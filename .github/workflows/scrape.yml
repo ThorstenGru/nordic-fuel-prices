@@ -1,8 +1,8 @@
-name: Scrape Nordic Fuel Prices
+name: Scrape European Fuel Prices
 
 on:
   schedule:
-    # Every 30 minutes (Sweden fastest source updates every 30 min)
+    # Every 30 minutes
     - cron: "0,30 * * * *"
   workflow_dispatch:
 
@@ -13,7 +13,7 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -30,6 +30,7 @@ jobs:
       - name: Run scrapers
         env:
           FUELPRICES_DK_API_KEY: ${{ secrets.FUELPRICES_DK_API_KEY }}
+          TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}
         run: python src/main.py
 
       - name: Copy web files to data dir

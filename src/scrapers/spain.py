@@ -1,0 +1,92 @@
+import aiohttp
+from typing import List, Dict, Any
+from .base import BaseScraper
+
+# Spanish mandatory fuel price reporting via MINETUR (Ministry of Industry)
+# https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/
+# Free, no API key, ~12 000 stations with GPS
+# Prices use comma decimal separator ("1,499")
+
+BASE_URL = (
+    "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes"
+    "/PreciosCarburantes/EstacionesTerrestres/"
+)
+
+# Spanish field name → (internal fuel_type, unit)
+FUEL_FIELDS = {
+    "Precio Gasoleo A":                      ("DIESEL", "L"),
+    "Precio Gasolina 95 E5":                 ("E5",     "L"),
+    "Precio Gasolina 95 E10":                ("E10",    "L"),
+    "Precio Gasolina 98 E5":                 ("E5",     "L"),  # premium 98
+    "Precio Gases licuados del petroleo":    ("LPG",    "L"),
+    "Precio Gas Natural Comprimido":         ("CNG",    "kg"),
+    "Precio Bioetanol":                      ("E85",    "L"),
+    "Precio Hidrogeno":                      ("H2",     "kg"),
+}
+
+
+class SpainScraper(BaseScraper):
+    COUNTRY = "ES"
+    CURRENCY = "EUR"
+    SOURCE = "minetur.gob.es"
+    CONFIDENCE = 0.95
+
+    async def fetch_stations(self) -> List[Dict[str, Any]]:
+        try:
+            async with self.session.get(
+                BASE_URL,
+                timeout=aiohttp.ClientTimeout(total=60),
+                headers={"Accept": "application/json"},
+            ) as resp:
+                if resp.status != 200:
+                    print(f"[ES] HTTP {resp.status}")
+                    return []
+                data = await resp.json(content_type=None)
+        except Exception as e:
+            print(f"[ES] {e}")
+            return []
+
+        raw_list = data.get("ListaEESSPrecio", [])
+        stations = []
+        for s in raw_list:
+            prices = []
+            seen = set()
+            for field, (ft, unit) in FUEL_FIELDS.items():
+                val_str = s.get(field, "").strip()
+                if not val_str or ft in seen:
+                    continue
+                try:
+                    price = float(val_str.replace(",", "."))
+                except ValueError:
+                    continue
+                if price > 0:
+                    prices.append(self.price_entry(ft, price, unit))
+                    seen.add(ft)
+
+            if not prices:
+                continue
+
+            try:
+                lat = float(s.get("Latitud", "0").replace(",", "."))
+                lon = float(s.get("Longitud (WGS84)", "0").replace(",", "."))
+                if not (-90 <= lat <= 90) or not (-180 <= lon <= 180) or (lat == 0 and lon == 0):
+                    lat = lon = None
+            except (ValueError, TypeError):
+                lat = lon = None
+
+            stations.append({
+                "id": f"es_{s.get('IDEESS', '')}",
+                "country": "ES",
+                "name": s.get("Rótulo", ""),
+                "brand": s.get("Rótulo", ""),
+                "address": s.get("Dirección", ""),
+                "city": s.get("Municipio", ""),
+                "lat": lat,
+                "lon": lon,
+                "source": self.SOURCE,
+                "confidence": self.CONFIDENCE,
+                "prices": prices,
+            })
+
+        print(f"[ES] {len(stations)} stations from minetur.gob.es")
+        return stations
