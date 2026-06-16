@@ -166,12 +166,13 @@ async function loadData() {
     const resp = await fetch('all.json');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
-    allStations = (data.stations || []).filter(s => s.lat && s.lon);
+    allStations = data.stations || [];
 
     const fetched = data.meta?.fetched_at
       ? new Date(data.meta.fetched_at).toLocaleString()
       : 'unknown';
-    status.textContent = `${allStations.length.toLocaleString()} stations · updated ${fetched}`;
+    const withCoords = allStations.filter(s => s.lat && s.lon).length;
+    status.textContent = `${allStations.length.toLocaleString()} stations (${withCoords} on map) · updated ${fetched}`;
     status.className = 'ok';
 
     render();
@@ -204,7 +205,7 @@ function renderMarkers(stations) {
   markerMap = {};
 
   stations.forEach((s, i) => {
-    const fuelPrice = s.prices?.[0];
+    if (!s.lat || !s.lon) return;
     const color = confidenceColor(s.confidence);
     const icon = L.divIcon({
       className: '',
@@ -256,6 +257,7 @@ function renderSidebar(stations) {
   const visible = stations.slice(0, 200);
   list.innerHTML = visible.map((s, i) => {
     const flag = COUNTRY_FLAGS[s.country] || '';
+    const hasCoords = s.lat && s.lon;
     const chips = (s.prices || []).map(p =>
       `<span class="price-chip">
         <span class="type">${p.fuel_type}</span>
@@ -263,8 +265,9 @@ function renderSidebar(stations) {
         <span class="cur">${p.currency}</span>
       </span>`
     ).join('');
+    const pinIcon = hasCoords ? '' : '<span style="color:#475569;font-size:0.65rem;margin-left:4px" title="No map coordinates">📍✕</span>';
     return `<div class="station-card" id="card-${i}" onclick="selectStation(${i})">
-      <div class="station-name">${flag} ${s.name}</div>
+      <div class="station-name">${flag} ${s.name}${pinIcon}</div>
       <div class="station-meta">${s.city || s.county || ''} · ${s.source}</div>
       <div class="prices">${chips || '<span style="color:#64748b;font-size:0.75rem">No prices</span>'}</div>
     </div>`;
