@@ -1,8 +1,14 @@
 import aiohttp
 import asyncio
+import re
 from typing import List, Dict, Any, Tuple
 from collections import defaultdict
 from .base import BaseScraper
+
+# ByVäg segment signature: starts uppercase, has 2+ consecutive lowercase, then another uppercase.
+# Examples: "BollebygdKappared", "PiteaBergsviken", "GullspangOtterbacken"
+# Excluded: "Circle", "K", "AB", "Express", "OKQ8", "dinX", "St1"
+_BYVAEG_RE = re.compile(r'^[A-Z][a-z]{2,}[A-Z]')
 
 # Actual county slugs accepted by the API
 COUNTIES = [
@@ -50,12 +56,6 @@ class SwedenScraper(BaseScraper):
 
         stations = []
         for station_id, prices_by_fuel in station_prices.items():
-            price_entries = [
-                self.price_entry(ft, price, FUEL_MAP[ft_raw][1])
-                for ft_raw, (ft, _) in FUEL_MAP.items()
-                if (price := prices_by_fuel.get(ft)) and price > 0
-            ]
-            # Rebuild price entries properly
             price_entries = []
             for ft_raw, (ft, unit) in FUEL_MAP.items():
                 p = prices_by_fuel.get(ft_raw)
@@ -65,11 +65,12 @@ class SwedenScraper(BaseScraper):
             if not price_entries:
                 continue
 
-            name, city = self._parse_name(station_id)
+            name, brand, city = self._parse_station_id(station_id)
             stations.append({
                 "id": f"se_{station_id}",
                 "country": "SE",
                 "name": name,
+                "brand": brand,
                 "city": city,
                 "county": station_county.get(station_id, ""),
                 "lat": None,
@@ -115,15 +116,36 @@ class SwedenScraper(BaseScraper):
 
         return entries
 
-    def _parse_name(self, station_id: str) -> Tuple[str, str]:
-        """Extract readable name and city from station_id key."""
-        # Format: {county}_{brand}_{cityaddress}
-        parts = station_id.split("_", 2)
-        if len(parts) >= 3:
-            brand = parts[1]
-            address = parts[2].replace("_", " ")
-            # First word of address is usually the city
-            words = address.split()
-            city = words[0] if words else ""
-            return f"{brand} {address}".strip(), city
-        return station_id, ""
+    def _parse_station_id(self, station_id: str) -> Tuple[str, str, str]:
+        """Parse station_id → (display_name, brand, city).
+
+        Key format: {county}_{seller}_{byväg}
+        where seller may contain underscores (Circle_K, Neste_Oil_Express, Borjes_Tankcenter…)
+        and byväg is a CamelCase concatenation of municipality+road (e.g. BollebygdKappared).
+
+        The ByVäg segment is detected by: starts with uppercase, has 2+ consecutive lowercase
+        letters, then another uppercase — this matches "BollebygdKappared" but not "Circle",
+        "K", "AB", "dinX", "OKQ8", or "Express".
+        """
+        parts = station_id.split("_")
+        if len(parts) < 2:
+            return station_id, station_id, ""
+
+        brand_parts: list = []
+        byvaeg_parts: list = []
+        in_byvaeg = False
+        for seg in parts[1:]:  # skip county at parts[0]
+            if not in_byvaeg and _BYVAEG_RE.match(seg):
+                in_byvaeg = True
+            if in_byvaeg:
+                byvaeg_parts.append(seg)
+            else:
+                brand_parts.append(seg)
+
+        brand = "_".join(brand_parts) if brand_parts else parts[1]
+        address = " ".join(byvaeg_parts) if byvaeg_parts else ""
+        # city = first ByVäg segment (CamelCase city+road; best we can do without a municipality list)
+        city = byvaeg_parts[0] if byvaeg_parts else ""
+        display_brand = brand.replace("_", " ")
+        name = f"{display_brand} · {address}".strip(" ·") if address else display_brand
+        return name, brand, city
