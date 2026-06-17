@@ -2,190 +2,350 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>European Fuel Prices</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; flex-direction: column; height: 100vh; }
+/* === Reset & Base === */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
 
-  header {
-    padding: 10px 16px;
-    background: #1e293b;
-    border-bottom: 1px solid #334155;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  header h1 { font-size: 1rem; font-weight: 600; color: #f1f5f9; white-space: nowrap; }
-  #status { font-size: 0.72rem; color: #64748b; margin-left: auto; white-space: nowrap; }
-  #status.ok  { color: #22c55e; }
-  #status.err { color: #ef4444; }
+/* === Header === */
+#header {
+  padding: 8px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 46px;
+  z-index: 100;
+}
+#header h1 { font-size: 0.95rem; font-weight: 600; color: #f1f5f9; white-space: nowrap; }
+#status {
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-left: auto;
+  text-align: right;
+  line-height: 1.35;
+  max-width: 55%;
+}
+#status.ok  { color: #22c55e; }
+#status.err { color: #ef4444; }
 
-  .controls {
-    padding: 8px 16px;
-    background: #1e293b;
-    border-bottom: 1px solid #334155;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-    align-items: center;
-  }
+/* === Controls bar === */
+#controls-bar {
+  padding: 8px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+}
 
-  .search-group {
-    display: flex;
-    gap: 4px;
-    flex: 1;
-    min-width: 180px;
-    max-width: 340px;
-  }
-  .search-group input {
-    flex: 1;
-    background: #0f172a;
-    color: #e2e8f0;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 0.82rem;
-  }
-  .search-group input::placeholder { color: #475569; }
-  .search-group input:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+.search-group {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 180px;
+  max-width: 340px;
+}
+.search-group input {
+  flex: 1;
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  min-height: 36px;
+}
+.search-group input::placeholder { color: #475569; }
+.search-group input:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
 
-  select, button {
-    background: #0f172a;
-    color: #e2e8f0;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  button:hover { background: #1e3a5f; border-color: #3b82f6; }
-  select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+select, button {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 36px;
+}
+button:hover, button:active { background: #1e3a5f; border-color: #3b82f6; }
+select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
 
-  #locBtn { color: #60a5fa; border-color: #1e40af; }
-  #locBtn:hover { background: #1e3a5f; }
-  #locBtn.loading { opacity: 0.6; cursor: wait; }
+.loc-btn { color: #60a5fa; border-color: #1e40af; }
+.loc-btn:hover { background: #1e3a5f; }
+.loc-btn.loading { opacity: 0.6; cursor: wait; }
 
-  .main { display: flex; flex: 1; overflow: hidden; }
-  #map { flex: 1; min-width: 0; }
+/* === Main layout === */
+.main { display: flex; flex: 1; overflow: hidden; }
+#map { flex: 1; min-width: 0; }
 
-  #sidebar {
-    width: 320px;
-    flex-shrink: 0;
+/* === Sidebar === */
+#sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: #1e293b;
+  border-left: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#sidebar-header h2 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+#stationList {
+  padding: 8px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* === Station cards === */
+.station-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin-bottom: 7px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.station-card:hover  { border-color: #3b82f6; }
+.station-card.active { border-color: #3b82f6; background: #1e3a5f; }
+.station-name { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
+.station-meta { font-size: 0.70rem; color: #64748b; margin: 2px 0 5px; }
+.prices { display: flex; flex-wrap: wrap; gap: 4px; }
+.price-chip {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.72rem;
+}
+.price-chip .type { color: #94a3b8; }
+.price-chip .val  { color: #22c55e; font-weight: 600; margin-left: 3px; }
+.price-chip .cur  { color: #64748b; font-size: 0.65rem; margin-left: 2px; }
+.empty { color: #64748b; font-size: 0.82rem; padding: 20px 0; text-align: center; }
+
+/* === Map overlays === */
+.leaflet-tooltip.price-tip {
+  background: rgba(15,23,42,0.92);
+  border: 1px solid #334155;
+  color: #22c55e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.leaflet-tooltip.price-tip::before { display: none; }
+#map.hide-prices .price-tip { display: none; }
+
+.my-loc-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.4); }
+  70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
+  100% { box-shadow: 0 0 0 0   rgba(59,130,246,0); }
+}
+
+/* Cluster icons — dark theme */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+  background: rgba(30,58,95,0.85) !important;
+}
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+  background: rgba(59,130,246,0.8) !important;
+  color: #fff !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+}
+
+/* === Sheet handle (shown on mobile) === */
+.sheet-handle {
+  display: none;
+  width: 40px; height: 4px;
+  background: #475569;
+  border-radius: 2px;
+  margin: 10px auto 8px;
+  flex-shrink: 0;
+}
+
+/* === Backdrop === */
+#backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 590;
+}
+#backdrop.visible { display: block; }
+
+/* === Mobile bottom bar (hidden on desktop) === */
+#mobile-bar { display: none; }
+
+/* ============================================================
+   MOBILE STYLES  (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* Compact header */
+  #header { min-height: 42px; padding: 6px 12px; }
+  #header h1 { font-size: 0.85rem; }
+  #status { font-size: 0.60rem; }
+
+  /* Controls bar → fixed bottom sheet */
+  #controls-bar {
+    position: fixed;
+    bottom: 62px;
+    left: 0; right: 0;
+    z-index: 600;
+    border-top: 1px solid #334155;
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    padding: 4px 16px 20px;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 75vh;
     overflow-y: auto;
-    background: #1e293b;
-    border-left: 1px solid #334155;
-    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+    transform: translateY(calc(100% + 62px));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
   }
-  #sidebar h2 {
-    font-size: 0.8rem;
-    font-weight: 600;
+  #controls-bar.sheet-open { transform: translateY(0); }
+  #controls-bar .sheet-handle { display: flex; }
+  #controls-bar .search-group { max-width: none; }
+  /* Prevent iOS zoom on input focus — must be ≥ 16px */
+  #controls-bar input,
+  #controls-bar select { font-size: 16px; padding: 10px 12px; min-height: 44px; }
+  #controls-bar button { min-height: 44px; font-size: 15px; }
+
+  /* Sidebar → fixed bottom sheet */
+  #sidebar {
+    position: fixed;
+    bottom: 62px;
+    left: 0; right: 0; top: auto;
+    width: 100%;
+    max-height: 68vh;
+    border-left: none;
+    border-top: 1px solid #334155;
+    border-radius: 16px 16px 0 0;
+    z-index: 601;
+    transform: translateY(calc(100% + 62px));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+    display: flex !important;
+  }
+  #sidebar.sheet-open { transform: translateY(0); }
+  #sidebar .sheet-handle { display: flex; }
+
+  /* Map fills everything; mobile bar is fixed so no padding needed */
+  .main { flex: 1; }
+
+  /* Move Leaflet attribution/zoom controls above mobile bar */
+  .leaflet-bottom { bottom: 66px; }
+
+  /* Sheet handle visible */
+  .sheet-handle { display: flex; }
+
+  /* Mobile bar */
+  #mobile-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 62px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #1e293b;
+    border-top: 1px solid #334155;
+    z-index: 700;
+    align-items: stretch;
+    justify-content: space-around;
+  }
+
+  /* Mobile bar buttons */
+  .mob-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    border-right: 1px solid #1e293b;
     color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-  }
-
-  .station-card {
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 9px 11px;
-    margin-bottom: 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
     cursor: pointer;
-    transition: border-color 0.12s;
+    font-size: 0.62rem;
+    font-family: inherit;
+    transition: color 0.12s, background 0.12s;
+    -webkit-tap-highlight-color: transparent;
   }
-  .station-card:hover  { border-color: #3b82f6; }
-  .station-card.active { border-color: #3b82f6; background: #1e3a5f; }
-  .station-name { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
-  .station-meta { font-size: 0.70rem; color: #64748b; margin: 2px 0 5px; }
-  .prices { display: flex; flex-wrap: wrap; gap: 4px; }
-  .price-chip {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 5px;
-    padding: 2px 7px;
-    font-size: 0.72rem;
-  }
-  .price-chip .type { color: #94a3b8; }
-  .price-chip .val  { color: #22c55e; font-weight: 600; margin-left: 3px; }
-  .price-chip .cur  { color: #64748b; font-size: 0.65rem; margin-left: 2px; }
-
-  .empty { color: #64748b; font-size: 0.82rem; padding: 16px 0; text-align: center; }
-  .flag  { font-size: 1rem; }
-
-  /* Price label tooltips on the map */
-  .leaflet-tooltip.price-tip {
-    background: rgba(15,23,42,0.92);
-    border: 1px solid #334155;
-    color: #22c55e;
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 4px;
-    white-space: nowrap;
-    box-shadow: none;
-  }
-  .leaflet-tooltip.price-tip::before { display: none; }
-  /* hide price labels at low zoom — toggled by JS class on map container */
-  #map.hide-prices .price-tip { display: none; }
-
-  /* My-location pulse dot */
-  .my-loc-dot {
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: #3b82f6;
-    border: 3px solid #fff;
-    box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
-    animation: pulse 1.8s infinite;
-  }
-  @keyframes pulse {
-    0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.4); }
-    70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
-    100% { box-shadow: 0 0 0 0   rgba(59,130,246,0); }
-  }
-
-  /* Cluster icon overrides to match dark theme */
-  .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-    background: rgba(30,58,95,0.85) !important;
-  }
-  .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-    background: rgba(59,130,246,0.8) !important;
-    color: #fff !important;
-    font-size: 0.7rem !important;
-    font-weight: 700 !important;
-  }
-
-  @media (max-width: 640px) { #sidebar { display: none; } }
+  .mob-btn:last-child { border-right: none; }
+  .mob-btn:active { background: #1e3a5f; }
+  .mob-btn.active { color: #3b82f6; }
+  .mob-btn .mob-icon { font-size: 1.3rem; line-height: 1; }
+  .mob-btn.loc-btn { color: #60a5fa; }
+  .mob-btn.loc-btn.loading { opacity: 0.5; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <span class="flag">⛽</span>
+<!-- Header -->
+<div id="header">
+  <span style="font-size:1.1rem;flex-shrink:0">⛽</span>
   <h1>European Fuel Prices</h1>
   <span id="status">Loading…</span>
-</header>
+</div>
 
-<div class="controls">
-  <!-- Address search -->
+<!-- Controls bar (desktop: always visible; mobile: slide-up sheet) -->
+<div id="controls-bar">
+  <div class="sheet-handle"></div>
   <div class="search-group">
     <input type="text" id="searchInput" placeholder="Search address or city…"
-           onkeydown="if(event.key==='Enter') searchAddress()">
+           autocomplete="off" autocorrect="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter')searchAddress()">
     <button onclick="searchAddress()" title="Search">🔍</button>
   </div>
-
-  <!-- My location -->
-  <button id="locBtn" onclick="goToMyLocation()" title="Go to my location">📍 My location</button>
-
-  <!-- Filters -->
+  <button class="loc-btn" onclick="goToMyLocation()" title="My location">📍 My location</button>
   <select id="countryFilter">
     <option value="">All countries</option>
     <option value="SE">🇸🇪 Sweden</option>
@@ -197,8 +357,9 @@
     <option value="FR">🇫🇷 France</option>
     <option value="ES">🇪🇸 Spain</option>
     <option value="IT">🇮🇹 Italy</option>
+    <option value="PT">🇵🇹 Portugal</option>
+    <option value="IS">🇮🇸 Iceland</option>
   </select>
-
   <select id="fuelFilter">
     <option value="">All fuels</option>
     <option value="E10">E10 / 95</option>
@@ -209,23 +370,45 @@
     <option value="LPG">LPG</option>
     <option value="CNG">CNG</option>
   </select>
-
-  <button onclick="resetFilters()">Reset</button>
+  <button onclick="resetFilters()">↺ Reset</button>
 </div>
 
+<!-- Main: map + sidebar -->
 <div class="main">
   <div id="map"></div>
   <div id="sidebar">
-    <h2>Stations <span id="countLabel"></span></h2>
+    <div class="sheet-handle"></div>
+    <div id="sidebar-header">
+      <h2>Stations <span id="countLabel"></span></h2>
+    </div>
     <div id="stationList"><p class="empty">Fetching data…</p></div>
   </div>
+</div>
+
+<!-- Backdrop (closes sheets on tap) -->
+<div id="backdrop" onclick="closeAllSheets()"></div>
+
+<!-- Mobile bottom navigation bar -->
+<div id="mobile-bar">
+  <button class="mob-btn" id="filterBtn" onclick="toggleSheet('controls-bar','filterBtn')">
+    <span class="mob-icon">⚡</span>
+    <span>Filters</span>
+  </button>
+  <button class="mob-btn loc-btn" onclick="goToMyLocation()">
+    <span class="mob-icon">📍</span>
+    <span>Locate</span>
+  </button>
+  <button class="mob-btn" id="listBtn" onclick="toggleSheet('sidebar','listBtn')">
+    <span class="mob-icon">📋</span>
+    <span id="mobileCountLabel">List</span>
+  </button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 // ── Map setup ──────────────────────────────────────────────────────────────
-const map = L.map('map', { center: [50, 12], zoom: 5 });
+const map = L.map('map', { center: [50, 12], zoom: 5, zoomControl: true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap &copy; CARTO',
   maxZoom: 19,
@@ -234,21 +417,63 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 const COUNTRY_FLAGS = {
   SE:'🇸🇪', NO:'🇳🇴', DK:'🇩🇰', FI:'🇫🇮',
   AT:'🇦🇹', DE:'🇩🇪', FR:'🇫🇷', ES:'🇪🇸', IT:'🇮🇹',
+  PT:'🇵🇹', IS:'🇮🇸',
 };
-const CURRENCY_SYMBOL = { EUR:'€', SEK:'kr', NOK:'kr', DKK:'kr' };
+const CURRENCY_SYMBOL = { EUR:'€', SEK:'kr', NOK:'kr', DKK:'kr', ISK:'kr' };
 const UNIT_LABEL = { L:'/L', kWh:'/kWh', kg:'/kg' };
-
-const PRICE_ZOOM = 13;   // show price labels at this zoom level and above
-const LABEL_ZOOM = 12;   // show clustering below this
+const PRICE_ZOOM = 13;
+const CLUSTER_ZOOM = 12;
 
 // ── State ──────────────────────────────────────────────────────────────────
 let allStations = [];
 let clusterGroup = null;
-let markerList = [];      // parallel to filteredStations list for index lookup
+let markerList = [];
 let filteredStations = [];
 let activeCard = null;
 let myLocMarker = null;
 let myLocCircle = null;
+
+// ── Sheet management (mobile) ──────────────────────────────────────────────
+function toggleSheet(sheetId, btnId) {
+  const sheet = document.getElementById(sheetId);
+  const isOpen = sheet.classList.toggle('sheet-open');
+  document.getElementById('backdrop').classList.toggle('visible', isOpen);
+
+  // Update active state on the button
+  if (btnId) {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.toggle('active', isOpen);
+  }
+
+  // Close the other sheet if opening this one
+  if (isOpen) {
+    const other = sheetId === 'controls-bar' ? 'sidebar' : 'controls-bar';
+    const otherSheet = document.getElementById(other);
+    if (otherSheet.classList.contains('sheet-open')) {
+      otherSheet.classList.remove('sheet-open');
+      // Reset the other button
+      const otherBtnId = other === 'sidebar' ? 'listBtn' : 'filterBtn';
+      const otherBtn = document.getElementById(otherBtnId);
+      if (otherBtn) otherBtn.classList.remove('active');
+    }
+  }
+}
+
+function closeAllSheets() {
+  ['controls-bar', 'sidebar'].forEach(id => {
+    document.getElementById(id).classList.remove('sheet-open');
+  });
+  ['filterBtn', 'listBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  document.getElementById('backdrop').classList.remove('visible');
+}
+
+// Close sheets on map interaction (mobile UX)
+map.on('click movestart', () => {
+  if (window.innerWidth <= 768) closeAllSheets();
+});
 
 // ── Load data ──────────────────────────────────────────────────────────────
 async function loadData() {
@@ -261,16 +486,17 @@ async function loadData() {
 
     const fetched = data.meta?.fetched_at
       ? new Date(data.meta.fetched_at).toLocaleString()
-      : 'unknown';
+      : '—';
     const withCoords = allStations.filter(s => s.lat && s.lon).length;
     const total = allStations.length;
-    status.textContent = `${total.toLocaleString()} stations (${withCoords.toLocaleString()} on map) · ${fetched}`;
+    status.textContent = `${total.toLocaleString()} stations · ${fetched}`;
     status.className = 'ok';
     render();
   } catch (e) {
     status.textContent = `Error: ${e.message}`;
     status.className = 'err';
-    document.getElementById('stationList').innerHTML = '<p class="empty">Could not load data.</p>';
+    document.getElementById('stationList').innerHTML =
+      '<p class="empty">Could not load data.</p>';
   }
 }
 
@@ -301,15 +527,15 @@ function renderMarkers(stations) {
 
   clusterGroup = L.markerClusterGroup({
     maxClusterRadius: 40,
-    disableClusteringAtZoom: LABEL_ZOOM,
+    disableClusteringAtZoom: CLUSTER_ZOOM,
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: false,
     iconCreateFunction: cluster => {
       const n = cluster.getChildCount();
-      const size = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
+      const sz = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
       return L.divIcon({
         html: `<div><span>${n}</span></div>`,
-        className: `marker-cluster marker-cluster-${size}`,
+        className: `marker-cluster marker-cluster-${sz}`,
         iconSize: [40, 40],
       });
     },
@@ -317,7 +543,6 @@ function renderMarkers(stations) {
 
   stations.forEach((s, i) => {
     if (!s.lat || !s.lon) return;
-
     const color = confidenceColor(s.confidence);
     const cheapest = cheapestPrice(s);
 
@@ -329,11 +554,8 @@ function renderMarkers(stations) {
     });
 
     const marker = L.marker([s.lat, s.lon], { icon });
-
-    // Popup on click
     marker.bindPopup(buildPopup(s), { maxWidth: 260 });
 
-    // Permanent price tooltip (CSS hides it when map has .hide-prices)
     if (cheapest) {
       const sym = CURRENCY_SYMBOL[cheapest.currency] || cheapest.currency;
       marker.bindTooltip(
@@ -353,9 +575,9 @@ function renderMarkers(stations) {
 
 function cheapestPrice(s) {
   if (!s.prices?.length) return null;
-  const liquidFuels = s.prices.filter(p => p.unit === 'L' && p.price > 0);
-  if (!liquidFuels.length) return s.prices[0];
-  return liquidFuels.reduce((a, b) => a.price < b.price ? a : b);
+  const liquid = s.prices.filter(p => p.unit === 'L' && p.price > 0);
+  if (!liquid.length) return s.prices[0];
+  return liquid.reduce((a, b) => a.price < b.price ? a : b);
 }
 
 function confidenceColor(c) {
@@ -384,10 +606,9 @@ function buildPopup(s) {
   </div>`;
 }
 
-// ── Price label visibility on zoom ─────────────────────────────────────────
+// ── Price label visibility ─────────────────────────────────────────────────
 function updatePriceLabels() {
-  const z = map.getZoom();
-  map.getContainer().classList.toggle('hide-prices', z < PRICE_ZOOM);
+  map.getContainer().classList.toggle('hide-prices', map.getZoom() < PRICE_ZOOM);
 }
 map.on('zoomend', updatePriceLabels);
 
@@ -395,7 +616,9 @@ map.on('zoomend', updatePriceLabels);
 function renderSidebar(stations) {
   const list  = document.getElementById('stationList');
   const label = document.getElementById('countLabel');
-  label.textContent = `(${stations.length.toLocaleString()})`;
+  const n = stations.length.toLocaleString();
+  label.textContent = `(${n})`;
+  document.getElementById('mobileCountLabel').textContent = n;
 
   if (!stations.length) {
     list.innerHTML = '<p class="empty">No stations match filters.</p>';
@@ -404,27 +627,27 @@ function renderSidebar(stations) {
 
   const visible = stations.slice(0, 200);
   list.innerHTML = visible.map((s, i) => {
-    const flag     = COUNTRY_FLAGS[s.country] || '';
-    const hasCoords = s.lat && s.lon;
-    const sym      = CURRENCY_SYMBOL[s.prices?.[0]?.currency] || '';
-    const chips    = (s.prices || []).map(p =>
+    const flag = COUNTRY_FLAGS[s.country] || '';
+    const sym  = CURRENCY_SYMBOL[s.prices?.[0]?.currency] || '';
+    const chips = (s.prices || []).map(p =>
       `<span class="price-chip">
         <span class="type">${p.fuel_type}</span>
         <span class="val">${p.price.toFixed(2)}</span>
         <span class="cur">${sym}</span>
       </span>`
     ).join('');
-    const noPin = hasCoords ? '' :
+    const noPin = (s.lat && s.lon) ? '' :
       '<span style="color:#475569;font-size:0.62rem;margin-left:4px" title="No GPS">📍✕</span>';
     return `<div class="station-card" id="card-${i}" onclick="selectStation(${i})">
       <div class="station-name">${flag} ${s.name || s.brand || '—'}${noPin}</div>
-      <div class="station-meta">${[s.city, s.county, s.source].filter(Boolean).join(' · ')}</div>
+      <div class="station-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
       <div class="prices">${chips || '<span style="color:#64748b;font-size:0.72rem">No prices</span>'}</div>
     </div>`;
   }).join('');
 
   if (stations.length > 200) {
-    list.innerHTML += `<p class="empty">Showing 200 of ${stations.length.toLocaleString()} — use filters to narrow.</p>`;
+    list.innerHTML +=
+      `<p class="empty">Showing 200 of ${stations.length.toLocaleString()} — use filters to narrow.</p>`;
   }
 }
 
@@ -434,29 +657,37 @@ function selectStation(i) {
 
   if (activeCard) activeCard.classList.remove('active');
   const card = document.getElementById(`card-${i}`);
-  if (card) { card.classList.add('active'); card.scrollIntoView({ block: 'nearest' }); activeCard = card; }
+  if (card) {
+    card.classList.add('active');
+    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    activeCard = card;
+  }
 
   const marker = markerList[i];
   if (marker && s.lat && s.lon) {
     map.setView([s.lat, s.lon], Math.max(map.getZoom(), 14));
-    marker.openPopup();
+    // Fix: zoomToShowLayer handles the case where marker is inside a cluster
+    clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+    // Close mobile sheets so map is visible
+    if (window.innerWidth <= 768) closeAllSheets();
   }
 }
 
 // ── My Location ────────────────────────────────────────────────────────────
 function goToMyLocation() {
-  if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
-  const btn = document.getElementById('locBtn');
-  btn.classList.add('loading');
-  btn.textContent = '⌛ Locating…';
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  document.querySelectorAll('.loc-btn').forEach(b => b.classList.add('loading'));
 
   navigator.geolocation.getCurrentPosition(
     pos => {
       const { latitude: lat, longitude: lon, accuracy } = pos.coords;
-      btn.classList.remove('loading');
-      btn.textContent = '📍 My location';
+      document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('loading'));
 
       map.setView([lat, lon], 13);
+      if (window.innerWidth <= 768) closeAllSheets();
 
       if (myLocMarker) { map.removeLayer(myLocMarker); map.removeLayer(myLocCircle); }
       myLocMarker = L.marker([lat, lon], {
@@ -469,13 +700,12 @@ function goToMyLocation() {
       }).addTo(map).bindPopup('📍 You are here').openPopup();
 
       myLocCircle = L.circle([lat, lon], {
-        radius: Math.min(accuracy, 200),
+        radius: Math.min(accuracy, 500),
         color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.08, weight: 1,
       }).addTo(map);
     },
     err => {
-      btn.classList.remove('loading');
-      btn.textContent = '📍 My location';
+      document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('loading'));
       const msgs = {
         1: 'Permission denied — enable location in browser settings.',
         2: 'Position unavailable.',
@@ -487,7 +717,7 @@ function goToMyLocation() {
   );
 }
 
-// ── Address search (Nominatim / OSM) ──────────────────────────────────────
+// ── Address search ─────────────────────────────────────────────────────────
 async function searchAddress() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
@@ -498,6 +728,7 @@ async function searchAddress() {
     if (!data.length) { alert(`"${q}" not found.`); return; }
     const { lat, lon, display_name } = data[0];
     map.setView([parseFloat(lat), parseFloat(lon)], 13);
+    if (window.innerWidth <= 768) closeAllSheets();
     L.popup()
       .setLatLng([parseFloat(lat), parseFloat(lon)])
       .setContent(`<div style="font-size:0.82rem;max-width:220px">${display_name}</div>`)

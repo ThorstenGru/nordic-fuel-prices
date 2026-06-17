@@ -6,21 +6,20 @@ from .base import BaseScraper
 # Austrian mandatory fuel price reporting via e-Control API
 # https://api.e-control.at/sprit/1.0/
 # Free, no API key required, real-time per-station GPS prices
-# 9 federal states (Bundesländer), codes 1-9:
-#   1=Burgenland 2=Kärnten 3=Niederösterreich 4=Oberösterreich
-#   5=Salzburg 6=Steiermark 7=Tirol 8=Vorarlberg 9=Wien
+# Strategy: fetch all PB (Bezirk/district) codes from /regions, then query
+# each district × each fuel type for comprehensive geographic coverage.
 
-BASE_URL = "https://api.e-control.at/sprit/1.0/search/gas-stations/by-region"
+REGIONS_URL = "https://api.e-control.at/sprit/1.0/regions"
+BY_REGION_URL = "https://api.e-control.at/sprit/1.0/search/gas-stations/by-region"
 
 FUEL_MAP = {
-    "DIE":   ("DIESEL", "L"),
-    "SUP":   ("E5",     "L"),
-    "SUP98": ("E5",     "L"),
-    "GAS":   ("CNG",    "kg"),
-    "LPG":   ("LPG",    "L"),
+    "DIE": ("DIESEL", "L"),
+    "SUP": ("E5",     "L"),
+    "LPG": ("LPG",    "L"),
 }
 
-REGIONS = list(range(1, 10))
+# Fallback BL (Bundesland) codes if district fetch fails
+BL_CODES = list(range(1, 10))
 
 
 class AustriaScraper(BaseScraper):
@@ -30,12 +29,22 @@ class AustriaScraper(BaseScraper):
     CONFIDENCE = 1.0
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        sem = asyncio.Semaphore(8)
-        tasks = [
-            self._fetch(region, fuel, sem)
-            for region in REGIONS
-            for fuel in FUEL_MAP
-        ]
+        pb_codes = await self._fetch_pb_codes()
+
+        sem = asyncio.Semaphore(12)
+        if pb_codes:
+            tasks = [
+                self._fetch("PB", code, fuel, sem)
+                for code in pb_codes
+                for fuel in FUEL_MAP
+            ]
+        else:
+            tasks = [
+                self._fetch("BL", code, fuel, sem)
+                for code in BL_CODES
+                for fuel in FUEL_MAP
+            ]
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         merged: Dict[str, Dict] = {}
@@ -53,20 +62,46 @@ class AustriaScraper(BaseScraper):
                             merged[sid]["prices"].append(p)
 
         stations = list(merged.values())
-        print(f"[AT] {len(stations)} stations from e-control.at")
+        print(f"[AT] {len(stations)} stations from e-control.at ({len(pb_codes)} districts)")
         return stations
 
-    async def _fetch(self, region: int, fuel: str, sem: asyncio.Semaphore) -> List[Dict]:
+    async def _fetch_pb_codes(self) -> List[int]:
+        try:
+            async with self.session.get(
+                REGIONS_URL,
+                timeout=aiohttp.ClientTimeout(total=20),
+                headers={"Accept": "application/json"},
+            ) as resp:
+                if resp.status != 200:
+                    print(f"[AT] regions HTTP {resp.status} — falling back to BL")
+                    return []
+                regions = await resp.json(content_type=None)
+        except Exception as e:
+            print(f"[AT] regions fetch: {e} — falling back to BL")
+            return []
+
+        codes = []
+        for bl in regions:
+            for pb in bl.get("subRegions", []):
+                code = pb.get("code")
+                if code is not None:
+                    try:
+                        codes.append(int(code))
+                    except (TypeError, ValueError):
+                        pass
+        return codes
+
+    async def _fetch(self, region_type: str, code: int, fuel: str, sem: asyncio.Semaphore) -> List[Dict]:
         params = {
-            "regionType": "BL",
-            "code": region,
+            "type": region_type,
+            "code": code,
             "fuelType": fuel,
             "includeClosed": "false",
         }
         async with sem:
             try:
                 async with self.session.get(
-                    BASE_URL, params=params,
+                    BY_REGION_URL, params=params,
                     timeout=aiohttp.ClientTimeout(total=30),
                     headers={"Accept": "application/json"},
                 ) as resp:
@@ -74,8 +109,11 @@ class AustriaScraper(BaseScraper):
                         return []
                     raw = await resp.json(content_type=None)
             except Exception as e:
-                print(f"[AT] region={region} fuel={fuel}: {e}")
+                print(f"[AT] {region_type}={code} fuel={fuel}: {e}")
                 return []
+
+        if not isinstance(raw, list):
+            return []
 
         ft, unit = FUEL_MAP[fuel]
         result = []
@@ -97,7 +135,7 @@ class AustriaScraper(BaseScraper):
                 "id": f"at_{s.get('id', '')}",
                 "country": "AT",
                 "name": s.get("name", ""),
-                "brand": s.get("name", "").split(",")[0].strip(),
+                "brand": (s.get("name", "") or "").split(",")[0].strip(),
                 "address": f"{addr.get('street', '')} {addr.get('streetnumber', '')}".strip(),
                 "city": addr.get("city", ""),
                 "lat": loc.get("latitude"),

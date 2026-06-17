@@ -41,9 +41,9 @@ class ItalyScraper(BaseScraper):
             return []
 
         # Parse station registry
-        # Columns: idImpianto;Gestore;Bandiera;Tipo Impianto;Nome Impianto;Indirizzo;Comune;Provincia;Latitudine;Longitudine
+        # Columns: idImpianto|Gestore|Bandiera|Tipo Impianto|Nome Impianto|Indirizzo|Comune|Provincia|Latitudine|Longitudine
         stations: Dict[str, Dict] = {}
-        reader = csv.DictReader(io.StringIO(registry_text), delimiter=";")
+        reader = csv.DictReader(io.StringIO(registry_text), delimiter="|")
         for row in reader:
             sid = (row.get("idImpianto") or "").strip()
             if not sid:
@@ -71,9 +71,16 @@ class ItalyScraper(BaseScraper):
             }
 
         # Parse price file
-        # Columns: idImpianto;descCarburante;prezzo;isSelf;dtComu
+        # Columns: idImpianto|descCarburante|prezzo|isSelf|dtComu
+        # First line is a metadata line ("Estrazione del YYYY-MM-DD") before the header
+        prices_lines = prices_text.splitlines()
+        header_idx = next(
+            (i for i, line in enumerate(prices_lines) if line.startswith("idImpianto")),
+            None,
+        )
+        prices_body = "\n".join(prices_lines[header_idx:]) if header_idx is not None else prices_text
         seen: Dict[str, set] = {}
-        reader = csv.DictReader(io.StringIO(prices_text), delimiter=";")
+        reader = csv.DictReader(io.StringIO(prices_body), delimiter="|")
         for row in reader:
             sid = (row.get("idImpianto") or "").strip()
             if sid not in stations:
