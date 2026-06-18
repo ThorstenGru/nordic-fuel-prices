@@ -3,11 +3,21 @@ import asyncio
 import re
 from typing import List, Dict, Any, Tuple
 from .base import BaseScraper
+from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
 # Free, no-auth APIs mandated by Danish law from Jan 2026
 SHELL_URL = "https://shellpumpepriser.geoapp.me/v1/prices"
 Q8_URL = "https://beta.q8.dk/Station/GetStationPrices?page=1&pageSize=2000"
+
+
+class _DKAnwb(ANWBScraper):
+    """ANWB coverage for Denmark: Circle K, Uno-X, Go'On, Oil! etc."""
+    COUNTRY    = "DK"
+    ISO3       = "DNK"
+    BBOX       = (54.80, 8.00, 57.80, 15.20)
+    SOURCE     = "anwb.nl (ANWB POI API)"
+    CONFIDENCE = 0.90
 
 # Shell: (fuelType, octane) → fuel_type
 SHELL_FUEL_MAP = {
@@ -32,19 +42,22 @@ Q8_FUEL_MAP = [
 class DenmarkScraper(BaseScraper):
     COUNTRY = "DK"
     CURRENCY = "DKK"
-    SOURCE = "shell+q8 open APIs"
+    SOURCE = "shell+q8+anwb.nl open APIs"
     CONFIDENCE = 1.0  # Mandatory government reporting
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         shell_task = self._fetch_shell()
         q8_task = self._fetch_q8()
-        shell, q8 = await asyncio.gather(shell_task, q8_task, return_exceptions=True)
+        anwb_task = _DKAnwb(self.session).fetch_stations()
+        shell, q8, anwb = await asyncio.gather(shell_task, q8_task, anwb_task, return_exceptions=True)
 
         stations = []
         if not isinstance(shell, Exception):
             stations.extend(shell)
         if not isinstance(q8, Exception):
             stations.extend(q8)
+        if not isinstance(anwb, Exception):
+            stations.extend(anwb)
         return stations
 
     async def _fetch_shell(self) -> List[Dict]:

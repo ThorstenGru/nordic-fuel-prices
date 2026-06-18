@@ -4,7 +4,17 @@ import re
 import urllib.parse
 from typing import List, Dict, Any, Optional
 from .base import BaseScraper
+from ._anwb import ANWBScraper
 from . import geocoder as _geo
+
+
+class _FIAnwb(ANWBScraper):
+    """ANWB coverage for Finland: Neste, Shell, Circle K etc. with real-time EUR prices."""
+    COUNTRY    = "FI"
+    ISO3       = "FIN"
+    BBOX       = (59.81, 19.09, 70.09, 31.59)
+    SOURCE     = "anwb.nl (ANWB POI API)"
+    CONFIDENCE = 0.90
 
 BASE_URL = "https://www.polttoaine.net"
 ENCODING = "windows-1252"
@@ -78,22 +88,29 @@ def _fi_query(s: Dict) -> tuple:
 class FinlandScraper(BaseScraper):
     COUNTRY = "FI"
     CURRENCY = "EUR"
-    SOURCE = "polttoaine.net"
-    CONFIDENCE = 0.70  # Community-reported prices
+    SOURCE = "polttoaine.net + anwb.nl"
+    CONFIDENCE = 0.70  # Community-reported prices (polttoaine.net); ANWB at 0.90
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         sem = asyncio.Semaphore(CONCURRENCY)
-        tasks = [self._fetch_slug(slug, sem) for slug in SLUGS]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        poltto_tasks = [self._fetch_slug(slug, sem) for slug in SLUGS]
+        anwb_task = _FIAnwb(self.session).fetch_stations()
+
+        poltto_results, anwb_stations = await asyncio.gather(
+            asyncio.gather(*poltto_tasks, return_exceptions=True),
+            anwb_task,
+            return_exceptions=True,
+        )
 
         seen: Dict[str, Dict] = {}
-        for result in results:
-            if isinstance(result, Exception) or not result:
-                continue
-            for station in result:
-                sid = station["id"]
-                if sid not in seen:
-                    seen[sid] = station
+        if not isinstance(poltto_results, Exception):
+            for result in poltto_results:
+                if isinstance(result, Exception) or not result:
+                    continue
+                for station in result:
+                    sid = station["id"]
+                    if sid not in seen:
+                        seen[sid] = station
 
         stations = list(seen.values())
         print(f"[FI] {len(stations)} stations from polttoaine.net")
@@ -103,6 +120,9 @@ class FinlandScraper(BaseScraper):
             key_fn=lambda s: s["id"],
             query_fn=_fi_query,
         )
+
+        if not isinstance(anwb_stations, Exception) and anwb_stations:
+            stations.extend(anwb_stations)
 
         return stations
 

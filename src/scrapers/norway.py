@@ -4,9 +4,11 @@ from typing import List, Dict, Any
 from .base import BaseScraper
 
 # Norway has NO public per-station consumer fuel price API as of 2026.
-# Circle K, YX, and Uno-X are legally BANNED from publishing indicative
-# list prices until October 2030 (Konkurransetilsynet commitments).
-# Drivstoffappen went commercial. No equivalent to Denmark's Jan-2026 mandate.
+# Circle K (~450), YX/Prio (~300), Uno-X (~150), ST1/Shell (~264) — none expose
+# free real-time price APIs. Konkurransetilsynet banned Circle K, YX, and Uno-X
+# from publishing indicative list prices until October 2030 (anti-cartel commitment).
+# ANWB POI API confirmed: 0 Norwegian stations in database (tested 2026-06-18).
+# Drivstoffappen went commercial. No equivalent to Denmark/Austria mandatory reporting.
 #
 # Source used: Statistics Norway (SSB) — official monthly national average.
 # Table 09654: Prices on engine fuel (NOK per litres)
