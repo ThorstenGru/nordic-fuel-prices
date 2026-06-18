@@ -420,9 +420,11 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const COUNTRY_FLAGS = {
-  AT:'🇦🇹', HR:'🇭🇷', DK:'🇩🇰', FI:'🇫🇮', FR:'🇫🇷',
-  DE:'🇩🇪', IS:'🇮🇸', IT:'🇮🇹', NO:'🇳🇴', PT:'🇵🇹',
-  RO:'🇷🇴', SI:'🇸🇮', ES:'🇪🇸', SE:'🇸🇪',
+  AT:'🇦🇹', BE:'🇧🇪', HR:'🇭🇷', CZ:'🇨🇿', DK:'🇩🇰',
+  EE:'🇪🇪', FI:'🇫🇮', FR:'🇫🇷', DE:'🇩🇪', HU:'🇭🇺',
+  IS:'🇮🇸', IT:'🇮🇹', LV:'🇱🇻', LT:'🇱🇹', LU:'🇱🇺',
+  NL:'🇳🇱', NO:'🇳🇴', PL:'🇵🇱', PT:'🇵🇹', RO:'🇷🇴',
+  SK:'🇸🇰', SI:'🇸🇮', ES:'🇪🇸', SE:'🇸🇪', CH:'🇨🇭',
 };
 const CURRENCY_SYMBOL = {
   EUR:'€', SEK:'kr', NOK:'kr', DKK:'kr', ISK:'kr', RON:'lei',
@@ -434,20 +436,31 @@ const CLUSTER_ZOOM = 12;
 // Country bounding boxes [[sw_lat, sw_lon], [ne_lat, ne_lon]]
 // Used to determine which country to load when the viewport moves
 const COUNTRY_BOUNDS = {
-  AT: L.latLngBounds([46.37, 9.52],  [49.02, 17.16]),
-  HR: L.latLngBounds([42.39, 13.49], [46.55, 19.45]),
-  DK: L.latLngBounds([54.56, 8.07],  [57.77, 15.19]),
-  FI: L.latLngBounds([59.81, 20.55], [70.09, 29.58]),
-  FR: L.latLngBounds([41.33, -5.14], [51.09, 9.56]),
-  DE: L.latLngBounds([47.27, 5.87],  [55.06, 15.04]),
-  IS: L.latLngBounds([63.29, -24.54],[66.56, -13.49]),
-  IT: L.latLngBounds([36.49, 6.63],  [47.09, 18.52]),
-  NO: L.latLngBounds([57.97, 4.64],  [71.19, 31.15]),
-  PT: L.latLngBounds([36.84, -9.52], [42.15, -6.19]),
-  RO: L.latLngBounds([43.62, 22.34], [48.26, 29.68]),
-  SI: L.latLngBounds([45.42, 13.38], [46.88, 16.61]),
-  ES: L.latLngBounds([35.95, -9.32], [43.79, 4.32]),
-  SE: L.latLngBounds([55.34, 11.11], [69.06, 24.17]),
+  AT: L.latLngBounds([46.37,  9.52],  [49.02, 17.16]),
+  BE: L.latLngBounds([49.50,  2.50],  [51.50,  6.40]),
+  HR: L.latLngBounds([42.39, 13.49],  [46.55, 19.45]),
+  CZ: L.latLngBounds([48.55, 12.10],  [51.06, 18.87]),
+  DK: L.latLngBounds([54.56,  8.07],  [57.77, 15.19]),
+  EE: L.latLngBounds([57.52, 21.83],  [59.68, 28.21]),
+  FI: L.latLngBounds([59.81, 20.55],  [70.09, 29.58]),
+  FR: L.latLngBounds([41.33, -5.14],  [51.09,  9.56]),
+  DE: L.latLngBounds([47.27,  5.87],  [55.06, 15.04]),
+  HU: L.latLngBounds([45.70, 16.10],  [48.60, 22.90]),
+  IS: L.latLngBounds([63.29,-24.54],  [66.56,-13.49]),
+  IT: L.latLngBounds([36.49,  6.63],  [47.09, 18.52]),
+  LV: L.latLngBounds([55.68, 20.97],  [57.84, 28.24]),
+  LT: L.latLngBounds([53.90, 20.95],  [56.45, 26.83]),
+  LU: L.latLngBounds([49.44,  5.73],  [50.18,  6.53]),
+  NL: L.latLngBounds([50.75,  3.36],  [53.55,  7.22]),
+  NO: L.latLngBounds([57.97,  4.64],  [71.19, 31.15]),
+  PL: L.latLngBounds([49.00, 14.10],  [54.90, 24.10]),
+  PT: L.latLngBounds([36.84, -9.52],  [42.15, -6.19]),
+  RO: L.latLngBounds([43.62, 22.34],  [48.26, 29.68]),
+  SK: L.latLngBounds([47.73, 16.84],  [49.62, 22.57]),
+  SI: L.latLngBounds([45.42, 13.38],  [46.88, 16.61]),
+  ES: L.latLngBounds([35.95, -9.32],  [43.79,  4.32]),
+  SE: L.latLngBounds([55.34, 11.11],  [69.06, 24.17]),
+  CH: L.latLngBounds([45.80,  5.90],  [47.80, 10.50]),
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
