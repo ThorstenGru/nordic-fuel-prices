@@ -1,0 +1,25 @@
+{
+  "name": "EuroFuel — European Fuel Prices",
+  "short_name": "EuroFuel",
+  "description": "Live fuel prices at stations across Europe",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cheapest Near Me",
+      "short_name": "Near Me",
+      "url": ".?action=nearby"
+    }
+  ]
+}

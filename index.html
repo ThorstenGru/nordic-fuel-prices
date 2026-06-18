@@ -3,910 +3,1188 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>European Fuel Prices</title>
+<meta name="theme-color" content="#0a0f1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EuroFuel">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>EuroFuel — Live European Fuel Prices</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <style>
-/* === Reset & Base === */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
+:root {
+  --bg:     #0a0f1e;
+  --surf:   #111827;
+  --surf2:  #1e293b;
+  --border: #1e2d45;
+  --text:   #e2e8f0;
+  --text2:  #94a3b8;
+  --text3:  #475569;
+  --blue:   #3b82f6;
+  --green:  #22c55e;
+  --amber:  #f59e0b;
+  --red:    #ef4444;
+  --tab-h:  58px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height:100%; height:100dvh;
+  overflow:hidden;
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text);
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* === Header === */
-#header {
-  padding: 8px 16px;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  min-height: 46px;
-  z-index: 100;
+/* ── Map fills viewport ── */
+#map-wrap {
+  position:fixed; inset:0;
 }
-#header h1 { font-size: 0.95rem; font-weight: 600; color: #f1f5f9; white-space: nowrap; }
-#status {
-  font-size: 0.68rem;
-  color: #64748b;
-  margin-left: auto;
-  text-align: right;
-  line-height: 1.35;
-  max-width: 60%;
-}
-#status.ok  { color: #22c55e; }
-#status.err { color: #ef4444; }
-#status.loading { color: #f59e0b; }
+#map { width:100%; height:100%; }
 
-/* === Controls bar === */
-#controls-bar {
-  padding: 8px 16px;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  align-items: center;
+/* ── Floating fuel-type chip bar ── */
+#chips {
+  position:absolute; top:10px; left:10px; right:10px; z-index:500;
+  display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:2px 0;
 }
+#chips::-webkit-scrollbar { display:none; }
+.chip {
+  flex-shrink:0;
+  background:rgba(10,15,30,0.88); border:1px solid var(--border);
+  border-radius:20px; padding:5px 13px;
+  font-size:0.73rem; font-weight:600; color:var(--text2);
+  cursor:pointer; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  transition:all 0.15s; white-space:nowrap; user-select:none;
+}
+.chip:active, .chip.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.chip.install-chip { background:rgba(34,197,94,0.15); border-color:var(--green); color:var(--green); }
 
-.search-group {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-  min-width: 180px;
-  max-width: 340px;
+/* ── Status badge ── */
+#badge {
+  position:absolute; top:10px; right:10px; z-index:500;
+  background:rgba(10,15,30,0.88); border:1px solid var(--border);
+  border-radius:8px; padding:4px 10px;
+  font-size:0.63rem; color:var(--text2); line-height:1.5;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  pointer-events:none; max-width:160px; text-align:right;
 }
-.search-group input {
-  flex: 1;
-  background: #0f172a;
-  color: #e2e8f0;
-  border: 1px solid #334155;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  min-height: 36px;
-}
-.search-group input::placeholder { color: #475569; }
-.search-group input:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+#badge.ok  { color:var(--green); }
+#badge.loading { color:var(--amber); }
 
-select, button {
-  background: #0f172a;
-  color: #e2e8f0;
-  border: 1px solid #334155;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  white-space: nowrap;
-  min-height: 36px;
+/* ── FAB – Near Me ── */
+#fab {
+  position:absolute; right:14px; z-index:500;
+  background:var(--green); color:#000;
+  border:none; border-radius:28px;
+  padding:11px 18px; font-size:0.85rem; font-weight:700;
+  display:flex; align-items:center; gap:7px; cursor:pointer;
+  box-shadow:0 4px 20px rgba(34,197,94,0.45);
+  transition:transform 0.12s, box-shadow 0.12s;
 }
-button:hover, button:active { background: #1e3a5f; border-color: #3b82f6; }
-select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+#fab:active { transform:scale(0.95); box-shadow:0 2px 10px rgba(34,197,94,0.3); }
+#fab.busy   { background:var(--surf2); color:var(--text2); box-shadow:none; }
 
-.loc-btn { color: #60a5fa; border-color: #1e40af; }
-.loc-btn:hover { background: #1e3a5f; }
-.loc-btn.loading { opacity: 0.6; cursor: wait; }
-
-/* === Main layout === */
-.main { display: flex; flex: 1; overflow: hidden; }
-#map { flex: 1; min-width: 0; }
-
-/* === Sidebar === */
-#sidebar {
-  width: 320px;
-  flex-shrink: 0;
-  background: #1e293b;
-  border-left: 1px solid #334155;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-#sidebar-header {
-  padding: 10px 12px 8px;
-  border-bottom: 1px solid #334155;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-#sidebar-header h2 {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-#stationList {
-  padding: 8px;
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* === Station cards === */
-.station-card {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 9px 11px;
-  margin-bottom: 7px;
-  cursor: pointer;
-  transition: border-color 0.12s;
-}
-.station-card:hover  { border-color: #3b82f6; }
-.station-card.active { border-color: #3b82f6; background: #1e3a5f; }
-.station-name { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
-.station-meta { font-size: 0.70rem; color: #64748b; margin: 2px 0 5px; }
-.prices { display: flex; flex-wrap: wrap; gap: 4px; }
-.price-chip {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 5px;
-  padding: 2px 7px;
-  font-size: 0.72rem;
-}
-.price-chip .type { color: #94a3b8; }
-.price-chip .val  { color: #22c55e; font-weight: 600; margin-left: 3px; }
-.price-chip .cur  { color: #64748b; font-size: 0.65rem; margin-left: 2px; }
-.empty { color: #64748b; font-size: 0.82rem; padding: 20px 0; text-align: center; }
-
-/* === Map overlays === */
-.leaflet-tooltip.price-tip {
-  background: rgba(15,23,42,0.92);
-  border: 1px solid #334155;
-  color: #22c55e;
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 4px;
-  white-space: nowrap;
-  box-shadow: none;
-}
-.leaflet-tooltip.price-tip::before { display: none; }
-#map.hide-prices .price-tip { display: none; }
-
-.my-loc-dot {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
-  animation: pulse 1.8s infinite;
+/* ── Location dot ── */
+.loc-dot {
+  width:14px; height:14px; border-radius:50%;
+  background:var(--blue); border:3px solid #fff;
+  box-shadow:0 0 0 4px rgba(59,130,246,0.3);
+  animation:pulse 1.8s infinite;
 }
 @keyframes pulse {
-  0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.4); }
-  70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
-  100% { box-shadow: 0 0 0 0   rgba(59,130,246,0); }
+  0%  { box-shadow:0 0 0 0   rgba(59,130,246,0.45); }
+  70% { box-shadow:0 0 0 12px rgba(59,130,246,0); }
+  100%{ box-shadow:0 0 0 0   rgba(59,130,246,0); }
 }
 
-/* Cluster icons — dark theme */
-.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-  background: rgba(30,58,95,0.85) !important;
+/* ── Price tooltips ── */
+.leaflet-tooltip.ptip {
+  background:rgba(10,15,30,0.9); border:1px solid rgba(59,130,246,0.35);
+  color:var(--green); font-size:0.63rem; font-weight:700;
+  padding:1px 5px; border-radius:4px; white-space:nowrap; box-shadow:none;
 }
-.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-  background: rgba(59,130,246,0.8) !important;
-  color: #fff !important;
-  font-size: 0.7rem !important;
-  font-weight: 700 !important;
-}
+.leaflet-tooltip.ptip::before { display:none; }
+#map.hide-prices .ptip { display:none; }
 
-/* === Sheet handle (shown on mobile) === */
-.sheet-handle {
-  display: none;
-  width: 40px; height: 4px;
-  background: #475569;
-  border-radius: 2px;
-  margin: 10px auto 8px;
-  flex-shrink: 0;
+/* ── Clusters ── */
+.marker-cluster { background:rgba(30,41,59,0.9) !important; }
+.marker-cluster div {
+  background:rgba(59,130,246,0.85) !important;
+  color:#fff !important; font-weight:700 !important;
+  font-size:0.68rem !important; display:flex !important;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:1px; line-height:1.2 !important;
 }
 
-/* === Backdrop === */
-#backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 590;
+/* ══════════════════════════════════════════
+   DESKTOP SIDEBAR
+══════════════════════════════════════════ */
+#sidebar {
+  display:none;
 }
-#backdrop.visible { display: block; }
+@media (min-width:769px) {
+  #map-wrap { right:360px; }
+  #fab { bottom:18px; }
+  #badge { right:374px; }
+  #chips { right:374px; }
 
-/* === Mobile bottom bar (hidden on desktop) === */
-#mobile-bar { display: none; }
-
-/* ============================================================
-   MOBILE STYLES  (≤ 768px)
-   ============================================================ */
-@media (max-width: 768px) {
-
-  /* Compact header */
-  #header { min-height: 42px; padding: 6px 12px; }
-  #header h1 { font-size: 0.85rem; }
-  #status { font-size: 0.60rem; }
-
-  /* Controls bar → fixed bottom sheet */
-  #controls-bar {
-    position: fixed;
-    bottom: 62px;
-    left: 0; right: 0;
-    z-index: 600;
-    border-top: 1px solid #334155;
-    border-bottom: none;
-    border-radius: 16px 16px 0 0;
-    padding: 4px 16px 20px;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 75vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    transform: translateY(calc(100% + 62px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
-  }
-  #controls-bar.sheet-open { transform: translateY(0); }
-  #controls-bar .sheet-handle { display: flex; }
-  #controls-bar .search-group { max-width: none; }
-  /* Prevent iOS zoom on input focus — must be ≥ 16px */
-  #controls-bar input,
-  #controls-bar select { font-size: 16px; padding: 10px 12px; min-height: 44px; }
-  #controls-bar button { min-height: 44px; font-size: 15px; }
-
-  /* Sidebar → fixed bottom sheet */
   #sidebar {
-    position: fixed;
-    bottom: 62px;
-    left: 0; right: 0; top: auto;
-    width: 100%;
-    max-height: 68vh;
-    border-left: none;
-    border-top: 1px solid #334155;
-    border-radius: 16px 16px 0 0;
-    z-index: 601;
-    transform: translateY(calc(100% + 62px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
-    display: flex !important;
+    display:flex; flex-direction:column;
+    position:fixed; top:0; right:0; bottom:0; width:360px;
+    background:var(--surf); border-left:1px solid var(--border);
+    z-index:200; overflow:hidden;
   }
-  #sidebar.sheet-open { transform: translateY(0); }
-  #sidebar .sheet-handle { display: flex; }
+  #sb-head {
+    padding:14px 16px 10px;
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  #sb-head h1 { font-size:1rem; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  #sb-status { font-size:0.7rem; color:var(--text2); }
+  #sb-status.ok { color:var(--green); }
 
-  /* Map fills everything; mobile bar is fixed so no padding needed */
-  .main { flex: 1; }
+  #sb-controls {
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+    display:flex; flex-direction:column; gap:8px;
+    flex-shrink:0;
+  }
+  #sb-controls .row { display:flex; gap:6px; }
+  #sb-controls input, #sb-controls select {
+    flex:1; background:var(--bg); color:var(--text);
+    border:1px solid var(--border); border-radius:8px;
+    padding:8px 12px; font-size:0.83rem; font-family:inherit;
+  }
+  #sb-controls input:focus, #sb-controls select:focus {
+    outline:2px solid var(--blue); outline-offset:1px;
+  }
+  #sb-controls input::placeholder { color:var(--text3); }
+  #sb-controls button { min-width:36px; background:var(--blue); border:none; border-radius:8px; color:#fff; font-size:0.9rem; cursor:pointer; padding:0 12px; }
+  #sb-nearbybtn {
+    width:100%; background:var(--green); border:none; border-radius:8px;
+    color:#000; font-weight:700; font-size:0.85rem; padding:10px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:opacity 0.12s;
+  }
+  #sb-nearbybtn:hover { opacity:0.88; }
 
-  /* Move Leaflet attribution/zoom controls above mobile bar */
-  .leaflet-bottom { bottom: 66px; }
-
-  /* Sheet handle visible */
-  .sheet-handle { display: flex; }
-
-  /* Mobile bar */
-  #mobile-bar {
-    display: flex;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 62px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: #1e293b;
-    border-top: 1px solid #334155;
-    z-index: 700;
-    align-items: stretch;
-    justify-content: space-around;
+  #sb-list-hdr {
+    padding:6px 16px 4px;
+    font-size:0.68rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--text3); flex-shrink:0;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  #sb-sort {
+    background:none; border:1px solid var(--border); border-radius:5px;
+    color:var(--text2); font-size:0.65rem; padding:2px 7px; cursor:pointer;
+    font-family:inherit;
   }
 
-  /* Mobile bar buttons */
-  .mob-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    border-right: 1px solid #1e293b;
-    color: #94a3b8;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    padding: 6px 4px;
-    cursor: pointer;
-    font-size: 0.62rem;
-    font-family: inherit;
-    transition: color 0.12s, background 0.12s;
-    -webkit-tap-highlight-color: transparent;
+  #stationList {
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:8px;
   }
-  .mob-btn:last-child { border-right: none; }
-  .mob-btn:active { background: #1e3a5f; }
-  .mob-btn.active { color: #3b82f6; }
-  .mob-btn .mob-icon { font-size: 1.3rem; line-height: 1; }
-  .mob-btn.loc-btn { color: #60a5fa; }
-  .mob-btn.loc-btn.loading { opacity: 0.5; }
 }
+
+/* ══════════════════════════════════════════
+   STATION CARDS
+══════════════════════════════════════════ */
+.scard {
+  background:var(--surf2); border:1px solid var(--border);
+  border-left:3px solid var(--border);
+  border-radius:10px; padding:10px 12px; margin-bottom:8px;
+  cursor:pointer; transition:border-color 0.12s, background 0.12s;
+}
+.scard:active, .scard.sel {
+  border-color:var(--blue); border-left-color:var(--blue);
+  background:rgba(59,130,246,0.07);
+}
+.scard.fh { border-left-color:var(--green); }
+.scard.fm { border-left-color:var(--blue); }
+.scard.fl { border-left-color:var(--amber); }
+.scard.fs { border-left-color:var(--red); }
+
+.scard-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:3px; }
+.scard-name { font-size:0.88rem; font-weight:600; color:#f1f5f9; flex:1; line-height:1.3; }
+.go-btn {
+  flex-shrink:0; background:none; border:1px solid var(--border);
+  border-radius:6px; color:var(--blue); font-size:0.72rem;
+  padding:3px 8px; cursor:pointer; display:flex; align-items:center; gap:3px;
+  white-space:nowrap; font-family:inherit;
+}
+.go-btn:active { background:var(--surf); }
+.scard-meta { font-size:0.67rem; color:var(--text3); margin-bottom:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.dist-badge { color:var(--text2); font-weight:600; }
+.pchips { display:flex; flex-wrap:wrap; gap:4px; }
+.pc {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:6px; padding:3px 8px; font-size:0.71rem;
+  display:flex; align-items:center; gap:3px;
+}
+.pc .t { color:var(--text2); }
+.pc .v { color:var(--green); font-weight:700; }
+.pc .u { color:var(--text3); font-size:0.63rem; }
+.pc.best { border-color:var(--green); background:rgba(34,197,94,0.08); }
+.pc.best .t { color:#86efac; }
+.scard-foot { margin-top:4px; font-size:0.61rem; color:var(--text3); }
+
+.empty { color:var(--text3); font-size:0.82rem; padding:24px 8px; text-align:center; line-height:1.6; }
+.load-more {
+  text-align:center; padding:12px; font-size:0.75rem; color:var(--blue);
+  cursor:pointer; border-top:1px solid var(--border); margin-top:4px;
+}
+.load-more:active { opacity:0.6; }
+
+/* ══════════════════════════════════════════
+   POPUP
+══════════════════════════════════════════ */
+.pop { font-family:system-ui,sans-serif; font-size:0.82rem; min-width:150px; max-width:270px; }
+.pop-name { font-weight:700; color:#f1f5f9; font-size:0.92rem; margin-bottom:2px; }
+.pop-addr { color:#64748b; font-size:0.7rem; margin-bottom:1px; }
+.pop-meta { color:#64748b; font-size:0.67rem; margin-bottom:7px; }
+.pop-tbl { border-collapse:collapse; margin-bottom:4px; }
+.pop-tbl td { padding:2px 5px 2px 0; }
+.pop-tbl .ft { color:#94a3b8; }
+.pop-tbl .pr { color:#22c55e; font-weight:700; }
+.pop-tbl .un { color:#475569; font-size:0.68rem; }
+.pop-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
+.pop-date { color:#475569; font-size:0.61rem; }
+.pop-go {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--blue); color:#fff; text-decoration:none;
+  border-radius:6px; padding:5px 11px; font-size:0.75rem; font-weight:600;
+}
+
+/* ══════════════════════════════════════════
+   MOBILE LAYOUT
+══════════════════════════════════════════ */
+@media (max-width:768px) {
+  #fab { bottom:calc(var(--tab-h) + var(--safe-b) + 14px); }
+  .leaflet-bottom { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); }
+  .leaflet-top { top:52px; }
+
+  /* Tab bar */
+  #tabbar {
+    position:fixed; bottom:0; left:0; right:0;
+    height:calc(var(--tab-h) + var(--safe-b));
+    padding-bottom:var(--safe-b);
+    background:var(--surf); border-top:1px solid var(--border);
+    display:grid; grid-template-columns:repeat(5,1fr); z-index:800;
+  }
+  .tb {
+    background:none; border:none; color:var(--text3);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; cursor:pointer; font-family:inherit; padding:4px 2px;
+    transition:color 0.15s; position:relative;
+  }
+  .tb.on { color:var(--blue); }
+  .tb.on.nb { color:var(--green); }
+  .tb.on::before {
+    content:''; position:absolute; top:0; left:25%; right:25%;
+    height:2px; background:var(--blue); border-radius:0 0 2px 2px;
+  }
+  .tb.on.nb::before { background:var(--green); }
+  .tb-icon { font-size:1.3rem; line-height:1; }
+  .tb-lbl  { font-size:0.57rem; font-weight:600; letter-spacing:0.02em; }
+
+  /* Panels */
+  .panel {
+    position:fixed; bottom:calc(var(--tab-h) + var(--safe-b)); left:0; right:0;
+    background:var(--surf); border-top:1px solid var(--border);
+    border-radius:18px 18px 0 0; z-index:700;
+    display:flex; flex-direction:column; max-height:78vh;
+    transform:translateY(100%);
+    transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    overflow:hidden;
+  }
+  .panel.open { transform:translateY(0); }
+  .drag-handle {
+    width:36px; height:4px; background:var(--border); border-radius:2px;
+    margin:10px auto 6px; flex-shrink:0; cursor:grab;
+  }
+  .panel-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Backdrop */
+  #bd { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:690; }
+  #bd.on { display:block; }
+
+  /* Near Me panel */
+  #p-nearby .panel-title {
+    padding:2px 16px 10px; font-size:0.75rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.06em; color:var(--text2);
+  }
+  #p-nearby .panel-scroll { padding:0 12px 14px; }
+
+  /* Search panel */
+  #p-search .sbox {
+    padding:4px 12px 10px; display:flex; gap:8px;
+  }
+  #p-search input {
+    flex:1; background:var(--bg); color:var(--text);
+    border:1px solid var(--border); border-radius:10px;
+    padding:11px 14px; font-size:16px; font-family:inherit;
+  }
+  #p-search input:focus { outline:2px solid var(--blue); outline-offset:1px; }
+  #p-search input::placeholder { color:var(--text3); }
+  #p-search .sbtn {
+    background:var(--blue); border:none; border-radius:10px;
+    color:#fff; font-size:1.1rem; padding:0 18px; cursor:pointer; min-height:44px;
+  }
+  #p-search .stabs {
+    display:flex; border-bottom:1px solid var(--border); padding:0 12px;
+  }
+  .stab {
+    flex:1; background:none; border:none; border-bottom:2px solid transparent;
+    color:var(--text3); font-size:0.76rem; font-weight:600; padding:6px 4px;
+    cursor:pointer; font-family:inherit; text-align:center;
+    transition:color 0.12s, border-color 0.12s;
+  }
+  .stab.on { color:var(--blue); border-bottom-color:var(--blue); }
+  #p-search .panel-scroll { padding:8px 12px 14px; }
+
+  /* Stations panel */
+  #p-stations .phead {
+    padding:2px 16px 10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  #p-stations .phead h2 { font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); }
+  #p-stations .sort-btn {
+    background:none; border:1px solid var(--border); border-radius:6px;
+    color:var(--text2); font-size:0.66rem; padding:4px 9px; cursor:pointer; font-family:inherit;
+  }
+  #p-stations .panel-scroll { padding:0 12px 14px; }
+
+  /* Filter panel */
+  #p-filter .panel-scroll { padding:6px 14px 20px; }
+  #p-filter label {
+    display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.05em; color:var(--text2); margin:14px 0 6px;
+  }
+  #p-filter label:first-of-type { margin-top:4px; }
+  #p-filter select {
+    width:100%; background:var(--bg); color:var(--text);
+    border:1px solid var(--border); border-radius:10px;
+    padding:12px 14px; font-size:16px; font-family:inherit;
+  }
+  #p-filter .rbtn {
+    width:100%; margin-top:18px; background:var(--surf2);
+    border:1px solid var(--border); border-radius:10px;
+    color:var(--text); font-size:0.9rem; padding:13px; cursor:pointer; font-family:inherit;
+  }
+}
+
+/* Desktop hides mobile elements */
+@media (min-width:769px) {
+  #tabbar, .panel, #bd, #fab { display:none !important; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div id="header">
-  <span style="font-size:1.1rem;flex-shrink:0">⛽</span>
-  <h1>European Fuel Prices</h1>
-  <span id="status" class="loading">Loading…</span>
-</div>
-
-<!-- Controls bar (desktop: always visible; mobile: slide-up sheet) -->
-<div id="controls-bar">
-  <div class="sheet-handle"></div>
-  <div class="search-group">
-    <input type="text" id="searchInput" placeholder="Search address or city…"
-           autocomplete="off" autocorrect="off" spellcheck="false"
-           onkeydown="if(event.key==='Enter')searchAddress()">
-    <button onclick="searchAddress()" title="Search">🔍</button>
-  </div>
-  <button class="loc-btn" onclick="goToMyLocation()" title="My location">📍 My location</button>
-  <select id="countryFilter">
-    <option value="">All countries</option>
-    <option value="AT">🇦🇹 Austria</option>
-    <option value="HR">🇭🇷 Croatia</option>
-    <option value="DK">🇩🇰 Denmark</option>
-    <option value="FI">🇫🇮 Finland</option>
-    <option value="FR">🇫🇷 France</option>
-    <option value="DE">🇩🇪 Germany</option>
-    <option value="IS">🇮🇸 Iceland</option>
-    <option value="IT">🇮🇹 Italy</option>
-    <option value="NO">🇳🇴 Norway</option>
-    <option value="PT">🇵🇹 Portugal</option>
-    <option value="RO">🇷🇴 Romania</option>
-    <option value="SI">🇸🇮 Slovenia</option>
-    <option value="ES">🇪🇸 Spain</option>
-    <option value="SE">🇸🇪 Sweden</option>
-  </select>
-  <select id="fuelFilter">
-    <option value="">All fuels</option>
-    <option value="E10">E10 / 95</option>
-    <option value="E5">E5 / 98</option>
-    <option value="DIESEL">Diesel</option>
-    <option value="HVO100">HVO100</option>
-    <option value="E85">E85</option>
-    <option value="LPG">LPG</option>
-    <option value="CNG">CNG</option>
-  </select>
-  <button onclick="resetFilters()">↺ Reset</button>
-</div>
-
-<!-- Main: map + sidebar -->
-<div class="main">
+<!-- ══ MAP ══ -->
+<div id="map-wrap">
   <div id="map"></div>
-  <div id="sidebar">
-    <div class="sheet-handle"></div>
-    <div id="sidebar-header">
-      <h2>Stations <span id="countLabel"></span></h2>
+
+  <!-- Fuel type chips -->
+  <div id="chips">
+    <button class="chip on" data-f="" onclick="setFuel(this,'')">All fuels</button>
+    <button class="chip" data-f="E10" onclick="setFuel(this,'E10')">⛽ E10 / 95</button>
+    <button class="chip" data-f="E5"  onclick="setFuel(this,'E5')">⛽ E5 / 98</button>
+    <button class="chip" data-f="DIESEL" onclick="setFuel(this,'DIESEL')">🛢 Diesel</button>
+    <button class="chip" data-f="HVO100" onclick="setFuel(this,'HVO100')">🌿 HVO</button>
+    <button class="chip" data-f="LPG" onclick="setFuel(this,'LPG')">💨 LPG</button>
+    <button class="chip" data-f="CNG" onclick="setFuel(this,'CNG')">💨 CNG</button>
+    <button class="chip" data-f="E85" onclick="setFuel(this,'E85')">🌽 E85</button>
+  </div>
+
+  <!-- Status -->
+  <div id="badge" class="loading">Loading…</div>
+
+  <!-- FAB -->
+  <button id="fab" onclick="goNearby()">📍 Near Me</button>
+</div>
+
+<!-- ══ DESKTOP SIDEBAR ══ -->
+<div id="sidebar">
+  <div id="sb-head">
+    <h1>⛽ EuroFuel</h1>
+    <div id="sb-status">Loading…</div>
+  </div>
+  <div id="sb-controls">
+    <div class="row">
+      <input type="text" id="deskSearch" placeholder="🔍 City, station, or address…"
+             autocomplete="off" autocorrect="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter')runSearch(false)">
+      <button onclick="runSearch(false)" title="Search">→</button>
     </div>
-    <div id="stationList"><p class="empty">Loading map data…</p></div>
+    <button id="sb-nearbybtn" onclick="goNearby()">📍 Cheapest Near Me</button>
+    <select id="deskCountry" onchange="setCountry(this.value)"></select>
+    <select id="deskFuel"    onchange="setFuel(null,this.value)">
+      <option value="">All fuels</option>
+      <option value="E10">E10 / 95 Octane</option>
+      <option value="E5">E5 / 98 Octane</option>
+      <option value="DIESEL">Diesel</option>
+      <option value="HVO100">HVO100</option>
+      <option value="E85">E85</option>
+      <option value="LPG">LPG</option>
+      <option value="CNG">CNG</option>
+    </select>
+  </div>
+  <div id="sb-list-hdr">
+    <span id="deskCount">Stations</span>
+    <button id="sb-sort" onclick="cycleSort()">⇅ <span id="sort-lbl">Default</span></button>
+  </div>
+  <div id="stationList"><p class="empty">Loading map data…</p></div>
+</div>
+
+<!-- ══ MOBILE PANELS ══ -->
+
+<!-- Near Me -->
+<div class="panel" id="p-nearby">
+  <div class="drag-handle"></div>
+  <div class="panel-title">📍 Cheapest Near You</div>
+  <div class="panel-scroll" id="nearby-list">
+    <p class="empty">Tap the button to find your location…</p>
   </div>
 </div>
 
-<!-- Backdrop (closes sheets on tap) -->
-<div id="backdrop" onclick="closeAllSheets()"></div>
+<!-- Search -->
+<div class="panel" id="p-search">
+  <div class="drag-handle"></div>
+  <div class="sbox">
+    <input type="text" id="mobSearch" placeholder="City, address, or station…"
+           autocomplete="off" autocorrect="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter')runSearch(true)">
+    <button class="sbtn" onclick="runSearch(true)">🔍</button>
+  </div>
+  <div class="stabs">
+    <button class="stab on" onclick="setSMode(this,'addr')">📍 Address</button>
+    <button class="stab"    onclick="setSMode(this,'name')">⛽ Station name</button>
+  </div>
+  <div class="panel-scroll" id="search-results">
+    <p class="empty" style="padding:18px 0">Enter a location or station name</p>
+  </div>
+</div>
 
-<!-- Mobile bottom navigation bar -->
-<div id="mobile-bar">
-  <button class="mob-btn" id="filterBtn" onclick="toggleSheet('controls-bar','filterBtn')">
-    <span class="mob-icon">⚡</span>
-    <span>Filters</span>
+<!-- Stations list -->
+<div class="panel" id="p-stations">
+  <div class="drag-handle"></div>
+  <div class="phead">
+    <h2>Stations <span id="mobCount">—</span></h2>
+    <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl">Default</span></button>
+  </div>
+  <div class="panel-scroll" id="mobList"><p class="empty">Loading…</p></div>
+</div>
+
+<!-- Filters -->
+<div class="panel" id="p-filter">
+  <div class="drag-handle"></div>
+  <div class="panel-scroll">
+    <label>Country</label>
+    <select id="mobCountry" onchange="setCountry(this.value)"></select>
+    <label>Fuel Type</label>
+    <select id="mobFuel" onchange="setFuel(null,this.value)">
+      <option value="">All fuels</option>
+      <option value="E10">E10 / 95 Octane</option>
+      <option value="E5">E5 / 98 Octane</option>
+      <option value="DIESEL">Diesel</option>
+      <option value="HVO100">HVO100</option>
+      <option value="E85">E85</option>
+      <option value="LPG">LPG</option>
+      <option value="CNG">CNG</option>
+    </select>
+    <button class="rbtn" onclick="resetAll()">↺ Reset all filters</button>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div id="tabbar">
+  <button class="tb on"  id="tb-map"     onclick="goTab('map')">
+    <span class="tb-icon">🗺</span><span class="tb-lbl">Map</span>
   </button>
-  <button class="mob-btn loc-btn" onclick="goToMyLocation()">
-    <span class="mob-icon">📍</span>
-    <span>Locate</span>
+  <button class="tb nb"  id="tb-nearby"  onclick="goTab('nearby')">
+    <span class="tb-icon">📍</span><span class="tb-lbl">Near Me</span>
   </button>
-  <button class="mob-btn" id="listBtn" onclick="toggleSheet('sidebar','listBtn')">
-    <span class="mob-icon">📋</span>
-    <span id="mobileCountLabel">List</span>
+  <button class="tb"     id="tb-search"  onclick="goTab('search')">
+    <span class="tb-icon">🔍</span><span class="tb-lbl">Search</span>
+  </button>
+  <button class="tb"     id="tb-stations" onclick="goTab('stations')">
+    <span class="tb-icon">⛽</span><span class="tb-lbl" id="tb-list-lbl">List</span>
+  </button>
+  <button class="tb"     id="tb-filter"  onclick="goTab('filter')">
+    <span class="tb-icon">⚡</span><span class="tb-lbl">Filter</span>
   </button>
 </div>
+
+<!-- Backdrop -->
+<div id="bd" onclick="closePanel()"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-// ── Map setup ─────────────────────────────────────────────────────────────────
-const map = L.map('map', { center: [52, 13], zoom: 5, zoomControl: true });
+// ════════════════════════════════════════════════════
+// Constants
+// ════════════════════════════════════════════════════
+const FLAGS = {
+  AT:'🇦🇹',BE:'🇧🇪',HR:'🇭🇷',CZ:'🇨🇿',DK:'🇩🇰',EE:'🇪🇪',FI:'🇫🇮',FR:'🇫🇷',
+  DE:'🇩🇪',GR:'🇬🇷',HU:'🇭🇺',IS:'🇮🇸',IT:'🇮🇹',LV:'🇱🇻',LT:'🇱🇹',LU:'🇱🇺',
+  NL:'🇳🇱',NO:'🇳🇴',PL:'🇵🇱',PT:'🇵🇹',RO:'🇷🇴',SK:'🇸🇰',SI:'🇸🇮',ES:'🇪🇸',
+  SE:'🇸🇪',CH:'🇨🇭',BG:'🇧🇬',RS:'🇷🇸',ME:'🇲🇪',MK:'🇲🇰',AL:'🇦🇱',BA:'🇧🇦',
+  XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
+};
+const CNAMES = {
+  AT:'Austria',BE:'Belgium',HR:'Croatia',CZ:'Czechia',DK:'Denmark',EE:'Estonia',
+  FI:'Finland',FR:'France',DE:'Germany',GR:'Greece',HU:'Hungary',IS:'Iceland',
+  IT:'Italy',LV:'Latvia',LT:'Lithuania',LU:'Luxembourg',NL:'Netherlands',NO:'Norway',
+  PL:'Poland',PT:'Portugal',RO:'Romania',SK:'Slovakia',SI:'Slovenia',ES:'Spain',
+  SE:'Sweden',CH:'Switzerland',BG:'Bulgaria',RS:'Serbia',ME:'Montenegro',
+  MK:'N.Macedonia',AL:'Albania',BA:'Bosnia',XK:'Kosovo',AD:'Andorra',
+  MD:'Moldova',MT:'Malta',CY:'Cyprus',LI:'Liechtenstein',
+};
+const SYM = {
+  EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',
+  PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',
+  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',
+};
+const UNIT = { L:'/L', kWh:'/kWh', kg:'/kg' };
+const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40;
+
+const BBOX = {
+  AT:[[46.37,9.52],[49.02,17.16]],  BE:[[49.50,2.50],[51.50,6.40]],
+  HR:[[42.39,13.49],[46.55,19.45]], CZ:[[48.55,12.10],[51.06,18.87]],
+  DK:[[54.56,8.07],[57.77,15.19]],  EE:[[57.52,21.83],[59.68,28.21]],
+  FI:[[59.81,20.55],[70.09,29.58]], FR:[[41.33,-5.14],[51.09,9.56]],
+  DE:[[47.27,5.87],[55.06,15.04]],  GR:[[34.70,19.30],[41.80,29.70]],
+  HU:[[45.70,16.10],[48.60,22.90]], IS:[[63.29,-24.54],[66.56,-13.49]],
+  IT:[[36.49,6.63],[47.09,18.52]],  LV:[[55.68,20.97],[57.84,28.24]],
+  LT:[[53.90,20.95],[56.45,26.83]], LU:[[49.44,5.73],[50.18,6.53]],
+  NL:[[50.75,3.36],[53.55,7.22]],   NO:[[57.97,4.64],[71.19,31.15]],
+  PL:[[49.00,14.10],[54.90,24.10]], PT:[[36.84,-9.52],[42.15,-6.19]],
+  RO:[[43.62,22.34],[48.26,29.68]], SK:[[47.73,16.84],[49.62,22.57]],
+  SI:[[45.42,13.38],[46.88,16.61]], ES:[[35.95,-9.32],[43.79,4.32]],
+  SE:[[55.34,11.11],[69.06,24.17]], CH:[[45.80,5.90],[47.80,10.50]],
+  BG:[[41.23,22.36],[44.22,28.69]], RS:[[42.23,18.84],[46.19,23.01]],
+  ME:[[41.87,18.43],[43.57,20.36]], MK:[[40.85,20.44],[42.37,23.04]],
+  AL:[[39.63,19.27],[42.68,21.06]], BA:[[42.55,15.72],[45.28,19.62]],
+  XK:[[41.85,20.01],[43.27,21.79]], AD:[[42.43,1.41],[42.66,1.79]],
+  MD:[[45.47,26.62],[48.49,30.14]], MT:[[35.78,14.18],[36.08,14.58]],
+  CY:[[34.63,32.26],[35.71,34.59]], LI:[[47.05,9.47],[47.27,9.64]],
+};
+const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
+  [cc, L.latLngBounds(b[0], b[1])]
+));
+
+// ════════════════════════════════════════════════════
+// Map
+// ════════════════════════════════════════════════════
+const map = L.map('map', { center:[52,13], zoom:5, zoomControl:true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap &copy; CARTO',
-  maxZoom: 19,
+  attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19,
 }).addTo(map);
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-const COUNTRY_FLAGS = {
-  AT:'🇦🇹', BE:'🇧🇪', HR:'🇭🇷', CZ:'🇨🇿', DK:'🇩🇰',
-  EE:'🇪🇪', FI:'🇫🇮', FR:'🇫🇷', DE:'🇩🇪', HU:'🇭🇺',
-  IS:'🇮🇸', IT:'🇮🇹', LV:'🇱🇻', LT:'🇱🇹', LU:'🇱🇺',
-  NL:'🇳🇱', NO:'🇳🇴', PL:'🇵🇱', PT:'🇵🇹', RO:'🇷🇴',
-  SK:'🇸🇰', SI:'🇸🇮', ES:'🇪🇸', SE:'🇸🇪', CH:'🇨🇭',
-  // Balkans / South-East Europe
-  GR:'🇬🇷', BG:'🇧🇬', RS:'🇷🇸', ME:'🇲🇪', MK:'🇲🇰',
-  AL:'🇦🇱', BA:'🇧🇦', XK:'🇽🇰', AD:'🇦🇩',
-  // Eastern Europe / Mediterranean
-  MD:'🇲🇩', MT:'🇲🇹', CY:'🇨🇾', LI:'🇱🇮',
-};
-const CURRENCY_SYMBOL = {
-  // Eurozone
-  EUR: '€',
-  // Nordic
-  SEK: 'kr', NOK: 'kr', DKK: 'kr', ISK: 'kr',
-  // Eastern / Central Europe
-  PLN: 'zł', HUF: 'Ft', CZK: 'Kč', RON: 'lei', CHF: 'Fr',
-  // Balkans
-  BGN: 'лв', RSD: 'din', MKD: 'ден', ALL: 'L', BAM: 'KM', MDL: 'lei',
-};
-const UNIT_LABEL = { L:'/L', kWh:'/kWh', kg:'/kg' };
-const PRICE_ZOOM   = 13;
-const CLUSTER_ZOOM = 12;
+// ════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════
+const data    = {};           // cc → station[]
+const loaded  = new Set();
+const loading = new Set();
+let cluster   = null;
+const byId    = new Map();    // id → marker
+let   selId   = null;
+let   myLat   = null, myLon = null;
+let   myMark  = null, myCirc = null;
+let   metaAt  = null;
+let   fCountry= '', fFuel = '';
+let   sortMode= 'default';    // 'default'|'price'|'distance'
+let   sMode   = 'addr';       // search mode
+let   vpOff   = 0;            // virtual scroll offset
+let   activeTab = 'map';
 
-// Country bounding boxes [[sw_lat, sw_lon], [ne_lat, ne_lon]]
-// Used to determine which country to load when the viewport moves
-const COUNTRY_BOUNDS = {
-  AT: L.latLngBounds([46.37,  9.52],  [49.02, 17.16]),
-  BE: L.latLngBounds([49.50,  2.50],  [51.50,  6.40]),
-  HR: L.latLngBounds([42.39, 13.49],  [46.55, 19.45]),
-  CZ: L.latLngBounds([48.55, 12.10],  [51.06, 18.87]),
-  DK: L.latLngBounds([54.56,  8.07],  [57.77, 15.19]),
-  EE: L.latLngBounds([57.52, 21.83],  [59.68, 28.21]),
-  FI: L.latLngBounds([59.81, 20.55],  [70.09, 29.58]),
-  FR: L.latLngBounds([41.33, -5.14],  [51.09,  9.56]),
-  DE: L.latLngBounds([47.27,  5.87],  [55.06, 15.04]),
-  HU: L.latLngBounds([45.70, 16.10],  [48.60, 22.90]),
-  IS: L.latLngBounds([63.29,-24.54],  [66.56,-13.49]),
-  IT: L.latLngBounds([36.49,  6.63],  [47.09, 18.52]),
-  LV: L.latLngBounds([55.68, 20.97],  [57.84, 28.24]),
-  LT: L.latLngBounds([53.90, 20.95],  [56.45, 26.83]),
-  LU: L.latLngBounds([49.44,  5.73],  [50.18,  6.53]),
-  NL: L.latLngBounds([50.75,  3.36],  [53.55,  7.22]),
-  NO: L.latLngBounds([57.97,  4.64],  [71.19, 31.15]),
-  PL: L.latLngBounds([49.00, 14.10],  [54.90, 24.10]),
-  PT: L.latLngBounds([36.84, -9.52],  [42.15, -6.19]),
-  RO: L.latLngBounds([43.62, 22.34],  [48.26, 29.68]),
-  SK: L.latLngBounds([47.73, 16.84],  [49.62, 22.57]),
-  SI: L.latLngBounds([45.42, 13.38],  [46.88, 16.61]),
-  ES: L.latLngBounds([35.95, -9.32],  [43.79,  4.32]),
-  SE: L.latLngBounds([55.34, 11.11],  [69.06, 24.17]),
-  CH: L.latLngBounds([45.80,  5.90],  [47.80, 10.50]),
-};
-
-// ── State ─────────────────────────────────────────────────────────────────────
-const countryStations = {};          // cc → station[]
-const loadedCountries  = new Set();  // successfully loaded
-const loadingCountries = new Set();  // fetch in progress
-let   clusterGroup     = null;
-let   markerById       = new Map();  // stationId → L.Marker
-let   filteredIds      = [];         // ordered station ids currently shown in sidebar
-let   activeSid        = null;
-let   myLocMarker      = null;
-let   myLocCircle      = null;
-let   metaFetchedAt    = null;
-
-// Active filter state
-let filterCountry = '';
-let filterFuel    = '';
-
-// ── Cluster group init ────────────────────────────────────────────────────────
-function initCluster() {
-  if (clusterGroup) { map.removeLayer(clusterGroup); }
-  clusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 40,
-    disableClusteringAtZoom: CLUSTER_ZOOM,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    chunkedLoading: true,
-    iconCreateFunction: cluster => {
-      const n  = cluster.getChildCount();
-      const sz = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
-      return L.divIcon({
-        html: `<div><span>${n}</span></div>`,
-        className: `marker-cluster marker-cluster-${sz}`,
-        iconSize: [40, 40],
-      });
-    },
+// ════════════════════════════════════════════════════
+// Country select builder
+// ════════════════════════════════════════════════════
+(function buildSelects() {
+  const opts = '<option value="">All countries</option>' +
+    Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
+      .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
+  ['deskCountry','mobCountry'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
   });
-  map.addLayer(clusterGroup);
-}
-initCluster();
+})();
 
-// ── Sheet management (mobile) ─────────────────────────────────────────────────
-function toggleSheet(sheetId, btnId) {
-  const sheet  = document.getElementById(sheetId);
-  const isOpen = sheet.classList.toggle('sheet-open');
-  document.getElementById('backdrop').classList.toggle('visible', isOpen);
-  if (btnId) {
-    document.getElementById(btnId)?.classList.toggle('active', isOpen);
-  }
-  if (isOpen) {
-    const other      = sheetId === 'controls-bar' ? 'sidebar' : 'controls-bar';
-    const otherBtnId = other === 'sidebar' ? 'listBtn' : 'filterBtn';
-    document.getElementById(other)?.classList.remove('sheet-open');
-    document.getElementById(otherBtnId)?.classList.remove('active');
-  }
-}
-
-function closeAllSheets() {
-  ['controls-bar', 'sidebar'].forEach(id =>
-    document.getElementById(id).classList.remove('sheet-open'));
-  ['filterBtn', 'listBtn'].forEach(id =>
-    document.getElementById(id)?.classList.remove('active'));
-  document.getElementById('backdrop').classList.remove('visible');
-}
-
-map.on('click movestart', () => {
-  if (window.innerWidth <= 768) closeAllSheets();
-});
-
-// ── Status bar ────────────────────────────────────────────────────────────────
-function updateStatus() {
-  const el     = document.getElementById('status');
-  const loaded = loadedCountries.size;
-  const total  = Object.keys(COUNTRY_BOUNDS).length;
-  const n      = Object.values(countryStations).reduce((s, a) => s + a.length, 0);
-  const active = loadingCountries.size;
-
-  if (active > 0) {
-    el.textContent = `${n.toLocaleString()} stations · loading ${active} more…`;
-    el.className   = 'loading';
-  } else {
-    const time = metaFetchedAt
-      ? new Date(metaFetchedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-      : '';
-    el.textContent = `${n.toLocaleString()} stations · ${loaded}/${total} countries${time ? ' · ' + time : ''}`;
-    el.className   = 'ok';
-  }
-}
-
-// ── Country data loading ──────────────────────────────────────────────────────
-async function loadCountry(cc) {
-  if (loadedCountries.has(cc) || loadingCountries.has(cc)) return;
-  loadingCountries.add(cc);
-  updateStatus();
-
-  try {
-    const resp = await fetch(`${cc.toLowerCase()}.json`);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    const stations = data.stations || [];
-
-    if (data.meta?.fetched_at && !metaFetchedAt) {
-      metaFetchedAt = data.meta.fetched_at;
-    }
-
-    countryStations[cc] = stations;
-    loadedCountries.add(cc);
-
-    // Add matching markers to the live cluster group (no full rebuild)
-    addCountryToMap(cc, stations);
-    appendToSidebar(cc, stations);
-    updateStatus();
-  } catch (e) {
-    console.warn(`[${cc}] load failed: ${e.message}`);
-  } finally {
-    loadingCountries.delete(cc);
-    updateStatus();
-  }
-}
-
-function matchesFilter(s) {
-  if (filterCountry && s.country !== filterCountry) return false;
-  if (filterFuel && !s.prices?.some(p => p.fuel_type === filterFuel)) return false;
-  return true;
-}
-
-function createMarker(s) {
-  const hasPrices = s.prices?.length > 0;
-  const color     = hasPrices ? confidenceColor(s.confidence) : '#64748b';
-  const size      = hasPrices ? 9 : 7;
-  const opacity   = hasPrices ? '1' : '0.55';
-  const cheapest  = cheapestPrice(s);
-  const icon      = L.divIcon({
-    className: '',
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:1.5px solid rgba(255,255,255,0.7);opacity:${opacity};"></div>`,
-    iconSize: [size, size], iconAnchor: [Math.floor(size / 2), Math.floor(size / 2)],
-  });
-  const marker = L.marker([s.lat, s.lon], { icon });
-  marker.bindPopup(buildPopup(s), { maxWidth: 260 });
-  if (cheapest) {
-    const sym = CURRENCY_SYMBOL[cheapest.currency] || cheapest.currency;
-    marker.bindTooltip(
-      `${cheapest.fuel_type} ${cheapest.price.toFixed(2)}${sym}`,
-      { permanent: true, direction: 'right', className: 'price-tip', offset: [5, 0] }
-    );
-  }
-  marker.on('click', () => highlightStation(s.id));
-  return marker;
-}
-
-function addCountryToMap(cc, stations) {
-  const toAdd = [];
-  for (const s of stations) {
-    if (!s.lat || !s.lon || !matchesFilter(s)) continue;
-    if (markerById.has(s.id)) continue;
-    const m = createMarker(s);
-    markerById.set(s.id, m);
-    toAdd.push(m);
-  }
-  if (toAdd.length) clusterGroup.addLayers(toAdd);
-}
-
-// ── Viewport-based lazy loading ───────────────────────────────────────────────
-let _vpTimer = null;
-function scheduleViewportCheck() {
-  clearTimeout(_vpTimer);
-  _vpTimer = setTimeout(checkViewport, 150);
-}
-
-function checkViewport() {
-  const bounds = map.getBounds();
-  const cf     = filterCountry;
-
-  for (const [cc, bbox] of Object.entries(COUNTRY_BOUNDS)) {
-    if (loadedCountries.has(cc) || loadingCountries.has(cc)) continue;
-    if (cf && cc !== cf) continue;  // country filter active — only load that country
-    if (bounds.intersects(bbox)) {
-      loadCountry(cc);
-    }
-  }
-}
-
-map.on('moveend zoomend', scheduleViewportCheck);
-
-// ── Full filter rebuild ───────────────────────────────────────────────────────
-function applyFilters() {
-  clusterGroup.clearLayers();
-  markerById.clear();
-  filteredIds = [];
-
-  for (const [cc, stations] of Object.entries(countryStations)) {
-    addCountryToMap(cc, stations);
-  }
-  rebuildSidebar();
-  updatePriceLabels();
-
-  // If country filter is set and that country hasn't loaded yet, trigger load
-  if (filterCountry && !loadedCountries.has(filterCountry)) {
-    loadCountry(filterCountry);
-  }
-}
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-function appendToSidebar(cc, newStations) {
-  // Just do a full rebuild — sidebar only shows 200 stations anyway
-  rebuildSidebar();
-}
-
-function rebuildSidebar() {
-  const list  = document.getElementById('stationList');
-  const label = document.getElementById('countLabel');
-
-  // Collect all filtered stations from all loaded countries
-  const all = [];
-  for (const stations of Object.values(countryStations)) {
-    for (const s of stations) {
-      if (matchesFilter(s)) all.push(s);
-    }
-  }
-
-  filteredIds = all.map(s => s.id);
-  const n = all.length;
-  label.textContent = `(${n.toLocaleString()})`;
-  document.getElementById('mobileCountLabel').textContent = n.toLocaleString();
-
-  if (!n) {
-    list.innerHTML = loadingCountries.size
-      ? '<p class="empty">Loading…</p>'
-      : '<p class="empty">No stations match current filters.</p>';
-    return;
-  }
-
-  const visible = all.slice(0, 200);
-  list.innerHTML = visible.map(s => stationCard(s)).join('');
-
-  if (n > 200) {
-    list.innerHTML +=
-      `<p class="empty">Showing 200 of ${n.toLocaleString()} — use filters to narrow.</p>`;
-  }
-}
-
-function stationCard(s) {
-  const flag    = COUNTRY_FLAGS[s.country] || '';
-  const chips   = (s.prices || []).map(p => {
-    const sym = CURRENCY_SYMBOL[p.currency] || p.currency || '';
-    return `<span class="price-chip">
-      <span class="type">${p.fuel_type}</span>
-      <span class="val">${p.price.toFixed(2)}</span>
-      <span class="cur">${sym}</span>
-    </span>`;
-  }).join('');
-  const updated = s.prices?.[0]?.updated_at ? formatDate(s.prices[0].updated_at) : '';
-  const noPin   = (s.lat && s.lon) ? '' :
-    '<span style="color:#475569;font-size:0.62rem;margin-left:4px" title="No GPS">📍✕</span>';
-  const isActive = s.id === activeSid ? ' active' : '';
-  return `<div class="station-card${isActive}" id="card-${s.id}" onclick="highlightStation('${s.id}')">
-    <div class="station-name">${flag} ${s.name || s.brand || '—'}${noPin}</div>
-    <div class="station-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
-    <div class="prices">${chips || '<span style="color:#64748b;font-size:0.72rem">No prices</span>'}</div>
-    ${updated ? `<div style="color:#475569;font-size:0.62rem;margin-top:2px">⏱ ${updated}</div>` : ''}
-  </div>`;
-}
-
-// ── Station selection ─────────────────────────────────────────────────────────
-function highlightStation(sid) {
-  // Update card active state
-  if (activeSid) {
-    document.getElementById(`card-${activeSid}`)?.classList.remove('active');
-  }
-  activeSid = sid;
-  const card = document.getElementById(`card-${sid}`);
-  if (card) {
-    card.classList.add('active');
-    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
-
-  const marker = markerById.get(sid);
-  if (marker) {
-    // Zoom and open popup; handles markers inside clusters
-    clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
-    if (window.innerWidth <= 768) closeAllSheets();
-  }
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function cheapestPrice(s) {
+// ════════════════════════════════════════════════════
+// Helpers
+// ════════════════════════════════════════════════════
+function cheapest(s) {
   if (!s.prices?.length) return null;
-  const liquid = s.prices.filter(p => p.unit === 'L' && p.price > 0);
-  if (!liquid.length) return s.prices[0];
-  return liquid.reduce((a, b) => a.price < b.price ? a : b);
+  const liq = s.prices.filter(p => p.unit === 'L' && p.price > 0);
+  const pool = liq.length ? liq : s.prices.filter(p => p.price > 0);
+  return pool.length ? pool.reduce((a,b) => a.price < b.price ? a : b) : null;
 }
 
-function confidenceColor(c) {
+function dist(a, b, c, d) {
+  const R=6371, dLat=(c-a)*Math.PI/180, dLon=(d-b)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`; }
+
+function confColor(c) {
   if (c >= 1.0) return '#22c55e';
   if (c >= 0.90) return '#3b82f6';
   if (c >= 0.75) return '#f59e0b';
   return '#ef4444';
 }
 
-function formatDate(iso) {
+function freshCls(s) {
+  const iso = s.prices?.[0]?.updated_at;
+  if (!iso) return '';
+  const h = (Date.now() - new Date(iso)) / 3600000;
+  return h<2 ? 'fh' : h<12 ? 'fm' : h<36 ? 'fl' : 'fs';
+}
+
+function fmtDate(iso) {
   if (!iso) return '';
   try {
     const d = new Date(iso);
-    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
-    const hh = String(d.getUTCHours()).padStart(2,'0');
-    const mm = String(d.getUTCMinutes()).padStart(2,'0');
-    return `${d.getUTCDate()} ${mo} ${hh}:${mm} UTC`;
+    const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
+    return `${d.getUTCDate()} ${mo} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`;
   } catch { return ''; }
 }
 
-function buildPopup(s) {
-  const flag = COUNTRY_FLAGS[s.country] || '';
-  const rows = (s.prices || []).map(p => {
-    const sym = CURRENCY_SYMBOL[p.currency] || p.currency || '';
-    return `<tr>
-      <td style="color:#94a3b8;padding-right:8px">${p.fuel_type}</td>
-      <td style="color:#22c55e;font-weight:700">${p.price.toFixed(2)}</td>
-      <td style="color:#64748b;padding-left:2px">${sym}${UNIT_LABEL[p.unit] || ''}</td>
-    </tr>`;
+function matches(s) {
+  if (fCountry && s.country !== fCountry) return false;
+  if (fFuel && !s.prices?.some(p => p.fuel_type === fFuel)) return false;
+  return true;
+}
+
+function navUrl(lat, lon, name) {
+  const lbl = encodeURIComponent(name || 'Fuel Station');
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent))
+    return `maps:?daddr=${lat},${lon}&dirflg=d`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`;
+}
+
+// ════════════════════════════════════════════════════
+// Cluster
+// ════════════════════════════════════════════════════
+function mkCluster() {
+  if (cluster) map.removeLayer(cluster);
+  cluster = L.markerClusterGroup({
+    maxClusterRadius:40, disableClusteringAtZoom:CLUSTER_ZOOM,
+    spiderfyOnMaxZoom:true, showCoverageOnHover:false, chunkedLoading:true,
+    iconCreateFunction: c => {
+      const kids = c.getAllChildMarkers();
+      let minP = Infinity, minCur = 'EUR';
+      for (const m of kids) {
+        const cp = m.options._cp;
+        if (cp && cp.price < minP) { minP = cp.price; minCur = cp.currency; }
+      }
+      const n  = c.getChildCount();
+      const sz = n<50?'small':n<200?'medium':'large';
+      const pStr = minP < Infinity
+        ? `<span style="font-size:0.57rem;opacity:0.85">${SYM[minCur]||'€'}${minP.toFixed(2)}</span>`
+        : '';
+      return L.divIcon({
+        html:`<div>${n}${pStr?'<br>'+pStr:''}</div>`,
+        className:`marker-cluster marker-cluster-${sz}`,
+        iconSize:[40,40],
+      });
+    },
+  });
+  map.addLayer(cluster);
+}
+mkCluster();
+
+// ════════════════════════════════════════════════════
+// Markers
+// ════════════════════════════════════════════════════
+function mkMarker(s) {
+  const cp   = cheapest(s);
+  const col  = cp ? confColor(s.confidence) : '#334155';
+  const sz   = cp ? 10 : 7;
+  const op   = cp ? 1 : 0.45;
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:1.5px solid rgba(255,255,255,0.55);opacity:${op};box-shadow:0 0 5px rgba(0,0,0,0.4)"></div>`,
+    iconSize:[sz,sz], iconAnchor:[sz>>1,sz>>1],
+  });
+  const m = L.marker([s.lat, s.lon], { icon, _cp:cp });
+  if (cp) {
+    m.bindTooltip(`${cp.fuel_type} ${cp.price.toFixed(2)}${SYM[cp.currency]||cp.currency}`,
+      { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
+  }
+  m.bindPopup(mkPopup(s), { maxWidth:290 });
+  m.on('click', () => selectStation(s.id));
+  return m;
+}
+
+function addToMap(cc, stations) {
+  const toAdd = [];
+  for (const s of stations) {
+    if (!s.lat || !s.lon || !matches(s) || byId.has(s.id)) continue;
+    const m = mkMarker(s);
+    byId.set(s.id, m);
+    toAdd.push(m);
+  }
+  if (toAdd.length) cluster.addLayers(toAdd);
+}
+
+// ════════════════════════════════════════════════════
+// Popup
+// ════════════════════════════════════════════════════
+function mkPopup(s) {
+  const flag = FLAGS[s.country] || '';
+  const rows = (s.prices||[]).map(p => {
+    const sym = SYM[p.currency] || p.currency || '';
+    return `<tr><td class="ft">${p.fuel_type}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
   }).join('');
-  const meta    = [s.city, s.brand, s.source].filter(Boolean).join(' · ');
-  const updated = s.prices?.[0]?.updated_at ? formatDate(s.prices[0].updated_at) : '';
-  const noPrices = !s.prices?.length
-    ? `<div style="color:#64748b;font-style:italic;font-size:0.75rem;margin-top:4px">No price data available</div>` : '';
-  return `<div style="font-family:system-ui;font-size:0.82rem;min-width:140px">
-    <strong style="color:#f1f5f9">${flag} ${s.name || s.brand || ''}</strong>
-    ${s.address ? `<div style="color:#64748b;font-size:0.72rem;margin:1px 0">${s.address}</div>` : ''}
-    <div style="color:#64748b;font-size:0.70rem;margin-bottom:6px">${meta}</div>
-    <table style="border-collapse:collapse">${rows}</table>
-    ${noPrices}
-    ${updated ? `<div style="color:#475569;font-size:0.65rem;margin-top:5px">⏱ ${updated}</div>` : ''}
+  const upd   = s.prices?.[0]?.updated_at ? fmtDate(s.prices[0].updated_at) : '';
+  const noP   = !s.prices?.length ? '<div style="color:#64748b;font-style:italic;font-size:0.75rem;margin:4px 0">No price data available</div>' : '';
+  const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
+  return `<div class="pop">
+    <div class="pop-name">${flag} ${s.name||s.brand||'—'}</div>
+    ${s.address ? `<div class="pop-addr">${s.address}</div>` : ''}
+    <div class="pop-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
+    <table class="pop-tbl">${rows}</table>${noP}
+    <div class="pop-foot">
+      ${upd ? `<span class="pop-date">⏱ ${upd}</span>` : '<span></span>'}
+      ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 Go</a>` : ''}
+    </div>
   </div>`;
 }
 
-// ── Price label visibility ────────────────────────────────────────────────────
-function updatePriceLabels() {
-  map.getContainer().classList.toggle('hide-prices', map.getZoom() < PRICE_ZOOM);
-}
-map.on('zoomend', updatePriceLabels);
-
-// ── My Location ───────────────────────────────────────────────────────────────
-function goToMyLocation() {
-  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
-  document.querySelectorAll('.loc-btn').forEach(b => b.classList.add('loading'));
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const { latitude: lat, longitude: lon, accuracy } = pos.coords;
-      document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('loading'));
-      map.setView([lat, lon], 13);
-      if (window.innerWidth <= 768) closeAllSheets();
-
-      if (myLocMarker) { map.removeLayer(myLocMarker); map.removeLayer(myLocCircle); }
-      myLocMarker = L.marker([lat, lon], {
-        icon: L.divIcon({
-          className: '',
-          html: '<div class="my-loc-dot"></div>',
-          iconSize: [14, 14], iconAnchor: [7, 7],
-        }),
-        zIndexOffset: 1000,
-      }).addTo(map).bindPopup('📍 You are here').openPopup();
-
-      myLocCircle = L.circle([lat, lon], {
-        radius: Math.min(accuracy, 500),
-        color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.08, weight: 1,
-      }).addTo(map);
-    },
-    err => {
-      document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('loading'));
-      const msgs = { 1: 'Permission denied.', 2: 'Position unavailable.', 3: 'Timed out.' };
-      alert('Location error: ' + (msgs[err.code] || err.message));
-    },
-    { timeout: 10000, maximumAge: 60000 }
-  );
+// ════════════════════════════════════════════════════
+// Station card
+// ════════════════════════════════════════════════════
+function mkCard(s, km) {
+  const flag = FLAGS[s.country] || '';
+  const fc   = freshCls(s);
+  const isSel= s.id === selId ? ' sel' : '';
+  const cp   = cheapest(s);
+  const chips = (s.prices||[]).map(p => {
+    const sym = SYM[p.currency] || p.currency || '';
+    const best = cp && p.fuel_type === cp.fuel_type && Math.abs(p.price-cp.price) < 0.001;
+    return `<span class="pc${best?' best':''}">
+      <span class="t">${p.fuel_type}</span>
+      <span class="v">${p.price.toFixed(2)}</span>
+      <span class="u">${sym}</span>
+    </span>`;
+  }).join('');
+  const upd = s.prices?.[0]?.updated_at ? fmtDate(s.prices[0].updated_at) : '';
+  const noPin = (!s.lat||!s.lon) ? ' <span title="No GPS" style="color:#475569">📍✕</span>' : '';
+  const goBtn = (s.lat && s.lon)
+    ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${s.id}')">🧭 Go</button>` : '';
+  const distHtml = km != null
+    ? `<span class="dist-badge">📏 ${fmtDist(km)}</span>` : '';
+  return `<div class="scard ${fc}${isSel}" id="c-${s.id}" onclick="selectStation('${s.id}')">
+    <div class="scard-top">
+      <div class="scard-name">${flag} ${s.name||s.brand||'—'}${noPin}</div>
+      ${goBtn}
+    </div>
+    <div class="scard-meta">${[s.city,s.source].filter(Boolean).join(' · ')}${distHtml ? ' '+distHtml : ''}</div>
+    <div class="pchips">${chips||'<span style="color:#475569;font-size:0.71rem">No prices</span>'}</div>
+    ${upd ? `<div class="scard-foot">⏱ ${upd}</div>` : ''}
+  </div>`;
 }
 
-// ── Address search ─────────────────────────────────────────────────────────────
-async function searchAddress() {
-  const q = document.getElementById('searchInput').value.trim();
-  if (!q) return;
-  try {
-    const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
-    const resp = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-    const data = await resp.json();
-    if (!data.length) { alert(`"${q}" not found.`); return; }
-    const { lat, lon, display_name } = data[0];
-    map.setView([parseFloat(lat), parseFloat(lon)], 13);
-    if (window.innerWidth <= 768) closeAllSheets();
-    L.popup()
-      .setLatLng([parseFloat(lat), parseFloat(lon)])
-      .setContent(`<div style="font-size:0.82rem;max-width:220px">${display_name}</div>`)
-      .openOn(map);
-  } catch (e) {
-    alert('Search error: ' + e.message);
+function doNav(id) {
+  for (const arr of Object.values(data)) {
+    const s = arr.find(x => x.id === id);
+    if (s?.lat && s?.lon) { window.open(navUrl(s.lat, s.lon, s.name||s.brand), '_blank', 'noopener'); return; }
   }
 }
 
-// ── Filter controls ───────────────────────────────────────────────────────────
-function resetFilters() {
-  document.getElementById('countryFilter').value = '';
-  document.getElementById('fuelFilter').value = '';
-  document.getElementById('searchInput').value = '';
-  filterCountry = '';
-  filterFuel    = '';
+// ════════════════════════════════════════════════════
+// Data loading
+// ════════════════════════════════════════════════════
+async function loadCC(cc) {
+  if (loaded.has(cc) || loading.has(cc)) return;
+  loading.add(cc); updStatus();
+  try {
+    const r = await fetch(`${cc.toLowerCase()}.json`);
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    if (j.meta?.fetched_at && !metaAt) metaAt = j.meta.fetched_at;
+    data[cc] = j.stations || [];
+    loaded.add(cc);
+    addToMap(cc, data[cc]);
+    onNewData();
+  } catch(e) {
+    console.warn(`[${cc}] ${e.message}`);
+  } finally {
+    loading.delete(cc); updStatus();
+  }
+}
+
+function onNewData() {
+  updStatus();
+  // Rebuild sidebar only if count is small or loading is done
+  const tot = Object.values(data).reduce((s,a) => s+a.length, 0);
+  if (tot < 2000 || loading.size === 0) rebuildList();
+  else updCounts();
+  if (activeTab === 'nearby' && myLat != null) showNearby();
+}
+
+// ════════════════════════════════════════════════════
+// Viewport lazy load
+// ════════════════════════════════════════════════════
+let _vpt = null;
+function schedVP() { clearTimeout(_vpt); _vpt = setTimeout(checkVP, 150); }
+function checkVP() {
+  const b = map.getBounds();
+  for (const [cc, bbox] of Object.entries(CB)) {
+    if (loaded.has(cc) || loading.has(cc)) continue;
+    if (fCountry && cc !== fCountry) continue;
+    if (b.intersects(bbox)) loadCC(cc);
+  }
+}
+map.on('moveend zoomend', schedVP);
+
+// ════════════════════════════════════════════════════
+// Filters
+// ════════════════════════════════════════════════════
+function setCountry(val) {
+  fCountry = val;
+  ['deskCountry','mobCountry'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
+  applyFilters();
+  if (val && !loaded.has(val)) loadCC(val);
+}
+
+function setFuel(chipEl, val) {
+  fFuel = val;
+  document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
+  if (chipEl) chipEl.classList.add('on');
+  else { const c = document.querySelector(`.chip[data-f="${val}"]`); if(c) c.classList.add('on'); }
+  ['deskFuel','mobFuel'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
   applyFilters();
 }
 
-document.getElementById('countryFilter').addEventListener('change', e => {
-  filterCountry = e.target.value;
-  applyFilters();
-  scheduleViewportCheck();
-});
+function applyFilters() {
+  cluster.clearLayers(); byId.clear();
+  for (const [cc, arr] of Object.entries(data)) addToMap(cc, arr);
+  rebuildList();
+  updPriceLbls();
+  schedVP();
+}
 
-document.getElementById('fuelFilter').addEventListener('change', e => {
-  filterFuel = e.target.value;
+function resetAll() {
+  fCountry=''; fFuel='';
+  ['deskCountry','mobCountry','deskFuel','mobFuel'].forEach(id => {
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+  document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
+  document.querySelector('.chip[data-f=""]')?.classList.add('on');
   applyFilters();
-});
+}
 
-// ── Boot: load meta then trigger initial viewport check ───────────────────────
-(async () => {
-  const status = document.getElementById('status');
-  try {
-    // Fetch lightweight meta.json first to get timestamps and country list
-    const resp = await fetch('meta.json');
-    if (resp.ok) {
-      const meta = await resp.json();
-      metaFetchedAt = meta.fetched_at;
+// ════════════════════════════════════════════════════
+// List management
+// ════════════════════════════════════════════════════
+function getAll() {
+  const all = [];
+  for (const arr of Object.values(data))
+    for (const s of arr) { if (matches(s)) all.push(s); }
+  if (sortMode === 'distance' && myLat != null)
+    all.sort((a,b) => {
+      const da = (a.lat&&a.lon) ? dist(myLat,myLon,a.lat,a.lon) : 99999;
+      const db = (b.lat&&b.lon) ? dist(myLat,myLon,b.lat,b.lon) : 99999;
+      return da-db;
+    });
+  else if (sortMode === 'price')
+    all.sort((a,b) => {
+      const pa=cheapest(a), pb=cheapest(b);
+      if(!pa&&!pb) return 0; if(!pa) return 1; if(!pb) return -1;
+      return pa.price-pb.price;
+    });
+  return all;
+}
+
+function updCounts() {
+  const n = getAll().length;
+  document.getElementById('deskCount').textContent = `${n.toLocaleString()} stations`;
+  document.getElementById('mobCount').textContent   = n.toLocaleString();
+  document.getElementById('tb-list-lbl').textContent = n > 0 ? `List (${n.toLocaleString()})` : 'List';
+}
+
+function rebuildList() {
+  vpOff = 0;
+  const all = getAll();
+  updCounts();
+  renderPage(all, 0, true);
+}
+
+function renderPage(all, offset, reset) {
+  vpOff = offset;
+  const page = all.slice(offset, offset + PAGE);
+  const isMob = window.innerWidth <= 768;
+  const listId = isMob ? 'mobList' : 'stationList';
+  const list = document.getElementById(listId);
+  if (!list) return;
+
+  const html = page.map(s => {
+    const km = (myLat!=null && s.lat && s.lon) ? dist(myLat,myLon,s.lat,s.lon) : null;
+    return mkCard(s, km);
+  }).join('');
+
+  if (reset || offset === 0) {
+    if (!all.length) {
+      list.innerHTML = loading.size
+        ? '<p class="empty">Loading data…</p>'
+        : '<p class="empty">No stations match. Try adjusting the filters.</p>';
+      return;
     }
-  } catch (_) { /* meta.json may not exist yet on first deploy */ }
+    list.innerHTML = html;
+  } else {
+    list.querySelector('.load-more')?.remove();
+    list.insertAdjacentHTML('beforeend', html);
+  }
 
-  // Trigger initial load of countries visible in the starting viewport
-  updateStatus();
-  updatePriceLabels();
-  scheduleViewportCheck();
+  if (offset + PAGE < all.length) {
+    const rem = all.length - offset - PAGE;
+    list.insertAdjacentHTML('beforeend',
+      `<div class="load-more" onclick="loadMore()">⬇ Load ${Math.min(PAGE,rem)} more  (${rem.toLocaleString()} remaining)</div>`);
+  }
+}
+
+function loadMore() {
+  renderPage(getAll(), vpOff + PAGE, false);
+}
+
+function cycleSort() {
+  const modes  = ['default','price','distance'];
+  const labels = { default:'Default', price:'By price ↑', distance:'By distance' };
+  sortMode = modes[(modes.indexOf(sortMode)+1) % modes.length];
+  document.getElementById('sort-lbl').textContent     = labels[sortMode];
+  document.getElementById('mob-sort-lbl').textContent = labels[sortMode];
+  rebuildList();
+}
+
+// ════════════════════════════════════════════════════
+// Station select
+// ════════════════════════════════════════════════════
+function selectStation(id) {
+  document.getElementById(`c-${selId}`)?.classList.remove('sel');
+  selId = id;
+  const card = document.getElementById(`c-${id}`);
+  if (card) { card.classList.add('sel'); card.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+  const m = byId.get(id);
+  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); if (window.innerWidth<=768) closePanel(); }
+}
+
+// ════════════════════════════════════════════════════
+// Near Me
+// ════════════════════════════════════════════════════
+function goNearby() {
+  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+  const fab = document.getElementById('fab');
+  fab.textContent = '⏳ Locating…'; fab.classList.add('busy');
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    myLat = pos.coords.latitude; myLon = pos.coords.longitude;
+    fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
+
+    if (myMark) { map.removeLayer(myMark); map.removeLayer(myCirc); }
+    myMark = L.marker([myLat,myLon], {
+      icon: L.divIcon({ className:'', html:'<div class="loc-dot"></div>', iconSize:[14,14], iconAnchor:[7,7] }),
+      zIndexOffset:1000,
+    }).addTo(map).bindPopup('📍 You are here');
+    myCirc = L.circle([myLat,myLon], {
+      radius:Math.min(pos.coords.accuracy,500), color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.08, weight:1,
+    }).addTo(map);
+
+    map.setView([myLat,myLon], 13);
+    schedVP();
+    if (window.innerWidth <= 768) goTab('nearby');
+    else showNearby();
+  }, err => {
+    fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
+    alert('Location error: ' + ({ 1:'Permission denied.',2:'Position unavailable.',3:'Timed out.'}[err.code]||err.message));
+  }, { timeout:10000, maximumAge:60000 });
+}
+
+function showNearby() {
+  if (myLat == null) return;
+  const cands = [];
+  for (const arr of Object.values(data))
+    for (const s of arr) {
+      if (!s.lat || !s.lon || !matches(s)) continue;
+      cands.push({ s, km: dist(myLat,myLon,s.lat,s.lon) });
+    }
+  cands.sort((a,b) => a.km-b.km);
+  const el = document.getElementById('nearby-list');
+  if (!el) return;
+  if (!cands.length) {
+    el.innerHTML = '<p class="empty">No stations loaded near your location yet.\nPan the map to load more countries.</p>';
+    return;
+  }
+  el.innerHTML = cands.slice(0,25).map(({s,km}) => mkCard(s,km)).join('');
+}
+
+// ════════════════════════════════════════════════════
+// Search
+// ════════════════════════════════════════════════════
+function setSMode(el, mode) {
+  sMode = mode;
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  const ph = mode==='addr' ? 'City, address, or country…' : 'Station name or brand…';
+  document.getElementById('mobSearch').placeholder = ph;
+  document.getElementById('search-results').innerHTML = '<p class="empty" style="padding:18px 0">Enter a search query above</p>';
+}
+
+async function runSearch(isMob) {
+  const q = (isMob ? document.getElementById('mobSearch') : document.getElementById('deskSearch'))?.value.trim();
+  if (!q) return;
+  const resEl = document.getElementById('search-results');
+
+  // Station name search
+  if (sMode === 'name' || (!isMob)) {
+    const hits = [];
+    for (const arr of Object.values(data)) {
+      for (const s of arr) {
+        if ((s.name||s.brand||'').toLowerCase().includes(q.toLowerCase())) {
+          const km = (myLat!=null && s.lat&&s.lon) ? dist(myLat,myLon,s.lat,s.lon) : null;
+          hits.push({ s, km });
+        }
+      }
+    }
+    if (hits.length) {
+      hits.sort((a,b) => (a.km||99999)-(b.km||99999));
+      if (isMob) {
+        resEl.innerHTML = hits.slice(0,40).map(({s,km}) => mkCard(s,km)).join('');
+      } else {
+        const first = hits[0].s;
+        if (first.lat && first.lon) map.setView([first.lat,first.lon], 14);
+        selectStation(first.id);
+      }
+      return;
+    }
+  }
+
+  // Address search (Nominatim)
+  try {
+    if (isMob && resEl) resEl.innerHTML = '<p class="empty">Searching…</p>';
+    const r    = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers:{'Accept-Language':'en'} });
+    const rows = await r.json();
+    if (!rows.length) {
+      if (isMob) resEl.innerHTML = `<p class="empty">Nothing found for "${q}"</p>`;
+      else alert(`"${q}" not found.`);
+      return;
+    }
+    const { lat, lon, display_name } = rows[0];
+    map.setView([+lat,+lon], 13);
+    if (isMob) closePanel();
+    L.popup().setLatLng([+lat,+lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${display_name}</div>`).openOn(map);
+  } catch(e) {
+    const msg = 'Search error: ' + e.message;
+    if (isMob) resEl.innerHTML = `<p class="empty">${msg}</p>`; else alert(msg);
+  }
+}
+
+// ════════════════════════════════════════════════════
+// Tab / Panel management
+// ════════════════════════════════════════════════════
+const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', filter:'p-filter' };
+
+function goTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById(`tb-${tab}`)?.classList.add('on');
+
+  if (tab === 'map') { closePanel(); return; }
+
+  Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
+  const pid = PANEL_MAP[tab];
+  if (pid) { document.getElementById(pid)?.classList.add('open'); document.getElementById('bd').classList.add('on'); }
+
+  if (tab === 'nearby') {
+    if (myLat == null) goNearby(); else showNearby();
+  } else if (tab === 'stations') {
+    rebuildList();
+  }
+}
+
+function closePanel() {
+  Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
+  document.getElementById('bd').classList.remove('on');
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tb-map')?.classList.add('on');
+  activeTab = 'map';
+}
+
+map.on('click movestart', () => { if (window.innerWidth<=768) closePanel(); });
+
+// Swipe down to close
+document.querySelectorAll('.panel').forEach(p => {
+  let sy=0, st=0;
+  p.addEventListener('touchstart', e => { sy=e.touches[0].clientY; st=Date.now(); }, { passive:true });
+  p.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY-sy > 70 && Date.now()-st < 500) closePanel(); }, { passive:true });
+});
+
+// ════════════════════════════════════════════════════
+// Price labels
+// ════════════════════════════════════════════════════
+function updPriceLbls() { map.getContainer().classList.toggle('hide-prices', map.getZoom() < PRICE_ZOOM); }
+map.on('zoomend', updPriceLbls);
+
+// ════════════════════════════════════════════════════
+// Status
+// ════════════════════════════════════════════════════
+function updStatus() {
+  const n    = Object.values(data).reduce((s,a) => s+a.length, 0);
+  const ld   = loaded.size, tot = Object.keys(CB).length;
+  const act  = loading.size;
+  const badge = document.getElementById('badge');
+  const sbSt  = document.getElementById('sb-status');
+
+  let txt, cls;
+  if (act > 0) {
+    txt = `${n.toLocaleString()} stations\nLoading ${act} more…`; cls = 'loading';
+  } else {
+    const t = metaAt ? new Date(metaAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    txt = `${n.toLocaleString()} stations\n${ld}/${tot} countries${t?' · '+t:''}`;
+    cls = ld > 0 ? 'ok' : 'loading';
+  }
+  badge.textContent = txt; badge.className = cls;
+  if (sbSt) { sbSt.textContent = txt.replace('\n',' · '); sbSt.className = 'sub '+cls; }
+  updCounts();
+}
+
+// ════════════════════════════════════════════════════
+// PWA
+// ════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e))
+  );
+}
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  const btn = document.createElement('button');
+  btn.className = 'chip install-chip';
+  btn.textContent = '📲 Install app';
+  btn.onclick = () => { e.prompt(); btn.remove(); };
+  document.getElementById('chips').appendChild(btn);
+});
+
+// ════════════════════════════════════════════════════
+// Boot
+// ════════════════════════════════════════════════════
+(async () => {
+  try {
+    const r = await fetch('meta.json');
+    if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; }
+  } catch(_) {}
+  updStatus(); updPriceLbls(); schedVP();
 })();
 </script>
 </body>
