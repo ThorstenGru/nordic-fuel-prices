@@ -1,0 +1,42 @@
+name: Deploy Web Files
+
+# Runs on every push to main that touches web/ files.
+# This way frontend changes (index.html) go live immediately
+# without waiting for the 30-minute scraper schedule.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Checkout gh-pages into subdirectory
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-dir
+          fetch-depth: 1
+
+      - name: Overwrite web files on gh-pages
+        run: cp -r web/. gh-pages-dir/
+
+      - name: Commit and push
+        run: |
+          cd gh-pages-dir
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Deploy web files from main [skip ci]"
+          git push
