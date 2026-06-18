@@ -2,6 +2,16 @@ import aiohttp
 import asyncio
 from typing import List, Dict, Any
 from .base import BaseScraper
+from ._anwb import ANWBScraper
+
+
+class _ESAnwb(ANWBScraper):
+    """Fallback: ANWB POI API when MINETUR is unreachable from GH Actions."""
+    COUNTRY    = "ES"
+    ISO3       = "ESP"
+    BBOX       = (36.00, -9.30, 43.80, 3.40)
+    SOURCE     = "anwb.nl (ANWB POI API)"
+    CONFIDENCE = 0.90
 
 # Spanish mandatory fuel price reporting via MINETUR (Ministry of Industry)
 # https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/
@@ -59,7 +69,8 @@ class SpainScraper(BaseScraper):
                 await asyncio.sleep(8 * (attempt + 1))
 
         if data is None:
-            return []
+            print("[ES] MINETUR unavailable — falling back to ANWB")
+            return await _ESAnwb(self.session).fetch_stations()
 
         raw_list = data.get("ListaEESSPrecio", [])
         stations = []

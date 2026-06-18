@@ -23,31 +23,64 @@ from .slovakia import SlovakiaScraper
 from .estonia import EstoniaScraper
 from .latvia import LatviaScraper
 from .lithuania import LithuaniaScraper
+# Balkans / South-East Europe
+from .greece import GreeceScraper
+from .bulgaria import BulgariaScraper
+from .serbia import SerbiaScraper
+from .montenegro import MontenegroScraper
+from .north_macedonia import NorthMacedoniaScraper
+from .albania import AlbaniaScraper
+from .bosnia import BosniaHerzegovinaScraper
+from .kosovo import KosovoScraper
+# Small / micro states
+from .andorra import AndorraScraper
+from .moldova import MoldovaScraper
+from .malta import MaltaScraper
+from .cyprus import CyprusScraper
+from .liechtenstein import LiechtensteinScraper
 
 ALL_SCRAPERS = [
+    # Nordic
     SwedenScraper,
     NorwayScraper,
     DenmarkScraper,
     FinlandScraper,
-    AustriaScraper,
+    IcelandScraper,
+    # Western Europe
+    GermanyScraper,
     FranceScraper,
     SpainScraper,
-    ItalyScraper,
-    GermanyScraper,
+    AndorraScraper,
     PortugalScraper,
-    IcelandScraper,
-    CroatiaScraper,
-    SloveniaScraper,
-    RomaniaScraper,
     NetherlandsScraper,
     BelgiumScraper,
     LuxembourgScraper,
     SwitzerlandScraper,
-    PolandScraper,
-    HungaryScraper,
+    LiechtensteinScraper,
+    # Central Europe
+    AustriaScraper,
     CzechiaScraper,
     SlovakiaScraper,
+    PolandScraper,
+    HungaryScraper,
+    # Southern Europe
+    ItalyScraper,
+    MaltaScraper,
+    SloveniaScraper,
+    CroatiaScraper,
+    BosniaHerzegovinaScraper,
+    MontenegroScraper,
+    SerbiaScraper,
+    KosovoScraper,
+    NorthMacedoniaScraper,
+    AlbaniaScraper,
+    GreeceScraper,
+    CyprusScraper,
+    # Eastern Europe
     EstoniaScraper,
     LatviaScraper,
     LithuaniaScraper,
+    RomaniaScraper,
+    BulgariaScraper,
+    MoldovaScraper,
 ]

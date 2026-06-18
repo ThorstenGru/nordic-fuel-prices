@@ -3,6 +3,16 @@ import asyncio
 import os
 from typing import List, Dict, Any
 from .base import BaseScraper
+from ._anwb import ANWBScraper
+
+
+class _DEAnwb(ANWBScraper):
+    """Fallback: ANWB POI API when Tankerkönig API key is unavailable."""
+    COUNTRY    = "DE"
+    ISO3       = "DEU"
+    BBOX       = (47.27, 5.87, 55.06, 15.04)
+    SOURCE     = "anwb.nl (ANWB POI API)"
+    CONFIDENCE = 0.90
 
 # German fuel prices via Tankerkönig
 # Distributes government-mandated MTS-K (Markttransparenzstelle für Kraftstoffe) data
@@ -74,8 +84,8 @@ class GermanyScraper(BaseScraper):
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         if not API_KEY:
-            print("[DE] TANKERKOENIG_API_KEY not set — skipping")
-            return []
+            print("[DE] TANKERKOENIG_API_KEY not set — falling back to ANWB")
+            return await _DEAnwb(self.session).fetch_stations()
 
         sem = asyncio.Semaphore(5)
         tasks = [self._fetch_area(lat, lon, sem) for lat, lon in GRID]
