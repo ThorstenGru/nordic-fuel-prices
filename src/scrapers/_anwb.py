@@ -8,12 +8,15 @@ Endpoint: https://api.anwb.nl/routing/points-of-interest/v3/all
   ?type-filter=FUEL_STATION
   &bounding-box-filter={min_lat},{min_lon},{max_lat},{max_lon}
 
-All prices returned in EUR (even for non-Euro countries like PL/HU/CZ).
-Filter by iso3CountryCode to isolate the target country.
+ANWB always returns prices in EUR. For countries that use a different local
+currency, the scraper fetches the ECB daily exchange rate and converts
+automatically. Set CURRENCY to the ISO 4217 code of the local currency in
+each subclass; leave it as "EUR" for eurozone countries.
 """
 
+import re as _re
 import aiohttp
-from typing import List, Dict, Any, Tuple, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from .base import BaseScraper
 
 _API_BASE = (
@@ -31,18 +34,38 @@ _HEADERS = {
     "Accept": "application/json",
 }
 
+# ECB daily XML exchange rates (base: EUR)
+_ECB_URL   = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+_ecb_cache: Dict[str, float] = {}   # currency_code → rate (how many units per 1 EUR)
+
+
+async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
+    """Return {currency: units_per_EUR} from ECB daily feed. Cached per process."""
+    if _ecb_cache:
+        return _ecb_cache
+    try:
+        async with session.get(_ECB_URL, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            if resp.status == 200:
+                text = await resp.text()
+                for m in _re.finditer(r'currency="([A-Z]{3})"\s+rate="([\d.]+)"', text):
+                    _ecb_cache[m.group(1)] = float(m.group(2))
+    except Exception as e:
+        print(f"[ECB] rate fetch failed: {e}")
+    return _ecb_cache
+
+
 # fuelType → (fuel_type, unit)  — EURO95 handled separately (E10 if name says so)
 _FUEL_MAP = {
-    "EURO98":        ("E5",     "L"),
-    "SUPER_E5":      ("E5",     "L"),
-    "DIESEL":        ("DIESEL", "L"),
-    "DIESEL_SPECIAL":("DIESEL", "L"),
-    "LPG":           ("LPG",    "L"),
-    "AUTOGAS":       ("LPG",    "L"),
-    "CNG":           ("CNG",    "kg"),
-    "E85":           ("E85",    "L"),
-    "HVO":           ("HVO100", "L"),
-    "HVO100":        ("HVO100", "L"),
+    "EURO98":         ("E5",     "L"),
+    "SUPER_E5":       ("E5",     "L"),
+    "DIESEL":         ("DIESEL", "L"),
+    "DIESEL_SPECIAL": ("DIESEL", "L"),
+    "LPG":            ("LPG",    "L"),
+    "AUTOGAS":        ("LPG",    "L"),
+    "CNG":            ("CNG",    "kg"),
+    "E85":            ("E85",    "L"),
+    "HVO":            ("HVO100", "L"),
+    "HVO100":         ("HVO100", "L"),
 }
 
 
@@ -56,9 +79,9 @@ class ANWBScraper(BaseScraper):
     """Base class for country scrapers backed by the ANWB POI API."""
 
     # Subclasses must set these:
-    ISO3: str = ""           # e.g. "NLD", "BEL", "POL"
-    BBOX: Tuple[float, float, float, float] = (0, 0, 0, 0)  # min_lat, min_lon, max_lat, max_lon
-    CURRENCY = "EUR"
+    ISO3: str = ""                                          # e.g. "NLD", "BEL", "POL"
+    BBOX: Tuple[float, float, float, float] = (0, 0, 0, 0) # min_lat, min_lon, max_lat, max_lon
+    CURRENCY = "EUR"   # override for non-eurozone countries (e.g. "PLN", "HUF", "CZK")
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         min_lat, min_lon, max_lat, max_lon = self.BBOX
@@ -102,7 +125,14 @@ class ANWBScraper(BaseScraper):
                 if not isinstance(val, (int, float)) or val <= 0:
                     continue
                 fuel_type, unit = mapped
-                prices.append(self.price_entry(fuel_type, float(val), unit))
+                # Store in EUR; converted to local currency below if needed
+                prices.append({
+                    "fuel_type":  fuel_type,
+                    "price":      float(val),
+                    "currency":   "EUR",
+                    "unit":       unit,
+                    "updated_at": self.fetched_at,
+                })
 
             if not prices:
                 continue
@@ -121,6 +151,18 @@ class ANWBScraper(BaseScraper):
                 "confidence": self.CONFIDENCE,
                 "prices":     prices,
             })
+
+        # Convert EUR → local currency when the country doesn't use EUR
+        if self.CURRENCY != "EUR" and stations:
+            rates = await _ecb_rates(self.session)
+            rate  = rates.get(self.CURRENCY)
+            if rate:
+                for s in stations:
+                    for p in s["prices"]:
+                        p["price"]    = round(p["price"] * rate, 3)
+                        p["currency"] = self.CURRENCY
+            else:
+                print(f"[{self.COUNTRY}] ECB rate not found for {self.CURRENCY} — keeping EUR")
 
         print(f"[{self.COUNTRY}] {len(stations)} stations from ANWB API")
         return stations

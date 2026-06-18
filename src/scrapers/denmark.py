@@ -15,6 +15,7 @@ class _DKAnwb(ANWBScraper):
     """ANWB coverage for Denmark: Circle K, Uno-X, Go'On, Oil! etc."""
     COUNTRY    = "DK"
     ISO3       = "DNK"
+    CURRENCY   = "DKK"
     BBOX       = (54.80, 8.00, 57.80, 15.20)
     SOURCE     = "anwb.nl (ANWB POI API)"
     CONFIDENCE = 0.90

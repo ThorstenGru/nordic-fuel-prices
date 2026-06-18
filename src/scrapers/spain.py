@@ -43,13 +43,13 @@ class SpainScraper(BaseScraper):
     CONFIDENCE = 0.95
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        # MINETUR occasionally resets connections from cloud provider IPs; retry 3×
+        # MINETUR occasionally resets connections from cloud provider IPs; retry 5×
         data = None
-        for attempt in range(3):
+        for attempt in range(5):
             try:
                 async with self.session.get(
                     BASE_URL,
-                    timeout=aiohttp.ClientTimeout(total=60),
+                    timeout=aiohttp.ClientTimeout(total=90),
                     headers={
                         "Accept": "application/json",
                         "User-Agent": (
@@ -65,8 +65,8 @@ class SpainScraper(BaseScraper):
                     print(f"[ES] HTTP {resp.status} (attempt {attempt + 1})")
             except Exception as e:
                 print(f"[ES] {e} (attempt {attempt + 1})")
-            if attempt < 2:
-                await asyncio.sleep(8 * (attempt + 1))
+            if attempt < 4:
+                await asyncio.sleep(10 * (attempt + 1))
 
         if data is None:
             print("[ES] MINETUR unavailable — falling back to ANWB")
