@@ -39,10 +39,11 @@ body {
   margin-left: auto;
   text-align: right;
   line-height: 1.35;
-  max-width: 55%;
+  max-width: 60%;
 }
 #status.ok  { color: #22c55e; }
 #status.err { color: #ef4444; }
+#status.loading { color: #f59e0b; }
 
 /* === Controls bar === */
 #controls-bar {
@@ -333,7 +334,7 @@ select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
 <div id="header">
   <span style="font-size:1.1rem;flex-shrink:0">⛽</span>
   <h1>European Fuel Prices</h1>
-  <span id="status">Loading…</span>
+  <span id="status" class="loading">Loading…</span>
 </div>
 
 <!-- Controls bar (desktop: always visible; mobile: slide-up sheet) -->
@@ -348,17 +349,20 @@ select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
   <button class="loc-btn" onclick="goToMyLocation()" title="My location">📍 My location</button>
   <select id="countryFilter">
     <option value="">All countries</option>
-    <option value="SE">🇸🇪 Sweden</option>
-    <option value="NO">🇳🇴 Norway</option>
+    <option value="AT">🇦🇹 Austria</option>
+    <option value="HR">🇭🇷 Croatia</option>
     <option value="DK">🇩🇰 Denmark</option>
     <option value="FI">🇫🇮 Finland</option>
-    <option value="AT">🇦🇹 Austria</option>
-    <option value="DE">🇩🇪 Germany</option>
     <option value="FR">🇫🇷 France</option>
-    <option value="ES">🇪🇸 Spain</option>
-    <option value="IT">🇮🇹 Italy</option>
-    <option value="PT">🇵🇹 Portugal</option>
+    <option value="DE">🇩🇪 Germany</option>
     <option value="IS">🇮🇸 Iceland</option>
+    <option value="IT">🇮🇹 Italy</option>
+    <option value="NO">🇳🇴 Norway</option>
+    <option value="PT">🇵🇹 Portugal</option>
+    <option value="RO">🇷🇴 Romania</option>
+    <option value="SI">🇸🇮 Slovenia</option>
+    <option value="ES">🇪🇸 Spain</option>
+    <option value="SE">🇸🇪 Sweden</option>
   </select>
   <select id="fuelFilter">
     <option value="">All fuels</option>
@@ -381,7 +385,7 @@ select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
     <div id="sidebar-header">
       <h2>Stations <span id="countLabel"></span></h2>
     </div>
-    <div id="stationList"><p class="empty">Fetching data…</p></div>
+    <div id="stationList"><p class="empty">Loading map data…</p></div>
   </div>
 </div>
 
@@ -407,131 +411,72 @@ select:focus, button:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-// ── Map setup ──────────────────────────────────────────────────────────────
-const map = L.map('map', { center: [50, 12], zoom: 5, zoomControl: true });
+// ── Map setup ─────────────────────────────────────────────────────────────────
+const map = L.map('map', { center: [52, 13], zoom: 5, zoomControl: true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap &copy; CARTO',
   maxZoom: 19,
 }).addTo(map);
 
+// ── Constants ─────────────────────────────────────────────────────────────────
 const COUNTRY_FLAGS = {
-  SE:'🇸🇪', NO:'🇳🇴', DK:'🇩🇰', FI:'🇫🇮',
-  AT:'🇦🇹', DE:'🇩🇪', FR:'🇫🇷', ES:'🇪🇸', IT:'🇮🇹',
-  PT:'🇵🇹', IS:'🇮🇸',
+  AT:'🇦🇹', HR:'🇭🇷', DK:'🇩🇰', FI:'🇫🇮', FR:'🇫🇷',
+  DE:'🇩🇪', IS:'🇮🇸', IT:'🇮🇹', NO:'🇳🇴', PT:'🇵🇹',
+  RO:'🇷🇴', SI:'🇸🇮', ES:'🇪🇸', SE:'🇸🇪',
 };
-const CURRENCY_SYMBOL = { EUR:'€', SEK:'kr', NOK:'kr', DKK:'kr', ISK:'kr' };
+const CURRENCY_SYMBOL = {
+  EUR:'€', SEK:'kr', NOK:'kr', DKK:'kr', ISK:'kr', RON:'lei',
+};
 const UNIT_LABEL = { L:'/L', kWh:'/kWh', kg:'/kg' };
-const PRICE_ZOOM = 13;
+const PRICE_ZOOM   = 13;
 const CLUSTER_ZOOM = 12;
 
-// ── State ──────────────────────────────────────────────────────────────────
-let allStations = [];
-let clusterGroup = null;
-let markerList = [];
-let filteredStations = [];
-let activeCard = null;
-let myLocMarker = null;
-let myLocCircle = null;
+// Country bounding boxes [[sw_lat, sw_lon], [ne_lat, ne_lon]]
+// Used to determine which country to load when the viewport moves
+const COUNTRY_BOUNDS = {
+  AT: L.latLngBounds([46.37, 9.52],  [49.02, 17.16]),
+  HR: L.latLngBounds([42.39, 13.49], [46.55, 19.45]),
+  DK: L.latLngBounds([54.56, 8.07],  [57.77, 15.19]),
+  FI: L.latLngBounds([59.81, 20.55], [70.09, 29.58]),
+  FR: L.latLngBounds([41.33, -5.14], [51.09, 9.56]),
+  DE: L.latLngBounds([47.27, 5.87],  [55.06, 15.04]),
+  IS: L.latLngBounds([63.29, -24.54],[66.56, -13.49]),
+  IT: L.latLngBounds([36.49, 6.63],  [47.09, 18.52]),
+  NO: L.latLngBounds([57.97, 4.64],  [71.19, 31.15]),
+  PT: L.latLngBounds([36.84, -9.52], [42.15, -6.19]),
+  RO: L.latLngBounds([43.62, 22.34], [48.26, 29.68]),
+  SI: L.latLngBounds([45.42, 13.38], [46.88, 16.61]),
+  ES: L.latLngBounds([35.95, -9.32], [43.79, 4.32]),
+  SE: L.latLngBounds([55.34, 11.11], [69.06, 24.17]),
+};
 
-// ── Sheet management (mobile) ──────────────────────────────────────────────
-function toggleSheet(sheetId, btnId) {
-  const sheet = document.getElementById(sheetId);
-  const isOpen = sheet.classList.toggle('sheet-open');
-  document.getElementById('backdrop').classList.toggle('visible', isOpen);
+// ── State ─────────────────────────────────────────────────────────────────────
+const countryStations = {};          // cc → station[]
+const loadedCountries  = new Set();  // successfully loaded
+const loadingCountries = new Set();  // fetch in progress
+let   clusterGroup     = null;
+let   markerById       = new Map();  // stationId → L.Marker
+let   filteredIds      = [];         // ordered station ids currently shown in sidebar
+let   activeSid        = null;
+let   myLocMarker      = null;
+let   myLocCircle      = null;
+let   metaFetchedAt    = null;
 
-  // Update active state on the button
-  if (btnId) {
-    const btn = document.getElementById(btnId);
-    if (btn) btn.classList.toggle('active', isOpen);
-  }
+// Active filter state
+let filterCountry = '';
+let filterFuel    = '';
 
-  // Close the other sheet if opening this one
-  if (isOpen) {
-    const other = sheetId === 'controls-bar' ? 'sidebar' : 'controls-bar';
-    const otherSheet = document.getElementById(other);
-    if (otherSheet.classList.contains('sheet-open')) {
-      otherSheet.classList.remove('sheet-open');
-      // Reset the other button
-      const otherBtnId = other === 'sidebar' ? 'listBtn' : 'filterBtn';
-      const otherBtn = document.getElementById(otherBtnId);
-      if (otherBtn) otherBtn.classList.remove('active');
-    }
-  }
-}
-
-function closeAllSheets() {
-  ['controls-bar', 'sidebar'].forEach(id => {
-    document.getElementById(id).classList.remove('sheet-open');
-  });
-  ['filterBtn', 'listBtn'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('backdrop').classList.remove('visible');
-}
-
-// Close sheets on map interaction (mobile UX)
-map.on('click movestart', () => {
-  if (window.innerWidth <= 768) closeAllSheets();
-});
-
-// ── Load data ──────────────────────────────────────────────────────────────
-async function loadData() {
-  const status = document.getElementById('status');
-  try {
-    const resp = await fetch('all.json');
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    allStations = data.stations || [];
-
-    const fetched = data.meta?.fetched_at
-      ? new Date(data.meta.fetched_at).toLocaleString()
-      : '—';
-    const withCoords = allStations.filter(s => s.lat && s.lon).length;
-    const total = allStations.length;
-    status.textContent = `${total.toLocaleString()} stations · ${fetched}`;
-    status.className = 'ok';
-    render();
-  } catch (e) {
-    status.textContent = `Error: ${e.message}`;
-    status.className = 'err';
-    document.getElementById('stationList').innerHTML =
-      '<p class="empty">Could not load data.</p>';
-  }
-}
-
-// ── Filtering ──────────────────────────────────────────────────────────────
-function getFiltered() {
-  const country = document.getElementById('countryFilter').value;
-  const fuel    = document.getElementById('fuelFilter').value;
-  return allStations.filter(s => {
-    if (country && s.country !== country) return false;
-    if (fuel && !s.prices?.some(p => p.fuel_type === fuel)) return false;
-    return true;
-  });
-}
-
-// ── Render ─────────────────────────────────────────────────────────────────
-function render() {
-  filteredStations = getFiltered();
-  renderMarkers(filteredStations);
-  renderSidebar(filteredStations);
-}
-
-function renderMarkers(stations) {
-  if (clusterGroup) {
-    clusterGroup.clearLayers();
-    map.removeLayer(clusterGroup);
-  }
-  markerList = new Array(stations.length).fill(null);
-
+// ── Cluster group init ────────────────────────────────────────────────────────
+function initCluster() {
+  if (clusterGroup) { map.removeLayer(clusterGroup); }
   clusterGroup = L.markerClusterGroup({
     maxClusterRadius: 40,
     disableClusteringAtZoom: CLUSTER_ZOOM,
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: false,
+    chunkedLoading: true,
     iconCreateFunction: cluster => {
-      const n = cluster.getChildCount();
+      const n  = cluster.getChildCount();
       const sz = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
       return L.divIcon({
         html: `<div><span>${n}</span></div>`,
@@ -540,39 +485,249 @@ function renderMarkers(stations) {
       });
     },
   });
-
-  stations.forEach((s, i) => {
-    if (!s.lat || !s.lon) return;
-    const color = confidenceColor(s.confidence);
-    const cheapest = cheapestPrice(s);
-
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:9px;height:9px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.8);"></div>`,
-      iconSize: [9, 9],
-      iconAnchor: [4, 4],
-    });
-
-    const marker = L.marker([s.lat, s.lon], { icon });
-    marker.bindPopup(buildPopup(s), { maxWidth: 260 });
-
-    if (cheapest) {
-      const sym = CURRENCY_SYMBOL[cheapest.currency] || cheapest.currency;
-      marker.bindTooltip(
-        `${cheapest.fuel_type} ${cheapest.price.toFixed(2)}${sym}`,
-        { permanent: true, direction: 'right', className: 'price-tip', offset: [5, 0] }
-      );
-    }
-
-    marker.on('click', () => selectStation(i));
-    clusterGroup.addLayer(marker);
-    markerList[i] = marker;
-  });
-
   map.addLayer(clusterGroup);
-  updatePriceLabels();
+}
+initCluster();
+
+// ── Sheet management (mobile) ─────────────────────────────────────────────────
+function toggleSheet(sheetId, btnId) {
+  const sheet  = document.getElementById(sheetId);
+  const isOpen = sheet.classList.toggle('sheet-open');
+  document.getElementById('backdrop').classList.toggle('visible', isOpen);
+  if (btnId) {
+    document.getElementById(btnId)?.classList.toggle('active', isOpen);
+  }
+  if (isOpen) {
+    const other      = sheetId === 'controls-bar' ? 'sidebar' : 'controls-bar';
+    const otherBtnId = other === 'sidebar' ? 'listBtn' : 'filterBtn';
+    document.getElementById(other)?.classList.remove('sheet-open');
+    document.getElementById(otherBtnId)?.classList.remove('active');
+  }
 }
 
+function closeAllSheets() {
+  ['controls-bar', 'sidebar'].forEach(id =>
+    document.getElementById(id).classList.remove('sheet-open'));
+  ['filterBtn', 'listBtn'].forEach(id =>
+    document.getElementById(id)?.classList.remove('active'));
+  document.getElementById('backdrop').classList.remove('visible');
+}
+
+map.on('click movestart', () => {
+  if (window.innerWidth <= 768) closeAllSheets();
+});
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+function updateStatus() {
+  const el     = document.getElementById('status');
+  const loaded = loadedCountries.size;
+  const total  = Object.keys(COUNTRY_BOUNDS).length;
+  const n      = Object.values(countryStations).reduce((s, a) => s + a.length, 0);
+  const active = loadingCountries.size;
+
+  if (active > 0) {
+    el.textContent = `${n.toLocaleString()} stations · loading ${active} more…`;
+    el.className   = 'loading';
+  } else {
+    const time = metaFetchedAt
+      ? new Date(metaFetchedAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+      : '';
+    el.textContent = `${n.toLocaleString()} stations · ${loaded}/${total} countries${time ? ' · ' + time : ''}`;
+    el.className   = 'ok';
+  }
+}
+
+// ── Country data loading ──────────────────────────────────────────────────────
+async function loadCountry(cc) {
+  if (loadedCountries.has(cc) || loadingCountries.has(cc)) return;
+  loadingCountries.add(cc);
+  updateStatus();
+
+  try {
+    const resp = await fetch(`${cc.toLowerCase()}.json`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const stations = data.stations || [];
+
+    if (data.meta?.fetched_at && !metaFetchedAt) {
+      metaFetchedAt = data.meta.fetched_at;
+    }
+
+    countryStations[cc] = stations;
+    loadedCountries.add(cc);
+
+    // Add matching markers to the live cluster group (no full rebuild)
+    addCountryToMap(cc, stations);
+    appendToSidebar(cc, stations);
+    updateStatus();
+  } catch (e) {
+    console.warn(`[${cc}] load failed: ${e.message}`);
+  } finally {
+    loadingCountries.delete(cc);
+    updateStatus();
+  }
+}
+
+function matchesFilter(s) {
+  if (filterCountry && s.country !== filterCountry) return false;
+  if (filterFuel && !s.prices?.some(p => p.fuel_type === filterFuel)) return false;
+  return true;
+}
+
+function createMarker(s) {
+  const color    = confidenceColor(s.confidence);
+  const cheapest = cheapestPrice(s);
+  const icon     = L.divIcon({
+    className: '',
+    html: `<div style="width:9px;height:9px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.8);"></div>`,
+    iconSize: [9, 9], iconAnchor: [4, 4],
+  });
+  const marker = L.marker([s.lat, s.lon], { icon });
+  marker.bindPopup(buildPopup(s), { maxWidth: 260 });
+  if (cheapest) {
+    const sym = CURRENCY_SYMBOL[cheapest.currency] || cheapest.currency;
+    marker.bindTooltip(
+      `${cheapest.fuel_type} ${cheapest.price.toFixed(2)}${sym}`,
+      { permanent: true, direction: 'right', className: 'price-tip', offset: [5, 0] }
+    );
+  }
+  marker.on('click', () => highlightStation(s.id));
+  return marker;
+}
+
+function addCountryToMap(cc, stations) {
+  const toAdd = [];
+  for (const s of stations) {
+    if (!s.lat || !s.lon || !matchesFilter(s)) continue;
+    if (markerById.has(s.id)) continue;
+    const m = createMarker(s);
+    markerById.set(s.id, m);
+    toAdd.push(m);
+  }
+  if (toAdd.length) clusterGroup.addLayers(toAdd);
+}
+
+// ── Viewport-based lazy loading ───────────────────────────────────────────────
+let _vpTimer = null;
+function scheduleViewportCheck() {
+  clearTimeout(_vpTimer);
+  _vpTimer = setTimeout(checkViewport, 150);
+}
+
+function checkViewport() {
+  const bounds = map.getBounds();
+  const cf     = filterCountry;
+
+  for (const [cc, bbox] of Object.entries(COUNTRY_BOUNDS)) {
+    if (loadedCountries.has(cc) || loadingCountries.has(cc)) continue;
+    if (cf && cc !== cf) continue;  // country filter active — only load that country
+    if (bounds.intersects(bbox)) {
+      loadCountry(cc);
+    }
+  }
+}
+
+map.on('moveend zoomend', scheduleViewportCheck);
+
+// ── Full filter rebuild ───────────────────────────────────────────────────────
+function applyFilters() {
+  clusterGroup.clearLayers();
+  markerById.clear();
+  filteredIds = [];
+
+  for (const [cc, stations] of Object.entries(countryStations)) {
+    addCountryToMap(cc, stations);
+  }
+  rebuildSidebar();
+  updatePriceLabels();
+
+  // If country filter is set and that country hasn't loaded yet, trigger load
+  if (filterCountry && !loadedCountries.has(filterCountry)) {
+    loadCountry(filterCountry);
+  }
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function appendToSidebar(cc, newStations) {
+  // Just do a full rebuild — sidebar only shows 200 stations anyway
+  rebuildSidebar();
+}
+
+function rebuildSidebar() {
+  const list  = document.getElementById('stationList');
+  const label = document.getElementById('countLabel');
+
+  // Collect all filtered stations from all loaded countries
+  const all = [];
+  for (const stations of Object.values(countryStations)) {
+    for (const s of stations) {
+      if (matchesFilter(s)) all.push(s);
+    }
+  }
+
+  filteredIds = all.map(s => s.id);
+  const n = all.length;
+  label.textContent = `(${n.toLocaleString()})`;
+  document.getElementById('mobileCountLabel').textContent = n.toLocaleString();
+
+  if (!n) {
+    list.innerHTML = loadingCountries.size
+      ? '<p class="empty">Loading…</p>'
+      : '<p class="empty">No stations match current filters.</p>';
+    return;
+  }
+
+  const visible = all.slice(0, 200);
+  list.innerHTML = visible.map(s => stationCard(s)).join('');
+
+  if (n > 200) {
+    list.innerHTML +=
+      `<p class="empty">Showing 200 of ${n.toLocaleString()} — use filters to narrow.</p>`;
+  }
+}
+
+function stationCard(s) {
+  const flag  = COUNTRY_FLAGS[s.country] || '';
+  const sym   = CURRENCY_SYMBOL[s.prices?.[0]?.currency] || '';
+  const chips = (s.prices || []).map(p =>
+    `<span class="price-chip">
+      <span class="type">${p.fuel_type}</span>
+      <span class="val">${p.price.toFixed(2)}</span>
+      <span class="cur">${sym}</span>
+    </span>`
+  ).join('');
+  const noPin = (s.lat && s.lon) ? '' :
+    '<span style="color:#475569;font-size:0.62rem;margin-left:4px" title="No GPS">📍✕</span>';
+  const isActive = s.id === activeSid ? ' active' : '';
+  return `<div class="station-card${isActive}" id="card-${s.id}" onclick="highlightStation('${s.id}')">
+    <div class="station-name">${flag} ${s.name || s.brand || '—'}${noPin}</div>
+    <div class="station-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
+    <div class="prices">${chips || '<span style="color:#64748b;font-size:0.72rem">No prices</span>'}</div>
+  </div>`;
+}
+
+// ── Station selection ─────────────────────────────────────────────────────────
+function highlightStation(sid) {
+  // Update card active state
+  if (activeSid) {
+    document.getElementById(`card-${activeSid}`)?.classList.remove('active');
+  }
+  activeSid = sid;
+  const card = document.getElementById(`card-${sid}`);
+  if (card) {
+    card.classList.add('active');
+    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  const marker = markerById.get(sid);
+  if (marker) {
+    // Zoom and open popup; handles markers inside clusters
+    clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+    if (window.innerWidth <= 768) closeAllSheets();
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function cheapestPrice(s) {
   if (!s.prices?.length) return null;
   const liquid = s.prices.filter(p => p.unit === 'L' && p.price > 0);
@@ -606,86 +761,21 @@ function buildPopup(s) {
   </div>`;
 }
 
-// ── Price label visibility ─────────────────────────────────────────────────
+// ── Price label visibility ────────────────────────────────────────────────────
 function updatePriceLabels() {
   map.getContainer().classList.toggle('hide-prices', map.getZoom() < PRICE_ZOOM);
 }
 map.on('zoomend', updatePriceLabels);
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
-function renderSidebar(stations) {
-  const list  = document.getElementById('stationList');
-  const label = document.getElementById('countLabel');
-  const n = stations.length.toLocaleString();
-  label.textContent = `(${n})`;
-  document.getElementById('mobileCountLabel').textContent = n;
-
-  if (!stations.length) {
-    list.innerHTML = '<p class="empty">No stations match filters.</p>';
-    return;
-  }
-
-  const visible = stations.slice(0, 200);
-  list.innerHTML = visible.map((s, i) => {
-    const flag = COUNTRY_FLAGS[s.country] || '';
-    const sym  = CURRENCY_SYMBOL[s.prices?.[0]?.currency] || '';
-    const chips = (s.prices || []).map(p =>
-      `<span class="price-chip">
-        <span class="type">${p.fuel_type}</span>
-        <span class="val">${p.price.toFixed(2)}</span>
-        <span class="cur">${sym}</span>
-      </span>`
-    ).join('');
-    const noPin = (s.lat && s.lon) ? '' :
-      '<span style="color:#475569;font-size:0.62rem;margin-left:4px" title="No GPS">📍✕</span>';
-    return `<div class="station-card" id="card-${i}" onclick="selectStation(${i})">
-      <div class="station-name">${flag} ${s.name || s.brand || '—'}${noPin}</div>
-      <div class="station-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
-      <div class="prices">${chips || '<span style="color:#64748b;font-size:0.72rem">No prices</span>'}</div>
-    </div>`;
-  }).join('');
-
-  if (stations.length > 200) {
-    list.innerHTML +=
-      `<p class="empty">Showing 200 of ${stations.length.toLocaleString()} — use filters to narrow.</p>`;
-  }
-}
-
-function selectStation(i) {
-  const s = filteredStations[i];
-  if (!s) return;
-
-  if (activeCard) activeCard.classList.remove('active');
-  const card = document.getElementById(`card-${i}`);
-  if (card) {
-    card.classList.add('active');
-    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    activeCard = card;
-  }
-
-  const marker = markerList[i];
-  if (marker && s.lat && s.lon) {
-    map.setView([s.lat, s.lon], Math.max(map.getZoom(), 14));
-    // Fix: zoomToShowLayer handles the case where marker is inside a cluster
-    clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
-    // Close mobile sheets so map is visible
-    if (window.innerWidth <= 768) closeAllSheets();
-  }
-}
-
-// ── My Location ────────────────────────────────────────────────────────────
+// ── My Location ───────────────────────────────────────────────────────────────
 function goToMyLocation() {
-  if (!navigator.geolocation) {
-    alert('Geolocation is not supported by your browser.');
-    return;
-  }
+  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
   document.querySelectorAll('.loc-btn').forEach(b => b.classList.add('loading'));
 
   navigator.geolocation.getCurrentPosition(
     pos => {
       const { latitude: lat, longitude: lon, accuracy } = pos.coords;
       document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('loading'));
-
       map.setView([lat, lon], 13);
       if (window.innerWidth <= 768) closeAllSheets();
 
@@ -706,23 +796,19 @@ function goToMyLocation() {
     },
     err => {
       document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('loading'));
-      const msgs = {
-        1: 'Permission denied — enable location in browser settings.',
-        2: 'Position unavailable.',
-        3: 'Timed out.',
-      };
+      const msgs = { 1: 'Permission denied.', 2: 'Position unavailable.', 3: 'Timed out.' };
       alert('Location error: ' + (msgs[err.code] || err.message));
     },
     { timeout: 10000, maximumAge: 60000 }
   );
 }
 
-// ── Address search ─────────────────────────────────────────────────────────
+// ── Address search ─────────────────────────────────────────────────────────────
 async function searchAddress() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
+    const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
     const resp = await fetch(url, { headers: { 'Accept-Language': 'en' } });
     const data = await resp.json();
     if (!data.length) { alert(`"${q}" not found.`); return; }
@@ -738,19 +824,44 @@ async function searchAddress() {
   }
 }
 
-// ── Filters & reset ────────────────────────────────────────────────────────
+// ── Filter controls ───────────────────────────────────────────────────────────
 function resetFilters() {
   document.getElementById('countryFilter').value = '';
   document.getElementById('fuelFilter').value = '';
   document.getElementById('searchInput').value = '';
-  render();
+  filterCountry = '';
+  filterFuel    = '';
+  applyFilters();
 }
 
-document.getElementById('countryFilter').addEventListener('change', render);
-document.getElementById('fuelFilter').addEventListener('change', render);
+document.getElementById('countryFilter').addEventListener('change', e => {
+  filterCountry = e.target.value;
+  applyFilters();
+  scheduleViewportCheck();
+});
 
-// ── Boot ───────────────────────────────────────────────────────────────────
-loadData();
+document.getElementById('fuelFilter').addEventListener('change', e => {
+  filterFuel = e.target.value;
+  applyFilters();
+});
+
+// ── Boot: load meta then trigger initial viewport check ───────────────────────
+(async () => {
+  const status = document.getElementById('status');
+  try {
+    // Fetch lightweight meta.json first to get timestamps and country list
+    const resp = await fetch('meta.json');
+    if (resp.ok) {
+      const meta = await resp.json();
+      metaFetchedAt = meta.fetched_at;
+    }
+  } catch (_) { /* meta.json may not exist yet on first deploy */ }
+
+  // Trigger initial load of countries visible in the starting viewport
+  updateStatus();
+  updatePriceLabels();
+  scheduleViewportCheck();
+})();
 </script>
 </body>
 </html>

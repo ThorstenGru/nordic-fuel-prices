@@ -9,6 +9,9 @@ from .italy import ItalyScraper
 from .germany import GermanyScraper
 from .portugal import PortugalScraper
 from .iceland import IcelandScraper
+from .croatia import CroatiaScraper
+from .slovenia import SloveniaScraper
+from .romania import RomaniaScraper
 
 ALL_SCRAPERS = [
     SwedenScraper,
@@ -22,4 +25,7 @@ ALL_SCRAPERS = [
     GermanyScraper,
     PortugalScraper,
     IcelandScraper,
+    CroatiaScraper,
+    SloveniaScraper,
+    RomaniaScraper,
 ]

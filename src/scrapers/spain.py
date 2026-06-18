@@ -1,4 +1,5 @@
 import aiohttp
+import asyncio
 from typing import List, Dict, Any
 from .base import BaseScraper
 
@@ -32,18 +33,32 @@ class SpainScraper(BaseScraper):
     CONFIDENCE = 0.95
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        try:
-            async with self.session.get(
-                BASE_URL,
-                timeout=aiohttp.ClientTimeout(total=60),
-                headers={"Accept": "application/json"},
-            ) as resp:
-                if resp.status != 200:
-                    print(f"[ES] HTTP {resp.status}")
-                    return []
-                data = await resp.json(content_type=None)
-        except Exception as e:
-            print(f"[ES] {e}")
+        # MINETUR occasionally resets connections from cloud provider IPs; retry 3×
+        data = None
+        for attempt in range(3):
+            try:
+                async with self.session.get(
+                    BASE_URL,
+                    timeout=aiohttp.ClientTimeout(total=60),
+                    headers={
+                        "Accept": "application/json",
+                        "User-Agent": (
+                            "Mozilla/5.0 (X11; Linux x86_64) "
+                            "AppleWebKit/537.36 (KHTML, like Gecko) "
+                            "Chrome/124.0 Safari/537.36"
+                        ),
+                    },
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        break
+                    print(f"[ES] HTTP {resp.status} (attempt {attempt + 1})")
+            except Exception as e:
+                print(f"[ES] {e} (attempt {attempt + 1})")
+            if attempt < 2:
+                await asyncio.sleep(8 * (attempt + 1))
+
+        if data is None:
             return []
 
         raw_list = data.get("ListaEESSPrecio", [])
