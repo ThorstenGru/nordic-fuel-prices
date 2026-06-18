@@ -42,8 +42,15 @@ class ItalyScraper(BaseScraper):
 
         # Parse station registry
         # Columns: idImpianto|Gestore|Bandiera|Tipo Impianto|Nome Impianto|Indirizzo|Comune|Provincia|Latitudine|Longitudine
+        # The registry CSV may also start with a metadata line ("Estrazione del YYYY-MM-DD") before the header
+        registry_lines = registry_text.splitlines()
+        reg_header_idx = next(
+            (i for i, line in enumerate(registry_lines) if line.startswith("idImpianto")),
+            None,
+        )
+        registry_body = "\n".join(registry_lines[reg_header_idx:]) if reg_header_idx is not None else registry_text
         stations: Dict[str, Dict] = {}
-        reader = csv.DictReader(io.StringIO(registry_text), delimiter="|")
+        reader = csv.DictReader(io.StringIO(registry_body), delimiter="|")
         for row in reader:
             sid = (row.get("idImpianto") or "").strip()
             if not sid:

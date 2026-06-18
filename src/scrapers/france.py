@@ -44,6 +44,13 @@ class FranceScraper(BaseScraper):
             print(f"[FR] {e}")
             return []
 
+        # API may return a paginated dict {"results": [...]} or a bare array
+        if isinstance(raw, dict):
+            raw = raw.get("results") or raw.get("records") or []
+        if not isinstance(raw, list):
+            print("[FR] Unexpected API response format")
+            return []
+
         stations = []
         for s in raw:
             prices = self._parse_prices(s.get("prix") or s.get("fields", {}).get("prix"))
