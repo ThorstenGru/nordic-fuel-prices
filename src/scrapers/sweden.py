@@ -50,13 +50,16 @@ def _split_byvaeg(s: str) -> Tuple[str, str]:
 class SwedenScraper(BaseScraper):
     COUNTRY = "SE"
     CURRENCY = "SEK"
-    SOURCE = "henrikhjelm.se"
-    CONFIDENCE = 0.85  # Community-curated
+    SOURCE = "bensinpriser.nu (via henrikhjelm.se)"
+    CONFIDENCE = 0.85  # Community-curated + station-owner reported
 
     BASE_URL = "https://henrikhjelm.se/api/getdata.php"
+    # Limit concurrent requests — the proxy server throttles under heavy parallel load.
+    _CONCURRENCY = 4
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        tasks = [self._fetch_county(c) for c in COUNTIES]
+        sem = asyncio.Semaphore(self._CONCURRENCY)
+        tasks = [self._fetch_county_throttled(c, sem) for c in COUNTIES]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Merge: station_id → {fuel_type: price, ...}
@@ -111,13 +114,21 @@ class SwedenScraper(BaseScraper):
 
     # ── County fetch ───────────────────────────────────────────────────────
 
+    async def _fetch_county_throttled(
+        self, county: str, sem: asyncio.Semaphore
+    ) -> List[Tuple[str, str, float]]:
+        async with sem:
+            result = await self._fetch_county(county)
+            await asyncio.sleep(0.3)
+            return result
+
     async def _fetch_county(self, county: str) -> List[Tuple[str, str, float]]:
         """Returns list of (station_id, fuel_type_raw, price)."""
         try:
             async with self.session.get(
                 self.BASE_URL,
                 params={"lan": county},
-                timeout=aiohttp.ClientTimeout(total=20),
+                timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 if resp.status != 200:
                     return []
