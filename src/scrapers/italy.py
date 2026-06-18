@@ -114,20 +114,36 @@ class ItalyScraper(BaseScraper):
         return result
 
     async def _fetch_csv(self, url: str) -> str:
-        try:
-            async with self.session.get(
-                url, timeout=aiohttp.ClientTimeout(total=90)
-            ) as resp:
-                if resp.status != 200:
-                    print(f"[IT] HTTP {resp.status} — {url}")
-                    return ""
-                raw = await resp.read()
-                for enc in ("utf-8-sig", "latin-1", "cp1252"):
-                    try:
-                        return raw.decode(enc)
-                    except UnicodeDecodeError:
-                        continue
-                return raw.decode("latin-1", errors="replace")
-        except Exception as e:
-            print(f"[IT] {e} — {url}")
-            return ""
+        _HEADERS = {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0 Safari/537.36"
+            ),
+            "Accept": "text/csv,text/plain,*/*",
+            "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
+            "Referer": "https://www.mimit.gov.it/",
+        }
+        for attempt in range(3):
+            try:
+                async with self.session.get(
+                    url,
+                    timeout=aiohttp.ClientTimeout(total=90),
+                    headers=_HEADERS,
+                ) as resp:
+                    if resp.status != 200:
+                        print(f"[IT] HTTP {resp.status} — {url}")
+                        return ""
+                    raw = await resp.read()
+                    for enc in ("utf-8-sig", "latin-1", "cp1252"):
+                        try:
+                            return raw.decode(enc)
+                        except UnicodeDecodeError:
+                            continue
+                    return raw.decode("latin-1", errors="replace")
+            except Exception as e:
+                if attempt < 2:
+                    await asyncio.sleep(4 * (attempt + 1))
+                else:
+                    print(f"[IT] {e} — {url}")
+        return ""

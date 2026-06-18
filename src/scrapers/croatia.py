@@ -32,7 +32,18 @@ class CroatiaScraper(BaseScraper):
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         try:
             async with self.session.get(
-                DATA_URL, timeout=aiohttp.ClientTimeout(total=30)
+                DATA_URL,
+                timeout=aiohttp.ClientTimeout(total=30),
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (X11; Linux x86_64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/124.0 Safari/537.36"
+                    ),
+                    "Accept": "application/json, */*",
+                    "Accept-Language": "hr-HR,hr;q=0.9,en;q=0.8",
+                    "Referer": "https://mzoe-gor.hr/",
+                },
             ) as resp:
                 if resp.status != 200:
                     print(f"[HR] HTTP {resp.status}")

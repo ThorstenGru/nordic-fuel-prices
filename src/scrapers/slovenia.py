@@ -6,7 +6,28 @@ from .base import BaseScraper
 # Free REST API, ~550 stations with GPS, updated in near real-time
 # Backup raw data: github.com/stefanb/goriva-data
 
-API_URL = "https://goriva.si/api/v1/stations/?format=json&page_size=2000"
+# goriva.si API (try with and without explicit format param)
+_API_URLS = [
+    "https://goriva.si/api/v1/stations/?format=json&page_size=2000",
+    "https://goriva.si/api/v1/stations/",
+    "https://goriva.si/api/v1/postaja/?format=json&page_size=2000",  # SI: postaja = station
+    "https://goriva.si/api/v1/price/?format=json&page_size=2000",
+]
+# Community data mirror updated by GitHub Action from goriva.si
+_GITHUB_URLS = [
+    "https://raw.githubusercontent.com/stefanb/goriva-data/main/goriva.si.json",
+    "https://raw.githubusercontent.com/stefanb/goriva-data/main/data/goriva.si.json",
+    "https://raw.githubusercontent.com/stefanb/goriva-data/master/goriva.si.json",
+]
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0 Safari/537.36"
+    ),
+    "Accept": "application/json",
+    "Referer": "https://goriva.si/",
+}
 
 # Map Slovenian fuel names (case-insensitive substrings) to internal types
 _FUEL_KEYWORDS = [
@@ -46,30 +67,15 @@ class SloveniaScraper(BaseScraper):
     CONFIDENCE = 1.0  # Government-mandated data
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        try:
-            async with self.session.get(
-                API_URL,
-                timeout=aiohttp.ClientTimeout(total=30),
-                headers={"Accept": "application/json"},
-            ) as resp:
-                if resp.status != 200:
-                    print(f"[SI] HTTP {resp.status}")
-                    return []
-                raw = await resp.json(content_type=None)
-        except Exception as e:
-            print(f"[SI] {e}")
-            return []
-
-        # DRF pagination: {"count":..., "results":[...]} or raw list
-        if isinstance(raw, dict):
-            items = raw.get("results") or raw.get("stations") or raw.get("data") or []
-        elif isinstance(raw, list):
-            items = raw
+        # Try all API URLs first, then GitHub mirrors
+        for url in _API_URLS + _GITHUB_URLS:
+            items = await self._fetch_url(url)
+            if items:
+                break
         else:
-            print(f"[SI] Unexpected format: {type(raw)}")
             return []
 
-        stations = []
+        stations: List[Dict[str, Any]] = []
         for item in items:
             prices = self._parse_prices(item)
             if not prices:
@@ -104,8 +110,32 @@ class SloveniaScraper(BaseScraper):
                 "prices": prices,
             })
 
-        print(f"[SI] {len(stations)} stations from goriva.si")
+        print(f"[SI] {len(stations)} stations")
         return stations
+
+    async def _fetch_url(self, url: str) -> list:
+        try:
+            async with self.session.get(
+                url,
+                timeout=aiohttp.ClientTimeout(total=30),
+                headers=_HEADERS,
+            ) as resp:
+                if resp.status != 200:
+                    print(f"[SI] HTTP {resp.status} — {url}")
+                    return []
+                raw = await resp.json(content_type=None)
+        except Exception as e:
+            print(f"[SI] {e} — {url}")
+            return []
+
+        if isinstance(raw, dict):
+            return (
+                raw.get("results") or raw.get("stations") or
+                raw.get("data") or raw.get("postaje") or []
+            )
+        if isinstance(raw, list):
+            return raw
+        return []
 
     def _parse_prices(self, item: dict) -> List[Dict]:
         """Handle both list-of-dicts and dict-of-values price formats."""

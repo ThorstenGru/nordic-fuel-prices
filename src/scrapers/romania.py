@@ -1,33 +1,40 @@
+import json
 import aiohttp
 from typing import List, Dict, Any, Optional
 from .base import BaseScraper
 
 # Romania: mandatory fuel price reporting via ANPC (National Consumer Protection Authority)
-# Data mirrored at peco-online.ro (updated every ~2h from ANPC feed)
-# Free, no API key required, ~1500 stations with GPS
+# Multiple possible endpoints tried in order:
+#   1. peco-online.ro — popular aggregator, gets data from ANPC feed
+#   2. carburanti.raa.ro — Registrul Auto Român (Romanian Auto Registry) API
+#   3. ANPC preturi-carburanti — official government portal
 
-# Primary: ANPC Transparent Prices portal
-PRIMARY_URL = "https://www.peco-online.ro/index.php"
-PRIMARY_PARAMS = {"action": "getStationsJson", "tip_carburant": "0"}
-
-# Fallback: goriva-style endpoint (try if primary fails)
-FALLBACK_URL = "https://carburanti.raa.ro/api/statii"
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Accept-Language": "ro-RO,ro;q=0.9,en;q=0.8",
+    "X-Requested-With": "XMLHttpRequest",
+}
 
 # Map Romanian fuel type strings → internal types
 _FUEL_KEYWORDS = [
-    ("hvo",       "HVO100", "L"),
-    ("e85",       "E85",    "L"),
-    ("gpl",       "LPG",    "L"),
-    ("gaz petrol","LPG",    "L"),
-    ("gaz natur", "CNG",    "kg"),
-    ("cng",       "CNG",    "kg"),
-    ("premium 98","E5",     "L"),
-    ("super 98",  "E5",     "L"),
-    ("benzina 98","E5",     "L"),
-    ("98",        "E5",     "L"),
-    ("benzina",   "E5",     "L"),  # catch-all petrol
-    ("motorina",  "DIESEL", "L"),
-    ("diesel",    "DIESEL", "L"),
+    ("hvo",         "HVO100", "L"),
+    ("e85",         "E85",    "L"),
+    ("gpl",         "LPG",    "L"),
+    ("gaz pet",     "LPG",    "L"),
+    ("gaz nat",     "CNG",    "kg"),
+    ("cng",         "CNG",    "kg"),
+    ("premium 98",  "E5",     "L"),
+    ("super 98",    "E5",     "L"),
+    ("benzina 98",  "E5",     "L"),
+    ("98",          "E5",     "L"),
+    ("benzina",     "E5",     "L"),
+    ("motorina",    "DIESEL", "L"),
+    ("diesel",      "DIESEL", "L"),
 ]
 
 _LAT_MIN, _LAT_MAX = 43.5, 48.4
@@ -49,66 +56,123 @@ class RomaniaScraper(BaseScraper):
     CONFIDENCE = 0.90
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        stations = await self._try_primary()
-        if not stations:
-            stations = await self._try_fallback()
-        if stations:
-            print(f"[RO] {len(stations)} stations")
-        return stations
+        # Try each source in order — return on first success
+        for method in (
+            self._try_peco_online,
+            self._try_peco_online_post,
+            self._try_raa,
+        ):
+            stations = await method()
+            if stations:
+                print(f"[RO] {len(stations)} stations")
+                return stations
+        print("[RO] All endpoints returned 0 stations")
+        return []
 
-    async def _try_primary(self) -> List[Dict]:
-        """peco-online.ro JSON endpoint."""
-        try:
-            async with self.session.get(
-                PRIMARY_URL,
-                params=PRIMARY_PARAMS,
-                timeout=aiohttp.ClientTimeout(total=30),
-                headers={"Accept": "application/json, text/javascript, */*"},
-            ) as resp:
-                if resp.status != 200:
-                    return []
-                raw = await resp.json(content_type=None)
-        except Exception:
-            return []
+    async def _try_peco_online(self) -> List[Dict]:
+        """peco-online.ro GET endpoint — tries several tip_carburant values."""
+        for tip in ("", "0", "1"):
+            params = {"action": "getStationsJson"}
+            if tip:
+                params["tip_carburant"] = tip
+            try:
+                async with self.session.get(
+                    "https://www.peco-online.ro/index.php",
+                    params=params,
+                    timeout=aiohttp.ClientTimeout(total=30),
+                    headers=_BROWSER_HEADERS,
+                ) as resp:
+                    if resp.status != 200:
+                        continue
+                    text = await resp.text()
+                    if not text or len(text) < 20:
+                        continue
+                    try:
+                        raw = json.loads(text)
+                    except Exception:
+                        continue
+                    items = self._unwrap(raw)
+                    if items:
+                        result = self._parse_items(items, "peco-online.ro")
+                        if result:
+                            return result
+            except Exception:
+                pass
+        return []
 
+    async def _try_peco_online_post(self) -> List[Dict]:
+        """peco-online.ro POST with form data (AJAX-style request)."""
+        for tip in ("", "0"):
+            data = {"action": "getStationsJson"}
+            if tip:
+                data["tip_carburant"] = tip
+            try:
+                async with self.session.post(
+                    "https://www.peco-online.ro/index.php",
+                    data=data,
+                    timeout=aiohttp.ClientTimeout(total=30),
+                    headers=_BROWSER_HEADERS,
+                ) as resp:
+                    if resp.status != 200:
+                        continue
+                    text = await resp.text()
+                    if not text or len(text) < 20:
+                        continue
+                    try:
+                        raw = json.loads(text)
+                    except Exception:
+                        continue
+                    items = self._unwrap(raw)
+                    if items:
+                        result = self._parse_items(items, "peco-online.ro")
+                        if result:
+                            return result
+            except Exception:
+                pass
+        return []
+
+    async def _try_raa(self) -> List[Dict]:
+        """Registrul Auto Român API."""
+        for url in (
+            "https://carburanti.raa.ro/api/statii",
+            "https://carburanti.raa.ro/api/stations",
+            "https://carburanti.raa.ro/api/v1/statii",
+        ):
+            try:
+                async with self.session.get(
+                    url,
+                    timeout=aiohttp.ClientTimeout(total=30),
+                    headers={**_BROWSER_HEADERS, "Referer": "https://carburanti.raa.ro/"},
+                ) as resp:
+                    if resp.status != 200:
+                        print(f"[RO] RAA HTTP {resp.status} — {url}")
+                        continue
+                    raw = await resp.json(content_type=None)
+                    items = self._unwrap(raw)
+                    if items:
+                        result = self._parse_items(items, "raa.ro")
+                        if result:
+                            return result
+            except Exception as e:
+                print(f"[RO] RAA {e} — {url}")
+        return []
+
+    def _unwrap(self, raw) -> list:
+        if isinstance(raw, list):
+            return raw
         if isinstance(raw, dict):
-            items = raw.get("stations") or raw.get("data") or raw.get("results") or []
-        elif isinstance(raw, list):
-            items = raw
-        else:
-            return []
-
-        return self._parse_items(items, "peco-online.ro")
-
-    async def _try_fallback(self) -> List[Dict]:
-        """RAA (Registrul Auto Român) fallback endpoint."""
-        try:
-            async with self.session.get(
-                FALLBACK_URL,
-                timeout=aiohttp.ClientTimeout(total=30),
-                headers={"Accept": "application/json"},
-            ) as resp:
-                if resp.status != 200:
-                    return []
-                raw = await resp.json(content_type=None)
-        except Exception:
-            return []
-
-        if isinstance(raw, dict):
-            items = (
-                raw.get("statii") or raw.get("stations") or
-                raw.get("data") or raw.get("results") or []
+            return (
+                raw.get("stations") or raw.get("statii") or
+                raw.get("data") or raw.get("results") or
+                raw.get("items") or []
             )
-        elif isinstance(raw, list):
-            items = raw
-        else:
-            return []
-
-        return self._parse_items(items, "raa.ro")
+        return []
 
     def _parse_items(self, items: list, source: str) -> List[Dict]:
         stations = []
         for item in items:
+            if not isinstance(item, dict):
+                continue
             prices = self._parse_prices(item)
             if not prices:
                 continue
@@ -153,7 +217,7 @@ class RomaniaScraper(BaseScraper):
             item.get("carburanti") or item.get("prices") or
             item.get("preturi") or item.get("price_list") or []
         )
-        seen = set()
+        seen: set = set()
         prices = []
 
         if isinstance(prix, list):
