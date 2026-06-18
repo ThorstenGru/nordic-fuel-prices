@@ -425,21 +425,9 @@ const COUNTRY_FLAGS = {
   IS:'🇮🇸', IT:'🇮🇹', LV:'🇱🇻', LT:'🇱🇹', LU:'🇱🇺',
   NL:'🇳🇱', NO:'🇳🇴', PL:'🇵🇱', PT:'🇵🇹', RO:'🇷🇴',
   SK:'🇸🇰', SI:'🇸🇮', ES:'🇪🇸', SE:'🇸🇪', CH:'🇨🇭',
-  // Balkans / South-East Europe
-  GR:'🇬🇷', BG:'🇧🇬', RS:'🇷🇸', ME:'🇲🇪', MK:'🇲🇰',
-  AL:'🇦🇱', BA:'🇧🇦', XK:'🇽🇰', AD:'🇦🇩',
-  // Eastern Europe / Mediterranean
-  MD:'🇲🇩', MT:'🇲🇹', CY:'🇨🇾', LI:'🇱🇮',
 };
 const CURRENCY_SYMBOL = {
-  // Eurozone
-  EUR: '€',
-  // Nordic
-  SEK: 'kr', NOK: 'kr', DKK: 'kr', ISK: 'kr',
-  // Eastern / Central Europe
-  PLN: 'zł', HUF: 'Ft', CZK: 'Kč', RON: 'lei', CHF: 'Fr',
-  // Balkans
-  BGN: 'лв', RSD: 'din', MKD: 'ден', ALL: 'L', BAM: 'KM', MDL: 'lei',
+  EUR:'€', SEK:'kr', NOK:'kr', DKK:'kr', ISK:'kr', RON:'lei',
 };
 const UNIT_LABEL = { L:'/L', kWh:'/kWh', kg:'/kg' };
 const PRICE_ZOOM   = 13;
@@ -715,24 +703,22 @@ function rebuildSidebar() {
 }
 
 function stationCard(s) {
-  const flag    = COUNTRY_FLAGS[s.country] || '';
-  const chips   = (s.prices || []).map(p => {
-    const sym = CURRENCY_SYMBOL[p.currency] || p.currency || '';
-    return `<span class="price-chip">
+  const flag  = COUNTRY_FLAGS[s.country] || '';
+  const sym   = CURRENCY_SYMBOL[s.prices?.[0]?.currency] || '';
+  const chips = (s.prices || []).map(p =>
+    `<span class="price-chip">
       <span class="type">${p.fuel_type}</span>
       <span class="val">${p.price.toFixed(2)}</span>
       <span class="cur">${sym}</span>
-    </span>`;
-  }).join('');
-  const updated = s.prices?.[0]?.updated_at ? formatDate(s.prices[0].updated_at) : '';
-  const noPin   = (s.lat && s.lon) ? '' :
+    </span>`
+  ).join('');
+  const noPin = (s.lat && s.lon) ? '' :
     '<span style="color:#475569;font-size:0.62rem;margin-left:4px" title="No GPS">📍✕</span>';
   const isActive = s.id === activeSid ? ' active' : '';
   return `<div class="station-card${isActive}" id="card-${s.id}" onclick="highlightStation('${s.id}')">
     <div class="station-name">${flag} ${s.name || s.brand || '—'}${noPin}</div>
     <div class="station-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
     <div class="prices">${chips || '<span style="color:#64748b;font-size:0.72rem">No prices</span>'}</div>
-    ${updated ? `<div style="color:#475569;font-size:0.62rem;margin-top:2px">⏱ ${updated}</div>` : ''}
   </div>`;
 }
 
@@ -772,38 +758,22 @@ function confidenceColor(c) {
   return '#ef4444';
 }
 
-function formatDate(iso) {
-  if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
-    const hh = String(d.getUTCHours()).padStart(2,'0');
-    const mm = String(d.getUTCMinutes()).padStart(2,'0');
-    return `${d.getUTCDate()} ${mo} ${hh}:${mm} UTC`;
-  } catch { return ''; }
-}
-
 function buildPopup(s) {
   const flag = COUNTRY_FLAGS[s.country] || '';
-  const rows = (s.prices || []).map(p => {
-    const sym = CURRENCY_SYMBOL[p.currency] || p.currency || '';
-    return `<tr>
+  const sym  = CURRENCY_SYMBOL[s.prices?.[0]?.currency] || '';
+  const rows = (s.prices || []).map(p =>
+    `<tr>
       <td style="color:#94a3b8;padding-right:8px">${p.fuel_type}</td>
       <td style="color:#22c55e;font-weight:700">${p.price.toFixed(2)}</td>
       <td style="color:#64748b;padding-left:2px">${sym}${UNIT_LABEL[p.unit] || ''}</td>
-    </tr>`;
-  }).join('');
-  const meta    = [s.city, s.brand, s.source].filter(Boolean).join(' · ');
-  const updated = s.prices?.[0]?.updated_at ? formatDate(s.prices[0].updated_at) : '';
-  const noPrices = !s.prices?.length
-    ? `<div style="color:#64748b;font-style:italic;font-size:0.75rem;margin-top:4px">No price data available</div>` : '';
+    </tr>`
+  ).join('');
+  const meta = [s.city, s.brand, s.source].filter(Boolean).join(' · ');
   return `<div style="font-family:system-ui;font-size:0.82rem;min-width:140px">
     <strong style="color:#f1f5f9">${flag} ${s.name || s.brand || ''}</strong>
     ${s.address ? `<div style="color:#64748b;font-size:0.72rem;margin:1px 0">${s.address}</div>` : ''}
     <div style="color:#64748b;font-size:0.70rem;margin-bottom:6px">${meta}</div>
     <table style="border-collapse:collapse">${rows}</table>
-    ${noPrices}
-    ${updated ? `<div style="color:#475569;font-size:0.65rem;margin-top:5px">⏱ ${updated}</div>` : ''}
   </div>`;
 }
 
