@@ -1,8 +1,9 @@
 import aiohttp
 import asyncio
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from .base import BaseScraper
+from . import geocoder as _geo
 
 # Free, no-auth APIs mandated by Danish law from Jan 2026
 SHELL_URL = "https://shellpumpepriser.geoapp.me/v1/prices"
@@ -135,7 +136,7 @@ class DenmarkScraper(BaseScraper):
             if not prices:
                 continue
 
-            city, postal = self._parse_q8_address(item.get("address", ""))
+            city, postal, street = self._parse_q8_address(item.get("address", ""))
             stations.append({
                 "id": f"dk_q8_{item.get('stationId', '')}",
                 "country": "DK",
@@ -143,6 +144,7 @@ class DenmarkScraper(BaseScraper):
                 "address": item.get("address", ""),
                 "city": city,
                 "postal_code": postal,
+                "geo_street": street,   # extracted street component for geocoding
                 "brand": item.get("stationName", ""),
                 "lat": None,  # Q8 API doesn't include coordinates
                 "lon": None,
@@ -150,6 +152,15 @@ class DenmarkScraper(BaseScraper):
                 "confidence": self.CONFIDENCE,
                 "prices": prices,
             })
+
+        await _geo.apply_geocoding(
+            stations, "DK", self.session,
+            key_fn=lambda s: s["id"],
+            query_fn=lambda s: (s.get("city", ""), s.get("geo_street", ""), s.get("postal_code", "")),
+        )
+
+        for s in stations:
+            s.pop("geo_street", None)
 
         return stations
 
@@ -168,16 +179,21 @@ class DenmarkScraper(BaseScraper):
                 return ft
         return None
 
-    def _parse_q8_address(self, address: str):
-        # Format: "Street City PostalCode Danmark"
-        # e.g. "Dronningemaen 34 Svendborg 5700 Danmark"
+    def _parse_q8_address(self, address: str) -> Tuple[str, str, str]:
+        """Parse Q8 address string → (city, postal, street).
+
+        Format: "Street [Number] City PostalCode Danmark"
+        e.g. "Dronningemaen 34 Svendborg 5700 Danmark"
+        → city="Svendborg", postal="5700", street="Dronningemaen 34"
+        """
         match = re.search(r'(\d{4})', address)
         postal = match.group(1) if match else ""
-        # City is word before postal code
+        street = ""
         if match:
             before_postal = address[:match.start()].strip()
             words = before_postal.split()
             city = words[-1] if words else ""
+            street = " ".join(words[:-1]) if len(words) > 1 else ""
         else:
             city = ""
-        return city, postal
+        return city, postal, street

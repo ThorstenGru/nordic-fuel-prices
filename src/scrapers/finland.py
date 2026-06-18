@@ -4,10 +4,19 @@ import re
 import urllib.parse
 from typing import List, Dict, Any, Optional
 from .base import BaseScraper
+from . import geocoder as _geo
 
 BASE_URL = "https://www.polttoaine.net"
 ENCODING = "windows-1252"
 CONCURRENCY = 10
+
+# Slugs that are brand names or major roads, not city names.
+# These cannot be passed to Nominatim as a "city" constraint.
+_FI_NON_CITY_SLUGS = {
+    "A24", "ABC", "Esso", "Futura", "Neste", "Neste_Oil", "Neste_Oil_Express",
+    "Nex", "Ritoil", "Seo", "Shell", "ShellExpress", "St1", "Teboil",
+    "Teboil_Express", "Ysi5",
+}
 
 # All slugs from the city/brand/road dropdown on polttoaine.net
 SLUGS = [
@@ -51,6 +60,21 @@ HINNAT_RE = re.compile(r'<td[^>]*class="Hinnat[^"]*"[^>]*>([^<]+)</td>')
 RE85_RE = re.compile(r'\(Re85\s+([\d.]+)\)')
 
 
+def _fi_query(s: Dict) -> tuple:
+    """Build Nominatim query tuple (city, street, postal) for a Finnish station."""
+    city = s.get("city", "")
+    address = s.get("address", "")
+    # Brand slugs and road slugs cannot constrain Nominatim by city
+    if (
+        city in _FI_NON_CITY_SLUGS
+        or "-tie" in city
+        or city.startswith("Keha")
+        or (city and city[0].isdigit())
+    ):
+        city = ""
+    return city, address, ""
+
+
 class FinlandScraper(BaseScraper):
     COUNTRY = "FI"
     CURRENCY = "EUR"
@@ -71,9 +95,16 @@ class FinlandScraper(BaseScraper):
                 if sid not in seen:
                     seen[sid] = station
 
-        total = len(seen)
-        print(f"[FI] {total} stations from polttoaine.net")
-        return list(seen.values())
+        stations = list(seen.values())
+        print(f"[FI] {len(stations)} stations from polttoaine.net")
+
+        await _geo.apply_geocoding(
+            stations, "FI", self.session,
+            key_fn=lambda s: s["id"],
+            query_fn=_fi_query,
+        )
+
+        return stations
 
     async def _fetch_slug(self, slug: str, sem: asyncio.Semaphore) -> List[Dict]:
         url = f"{BASE_URL}/{urllib.parse.quote(slug, safe='_-()~')}"
