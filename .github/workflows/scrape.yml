@@ -1,4 +1,4 @@
-name: Scrape European Fuel Prices
+name: EuroFuelPrices — Scrape
 
 on:
   schedule:
@@ -29,7 +29,6 @@ jobs:
 
       - name: Run scrapers
         env:
-          FUELPRICES_DK_API_KEY: ${{ secrets.FUELPRICES_DK_API_KEY }}
           TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}
         run: python src/main.py
 

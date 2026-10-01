@@ -1,55 +1,102 @@
-# Nordic Fuel Prices
+# EuroFuelPrices
 
-Real-time fuel price aggregator for Sweden, Norway, Denmark, and Finland.
-Data is pulled every 30 minutes via GitHub Actions and served as static JSON on GitHub Pages.
+Live fuel price aggregator covering **all of Europe + EEA** — 38 countries, 80,000+ stations. Data is scraped every 30 minutes via GitHub Actions and served as static JSON on GitHub Pages.
 
-## Live map
+**Live map:** `https://thorstengru.github.io/nordic-fuel-prices/`  
+**Data dashboard:** `https://thorstengru.github.io/nordic-fuel-prices/admin.html`
 
-`https://<your-github-username>.github.io/nordic-fuel-prices/`
+---
 
-## Coverage
+## Coverage — 38 Countries
 
-| Country | Source | Type | Update | Stations | API Key |
-|---------|--------|------|--------|----------|---------|
-| 🇸🇪 Sweden | [henrikhjelm.se](https://henrikhjelm.se) | Community (curated) | 30 min | ~1,500 | No |
-| 🇳🇴 Norway | [drivstoffpriser.no](https://drivstoffpriser.no) | Government-mandated | 6h | ~1,000 | No |
-| 🇩🇰 Denmark | [fuelprices.dk](https://fuelprices.dk) | Commercial (8 chains) | 60 min | ~1,500 | Yes (free) |
-| 🇫🇮 Finland | [polttoaine.net](https://polttoaine.net) | Community | 12h | ~1,000 | No |
+### Tier 1 — Official mandatory government APIs (highest accuracy)
 
-## Fuel types
+| Country | Source | Stations | Update |
+|---------|--------|----------|--------|
+| 🇩🇪 Germany | [Tankerkönig / MTS-K](https://creativecommons.tankerkoenig.de) | ~14,000 | ~15 min |
+| 🇫🇷 France | [data.economie.gouv.fr](https://data.economie.gouv.fr) | ~12,000 | Near real-time |
+| 🇪🇸 Spain | [MINETUR](https://sedeaplicaciones.minetur.gob.es) | ~12,000 | Near real-time |
+| 🇮🇹 Italy | [MIMIT](https://www.mise.gov.it) | ~20,000 | Daily (8 AM) |
+| 🇵🇹 Portugal | [DGEG](https://precoscombustiveis.dgeg.gov.pt) | ~4,000 | Regular |
+| 🇦🇹 Austria | [e-Control](https://api.e-control.at) | ~2,500 | Real-time |
+| 🇭🇷 Croatia | [MZOE](https://mzoe-gor.hr) | ~900 | Daily |
+| 🇸🇮 Slovenia | [goriva.si](https://goriva.si) | ~550 | Real-time |
 
-All fuel types are tracked — not just petrol and diesel:
+### Tier 2 — Chain & community APIs
 
-| Category | Types | Unit |
-|----------|-------|------|
-| Fossil | E10, E5 (98), Diesel, LPG, HVO100 | L |
-| Electric | AC 22kW, DC 50kW | kWh |
+| Country | Source | Stations | Notes |
+|---------|--------|----------|-------|
+| 🇸🇪 Sweden | OSM + [bensinpriser.nu](https://henrikhjelm.se) | ~1,800 | Major chains omit prices (Konkurrensverket) |
+| 🇩🇰 Denmark | Shell geoapp + Q8 API + ANWB | ~1,500 | Three sources merged |
+| 🇫🇮 Finland | [polttoaine.net](https://polttoaine.net) + ANWB | ~1,000 | Community-reported |
+| 🇮🇸 Iceland | [gasvaktin](https://github.com/gasvaktin/gasvaktin) | ~75 | Community |
+| 🇷🇴 Romania | [peco-online.ro](https://peco-online.ro) | ~1,200 | ANPC-backed |
 
-Every price record includes `currency` (SEK, NOK, DKK, EUR) and `unit`.
+### Tier 3 — ANWB POI API (22 countries)
 
-## Data format
+NL · BE · LU · CH · LI · PL · CZ · HU · SK · EE · LV · LT · GR · BG · RS · ME · MK · AL · BA · XK · AD · MD · MT · CY
 
-**`data/all.json`** — combined output, all countries  
-**`data/se.json`**, `no.json`, `dk.json`, `fi.json` — per-country
+### Locations only (no prices — regulatory)
+
+| Country | Reason |
+|---------|--------|
+| 🇳🇴 Norway | Anti-cartel law bans Circle K, YX, Uno-X, ST1, Shell from publishing list prices until 2030 |
+
+---
+
+## Data Format
+
+**`data/meta.json`** — lightweight index (fetched first by the frontend)  
+**`data/{cc}.json`** — per-country stations (lazy-loaded by viewport)
 
 ```json
 {
-  "meta": { "country": "SE", "currency": "SEK", "source": "henrikhjelm.se", "fetched_at": "..." },
+  "meta": {
+    "country": "SE",
+    "currency": "SEK",
+    "source": "OSM + bensinpriser.nu",
+    "confidence": 0.85,
+    "fetched_at": "2026-10-01T12:30:00Z",
+    "station_count": 1823
+  },
   "stations": [
     {
-      "id": "se_Shell_Stockholm__59.33_18.07",
+      "id": "se_Shell_Stockholm_59.33_18.07",
       "country": "SE",
       "name": "Shell Stockholm",
+      "brand": "Shell",
+      "city": "Stockholm",
+      "address": "Sveavägen 1",
       "lat": 59.33,
       "lon": 18.07,
+      "confidence": 0.85,
+      "source": "bensinpriser.nu",
       "prices": [
-        { "fuel_type": "E10", "price": 19.50, "currency": "SEK", "unit": "L", "updated_at": "..." },
-        { "fuel_type": "DIESEL", "price": 20.10, "currency": "SEK", "unit": "L", "updated_at": "..." }
+        {
+          "fuel_type": "E10",
+          "price": 19.50,
+          "currency": "SEK",
+          "unit": "L",
+          "updated_at": "2026-10-01T12:30:00Z"
+        }
       ]
     }
   ]
 }
 ```
+
+---
+
+## Mobile-First PWA
+
+The frontend is a Progressive Web App designed for on-the-road use:
+- **Near Me** — GPS-based nearest stations with cheapest-price summary
+- **Offline support** — service worker caches data for offline browsing
+- **Install prompt** — add to home screen on iOS/Android
+- **Bottom tab bar** — Map, Near Me, Search, List, Filter
+- **Safe area handling** — notch/Dynamic Island support
+
+---
 
 ## Setup
 
@@ -60,34 +107,46 @@ Every price record includes `currency` (SEK, NOK, DKK, EUR) and `unit`.
 - Source: **Deploy from a branch**
 - Branch: **gh-pages** / root
 
-### 3. Add secrets (optional)
-Only needed for Denmark:
-- **Settings → Secrets and variables → Actions → New repository secret**
-- Name: `FUELPRICES_DK_API_KEY`
-- Value: your key from [fuelprices.dk](https://fuelprices.dk)
+### 3. Add secrets (required for Germany)
+- **Settings → Secrets → Actions → New repository secret**
+- Name: `TANKERKOENIG_API_KEY`
+- Value: free key from [creativecommons.tankerkoenig.de](https://creativecommons.tankerkoenig.de)
+  (Without this, Germany falls back to ANWB with lower confidence)
 
-### 4. Run manually first
-- **Actions → Scrape Nordic Fuel Prices → Run workflow**
-
-The first run creates the `gh-pages` branch and deploys the site.
+### 4. Run the scraper manually first
+- **Actions → EuroFuelPrices — Scrape → Run workflow**
 
 ### 5. Automatic updates
-GitHub Actions runs every 30 minutes automatically after that.
+Runs every 30 minutes. Frontend deploys instantly on any `web/` push.
 
-## Local development
+---
+
+## Local Development
 
 ```bash
 pip install -r requirements.txt
 python src/main.py
-# outputs to data/
+# writes to data/
 ```
 
-Open `web/index.html` locally (needs data files in same dir, or run a local server).
+Serve `data/` + `web/` together (e.g. `python -m http.server 8080 --directory data`), then open `http://localhost:8080`.
+
+---
+
+## Adding Analytics
+
+The admin dashboard (`admin.html`) includes setup guides for:
+- **GoatCounter** — free, open-source, GDPR-compliant
+- **Plausible** — €9/mo, EU-hosted, best dashboard
+- **Cloudflare Web Analytics** — free, Core Web Vitals
+
+---
 
 ## Roadmap
 
-- [ ] Add Core EU countries (DE, FR, ES, IT, AT, PT, SI, UK, HR, RO)
-- [ ] Price change alerts (track delta between pulls)
-- [ ] Historical price charts per station
-- [ ] Currency conversion to EUR for cross-country comparison
-- [ ] EV charging network coverage (OCPI / Open Charge Map)
+- [ ] Greece: migrate from ANWB → official fuelprices.gr mandatory API
+- [ ] Belgium: add carbu.com parallel source
+- [ ] Price trend deltas (↑/↓ vs previous scrape)
+- [ ] Per-station price history chart
+- [ ] Cross-country EUR price comparison layer
+- [ ] Push notifications for price drops near saved locations

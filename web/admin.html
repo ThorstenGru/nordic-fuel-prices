@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0f1e">
+<title>EuroFuelPrices — Data Health Dashboard</title>
+<style>
+:root {
+  --bg:    #0a0f1e;
+  --surf:  #111827;
+  --surf2: #1e293b;
+  --b:     #1e2d45;
+  --text:  #e2e8f0;
+  --t2:    #94a3b8;
+  --t3:    #475569;
+  --blue:  #3b82f6;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red:   #ef4444;
+  --purple:#a855f7;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px;
+  font-size:14px;
+}
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+
+/* Header */
+.hd {
+  background:var(--surf); border-bottom:1px solid var(--b);
+  padding:18px 24px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100; gap:16px;
+}
+.hd-left { display:flex; align-items:center; gap:12px; }
+.hd-logo { font-size:1.4rem; font-weight:800; display:flex; align-items:center; gap:8px; }
+.hd-logo span { color:var(--green); }
+.hd-sub { font-size:0.72rem; color:var(--t2); }
+.hd-right { display:flex; align-items:center; gap:12px; }
+#last-run { font-size:0.7rem; color:var(--t3); }
+.back-btn {
+  background:var(--surf2); border:1px solid var(--b); border-radius:8px;
+  color:var(--t2); font-size:0.75rem; padding:6px 14px; cursor:pointer; text-decoration:none;
+  display:flex; align-items:center; gap:5px;
+}
+.back-btn:hover { color:var(--text); }
+
+/* Layout */
+.wrap { max-width:1280px; margin:0 auto; padding:24px 20px; }
+
+/* Summary cards */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:28px; }
+.kpi {
+  background:var(--surf); border:1px solid var(--b); border-radius:14px;
+  padding:18px 20px; display:flex; flex-direction:column; gap:4px;
+}
+.kpi-val { font-size:2rem; font-weight:800; line-height:1; }
+.kpi-lbl { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--t2); }
+.kpi-sub { font-size:0.68rem; color:var(--t3); margin-top:2px; }
+.kpi.green .kpi-val { color:var(--green); }
+.kpi.blue  .kpi-val { color:var(--blue); }
+.kpi.amber .kpi-val { color:var(--amber); }
+.kpi.purple .kpi-val { color:var(--purple); }
+
+/* Section headers */
+.sec-hd {
+  font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em;
+  color:var(--t3); margin:28px 0 12px; display:flex; align-items:center; gap:8px;
+}
+.sec-hd::after { content:''; flex:1; height:1px; background:var(--b); }
+
+/* Data source table */
+.tbl-wrap { overflow-x:auto; }
+.tbl {
+  width:100%; border-collapse:collapse; font-size:0.8rem;
+}
+.tbl th {
+  text-align:left; font-size:0.65rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.05em; color:var(--t3);
+  padding:8px 12px; border-bottom:1px solid var(--b);
+  white-space:nowrap;
+}
+.tbl td {
+  padding:9px 12px; border-bottom:1px solid rgba(30,45,69,0.5);
+  vertical-align:middle;
+}
+.tbl tr:hover td { background:rgba(59,130,246,0.04); }
+.tbl tr.warn td { background:rgba(245,158,11,0.04); }
+.tbl tr.fail td { background:rgba(239,68,68,0.04); }
+
+/* Confidence pill */
+.conf {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 8px; border-radius:20px; font-size:0.67rem; font-weight:700;
+}
+.conf.c1 { background:rgba(34,197,94,0.15); color:var(--green); }
+.conf.c09 { background:rgba(59,130,246,0.15); color:var(--blue); }
+.conf.c07 { background:rgba(245,158,11,0.15); color:var(--amber); }
+.conf.c0 { background:rgba(239,68,68,0.15); color:var(--red); }
+
+/* Status pill */
+.status-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:0.67rem; font-weight:700;
+}
+.status-pill.live { background:rgba(34,197,94,0.12); color:var(--green); }
+.status-pill.warn { background:rgba(245,158,11,0.12); color:var(--amber); }
+.status-pill.stale { background:rgba(239,68,68,0.12); color:var(--red); }
+.status-pill.nodata { background:rgba(71,85,105,0.2); color:var(--t3); }
+.dot { width:6px; height:6px; border-radius:50%; background:currentColor; display:inline-block; }
+
+/* Bar */
+.bar-wrap { display:flex; align-items:center; gap:8px; min-width:120px; }
+.bar-bg { flex:1; height:4px; background:var(--surf2); border-radius:2px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:2px; transition:width 0.3s; }
+.bar-n { font-size:0.72rem; font-weight:700; color:var(--text); min-width:52px; text-align:right; }
+
+/* Source type chips */
+.src-chip {
+  display:inline-block; font-size:0.62rem; padding:2px 7px; border-radius:10px;
+  font-weight:600; white-space:nowrap;
+}
+.src-chip.gov { background:rgba(34,197,94,0.12); color:var(--green); }
+.src-chip.anwb { background:rgba(59,130,246,0.12); color:var(--blue); }
+.src-chip.community { background:rgba(168,85,247,0.12); color:var(--purple); }
+.src-chip.noprices { background:rgba(71,85,105,0.2); color:var(--t3); }
+
+/* Analytics section */
+.analytics-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+.analytics-card {
+  background:var(--surf); border:1px solid var(--b); border-radius:14px; padding:20px;
+}
+.analytics-card h3 { font-size:0.88rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:7px; }
+.analytics-card p { font-size:0.75rem; color:var(--t2); line-height:1.6; margin-bottom:10px; }
+.analytics-card code {
+  display:block; background:var(--bg); border:1px solid var(--b); border-radius:8px;
+  padding:10px 12px; font-size:0.7rem; color:var(--green); font-family:monospace; white-space:pre-wrap;
+  margin-bottom:8px;
+}
+.analytics-card .tag {
+  display:inline-block; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3);
+  color:var(--blue); font-size:0.65rem; font-weight:600; padding:2px 8px; border-radius:10px;
+  margin-right:4px; margin-bottom:4px;
+}
+
+/* Source breakdown */
+.source-breakdown { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:28px; }
+.src-box {
+  background:var(--surf); border:1px solid var(--b); border-radius:12px;
+  padding:16px; text-align:center;
+}
+.src-box .n { font-size:2.2rem; font-weight:800; line-height:1; margin-bottom:4px; }
+.src-box .lbl { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--t2); }
+.src-box .desc { font-size:0.65rem; color:var(--t3); margin-top:4px; }
+.src-box.gov .n { color:var(--green); }
+.src-box.anwb .n { color:var(--blue); }
+.src-box.comm .n { color:var(--purple); }
+.src-box.none .n { color:var(--t3); }
+
+/* Loading skeleton */
+.skeleton { background:linear-gradient(90deg,var(--surf) 25%,var(--surf2) 50%,var(--surf) 75%); background-size:200% 100%; animation:skel 1.4s infinite; border-radius:6px; }
+@keyframes skel { 0%{background-position:200%} 100%{background-position:-200%} }
+
+/* Refresh button */
+.refresh-btn {
+  background:none; border:1px solid var(--b); border-radius:8px;
+  color:var(--t2); font-size:0.75rem; padding:5px 12px; cursor:pointer;
+  display:flex; align-items:center; gap:5px; font-family:inherit;
+}
+.refresh-btn:hover { border-color:var(--blue); color:var(--blue); }
+@keyframes spin { to { transform:rotate(360deg); } }
+.refresh-btn.loading .icon { animation:spin 0.8s linear infinite; display:inline-block; }
+
+/* Error */
+.err { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; padding:16px 20px; font-size:0.8rem; color:var(--red); margin-bottom:20px; }
+
+/* Responsive */
+@media (max-width:600px) {
+  .hd { padding:14px 16px; }
+  .wrap { padding:16px 14px; }
+  .kpi-val { font-size:1.6rem; }
+  .tbl td, .tbl th { padding:7px 8px; }
+}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-left">
+    <div class="hd-logo">⛽ <span>EuroFuelPrices</span></div>
+    <div class="hd-sub">Data Health Dashboard</div>
+  </div>
+  <div class="hd-right">
+    <span id="last-run">Loading…</span>
+    <button class="refresh-btn" id="refreshBtn" onclick="load()">
+      <span class="icon">↻</span> Refresh
+    </button>
+    <a href="./" class="back-btn">← Live map</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="err-box" class="err" style="display:none"></div>
+
+  <!-- KPI cards -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi green"><div class="kpi-val skeleton" style="height:2rem;width:80px">&nbsp;</div><div class="kpi-lbl">Total Stations</div></div>
+    <div class="kpi blue"><div class="kpi-val skeleton" style="height:2rem;width:50px">&nbsp;</div><div class="kpi-lbl">Countries Live</div></div>
+    <div class="kpi amber"><div class="kpi-val skeleton" style="height:2rem;width:60px">&nbsp;</div><div class="kpi-lbl">Avg. Freshness</div></div>
+    <div class="kpi purple"><div class="kpi-val skeleton" style="height:2rem;width:60px">&nbsp;</div><div class="kpi-lbl">Avg. Confidence</div></div>
+  </div>
+
+  <!-- Source breakdown -->
+  <div class="sec-hd">Data source breakdown</div>
+  <div class="source-breakdown" id="srcBreakdown">
+    <div class="src-box gov"><div class="n skeleton" style="height:2.2rem;width:40px;margin:0 auto 4px">&nbsp;</div><div class="lbl">Gov. Mandatory</div><div class="desc">Official national APIs</div></div>
+    <div class="src-box anwb"><div class="n skeleton" style="height:2.2rem;width:40px;margin:0 auto 4px">&nbsp;</div><div class="lbl">ANWB POI API</div><div class="desc">Dutch motorists' association</div></div>
+    <div class="src-box comm"><div class="n skeleton" style="height:2.2rem;width:40px;margin:0 auto 4px">&nbsp;</div><div class="lbl">Community</div><div class="desc">Reported &amp; scraped</div></div>
+    <div class="src-box none"><div class="n skeleton" style="height:2.2rem;width:40px;margin:0 auto 4px">&nbsp;</div><div class="lbl">No Prices</div><div class="desc">Locations only</div></div>
+  </div>
+
+  <!-- Country table -->
+  <div class="sec-hd">Per-country data health <span style="color:var(--t2);font-size:0.65rem;text-transform:none;letter-spacing:0;font-weight:400" id="tableHint"></span></div>
+  <div class="tbl-wrap">
+    <table class="tbl" id="countryTbl">
+      <thead>
+        <tr>
+          <th>Country</th>
+          <th>Stations</th>
+          <th>Source</th>
+          <th>Confidence</th>
+          <th>Last Fetched</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tblBody">
+        <tr><td colspan="6" style="color:var(--t3);padding:20px;text-align:center">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Analytics -->
+  <div class="sec-hd">User analytics — setup guide</div>
+  <p style="font-size:0.78rem;color:var(--t2);margin-bottom:16px;line-height:1.6">
+    EuroFuelPrices is a static site served from GitHub Pages — there is no server-side access log. To understand how visitors use the app, you need a lightweight client-side analytics solution. Three recommended options below.
+  </p>
+  <div class="analytics-grid">
+    <div class="analytics-card">
+      <h3>📊 GoatCounter <span style="font-size:0.65rem;color:var(--green);font-weight:600">Free · Privacy-first</span></h3>
+      <p>Simple, open-source, GDPR-compliant. No cookies. Free for public sites. Shows page views, countries, referrers, device types. Takes 2 minutes to set up.</p>
+      <div class="tag">No cookies</div><div class="tag">GDPR OK</div><div class="tag">Open source</div>
+      <br><br>
+      <p><strong>1.</strong> Register at <a href="https://www.goatcounter.com/" target="_blank" rel="noopener">goatcounter.com</a> (free for public sites)<br>
+      <strong>2.</strong> Add this to index.html before &lt;/body&gt;:</p>
+      <code>&lt;script data-goatcounter="https://YOUR.goatcounter.com/count"
+  async src="//gc.zgo.at/count.js"&gt;&lt;/script&gt;</code>
+      <p><strong>3.</strong> To track fuel type filters and Near Me usage, emit custom events:</p>
+      <code>window.goatcounter?.count({ path:'fuel-filter/DIESEL', title:'Filter: Diesel' });
+window.goatcounter?.count({ path:'nearby-used', title:'Near Me tapped' });</code>
+    </div>
+
+    <div class="analytics-card">
+      <h3>🌐 Plausible Analytics <span style="font-size:0.65rem;color:var(--amber);font-weight:600">€9/mo · Best UX</span></h3>
+      <p>Best-in-class privacy-friendly analytics. Beautiful dashboard. Custom events for fuel types, Near Me, country filters. EU-hosted (Estonia). GDPR/CCPA compliant out of the box.</p>
+      <div class="tag">EU-hosted</div><div class="tag">Custom events</div><div class="tag">Best dashboard</div>
+      <br><br>
+      <code>&lt;script defer
+  data-domain="your-domain.github.io"
+  src="https://plausible.io/js/script.tagged-events.js"&gt;&lt;/script&gt;</code>
+      <p>Then track custom events:</p>
+      <code>// When Near Me is used:
+window.plausible?.('Near Me', { props: { action:'locate' } });
+
+// When a fuel type is selected:
+window.plausible?.('Fuel Filter', { props: { fuel: fuelType } });
+
+// When a country is filtered:
+window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
+    </div>
+
+    <div class="analytics-card">
+      <h3>☁️ Cloudflare Web Analytics <span style="font-size:0.65rem;color:var(--green);font-weight:600">Free forever</span></h3>
+      <p>100% free, requires a Cloudflare account (free). Works without proxying the site. Cookie-less. Shows Core Web Vitals, pages, countries, referrers. No custom events on free plan.</p>
+      <div class="tag">Free</div><div class="tag">Core Web Vitals</div><div class="tag">No config</div>
+      <br><br>
+      <p><strong>1.</strong> Go to Cloudflare Dashboard → Web Analytics → Add site<br>
+      <strong>2.</strong> Add the snippet to index.html:</p>
+      <code>&lt;script defer
+  src='https://static.cloudflareinsights.com/beacon.min.js'
+  data-cf-beacon='{"token": "YOUR_TOKEN"}'&gt;
+&lt;/script&gt;</code>
+      <p>No server changes needed. Works on any static host including GitHub Pages.</p>
+    </div>
+  </div>
+
+  <!-- What to track -->
+  <div class="sec-hd">Recommended events to track</div>
+  <div style="background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:20px;font-size:0.78rem;line-height:1.8;color:var(--t2)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+      <div>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">🗺 Map interactions</strong>
+        Zoom level when station is tapped<br>
+        Country that was browsed most<br>
+        Cluster vs individual pin clicks
+      </div>
+      <div>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">⛽ Fuel type preference</strong>
+        Which fuel type filter is most used<br>
+        E10 vs Diesel vs HVO split by country<br>
+        "All fuels" vs specific type ratio
+      </div>
+      <div>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">📍 Near Me usage</strong>
+        How often Near Me is triggered<br>
+        How many stations shown (radius)<br>
+        Navigation button (Go) click rate
+      </div>
+      <div>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">🔍 Search behaviour</strong>
+        Top searched cities / addresses<br>
+        Search-to-navigate conversion rate<br>
+        Station name vs address search ratio
+      </div>
+      <div>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">📱 Device & platform</strong>
+        Mobile vs desktop split<br>
+        iOS vs Android (for navigation link)<br>
+        PWA install rate (beforeinstallprompt)
+      </div>
+      <div>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">🌍 Geographic</strong>
+        Top countries of origin<br>
+        Most viewed country on map<br>
+        Cross-border browsing patterns
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FLAGS = {
+  AT:'🇦🇹',BE:'🇧🇪',HR:'🇭🇷',CZ:'🇨🇿',DK:'🇩🇰',EE:'🇪🇪',FI:'🇫🇮',FR:'🇫🇷',
+  DE:'🇩🇪',GR:'🇬🇷',HU:'🇭🇺',IS:'🇮🇸',IT:'🇮🇹',LV:'🇱🇻',LT:'🇱🇹',LU:'🇱🇺',
+  NL:'🇳🇱',NO:'🇳🇴',PL:'🇵🇱',PT:'🇵🇹',RO:'🇷🇴',SK:'🇸🇰',SI:'🇸🇮',ES:'🇪🇸',
+  SE:'🇸🇪',CH:'🇨🇭',BG:'🇧🇬',RS:'🇷🇸',ME:'🇲🇪',MK:'🇲🇰',AL:'🇦🇱',BA:'🇧🇦',
+  XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
+};
+
+const GOV_COUNTRIES  = new Set(['DE','FR','ES','IT','PT','AT','HR','SI']);
+const NODATA_COUNTRIES = new Set(['NO']);
+
+function ago(iso) {
+  if (!iso) return '—';
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 2) return 'Just now';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h ago`;
+  return `${Math.round(h/24)} d ago`;
+}
+
+function freshnessClass(iso) {
+  if (!iso) return 'stale';
+  const h = (Date.now() - new Date(iso)) / 3600000;
+  if (h < 2) return 'live';
+  if (h < 12) return 'live';
+  if (h < 48) return 'warn';
+  return 'stale';
+}
+
+function confClass(c) {
+  if (c >= 1.0) return 'c1';
+  if (c >= 0.90) return 'c09';
+  if (c >= 0.75) return 'c07';
+  return 'c0';
+}
+
+function srcChip(src, country) {
+  if (NODATA_COUNTRIES.has(country)) return '<span class="src-chip noprices">Locations only</span>';
+  if (GOV_COUNTRIES.has(country)) return '<span class="src-chip gov">Gov. mandatory</span>';
+  if (src.includes('anwb')) return '<span class="src-chip anwb">ANWB POI API</span>';
+  return '<span class="src-chip community">Community</span>';
+}
+
+function barHtml(n, max) {
+  const pct = max > 0 ? Math.min(100, Math.round(n / max * 100)) : 0;
+  const col = pct > 60 ? 'var(--green)' : pct > 20 ? 'var(--blue)' : 'var(--amber)';
+  return `<div class="bar-wrap">
+    <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+    <div class="bar-n">${n.toLocaleString()}</div>
+  </div>`;
+}
+
+async function load() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  document.getElementById('err-box').style.display = 'none';
+
+  try {
+    const r = await fetch(`meta.json?t=${Date.now()}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const meta = await r.json();
+    render(meta);
+  } catch (e) {
+    const err = document.getElementById('err-box');
+    err.textContent = `⚠ Could not load meta.json: ${e.message}. Are you viewing this from the deployed site?`;
+    err.style.display = 'block';
+    document.getElementById('last-run').textContent = 'Failed to load';
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+function render(meta) {
+  const countries = meta.countries || [];
+  const total = meta.total_stations || 0;
+  const fetchedAt = meta.fetched_at;
+
+  // Last run
+  document.getElementById('last-run').textContent = `Last scrape: ${ago(fetchedAt)}`;
+
+  // KPIs
+  const live = countries.filter(c => c.station_count > 0).length;
+  const avgConf = countries.length
+    ? (countries.reduce((s, c) => s + (c.confidence || 0), 0) / countries.length).toFixed(2)
+    : '—';
+  const freshH = fetchedAt ? Math.round((Date.now() - new Date(fetchedAt)) / 60000) : null;
+  const freshStr = freshH == null ? '—' : freshH < 60 ? `${freshH}m` : `${Math.round(freshH/60)}h`;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi green"><div class="kpi-val">${total.toLocaleString()}</div><div class="kpi-lbl">Total Stations</div><div class="kpi-sub">Across ${live} countries</div></div>
+    <div class="kpi blue"><div class="kpi-val">${live}/${countries.length}</div><div class="kpi-lbl">Countries Live</div><div class="kpi-sub">With station data</div></div>
+    <div class="kpi amber"><div class="kpi-val">${freshStr}</div><div class="kpi-lbl">Data Age</div><div class="kpi-sub">Since last scrape run</div></div>
+    <div class="kpi purple"><div class="kpi-val">${avgConf}</div><div class="kpi-lbl">Avg Confidence</div><div class="kpi-sub">Weighted by source quality</div></div>
+  `;
+
+  // Source breakdown
+  const govCount  = countries.filter(c => GOV_COUNTRIES.has(c.country)).length;
+  const anwbCount = countries.filter(c => !GOV_COUNTRIES.has(c.country) && !NODATA_COUNTRIES.has(c.country) && (c.source||'').includes('anwb')).length;
+  const commCount = countries.filter(c => !GOV_COUNTRIES.has(c.country) && !NODATA_COUNTRIES.has(c.country) && !(c.source||'').includes('anwb')).length;
+  const noneCount = countries.filter(c => NODATA_COUNTRIES.has(c.country)).length;
+
+  document.getElementById('srcBreakdown').innerHTML = `
+    <div class="src-box gov"><div class="n">${govCount}</div><div class="lbl">Gov. Mandatory</div><div class="desc">Official national APIs, highest accuracy</div></div>
+    <div class="src-box anwb"><div class="n">${anwbCount}</div><div class="lbl">ANWB POI API</div><div class="desc">Dutch motorists' data across Europe</div></div>
+    <div class="src-box comm"><div class="n">${commCount}</div><div class="lbl">Community / Scraped</div><div class="desc">Reported prices &amp; web scrapers</div></div>
+    <div class="src-box none"><div class="n">${noneCount}</div><div class="lbl">No Prices</div><div class="desc">Locations only (regulatory ban)</div></div>
+  `;
+
+  // Country table
+  const sorted = [...countries].sort((a, b) => b.station_count - a.station_count);
+  const maxN = sorted[0]?.station_count || 1;
+  document.getElementById('tableHint').textContent = `${total.toLocaleString()} total stations`;
+
+  const rows = sorted.map(c => {
+    const fc = freshnessClass(c.fetched_at);
+    const trCls = fc === 'stale' ? ' class="fail"' : fc === 'warn' ? ' class="warn"' : '';
+    const noP = NODATA_COUNTRIES.has(c.country);
+    const statusHtml = noP
+      ? '<span class="status-pill nodata">No prices</span>'
+      : c.station_count > 0
+        ? `<span class="status-pill ${fc}"><span class="dot"></span>${fc === 'live' ? 'Live' : fc === 'warn' ? 'Stale' : 'No data'}</span>`
+        : '<span class="status-pill stale"><span class="dot"></span>Failed</span>';
+
+    return `<tr${trCls}>
+      <td style="white-space:nowrap">${FLAGS[c.country]||''} <strong>${c.country}</strong></td>
+      <td>${barHtml(c.station_count, maxN)}</td>
+      <td style="max-width:220px;font-size:0.72rem;color:var(--t2)">${srcChip(c.source||'', c.country)} <span style="font-size:0.67rem">${(c.source||'').split('(')[0].trim()}</span></td>
+      <td><span class="conf ${confClass(c.confidence)}">${(c.confidence||0).toFixed(2)}</span></td>
+      <td style="white-space:nowrap;font-size:0.72rem;color:var(--t2)">${ago(c.fetched_at)}</td>
+      <td>${statusHtml}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tblBody').innerHTML = rows || '<tr><td colspan="6" style="color:var(--t3);padding:20px;text-align:center">No country data found in meta.json</td></tr>';
+}
+
+load();
+</script>
+</body>
+</html>

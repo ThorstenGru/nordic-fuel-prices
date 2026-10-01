@@ -6,10 +6,12 @@
 <meta name="theme-color" content="#0a0f1e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="EuroFuel">
+<meta name="apple-mobile-web-app-title" content="EuroFuelPrices">
+<meta name="description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>EuroFuel — Live European Fuel Prices</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<title>EuroFuelPrices — Live European Fuel Prices</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
@@ -383,13 +385,50 @@ html, body {
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ── Loading progress bar ── */
+#progress {
+  position:fixed; top:0; left:0; right:0; height:2px; z-index:2000;
+  background:transparent; pointer-events:none;
+}
+#progress-fill {
+  height:100%; background:linear-gradient(90deg,var(--green),var(--blue));
+  transition:width 0.35s ease; width:0%;
+}
+
+/* ── Near Me summary card ── */
+.nearby-summary {
+  background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2);
+  border-radius:12px; padding:12px 16px; margin:0 12px 10px;
+  font-size:0.8rem; display:flex; flex-direction:column; gap:3px;
+}
+.nearby-summary .ns-label { color:var(--green); font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; }
+.nearby-summary .ns-price { font-size:1.4rem; font-weight:800; color:#f1f5f9; line-height:1.1; }
+.nearby-summary .ns-detail { color:var(--text2); font-size:0.73rem; }
+
+/* ── Admin link ── */
+#admin-link {
+  position:absolute; bottom:10px; left:10px; z-index:500;
+  background:rgba(10,15,30,0.75); border:1px solid var(--border);
+  border-radius:8px; padding:3px 9px; font-size:0.6rem; color:var(--text3);
+  text-decoration:none; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  transition:color 0.15s;
+}
+#admin-link:hover { color:var(--text2); }
+@media (max-width:768px) { #admin-link { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); } }
 </style>
 </head>
 <body>
 
+<!-- Progress bar -->
+<div id="progress"><div id="progress-fill"></div></div>
+
 <!-- ══ MAP ══ -->
 <div id="map-wrap">
   <div id="map"></div>
+
+  <!-- Admin link -->
+  <a href="admin.html" id="admin-link" title="Data health dashboard">⚙ Stats</a>
 
   <!-- Fuel type chips -->
   <div id="chips">
@@ -413,7 +452,7 @@ html, body {
 <!-- ══ DESKTOP SIDEBAR ══ -->
 <div id="sidebar">
   <div id="sb-head">
-    <h1>⛽ EuroFuel</h1>
+    <h1>⛽ EuroFuelPrices</h1>
     <div id="sb-status">Loading…</div>
   </div>
   <div id="sb-controls">
@@ -449,6 +488,11 @@ html, body {
 <div class="panel" id="p-nearby">
   <div class="drag-handle"></div>
   <div class="panel-title">📍 Cheapest Near You</div>
+  <div id="nearby-summary" style="display:none" class="nearby-summary">
+    <div class="ns-label">Best price within 5 km</div>
+    <div class="ns-price" id="ns-price">—</div>
+    <div class="ns-detail" id="ns-detail"></div>
+  </div>
   <div class="panel-scroll" id="nearby-list">
     <p class="empty">Tap the button to find your location…</p>
   </div>
@@ -583,7 +627,8 @@ const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
 // ════════════════════════════════════════════════════
 // Map
 // ════════════════════════════════════════════════════
-const map = L.map('map', { center:[52,13], zoom:5, zoomControl:true });
+// Default view: Sweden (slightly north of center, covers the whole country nicely)
+const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19,
 }).addTo(map);
@@ -1024,8 +1069,35 @@ function showNearby() {
   if (!el) return;
   if (!cands.length) {
     el.innerHTML = '<p class="empty">No stations loaded near your location yet.\nPan the map to load more countries.</p>';
+    document.getElementById('nearby-summary').style.display = 'none';
     return;
   }
+
+  // Build summary: cheapest station with a price within 5 km
+  const within5 = cands.filter(c => c.km <= 5 && c.s.prices?.length);
+  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei' };
+  let bestGlobal = null, bestGlobalKm = null;
+  // find cheapest by cheapest() across nearest 25
+  for (const {s,km} of cands.slice(0,25)) {
+    const cp = cheapest(s);
+    if (!cp) continue;
+    const ftMatch = !fFuel || cp.fuel_type === fFuel;
+    if (!ftMatch) continue;
+    if (!bestGlobal || cp.price < bestGlobal.price) { bestGlobal = cp; bestGlobalKm = km; }
+  }
+
+  const sumEl = document.getElementById('nearby-summary');
+  const priceEl = document.getElementById('ns-price');
+  const detailEl = document.getElementById('ns-detail');
+  if (bestGlobal) {
+    const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
+    priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${bestGlobal.fuel_type}`;
+    detailEl.textContent = `Best within ${fmtDist(bestGlobalKm)} · ${within5.length} stations within 5 km`;
+    sumEl.style.display = 'flex';
+  } else {
+    sumEl.style.display = 'none';
+  }
+
   el.innerHTML = cands.slice(0,25).map(({s,km}) => mkCard(s,km)).join('');
 }
 
@@ -1137,6 +1209,18 @@ function updPriceLbls() { map.getContainer().classList.toggle('hide-prices', map
 map.on('zoomend', updPriceLbls);
 
 // ════════════════════════════════════════════════════
+// Progress bar
+// ════════════════════════════════════════════════════
+function updProgress() {
+  const tot = Object.keys(CB).length;
+  const done = loaded.size;
+  const pct  = tot > 0 ? Math.round((done / tot) * 100) : 0;
+  const fill = document.getElementById('progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  if (pct >= 100) setTimeout(() => { if (fill) fill.style.opacity = '0'; }, 600);
+}
+
+// ════════════════════════════════════════════════════
 // Status
 // ════════════════════════════════════════════════════
 function updStatus() {
@@ -1157,6 +1241,7 @@ function updStatus() {
   badge.textContent = txt; badge.className = cls;
   if (sbSt) { sbSt.textContent = txt.replace('\n',' · '); sbSt.className = 'sub '+cls; }
   updCounts();
+  updProgress();
 }
 
 // ════════════════════════════════════════════════════
@@ -1184,7 +1269,19 @@ window.addEventListener('beforeinstallprompt', e => {
     const r = await fetch('meta.json');
     if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; }
   } catch(_) {}
-  updStatus(); updPriceLbls(); schedVP();
+  updStatus(); updPriceLbls();
+
+  // Always pre-load Sweden (home country priority)
+  loadCC('SE');
+  schedVP();
+
+  // Auto-trigger Near Me on mobile if geolocation was previously granted
+  if (window.innerWidth <= 768 && navigator.permissions) {
+    try {
+      const perm = await navigator.permissions.query({ name:'geolocation' });
+      if (perm.state === 'granted') goNearby();
+    } catch (_) {}
+  }
 })();
 </script>
 </body>

@@ -1,4 +1,4 @@
-name: Deploy Web Files
+name: EuroFuelPrices — Deploy Web
 
 # Runs on every push to main that touches web/ files.
 # This way frontend changes (index.html) go live immediately
