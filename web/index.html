@@ -629,8 +629,14 @@ const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
 // ════════════════════════════════════════════════════
 // Default view: Sweden (slightly north of center, covers the whole country nicely)
 const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19,
+// ESRI World Dark Gray Canvas — free, no API key required
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
+  maxZoom:16,
+}).addTo(map);
+// Reference layer (labels) on top
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'', maxZoom:16, pane:'overlayPane',
 }).addTo(map);
 
 // ════════════════════════════════════════════════════
