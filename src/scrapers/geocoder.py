@@ -22,6 +22,8 @@ NOMINATIM_UA   = "EuroFuelPrices/1.0 (https://github.com/ThorstenGru/nordic-fuel
 PAGES_BASE     = "https://thorstengru.github.io/nordic-fuel-prices"
 _DATA_DIR      = Path(__file__).parent.parent.parent / "data"
 GEOCODE_LIMIT  = 250   # max new Nominatim calls per country per scrape run
+GLOBAL_BUDGET  = 150   # max new Nominatim calls per run across ALL countries (keeps runs short)
+_used = 0
 _MIN_INTERVAL  = 1.1   # Nominatim policy: max 1 request/second for the WHOLE process
 _rl_lock: Optional[asyncio.Lock] = None
 _rl_last = 0.0
@@ -140,6 +142,7 @@ async def apply_geocoding(
     query_fn(station) → (city, street, postal) tuple for the Nominatim query
     limit             → max new geocoding calls this run
     """
+    global _used
     cache = await _load_cache(country_code, session)
 
     # 1. Apply already-cached coordinates
@@ -170,6 +173,9 @@ async def apply_geocoding(
     # 3. Geocode sequentially — 1 req/s per Nominatim usage policy
     new_count = 0
     for s in to_geocode[:limit]:
+        if _used >= GLOBAL_BUDGET:
+            break
+        _used += 1
         k = key_fn(s)
         city, street, postal = query_fn(s)
         lat, lon, definitive = await _geocode_one(session, city, street, postal, country_code)
