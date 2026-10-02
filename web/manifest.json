@@ -2,17 +2,35 @@
   "name": "EuroFuelPrices",
   "short_name": "EuroFuel",
   "description": "Live fuel prices at every station across Europe",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0a0f1e",
   "theme_color": "#0a0f1e",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ],
   "screenshots": [],
-  "categories": ["navigation", "travel", "utilities"],
-  "lang": "en"
+  "categories": [
+    "navigation",
+    "travel",
+    "utilities"
+  ],
+  "lang": "en",
+  "scope": "./"
 }

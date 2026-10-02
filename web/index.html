@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0f1e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -122,73 +123,15 @@ html, body {
 }
 
 /* ══════════════════════════════════════════
-   DESKTOP SIDEBAR
+   MOBILE ONLY — one phone-sized app at every viewport.
+   On a wide screen the app stays a centred phone column (the transform makes
+   position:fixed children relative to the column instead of the window).
 ══════════════════════════════════════════ */
-#sidebar {
-  display:none;
-}
-@media (min-width:769px) {
-  #map-wrap { right:360px; }
-  #fab { bottom:18px; }
-  #badge { right:374px; }
-  #chips { right:374px; }
-
-  #sidebar {
-    display:flex; flex-direction:column;
-    position:fixed; top:0; right:0; bottom:0; width:360px;
-    background:var(--surf); border-left:1px solid var(--border);
-    z-index:200; overflow:hidden;
-  }
-  #sb-head {
-    padding:14px 16px 10px;
-    border-bottom:1px solid var(--border);
-    flex-shrink:0;
-  }
-  #sb-head h1 { font-size:1rem; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:5px; }
-  #sb-status { font-size:0.7rem; color:var(--text2); }
-  #sb-status.ok { color:var(--green); }
-
-  #sb-controls {
-    padding:10px 12px;
-    border-bottom:1px solid var(--border);
-    display:flex; flex-direction:column; gap:8px;
-    flex-shrink:0;
-  }
-  #sb-controls .row { display:flex; gap:6px; }
-  #sb-controls input, #sb-controls select {
-    flex:1; background:var(--bg); color:var(--text);
-    border:1px solid var(--border); border-radius:8px;
-    padding:8px 12px; font-size:0.83rem; font-family:inherit;
-  }
-  #sb-controls input:focus, #sb-controls select:focus {
-    outline:2px solid var(--blue); outline-offset:1px;
-  }
-  #sb-controls input::placeholder { color:var(--text3); }
-  #sb-controls button { min-width:36px; background:var(--blue); border:none; border-radius:8px; color:#fff; font-size:0.9rem; cursor:pointer; padding:0 12px; }
-  #sb-nearbybtn {
-    width:100%; background:var(--green); border:none; border-radius:8px;
-    color:#000; font-weight:700; font-size:0.85rem; padding:10px;
-    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:opacity 0.12s;
-  }
-  #sb-nearbybtn:hover { opacity:0.88; }
-
-  #sb-list-hdr {
-    padding:6px 16px 4px;
-    font-size:0.68rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.06em; color:var(--text3); flex-shrink:0;
-    display:flex; justify-content:space-between; align-items:center;
-  }
-  #sb-sort {
-    background:none; border:1px solid var(--border); border-radius:5px;
-    color:var(--text2); font-size:0.65rem; padding:2px 7px; cursor:pointer;
-    font-family:inherit;
-  }
-
-  #stationList {
-    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:8px;
-  }
-}
+html { background:#05080f; height:100%; }
+body { max-width:520px; margin:0 auto; height:100%; position:relative; overflow:hidden;
+       transform:translateZ(0); box-shadow:0 0 0 1px #111827; }
+button, .tb, .chip, select, input { touch-action:manipulation; }
+body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
 /* ══════════════════════════════════════════
    STATION CARDS
@@ -267,7 +210,7 @@ html, body {
 /* ══════════════════════════════════════════
    MOBILE LAYOUT
 ══════════════════════════════════════════ */
-@media (max-width:768px) {
+@media all {
   #fab { bottom:calc(var(--tab-h) + var(--safe-b) + 14px); }
   .leaflet-bottom { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); }
   .leaflet-top { top:52px; }
@@ -381,11 +324,6 @@ html, body {
   }
 }
 
-/* Desktop hides mobile elements */
-@media (min-width:769px) {
-  #tabbar, .panel, #bd, #fab { display:none !important; }
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -420,7 +358,7 @@ html, body {
   transition:color 0.15s;
 }
 #admin-link:hover { color:var(--text2); }
-@media (max-width:768px) { #admin-link { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); } }
+@media all { #admin-link { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); } }
 </style>
 </head>
 <body>
@@ -452,39 +390,6 @@ html, body {
 
   <!-- FAB -->
   <button id="fab" onclick="goNearby()">📍 Near Me</button>
-</div>
-
-<!-- ══ DESKTOP SIDEBAR ══ -->
-<div id="sidebar">
-  <div id="sb-head">
-    <h1>⛽ EuroFuelPrices</h1>
-    <div id="sb-status">Loading…</div>
-  </div>
-  <div id="sb-controls">
-    <div class="row">
-      <input type="text" id="deskSearch" placeholder="🔍 City, station, or address…"
-             autocomplete="off" autocorrect="off" spellcheck="false"
-             onkeydown="if(event.key==='Enter')runSearch(false)">
-      <button onclick="runSearch(false)" title="Search">→</button>
-    </div>
-    <button id="sb-nearbybtn" onclick="goNearby()">📍 Cheapest Near Me</button>
-    <select id="deskCountry" onchange="setCountry(this.value)"></select>
-    <select id="deskFuel"    onchange="setFuel(null,this.value)">
-      <option value="">All fuels</option>
-      <option value="E10">E10 / 95 Octane</option>
-      <option value="E5">E5 / 98 Octane</option>
-      <option value="DIESEL">Diesel</option>
-      <option value="HVO100">HVO100</option>
-      <option value="E85">E85</option>
-      <option value="LPG">LPG</option>
-      <option value="CNG">CNG</option>
-    </select>
-  </div>
-  <div id="sb-list-hdr">
-    <span id="deskCount">Stations</span>
-    <button id="sb-sort" onclick="cycleSort()">⇅ <span id="sort-lbl">Default</span></button>
-  </div>
-  <div id="stationList"><p class="empty">Loading map data…</p></div>
 </div>
 
 <!-- ══ MOBILE PANELS ══ -->
@@ -675,7 +580,7 @@ let   activeTab = 'map';
   const opts = '<option value="">All countries</option>' +
     Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
       .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
-  ['deskCountry','mobCountry'].forEach(id => {
+  ['mobCountry'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
@@ -970,7 +875,7 @@ map.on('moveend zoomend', schedVP);
 // ════════════════════════════════════════════════════
 function setCountry(val) {
   fCountry = val;
-  ['deskCountry','mobCountry'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
+  ['mobCountry'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
   applyFilters();
   if (val && !loaded.has(val)) loadCC(val);
 }
@@ -980,7 +885,7 @@ function setFuel(chipEl, val) {
   document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
   if (chipEl) chipEl.classList.add('on');
   else { const c = document.querySelector(`.chip[data-f="${val}"]`); if(c) c.classList.add('on'); }
-  ['deskFuel','mobFuel'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
+  ['mobFuel'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
   applyFilters();
 }
 
@@ -994,7 +899,7 @@ function applyFilters() {
 
 function resetAll() {
   fCountry=''; fFuel='';
-  ['deskCountry','mobCountry','deskFuel','mobFuel'].forEach(id => {
+  ['mobCountry','mobFuel'].forEach(id => {
     const e=document.getElementById(id); if(e) e.value='';
   });
   document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
@@ -1026,7 +931,6 @@ function getAll() {
 
 function updCounts() {
   const n = getAll().length;
-  document.getElementById('deskCount').textContent = `${n.toLocaleString()} stations`;
   document.getElementById('mobCount').textContent   = n.toLocaleString();
   document.getElementById('tb-list-lbl').textContent = n > 0 ? `List (${n.toLocaleString()})` : 'List';
 }
@@ -1041,8 +945,8 @@ function rebuildList() {
 function renderPage(all, offset, reset) {
   vpOff = offset;
   const page = all.slice(offset, offset + PAGE);
-  const isMob = window.innerWidth <= 768;
-  const listId = isMob ? 'mobList' : 'stationList';
+  const isMob = true;
+  const listId = 'mobList';
   const list = document.getElementById(listId);
   if (!list) return;
 
@@ -1079,7 +983,6 @@ function cycleSort() {
   const modes  = ['default','price','distance'];
   const labels = { default:'Default', price:'By price ↑', distance:'By distance' };
   sortMode = modes[(modes.indexOf(sortMode)+1) % modes.length];
-  document.getElementById('sort-lbl').textContent     = labels[sortMode];
   document.getElementById('mob-sort-lbl').textContent = labels[sortMode];
   rebuildList();
 }
@@ -1093,7 +996,7 @@ function selectStation(id) {
   const card = document.getElementById(`c-${id}`);
   if (card) { card.classList.add('sel'); card.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
   const m = byId.get(id);
-  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); if (window.innerWidth<=768) closePanel(); }
+  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); if (true) closePanel(); }
 }
 
 // ════════════════════════════════════════════════════
@@ -1119,7 +1022,7 @@ function goNearby() {
 
     map.setView([myLat,myLon], 13);
     schedVP();
-    if (window.innerWidth <= 768) goTab('nearby');
+    if (true) goTab('nearby');
     else showNearby();
   }, err => {
     fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
@@ -1185,7 +1088,7 @@ function setSMode(el, mode) {
 }
 
 async function runSearch(isMob) {
-  const q = (isMob ? document.getElementById('mobSearch') : document.getElementById('deskSearch'))?.value.trim();
+  const q = document.getElementById('mobSearch')?.value.trim();
   if (!q) return;
   const resEl = document.getElementById('search-results');
 
@@ -1264,7 +1167,7 @@ function closePanel() {
   activeTab = 'map';
 }
 
-map.on('click movestart', () => { if (window.innerWidth<=768) closePanel(); });
+map.on('click movestart', () => { if (true) closePanel(); });
 
 // Swipe down to close
 document.querySelectorAll('.panel').forEach(p => {
@@ -1299,7 +1202,6 @@ function updStatus() {
   const ld   = loaded.size, tot = Object.keys(CB).length;
   const act  = loading.size;
   const badge = document.getElementById('badge');
-  const sbSt  = document.getElementById('sb-status');
 
   let txt, cls;
   if (act > 0) {
@@ -1310,8 +1212,7 @@ function updStatus() {
     cls = ld > 0 ? 'ok' : 'loading';
   }
   badge.textContent = txt; badge.className = cls;
-  if (sbSt) { sbSt.textContent = txt.replace('\n',' · '); sbSt.className = 'sub '+cls; }
-  updCounts();
+    updCounts();
   updProgress();
 }
 
@@ -1347,7 +1248,7 @@ window.addEventListener('beforeinstallprompt', e => {
   schedVP();
 
   // Auto-trigger Near Me on mobile if geolocation was previously granted
-  if (window.innerWidth <= 768 && navigator.permissions) {
+  if (true && navigator.permissions) {
     try {
       const perm = await navigator.permissions.query({ name:'geolocation' });
       if (perm.state === 'granted') goNearby();
