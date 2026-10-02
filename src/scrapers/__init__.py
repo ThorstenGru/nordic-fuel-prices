@@ -38,6 +38,10 @@ from .moldova import MoldovaScraper
 from .malta import MaltaScraper
 from .cyprus import CyprusScraper
 from .liechtenstein import LiechtensteinScraper
+from .united_kingdom import UnitedKingdomScraper
+from .ireland import IrelandScraper
+from .monaco import MonacoScraper
+from .san_marino import SanMarinoScraper
 
 ALL_SCRAPERS = [
     # Nordic
@@ -83,4 +87,9 @@ ALL_SCRAPERS = [
     RomaniaScraper,
     BulgariaScraper,
     MoldovaScraper,
+    # British Isles + micro states (interim ANWB feeds; official UK Fuel Finder needs owner registration)
+    UnitedKingdomScraper,
+    IrelandScraper,
+    MonacoScraper,
+    SanMarinoScraper,
 ]

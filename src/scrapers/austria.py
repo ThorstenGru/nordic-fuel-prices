@@ -12,10 +12,12 @@ from .base import BaseScraper
 REGIONS_URL = "https://api.e-control.at/sprit/1.0/regions"
 BY_REGION_URL = "https://api.e-control.at/sprit/1.0/search/gas-stations/by-region"
 
+# e-control only accepts fuelType DIE | SUP | GAS (LPG returns HTTP 400!). GAS is an umbrella for
+# autogas AND CNG: the price's ``label`` tells which ("CNG" -> per kg, anything else -> LPG per litre).
 FUEL_MAP = {
     "DIE": ("DIESEL", "L"),
     "SUP": ("E5",     "L"),
-    "LPG": ("LPG",    "L"),
+    "GAS": ("LPG",    "L"),
 }
 
 # Fallback BL (Bundesland) codes if district fetch fails
@@ -27,6 +29,7 @@ class AustriaScraper(BaseScraper):
     CURRENCY = "EUR"
     SOURCE = "e-control.at"
     CONFIDENCE = 1.0
+    GRADE = "A"   # statutory: price changes reported to E-Control within 30 minutes
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         pb_codes = await self._fetch_pb_codes()
@@ -119,12 +122,15 @@ class AustriaScraper(BaseScraper):
         result = []
         for s in raw:
             price_val = None
+            row_ft, row_unit = ft, unit
             for p in s.get("prices", []):
                 if p.get("fuelType") == fuel and p.get("amount"):
                     try:
                         price_val = float(p["amount"])
                     except (TypeError, ValueError):
                         pass
+                    if fuel == "GAS" and "CNG" in str(p.get("label", "")).upper():
+                        row_ft, row_unit = "CNG", "kg"
                     break
             if not price_val or price_val <= 0:
                 continue
@@ -142,6 +148,6 @@ class AustriaScraper(BaseScraper):
                 "lon": loc.get("longitude"),
                 "source": self.SOURCE,
                 "confidence": self.CONFIDENCE,
-                "prices": [self.price_entry(ft, price_val, unit)],
+                "prices": [self.price_entry(row_ft, price_val, row_unit)],
             })
         return result

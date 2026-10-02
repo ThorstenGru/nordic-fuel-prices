@@ -207,6 +207,11 @@ html, body {
 .scard.fm { border-left-color:var(--blue); }
 .scard.fl { border-left-color:var(--amber); }
 .scard.fs { border-left-color:var(--red); }
+.scard.fu { border-left-color:#475569; }
+.gb { display:inline-block; padding:1px 6px; border-radius:8px; font-size:0.58rem; font-weight:700; letter-spacing:.2px; color:#0a0f1e; vertical-align:middle; }
+.gb.gA { background:#22c55e; } .gb.gB { background:#3b82f6; color:#fff; } .gb.gC { background:#f59e0b; } .gb.gD { background:#ef4444; color:#fff; } .gb.gL { background:#475569; color:#e2e8f0; }
+.stale-note { margin-top:5px; padding:3px 6px; border-radius:6px; background:rgba(239,68,68,.14); color:#fca5a5; font-size:0.62rem; }
+.age-line { font-size:0.62rem; color:var(--text3); margin-top:4px; line-height:1.35; }
 
 .scard-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:3px; }
 .scard-name { font-size:0.88rem; font-weight:600; color:#f1f5f9; flex:1; line-height:1.3; }
@@ -581,6 +586,7 @@ const FLAGS = {
   NL:'🇳🇱',NO:'🇳🇴',PL:'🇵🇱',PT:'🇵🇹',RO:'🇷🇴',SK:'🇸🇰',SI:'🇸🇮',ES:'🇪🇸',
   SE:'🇸🇪',CH:'🇨🇭',BG:'🇧🇬',RS:'🇷🇸',ME:'🇲🇪',MK:'🇲🇰',AL:'🇦🇱',BA:'🇧🇦',
   XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
+  GB:'🇬🇧',IE:'🇮🇪',MC:'🇲🇨',SM:'🇸🇲',
 };
 const CNAMES = {
   AT:'Austria',BE:'Belgium',HR:'Croatia',CZ:'Czechia',DK:'Denmark',EE:'Estonia',
@@ -590,11 +596,12 @@ const CNAMES = {
   SE:'Sweden',CH:'Switzerland',BG:'Bulgaria',RS:'Serbia',ME:'Montenegro',
   MK:'N.Macedonia',AL:'Albania',BA:'Bosnia',XK:'Kosovo',AD:'Andorra',
   MD:'Moldova',MT:'Malta',CY:'Cyprus',LI:'Liechtenstein',
+  GB:'United Kingdom',IE:'Ireland',MC:'Monaco',SM:'San Marino',
 };
 const SYM = {
   EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',
   PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',
-  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',
+  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£',
 };
 const UNIT = { L:'/L', kWh:'/kWh', kg:'/kg' };
 const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40;
@@ -611,7 +618,7 @@ const BBOX = {
   NL:[[50.75,3.36],[53.55,7.22]],   NO:[[57.97,4.64],[71.19,31.15]],
   PL:[[49.00,14.10],[54.90,24.10]], PT:[[36.84,-9.52],[42.15,-6.19]],
   RO:[[43.62,22.34],[48.26,29.68]], SK:[[47.73,16.84],[49.62,22.57]],
-  SI:[[45.42,13.38],[46.88,16.61]], ES:[[35.95,-9.32],[43.79,4.32]],
+  SI:[[45.42,13.38],[46.88,16.61]], ES:[[27.60,-18.40],[43.79,4.32]],
   SE:[[55.34,11.11],[69.06,24.17]], CH:[[45.80,5.90],[47.80,10.50]],
   BG:[[41.23,22.36],[44.22,28.69]], RS:[[42.23,18.84],[46.19,23.01]],
   ME:[[41.87,18.43],[43.57,20.36]], MK:[[40.85,20.44],[42.37,23.04]],
@@ -619,6 +626,8 @@ const BBOX = {
   XK:[[41.85,20.01],[43.27,21.79]], AD:[[42.43,1.41],[42.66,1.79]],
   MD:[[45.47,26.62],[48.49,30.14]], MT:[[35.78,14.18],[36.08,14.58]],
   CY:[[34.63,32.26],[35.71,34.59]], LI:[[47.05,9.47],[47.27,9.64]],
+  GB:[[49.80,-8.70],[60.90,1.90]],  IE:[[51.30,-10.70],[55.50,-5.30]],
+  MC:[[43.72,7.40],[43.76,7.45]],   SM:[[43.88,12.40],[43.99,12.52]],
 };
 const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
   [cc, L.latLngBounds(b[0], b[1])]
@@ -629,6 +638,7 @@ const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
 // ════════════════════════════════════════════════════
 // Default view: Sweden (slightly north of center, covers the whole country nicely)
 const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
+map.attributionControl.addAttribution('Fuel prices: official feeds &amp; partners — <a href="admin.html" style="color:inherit">sources, grades &amp; freshness</a>');
 // ESRI World Dark Gray Canvas — free, no API key required
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
@@ -645,6 +655,7 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_D
 const data    = {};           // cc → station[]
 const loaded  = new Set();
 const loading = new Set();
+const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
 let cluster   = null;
 const byId    = new Map();    // id → marker
 let   selId   = null;
@@ -688,18 +699,58 @@ function dist(a, b, c, d) {
 
 function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`; }
 
-function confColor(c) {
-  if (c >= 1.0) return '#22c55e';
-  if (c >= 0.90) return '#3b82f6';
-  if (c >= 0.75) return '#f59e0b';
-  return '#ef4444';
+// Source grade: A official statutory feed · B official periodic/regulated · C third-party aggregator
+// (no price timestamps) · D community-reported · L location only. Set per country in meta.json,
+// optionally overridden per station (e.g. Germany stations upgraded to the statutory MTS-K feed).
+const GRADE_COL = { A:'#22c55e', B:'#3b82f6', C:'#f59e0b', D:'#ef4444', L:'#334155' };
+const GRADE_TXT = {
+  A:'Official feed · stations must report price changes',
+  B:'Official feed · periodic / regulated prices',
+  C:'Third-party data · price time unknown',
+  D:'Community-reported prices',
+  L:'Location only',
+};
+function gradeOf(s) { return s.grade || metaOf[s.country]?.grade || 'C'; }
+
+function fmtAgo(iso) {
+  if (!iso) return '';
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (m < 2)    return 'just now';
+  if (m < 90)   return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 36)   return `${h} h ago`;
+  return `${Math.round(h / 24)} days ago`;
+}
+
+// Age of the NEWEST price on the station (hours) or null when the source gives no timestamp
+function priceAgeH(s) {
+  let best = null;
+  for (const p of (s.prices || [])) {
+    if (!p.updated_at) continue;
+    const h = (Date.now() - new Date(p.updated_at)) / 3600000;
+    if (best === null || h < best) best = h;
+  }
+  return best;
 }
 
 function freshCls(s) {
-  const iso = s.prices?.[0]?.updated_at;
-  if (!iso) return '';
-  const h = (Date.now() - new Date(iso)) / 3600000;
+  if (!s.prices?.length) return '';
+  const h = priceAgeH(s);
+  if (h === null) return 'fu';
   return h<2 ? 'fh' : h<12 ? 'fm' : h<36 ? 'fl' : 'fs';
+}
+
+// One honest line: how old is the price, who says so, and is the whole feed stale?
+function ageHtml(s) {
+  if (!s.prices?.length) return '';
+  const g = gradeOf(s), m = metaOf[s.country] || {};
+  const h = priceAgeH(s);
+  const when = h === null
+    ? `price time unknown${m.fetched_at ? ' · checked ' + fmtAgo(m.fetched_at) : ''}`
+    : `price set ${fmtAgo(new Date(Date.now() - h*3600000).toISOString())}`;
+  const stale = m.status === 'stale'
+    ? `<div class="stale-note">⚠ Source temporarily unavailable — showing data from ${fmtAgo(m.fetched_at)}</div>` : '';
+  return `<div class="age-line"><span class="gb g${g}">${g}</span> ${GRADE_TXT[g]}<br>⏱ ${when}</div>${stale}`;
 }
 
 function fmtDate(iso) {
@@ -760,7 +811,7 @@ mkCluster();
 // ════════════════════════════════════════════════════
 function mkMarker(s) {
   const cp   = cheapest(s);
-  const col  = cp ? confColor(s.confidence) : '#334155';
+  const col  = cp ? (GRADE_COL[gradeOf(s)] || '#f59e0b') : '#334155';
   const sz   = cp ? 10 : 7;
   const op   = cp ? 1 : 0.45;
   const icon = L.divIcon({
@@ -798,7 +849,6 @@ function mkPopup(s) {
     const sym = SYM[p.currency] || p.currency || '';
     return `<tr><td class="ft">${p.fuel_type}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
   }).join('');
-  const upd   = s.prices?.[0]?.updated_at ? fmtDate(s.prices[0].updated_at) : '';
   const noP   = !s.prices?.length ? '<div style="color:#64748b;font-style:italic;font-size:0.75rem;margin:4px 0">No price data available</div>' : '';
   const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
   return `<div class="pop">
@@ -806,8 +856,9 @@ function mkPopup(s) {
     ${s.address ? `<div class="pop-addr">${s.address}</div>` : ''}
     <div class="pop-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
     <table class="pop-tbl">${rows}</table>${noP}
+    ${ageHtml(s)}
     <div class="pop-foot">
-      ${upd ? `<span class="pop-date">⏱ ${upd}</span>` : '<span></span>'}
+      <span></span>
       ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 Go</a>` : ''}
     </div>
   </div>`;
@@ -830,7 +881,6 @@ function mkCard(s, km) {
       <span class="u">${sym}</span>
     </span>`;
   }).join('');
-  const upd = s.prices?.[0]?.updated_at ? fmtDate(s.prices[0].updated_at) : '';
   const noPin = (!s.lat||!s.lon) ? ' <span title="No GPS" style="color:#475569">📍✕</span>' : '';
   const goBtn = (s.lat && s.lon)
     ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${s.id}')">🧭 Go</button>` : '';
@@ -843,7 +893,7 @@ function mkCard(s, km) {
     </div>
     <div class="scard-meta">${[s.city,s.source].filter(Boolean).join(' · ')}${distHtml ? ' '+distHtml : ''}</div>
     <div class="pchips">${chips||'<span style="color:#475569;font-size:0.71rem">No prices</span>'}</div>
-    ${upd ? `<div class="scard-foot">⏱ ${upd}</div>` : ''}
+    ${ageHtml(s)}
   </div>`;
 }
 
@@ -866,6 +916,7 @@ async function loadCC(cc) {
     const j = await r.json();
     if (j.meta?.fetched_at && !metaAt) metaAt = j.meta.fetched_at;
     data[cc] = j.stations || [];
+    metaOf[cc] = j.meta || {};
     loaded.add(cc);
     addToMap(cc, data[cc]);
     onNewData();
@@ -1081,7 +1132,7 @@ function showNearby() {
 
   // Build summary: cheapest station with a price within 5 km
   const within5 = cands.filter(c => c.km <= 5 && c.s.prices?.length);
-  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei' };
+  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£' };
   let bestGlobal = null, bestGlobalKm = null;
   // find cheapest by cheapest() across nearest 25
   for (const {s,km} of cands.slice(0,25)) {

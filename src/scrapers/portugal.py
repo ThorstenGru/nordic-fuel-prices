@@ -14,10 +14,11 @@ FUEL_IDS: Dict[int, tuple] = {
     3201: ("E5",     "L"),   # Gasolina simples 95
     3400: ("E5",     "L"),   # Gasolina simples 98 (maps to E5 — best available)
     1120: ("LPG",    "L"),   # GPL Auto
+    1143: ("CNG",    "kg"),  # GNC (compressed natural gas), EUR/kg
 }
 
-LAT_MIN, LAT_MAX = 36.0, 43.0
-LON_MIN, LON_MAX = -10.0, -5.5
+LAT_MIN, LAT_MAX = 32.0, 43.0      # mainland + Madeira + Azores
+LON_MIN, LON_MAX = -32.0, -5.5
 
 
 class PortugalScraper(BaseScraper):
@@ -25,6 +26,7 @@ class PortugalScraper(BaseScraper):
     CURRENCY = "EUR"
     SOURCE = "dgeg.gov.pt"
     CONFIDENCE = 1.0
+    GRADE = "A"   # statutory: price reported to DGEG BEFORE it takes effect
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         sem = asyncio.Semaphore(4)
@@ -99,6 +101,6 @@ class PortugalScraper(BaseScraper):
                 "lon": lon,
                 "source": self.SOURCE,
                 "confidence": self.CONFIDENCE,
-                "prices": [self.price_entry(ft, price, unit)],
+                "prices": [self.price_entry(ft, price, unit, updated_at=s.get("DataAtualizacao"), tz="Europe/Lisbon")],
             })
         return result

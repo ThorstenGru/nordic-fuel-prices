@@ -22,6 +22,7 @@ class IcelandScraper(BaseScraper):
     CURRENCY = "ISK"
     SOURCE = "gasvaktin.is"
     CONFIDENCE = 0.90
+    GRADE = "D"
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         try:

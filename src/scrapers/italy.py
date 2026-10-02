@@ -31,6 +31,8 @@ class ItalyScraper(BaseScraper):
     CURRENCY = "EUR"
     SOURCE = "mimit.gov.it"
     CONFIDENCE = 0.90
+    GRADE = "B"             # statutory duty (update on every change) but published as a daily CSV snapshot
+    REFRESH_MINUTES = 120   # MIMIT publishes its CSV once a day (~08:00)
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         registry_text, prices_text = await asyncio.gather(
@@ -86,28 +88,32 @@ class ItalyScraper(BaseScraper):
             None,
         )
         prices_body = "\n".join(prices_lines[header_idx:]) if header_idx is not None else prices_text
-        seen: Dict[str, set] = {}
+        # Each fuel can appear twice: isSelf=1 (self-service, cheaper) and isSelf=0 (served).
+        # Prefer the self-service price; fall back to the served one.
+        best: Dict[str, Dict[str, tuple]] = {}
         reader = csv.DictReader(io.StringIO(prices_body), delimiter="|")
         for row in reader:
             sid = (row.get("idImpianto") or "").strip()
             if sid not in stations:
                 continue
-            fuel_name = (row.get("descCarburante") or "").strip()
-            ft_info = FUEL_MAP.get(fuel_name)
+            ft_info = FUEL_MAP.get((row.get("descCarburante") or "").strip())
             if not ft_info:
                 continue
             ft, unit = ft_info
-            if sid not in seen:
-                seen[sid] = set()
-            if ft in seen[sid]:
-                continue
             try:
                 price = float((row.get("prezzo") or "0").replace(",", "."))
             except (ValueError, TypeError):
                 continue
-            if price > 0:
-                stations[sid]["prices"].append(self.price_entry(ft, price, unit))
-                seen[sid].add(ft)
+            if price <= 0:
+                continue
+            is_self = (row.get("isSelf") or "").strip() == "1"
+            prev = best.setdefault(sid, {}).get(ft)
+            if prev is not None and (prev[0] or not is_self):
+                continue                      # keep an existing self-service price / first served price
+            entry = self.price_entry(ft, price, unit, updated_at=row.get("dtComu"), tz="Europe/Rome")
+            best[sid][ft] = (is_self, entry)
+        for sid, by_fuel in best.items():
+            stations[sid]["prices"] = [e for _, e in by_fuel.values()]
 
         result = [s for s in stations.values() if s["prices"]]
         print(f"[IT] {len(result)} stations from mimit.gov.it")

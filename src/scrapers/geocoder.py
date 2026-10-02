@@ -21,7 +21,23 @@ NOMINATIM_URL  = "https://nominatim.openstreetmap.org/search"
 NOMINATIM_UA   = "EuroFuelPrices/1.0 (https://github.com/ThorstenGru/nordic-fuel-prices)"
 PAGES_BASE     = "https://thorstengru.github.io/nordic-fuel-prices"
 _DATA_DIR      = Path(__file__).parent.parent.parent / "data"
-GEOCODE_LIMIT  = 300   # max new Nominatim calls per country per scrape run (~5 min)
+GEOCODE_LIMIT  = 250   # max new Nominatim calls per country per scrape run
+_MIN_INTERVAL  = 1.1   # Nominatim policy: max 1 request/second for the WHOLE process
+_rl_lock: Optional[asyncio.Lock] = None
+_rl_last = 0.0
+
+
+async def _throttle() -> None:
+    """Process-wide rate limit shared by all countries geocoding concurrently."""
+    global _rl_lock, _rl_last
+    if _rl_lock is None:
+        _rl_lock = asyncio.Lock()
+    async with _rl_lock:
+        loop = asyncio.get_running_loop()
+        wait = _rl_last + _MIN_INTERVAL - loop.time()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _rl_last = loop.time()
 
 
 # ── Cache I/O ─────────────────────────────────────────────────────────────────
@@ -46,6 +62,7 @@ async def _load_cache(country_code: str, session: aiohttp.ClientSession) -> Dict
                 data = await resp.json(content_type=None)
                 if isinstance(data, dict):
                     print(f"[{country_code}] Loaded geocache from GitHub Pages ({len(data)} entries)")
+                    _save_cache(country_code, data)   # re-publish: gh-pages deploy deletes files absent from data/
                     return data
     except Exception:
         pass
@@ -71,8 +88,12 @@ async def _geocode_one(
     street: str,
     postal: str,
     country_code: str,
-) -> Tuple[Optional[float], Optional[float]]:
-    """Nominatim structured search → (lat, lon) or (None, None)."""
+) -> Tuple[Optional[float], Optional[float], bool]:
+    """Nominatim structured search → (lat, lon, definitive).
+
+    ``definitive`` is False for transient failures (timeout, 429, 5xx) so they are not cached
+    as "address does not exist" and get retried on a later run.
+    """
     params: Dict = {"format": "json", "limit": 1}
     if country_code:
         params["countrycodes"] = country_code.lower()
@@ -84,7 +105,8 @@ async def _geocode_one(
         params["postalcode"] = postal
     # Need at least street or city to make a meaningful query
     if not params.get("street") and not params.get("city"):
-        return None, None
+        return None, None, True
+    await _throttle()
     try:
         async with session.get(
             NOMINATIM_URL, params=params,
@@ -94,10 +116,11 @@ async def _geocode_one(
             if resp.status == 200:
                 data = await resp.json(content_type=None)
                 if data:
-                    return float(data[0]["lat"]), float(data[0]["lon"])
+                    return float(data[0]["lat"]), float(data[0]["lon"]), True
+                return None, None, True          # Nominatim answered: no such address
+            return None, None, False              # 429 / 5xx — try again next run
     except Exception:
-        pass
-    return None, None
+        return None, None, False
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────
@@ -149,14 +172,13 @@ async def apply_geocoding(
     for s in to_geocode[:limit]:
         k = key_fn(s)
         city, street, postal = query_fn(s)
-        lat, lon = await _geocode_one(session, city, street, postal, country_code)
-        # Cache the result (lat/lon may be None = failed attempt, won't be retried)
-        cache[k] = {"lat": lat, "lon": lon}
+        lat, lon, definitive = await _geocode_one(session, city, street, postal, country_code)
+        if definitive:
+            cache[k] = {"lat": lat, "lon": lon}     # None/None = Nominatim says it does not exist
         if lat is not None:
             s["lat"] = lat
             s["lon"] = lon
             new_count += 1
-        await asyncio.sleep(1.1)
 
     # 4. Persist updated cache
     _save_cache(country_code, cache)

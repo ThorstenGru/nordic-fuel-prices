@@ -13,14 +13,14 @@ BASE_URL = (
 )
 
 # Direct numerical price fields present in the v2.1 API export (no JSON parsing needed)
-# {field_name: (fuel_type, unit)}
+# {field_name: (fuel_type, unit, timestamp_field)} — *_maj = when the station last changed that price
 PRICE_FIELDS = {
-    "gazole_prix": ("DIESEL", "L"),
-    "sp95_prix":   ("E5",     "L"),
-    "sp98_prix":   ("E5",     "L"),  # premium 98 — also maps to E5, deduped via seen set
-    "e10_prix":    ("E10",    "L"),
-    "e85_prix":    ("E85",    "L"),
-    "gplc_prix":   ("LPG",    "L"),
+    "gazole_prix": ("DIESEL", "L", "gazole_maj"),
+    "sp95_prix":   ("E5",     "L", "sp95_maj"),
+    "sp98_prix":   ("E5",     "L", "sp98_maj"),  # premium 98 — also maps to E5, deduped via seen set
+    "e10_prix":    ("E10",    "L", "e10_maj"),
+    "e85_prix":    ("E85",    "L", "e85_maj"),
+    "gplc_prix":   ("LPG",    "L", "gplc_maj"),
 }
 
 
@@ -29,6 +29,7 @@ class FranceScraper(BaseScraper):
     CURRENCY = "EUR"
     SOURCE = "data.economie.gouv.fr"
     CONFIDENCE = 0.95
+    GRADE = "A"   # statutory: every price change must be declared, shown "immédiatement"
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         try:
@@ -68,7 +69,7 @@ class FranceScraper(BaseScraper):
             # Use the pre-parsed direct price fields (floats) — avoids JSON string parsing
             seen: set = set()
             prices = []
-            for field, (ft, unit) in PRICE_FIELDS.items():
+            for field, (ft, unit, ts_field) in PRICE_FIELDS.items():
                 if ft in seen:
                     continue
                 val = s.get(field)
@@ -79,7 +80,8 @@ class FranceScraper(BaseScraper):
                 except (TypeError, ValueError):
                     continue
                 if price > 0:
-                    prices.append(self.price_entry(ft, price, unit))
+                    prices.append(self.price_entry(ft, price, unit,
+                                                   updated_at=self._maj(s.get(ts_field)), tz="Europe/Paris"))
                     seen.add(ft)
 
             if not prices:
@@ -87,11 +89,12 @@ class FranceScraper(BaseScraper):
 
             lat, lon = self._coords(s)
             brand = (s.get("nom_marque") or s.get("nom") or "").strip()
+            city = (s.get("ville") or "").strip()
 
             stations.append({
                 "id":         f"fr_{s.get('id', '')}",
                 "country":    "FR",
-                "name":       brand,
+                "name":       brand or (f"Station-service · {city}" if city else "Station-service"),
                 "brand":      brand,
                 "address":    (s.get("adresse") or "").strip(),
                 "city":       (s.get("ville") or "").strip(),
@@ -104,6 +107,14 @@ class FranceScraper(BaseScraper):
 
         print(f"[FR] {len(stations)} stations from data.economie.gouv.fr")
         return stations
+
+    @staticmethod
+    def _maj(value):
+        """*_maj values are Paris LOCAL time but carry a bogus '+00:00' suffix (verified: they lie
+        up to 2 h in the future of the real UTC clock). Drop the suffix; caller applies Europe/Paris."""
+        if not value:
+            return None
+        return str(value).replace("Z", "")[:19].replace("T", " ")
 
     def _coords(self, s: dict):
         # Prefer geom object (decimal degrees already) over raw lat/lon (×100 000)

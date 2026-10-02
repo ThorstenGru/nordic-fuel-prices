@@ -1,19 +1,34 @@
 name: EuroFuelPrices — Scrape
 
+# GitHub's `schedule:` trigger is best-effort: measured over 100 runs the median gap between
+# "every 30 min" runs was 262 minutes (max 9 h). So the cron below is only a SAFETY NET; the
+# real cadence comes from the `chain` job, which re-dispatches this workflow ~12 min after each
+# run finishes (workflow_dispatch triggered with GITHUB_TOKEN is allowed to start new runs).
+# Per-source cadences (REFRESH_MINUTES in each scraper) keep upstream APIs from being hammered:
+# a source that was refreshed recently is re-published from the previous run instead.
+
 on:
   schedule:
-    # Every 30 minutes
-    - cron: "0,30 * * * *"
+    - cron: "13,43 * * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Refresh every source now (ignore per-source cadence)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   pages: write
+  actions: write
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -23,6 +38,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -30,6 +46,7 @@ jobs:
       - name: Run scrapers
         env:
           TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}
+          FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
         run: python src/main.py
 
       - name: Copy web files to data dir
@@ -41,4 +58,30 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./data
           publish_branch: gh-pages
-          force_orphan: false
+          # Single-commit history: the data changes every ~15 min and ~60 MB per publish would
+          # otherwise bloat the repository by gigabytes per day.
+          force_orphan: true
+          commit_message: "data ${{ github.run_id }}"
+
+  chain:
+    # Keeps the cadence close to 15 minutes regardless of GitHub's cron delays.
+    needs: scrape
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait, then dispatch the next run (unless one is already queued/running)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          THIS_RUN: ${{ github.run_id }}
+        run: |
+          sleep 690
+          others=$(gh run list --repo "$REPO" --workflow scrape.yml --json databaseId,status \
+            --jq "[.[] | select((.status==\"queued\" or .status==\"in_progress\" or .status==\"waiting\") and .databaseId != $THIS_RUN)] | length")
+          echo "other active/queued scrape runs: $others"
+          if [ "$others" -eq 0 ]; then
+            gh workflow run scrape.yml --repo "$REPO" --ref main
+          else
+            echo "another run is already active — not dispatching (prevents duplicate chains)"
+          fi

@@ -56,6 +56,7 @@ class NorwayScraper(BaseScraper):
     CURRENCY   = "NOK"
     SOURCE     = "openstreetmap.org (locations) + ssb.no (national avg)"
     CONFIDENCE = 0.75  # Locations from OSM, no per-station prices available
+    GRADE = "L"
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         osm_task, ssb_task = self._fetch_osm(), self._fetch_ssb()

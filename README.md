@@ -1,152 +1,79 @@
 # EuroFuelPrices
 
-Live fuel price aggregator covering **all of Europe + EEA** — 38 countries, 80,000+ stations. Data is scraped every 30 minutes via GitHub Actions and served as static JSON on GitHub Pages.
+Live fuel prices at every station across **Europe + EEA** — 42 countries/territories, 100,000+ stations, mobile-first PWA, Sweden-first.
+A GitHub Actions job scrapes official and third-party feeds about every 15 minutes and publishes static JSON to GitHub Pages.
 
-**Live map:** `https://thorstengru.github.io/nordic-fuel-prices/`  
-**Data dashboard:** `https://thorstengru.github.io/nordic-fuel-prices/admin.html`
+**Live map:** `https://thorstengru.github.io/nordic-fuel-prices/`
+**Data health dashboard:** `https://thorstengru.github.io/nordic-fuel-prices/admin.html` (per-country status, source grade, real price age)
 
----
-
-## Coverage — 38 Countries
-
-### Tier 1 — Official mandatory government APIs (highest accuracy)
-
-| Country | Source | Stations | Update |
-|---------|--------|----------|--------|
-| 🇩🇪 Germany | [Tankerkönig / MTS-K](https://creativecommons.tankerkoenig.de) | ~14,000 | ~15 min |
-| 🇫🇷 France | [data.economie.gouv.fr](https://data.economie.gouv.fr) | ~12,000 | Near real-time |
-| 🇪🇸 Spain | [MINETUR](https://sedeaplicaciones.minetur.gob.es) | ~12,000 | Near real-time |
-| 🇮🇹 Italy | [MIMIT](https://www.mise.gov.it) | ~20,000 | Daily (8 AM) |
-| 🇵🇹 Portugal | [DGEG](https://precoscombustiveis.dgeg.gov.pt) | ~4,000 | Regular |
-| 🇦🇹 Austria | [e-Control](https://api.e-control.at) | ~2,500 | Real-time |
-| 🇭🇷 Croatia | [MZOE](https://mzoe-gor.hr) | ~900 | Daily |
-| 🇸🇮 Slovenia | [goriva.si](https://goriva.si) | ~550 | Real-time |
-
-### Tier 2 — Chain & community APIs
-
-| Country | Source | Stations | Notes |
-|---------|--------|----------|-------|
-| 🇸🇪 Sweden | OSM + [bensinpriser.nu](https://henrikhjelm.se) | ~1,800 | Major chains omit prices (Konkurrensverket) |
-| 🇩🇰 Denmark | Shell geoapp + Q8 API + ANWB | ~1,500 | Three sources merged |
-| 🇫🇮 Finland | [polttoaine.net](https://polttoaine.net) + ANWB | ~1,000 | Community-reported |
-| 🇮🇸 Iceland | [gasvaktin](https://github.com/gasvaktin/gasvaktin) | ~75 | Community |
-| 🇷🇴 Romania | [peco-online.ro](https://peco-online.ro) | ~1,200 | ANPC-backed |
-
-### Tier 3 — ANWB POI API (22 countries)
-
-NL · BE · LU · CH · LI · PL · CZ · HU · SK · EE · LV · LT · GR · BG · RS · ME · MK · AL · BA · XK · AD · MD · MT · CY
-
-### Locations only (no prices — regulatory)
-
-| Country | Reason |
-|---------|--------|
-| 🇳🇴 Norway | Anti-cartel law bans Circle K, YX, Uno-X, ST1, Shell from publishing list prices until 2030 |
+> **Data is king.** Every price carries its **source grade** and its **real age**. Where a source gives no timestamp we say
+> "price time unknown" instead of faking freshness. See the research behind the choices:
+> [docs/REGULATORY_REPORTING.md](docs/REGULATORY_REPORTING.md) (which governments force stations to report prices, and how fast),
+> [docs/COMPETITORS.md](docs/COMPETITORS.md), [docs/ROADMAP.md](docs/ROADMAP.md) (incl. monetization).
 
 ---
 
-## Data Format
+## Source grades
 
-**`data/meta.json`** — lightweight index (fetched first by the frontend)  
-**`data/{cc}.json`** — per-country stations (lazy-loaded by viewport)
+| Grade | Meaning | Examples |
+|---|---|---|
+| **A** | Official feed; stations are legally obliged to report price changes (minutes–hours) | France, Spain, Portugal, Austria, Germany (with Tankerkönig key) |
+| **B** | Official feed, daily/periodic or regulated prices | Italy (daily CSV) |
+| **C** | Third-party aggregator (ANWB/xavvy/Appitup), **no price timestamps**, unofficial | NL, BE, PL, CZ, GB, IE, … (and DE/ES fallback) |
+| **D** | Community-reported | Sweden (bensinpriser.nu), Finland, Iceland |
+| **L** | Locations only | Norway, Kosovo (no legitimate price source) |
 
-```json
-{
-  "meta": {
-    "country": "SE",
-    "currency": "SEK",
-    "source": "OSM + bensinpriser.nu",
-    "confidence": 0.85,
-    "fetched_at": "2026-10-01T12:30:00Z",
-    "station_count": 1823
-  },
-  "stations": [
-    {
-      "id": "se_Shell_Stockholm_59.33_18.07",
-      "country": "SE",
-      "name": "Shell Stockholm",
-      "brand": "Shell",
-      "city": "Stockholm",
-      "address": "Sveavägen 1",
-      "lat": 59.33,
-      "lon": 18.07,
-      "confidence": 0.85,
-      "source": "bensinpriser.nu",
-      "prices": [
-        {
-          "fuel_type": "E10",
-          "price": 19.50,
-          "currency": "SEK",
-          "unit": "L",
-          "updated_at": "2026-10-01T12:30:00Z"
-        }
-      ]
-    }
-  ]
-}
-```
+Sweden and Norway: authorities discourage/ban chains from publishing list prices, so there is no official feed; Sweden relies on crowd
+data (~20 % of stations) on top of an OpenStreetMap location backbone.
 
----
+## Reliability design
 
-## Mobile-First PWA
-
-The frontend is a Progressive Web App designed for on-the-road use:
-- **Near Me** — GPS-based nearest stations with cheapest-price summary
-- **Offline support** — service worker caches data for offline browsing
-- **Install prompt** — add to home screen on iOS/Android
-- **Bottom tab bar** — Map, Near Me, Search, List, Filter
-- **Safe area handling** — notch/Dynamic Island support
-
----
+* **Last known good:** a failing, empty or suddenly-shrunk source never overwrites good data; the previous file is kept and marked
+  `status: "stale"` with `stale_since` and the error (shown in the app and on the dashboard).
+* **Validation:** per-currency price bands, coordinate sanity, duplicate-id removal, no timestamps from the future.
+* **Honest timestamps:** `updated_at` = the source's time, or `null`. `fetched_at` = when we really fetched.
+* **Cadence:** GitHub's `cron` is best-effort (median gap measured: 262 min), so the workflow **re-dispatches itself ~12 min after each run**;
+  each source has its own refresh interval (`REFRESH_MINUTES`) to stay polite towards upstream APIs.
+* **Health report:** `health.json` (per-source status, counts, newest price, errors) and `meta.json` (index used by the app).
 
 ## Setup
 
-### 1. Fork / clone this repo
+1. Fork/clone, enable **Settings → Pages → Deploy from branch → gh-pages**.
+2. **Germany (statutory MTS-K, 5-minute reporting duty):** register a free key at <https://onboarding.tankerkoenig.de>, add it as
+   repository secret `TANKERKOENIG_API_KEY`. Without it Germany uses the ANWB fallback (~14.9k stations, grade C).
+3. Run **Actions → EuroFuelPrices — Scrape → Run workflow** once; it then keeps itself running.
+4. Local: `pip install -r requirements.txt && python src/main.py` (writes `data/`), serve `data/` + `web/` together.
 
-### 2. Enable GitHub Pages
-- Go to **Settings → Pages**
-- Source: **Deploy from a branch**
-- Branch: **gh-pages** / root
+## Roadmap (summary — details and numbers in [docs/ROADMAP.md](docs/ROADMAP.md))
 
-### 3. Add secrets (required for Germany)
-- **Settings → Secrets → Actions → New repository secret**
-- Name: `TANKERKOENIG_API_KEY`
-- Value: free key from [creativecommons.tankerkoenig.de](https://creativecommons.tankerkoenig.de)
-  (Without this, Germany falls back to ANWB with lower confidence)
+**Data**
+- [x] Honest timestamps, last-known-good, validation, health report, 15-minute cadence
+- [x] Sweden parser fixed (crowd prices), Germany/Spain via tiled ANWB, France/Portugal/Italy real timestamps, UK/IE interim
+- [ ] Tankerkönig key (DE grade A), UK Fuel Finder registration (30-min statutory feed), Spain relay (MINETUR blocks GitHub IPs)
+- [ ] Denmark statutory operator APIs (real-time since 2026-01-01), Lithuania LEA, Romania monitorulpreturilor, Greece ministry feed
+- [ ] EU Weekly Oil Bulletin as independent price-sanity validator; monthly OSM snapshot per country as location backbone
+- [ ] Licence register per country (gate monetization per source)
 
-### 4. Run the scraper manually first
-- **Actions → EuroFuelPrices — Scrape → Run workflow**
+**Product (from competitor teardown)** — freshness/grade badges ✔, then: SEO city & station pages, price alerts, price history, cross-border comparison, offline last-known data.
 
-### 5. Automatic updates
-Runs every 30 minutes. Frontend deploys instantly on any `web/` push.
+**Monetization (phased, Sweden first; all figures are assumptions in the roadmap)**
+1. *Phase 0 — trust & growth:* fix data, badges, SEO pages, move serving to Cloudflare Pages (GitHub Pages ToS forbids commercial use).
+2. *Phase 1 — light monetization:* affiliate module (EV charging, fuel card, insurance, roadside) and one labelled, non-personalised ad slot behind a certified CMP.
+3. *Phase 2 — premium (~€9.99/yr):* price alerts, history, trip planner, ad-free. Never paywall what is free today.
+4. *Phase 3 — B2B:* normalised price API/history for fleets, insurers, media; sponsored stations (labelled, kept out of ranking); white-label widgets.
+5. **Licence gates:** the unofficial ANWB feed, Portuguese prices and the Swedish bensinpriser proxy must be licensed or replaced before any monetization on them.
 
----
+## Data format
 
-## Local Development
+`data/meta.json` index → `data/{cc}.json` per country:
 
-```bash
-pip install -r requirements.txt
-python src/main.py
-# writes to data/
+```json
+{
+  "meta": { "country": "FR", "currency": "EUR", "source": "data.economie.gouv.fr", "grade": "A",
+            "status": "ok", "fetched_at": "…", "station_count": 9358, "priced_count": 9358,
+            "with_timestamp_pct": 100.0, "newest_price_at": "…" },
+  "stations": [ { "id": "fr_…", "name": "…", "lat": 48.18, "lon": 3.31, "source": "…",
+                  "prices": [ { "fuel_type": "DIESEL", "price": 2.429, "currency": "EUR", "unit": "L",
+                                "updated_at": "2026-09-28T11:45:27+00:00" } ] } ]
+}
 ```
-
-Serve `data/` + `web/` together (e.g. `python -m http.server 8080 --directory data`), then open `http://localhost:8080`.
-
----
-
-## Adding Analytics
-
-The admin dashboard (`admin.html`) includes setup guides for:
-- **GoatCounter** — free, open-source, GDPR-compliant
-- **Plausible** — €9/mo, EU-hosted, best dashboard
-- **Cloudflare Web Analytics** — free, Core Web Vitals
-
----
-
-## Roadmap
-
-- [ ] Greece: migrate from ANWB → official fuelprices.gr mandatory API
-- [ ] Belgium: add carbu.com parallel source
-- [ ] Price trend deltas (↑/↓ vs previous scrape)
-- [ ] Per-station price history chart
-- [ ] Cross-country EUR price comparison layer
-- [ ] Push notifications for price drops near saved locations

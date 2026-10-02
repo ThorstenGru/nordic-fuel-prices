@@ -230,9 +230,9 @@ a:hover { text-decoration:underline; }
         <tr>
           <th>Country</th>
           <th>Stations</th>
-          <th>Source</th>
-          <th>Confidence</th>
-          <th>Last Fetched</th>
+          <th>Source · grade</th>
+          <th>Newest price</th>
+          <th>Last checked</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -349,8 +349,13 @@ const FLAGS = {
   XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
 };
 
-const GOV_COUNTRIES  = new Set(['DE','FR','ES','IT','PT','AT','HR','SI']);
-const NODATA_COUNTRIES = new Set(['NO']);
+const GRADE_INFO = {
+  A: { chip:'gov',       txt:'A · Official statutory', desc:'Stations must report price changes to the government' },
+  B: { chip:'gov',       txt:'B · Official periodic',  desc:'Government feed, daily or regulated prices' },
+  C: { chip:'anwb',      txt:'C · Third-party',        desc:'Aggregator feed, price time unknown' },
+  D: { chip:'community', txt:'D · Community',          desc:'Crowd / community reported' },
+  L: { chip:'noprices',  txt:'L · Locations only',     desc:'No prices available' },
+};
 
 function ago(iso) {
   if (!iso) return '—';
@@ -362,32 +367,30 @@ function ago(iso) {
   return `${Math.round(h/24)} d ago`;
 }
 
-function freshnessClass(iso) {
-  if (!iso) return 'stale';
-  const h = (Date.now() - new Date(iso)) / 3600000;
-  if (h < 2) return 'live';
-  if (h < 12) return 'live';
-  if (h < 48) return 'warn';
-  return 'stale';
+// Real status of a country: failed (nothing), stale (kept last good data), nodata (locations only),
+// live (fresh run) / warn (fresh run but the newest source timestamp is old)
+function countryState(c) {
+  if (c.status === 'failed' || !(c.station_count > 0)) return 'failed';
+  if (c.status === 'stale') return 'stale';
+  if (!(c.priced_count > 0)) return 'nodata';
+  if (c.newest_price_at) {
+    const h = (Date.now() - new Date(c.newest_price_at)) / 3600000;
+    if (h > 72) return 'warn';
+  }
+  return 'live';
 }
+const STATE_PILL = {
+  live:   '<span class="status-pill live"><span class="dot"></span>Live</span>',
+  warn:   '<span class="status-pill warn"><span class="dot"></span>Old prices</span>',
+  stale:  '<span class="status-pill stale"><span class="dot"></span>Stale (kept last good)</span>',
+  failed: '<span class="status-pill stale"><span class="dot"></span>Failed</span>',
+  nodata: '<span class="status-pill nodata">No prices</span>',
+};
 
-function confClass(c) {
-  if (c >= 1.0) return 'c1';
-  if (c >= 0.90) return 'c09';
-  if (c >= 0.75) return 'c07';
-  return 'c0';
-}
-
-function srcChip(src, country) {
-  if (NODATA_COUNTRIES.has(country)) return '<span class="src-chip noprices">Locations only</span>';
-  if (GOV_COUNTRIES.has(country)) return '<span class="src-chip gov">Gov. mandatory</span>';
-  if (src.includes('anwb')) return '<span class="src-chip anwb">ANWB POI API</span>';
-  return '<span class="src-chip community">Community</span>';
-}
-
-function barHtml(n, max) {
+function barHtml(n, priced, max) {
   const pct = max > 0 ? Math.min(100, Math.round(n / max * 100)) : 0;
-  const col = pct > 60 ? 'var(--green)' : pct > 20 ? 'var(--blue)' : 'var(--amber)';
+  const ppct = n > 0 ? Math.round(priced / n * 100) : 0;
+  const col = ppct >= 90 ? 'var(--green)' : ppct >= 50 ? 'var(--blue)' : 'var(--amber)';
   return `<div class="bar-wrap">
     <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
     <div class="bar-n">${n.toLocaleString()}</div>
@@ -400,10 +403,15 @@ async function load() {
   document.getElementById('err-box').style.display = 'none';
 
   try {
-    const r = await fetch(`meta.json?t=${Date.now()}`);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const meta = await r.json();
-    render(meta);
+    const [rm, rh] = await Promise.all([
+      fetch(`meta.json?t=${Date.now()}`),
+      fetch(`health.json?t=${Date.now()}`).catch(() => null),
+    ]);
+    if (!rm.ok) throw new Error(`HTTP ${rm.status}`);
+    const meta = await rm.json();
+    let health = null;
+    try { if (rh && rh.ok) health = await rh.json(); } catch (_) {}
+    render(meta, health);
   } catch (e) {
     const err = document.getElementById('err-box');
     err.textContent = `⚠ Could not load meta.json: ${e.message}. Are you viewing this from the deployed site?`;
@@ -414,64 +422,62 @@ async function load() {
   }
 }
 
-function render(meta) {
+function render(meta, health) {
   const countries = meta.countries || [];
   const total = meta.total_stations || 0;
+  const totalPriced = meta.total_priced != null ? meta.total_priced : countries.reduce((s, c) => s + (c.priced_count || 0), 0);
   const fetchedAt = meta.fetched_at;
+  const states = countries.map(countryState);
+  const count = (s) => states.filter(x => x === s).length;
 
-  // Last run
   document.getElementById('last-run').textContent = `Last scrape: ${ago(fetchedAt)}`;
 
-  // KPIs
-  const live = countries.filter(c => c.station_count > 0).length;
-  const avgConf = countries.length
-    ? (countries.reduce((s, c) => s + (c.confidence || 0), 0) / countries.length).toFixed(2)
-    : '—';
-  const freshH = fetchedAt ? Math.round((Date.now() - new Date(fetchedAt)) / 60000) : null;
-  const freshStr = freshH == null ? '—' : freshH < 60 ? `${freshH}m` : `${Math.round(freshH/60)}h`;
+  const live = count('live') + count('warn');
+  const pricedPct = total ? Math.round(100 * totalPriced / total) : 0;
+  const freshMin = fetchedAt ? Math.round((Date.now() - new Date(fetchedAt)) / 60000) : null;
+  const freshStr = freshMin == null ? '—' : freshMin < 60 ? `${freshMin}m` : `${Math.round(freshMin/60)}h`;
+  const problem = count('stale') + count('failed');
 
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi green"><div class="kpi-val">${total.toLocaleString()}</div><div class="kpi-lbl">Total Stations</div><div class="kpi-sub">Across ${live} countries</div></div>
-    <div class="kpi blue"><div class="kpi-val">${live}/${countries.length}</div><div class="kpi-lbl">Countries Live</div><div class="kpi-sub">With station data</div></div>
+    <div class="kpi green"><div class="kpi-val">${total.toLocaleString()}</div><div class="kpi-lbl">Total Stations</div><div class="kpi-sub">${totalPriced.toLocaleString()} with a price (${pricedPct}%)</div></div>
+    <div class="kpi blue"><div class="kpi-val">${live}/${countries.length}</div><div class="kpi-lbl">Countries Live</div><div class="kpi-sub">Fresh run with priced stations</div></div>
     <div class="kpi amber"><div class="kpi-val">${freshStr}</div><div class="kpi-lbl">Data Age</div><div class="kpi-sub">Since last scrape run</div></div>
-    <div class="kpi purple"><div class="kpi-val">${avgConf}</div><div class="kpi-lbl">Avg Confidence</div><div class="kpi-sub">Weighted by source quality</div></div>
+    <div class="kpi purple"><div class="kpi-val">${problem}</div><div class="kpi-lbl">Need Attention</div><div class="kpi-sub">${count('stale')} stale · ${count('failed')} failed</div></div>
   `;
 
-  // Source breakdown
-  const govCount  = countries.filter(c => GOV_COUNTRIES.has(c.country)).length;
-  const anwbCount = countries.filter(c => !GOV_COUNTRIES.has(c.country) && !NODATA_COUNTRIES.has(c.country) && (c.source||'').includes('anwb')).length;
-  const commCount = countries.filter(c => !GOV_COUNTRIES.has(c.country) && !NODATA_COUNTRIES.has(c.country) && !(c.source||'').includes('anwb')).length;
-  const noneCount = countries.filter(c => NODATA_COUNTRIES.has(c.country)).length;
-
+  const g = (x) => countries.filter(c => (c.grade || 'C') === x).length;
   document.getElementById('srcBreakdown').innerHTML = `
-    <div class="src-box gov"><div class="n">${govCount}</div><div class="lbl">Gov. Mandatory</div><div class="desc">Official national APIs, highest accuracy</div></div>
-    <div class="src-box anwb"><div class="n">${anwbCount}</div><div class="lbl">ANWB POI API</div><div class="desc">Dutch motorists' data across Europe</div></div>
-    <div class="src-box comm"><div class="n">${commCount}</div><div class="lbl">Community / Scraped</div><div class="desc">Reported prices &amp; web scrapers</div></div>
-    <div class="src-box none"><div class="n">${noneCount}</div><div class="lbl">No Prices</div><div class="desc">Locations only (regulatory ban)</div></div>
+    <div class="src-box gov"><div class="n">${g('A')}</div><div class="lbl">A · Official statutory</div><div class="desc">${GRADE_INFO.A.desc}</div></div>
+    <div class="src-box gov"><div class="n">${g('B')}</div><div class="lbl">B · Official periodic</div><div class="desc">${GRADE_INFO.B.desc}</div></div>
+    <div class="src-box anwb"><div class="n">${g('C')}</div><div class="lbl">C · Third-party</div><div class="desc">${GRADE_INFO.C.desc}</div></div>
+    <div class="src-box comm"><div class="n">${g('D') + g('L')}</div><div class="lbl">D / L · Community or none</div><div class="desc">Crowd reported or locations only</div></div>
   `;
 
-  // Country table
-  const sorted = [...countries].sort((a, b) => b.station_count - a.station_count);
-  const maxN = sorted[0]?.station_count || 1;
-  document.getElementById('tableHint').textContent = `${total.toLocaleString()} total stations`;
+  const order = { failed: 0, stale: 1, warn: 2, nodata: 3, live: 4 };
+  const idx = countries.map((c, i) => i).sort((a, b) =>
+    (order[states[a]] - order[states[b]]) || (countries[b].station_count - countries[a].station_count));
+  const maxN = Math.max(1, ...countries.map(c => c.station_count || 0));
+  document.getElementById('tableHint').textContent =
+    `${total.toLocaleString()} stations · ${totalPriced.toLocaleString()} priced` +
+    (health && health.run_seconds != null ? ` · run took ${Math.round(health.run_seconds)}s` : '');
 
-  const rows = sorted.map(c => {
-    const fc = freshnessClass(c.fetched_at);
-    const trCls = fc === 'stale' ? ' class="fail"' : fc === 'warn' ? ' class="warn"' : '';
-    const noP = NODATA_COUNTRIES.has(c.country);
-    const statusHtml = noP
-      ? '<span class="status-pill nodata">No prices</span>'
-      : c.station_count > 0
-        ? `<span class="status-pill ${fc}"><span class="dot"></span>${fc === 'live' ? 'Live' : fc === 'warn' ? 'Stale' : 'No data'}</span>`
-        : '<span class="status-pill stale"><span class="dot"></span>Failed</span>';
-
+  const rows = idx.map(i => {
+    const c = countries[i], st = states[i];
+    const gi = GRADE_INFO[c.grade || 'C'] || GRADE_INFO.C;
+    const h = (health && health.countries && health.countries[c.country]) || {};
+    const err = c.last_error || h.error || '';
+    const trCls = (st === 'failed' || st === 'stale') ? ' class="fail"' : st === 'warn' ? ' class="warn"' : '';
+    const ts = c.with_timestamp_pct != null ? c.with_timestamp_pct : 0;
+    const priceAge = c.newest_price_at
+      ? `${ago(c.newest_price_at)}<br><span style="color:var(--t3);font-size:0.62rem">${ts}% have source time</span>`
+      : `<span style="color:var(--amber)">unknown</span><br><span style="color:var(--t3);font-size:0.62rem">source gives no timestamp</span>`;
     return `<tr${trCls}>
       <td style="white-space:nowrap">${FLAGS[c.country]||''} <strong>${c.country}</strong></td>
-      <td>${barHtml(c.station_count, maxN)}</td>
-      <td style="max-width:220px;font-size:0.72rem;color:var(--t2)">${srcChip(c.source||'', c.country)} <span style="font-size:0.67rem">${(c.source||'').split('(')[0].trim()}</span></td>
-      <td><span class="conf ${confClass(c.confidence)}">${(c.confidence||0).toFixed(2)}</span></td>
+      <td>${barHtml(c.station_count || 0, c.priced_count || 0, maxN)}<div style="font-size:0.62rem;color:var(--t3)">${(c.priced_count||0).toLocaleString()} priced</div></td>
+      <td style="max-width:230px;font-size:0.72rem;color:var(--t2)"><span class="src-chip ${gi.chip}">${gi.txt}</span><br><span style="font-size:0.66rem">${(c.source||'').split('(')[0].trim()}</span></td>
+      <td style="white-space:nowrap;font-size:0.72rem;color:var(--t2)">${priceAge}</td>
       <td style="white-space:nowrap;font-size:0.72rem;color:var(--t2)">${ago(c.fetched_at)}</td>
-      <td>${statusHtml}</td>
+      <td>${STATE_PILL[st]}${err ? `<div title="${String(err).replace(/"/g,'&quot;')}" style="font-size:0.6rem;color:var(--red);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${err}</div>` : ''}</td>
     </tr>`;
   }).join('');
 
