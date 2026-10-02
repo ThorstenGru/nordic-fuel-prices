@@ -11,7 +11,7 @@
   script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline';
   img-src 'self';
-  connect-src 'self' https://cloudflareinsights.com;
+  connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -21,8 +21,8 @@
      Cloudflare dashboard -> Analytics & Logs -> Web Analytics -> Add a site.
      The token is not a secret (it ships in every page's public source); replace the
      placeholder below with the real one to activate. -->
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
-        data-cf-beacon='{"token": "REPLACE_WITH_YOUR_CLOUDFLARE_WEB_ANALYTICS_TOKEN"}'></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
 <style>
 :root {
   --bg:    #0a0f1e;
