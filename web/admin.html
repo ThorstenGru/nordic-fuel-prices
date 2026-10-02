@@ -359,6 +359,14 @@ window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
 </div>
 
 <script>
+// Country names/sources ultimately trace back to scraper-controlled strings, but err/source
+// below can include text derived from upstream responses — escape before inserting as HTML.
+const _escDiv = document.createElement('div');
+function esc(v) {
+  _escDiv.textContent = v ?? '';
+  return _escDiv.innerHTML;
+}
+
 const FLAGS = {
   AT:'🇦🇹',BE:'🇧🇪',HR:'🇭🇷',CZ:'🇨🇿',DK:'🇩🇰',EE:'🇪🇪',FI:'🇫🇮',FR:'🇫🇷',
   DE:'🇩🇪',GR:'🇬🇷',HU:'🇭🇺',IS:'🇮🇸',IT:'🇮🇹',LV:'🇱🇻',LT:'🇱🇹',LU:'🇱🇺',
