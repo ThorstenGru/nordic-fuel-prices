@@ -115,9 +115,6 @@ html, body {
 /* ── Clusters ── */
 .marker-cluster { background:rgba(30,41,59,0.9) !important; }
 /* Bigger icon with two price lines needs a taller box than the default round bubble */
-.marker-cluster-small.has-prices, .marker-cluster-medium.has-prices, .marker-cluster-large.has-prices {
-  border-radius:12px !important;
-}
 .marker-cluster div {
   background:rgba(59,130,246,0.85) !important;
   color:#fff !important; font-weight:700 !important;
@@ -547,7 +544,10 @@ const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
 // ════════════════════════════════════════════════════
 // Default view: Sweden (slightly north of center, covers the whole country nicely)
 const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
-map.attributionControl.addAttribution('Fuel prices: official feeds &amp; partners — <a href="admin.html" style="color:inherit">sources, grades &amp; freshness</a>');
+// Bottom-left (not bottom-right): the Near Me FAB lives bottom-right and a long attribution
+// string was wrapping to 2 lines and colliding with it on narrow phones.
+map.attributionControl.setPosition('bottomleft');
+map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
 // ESRI World Dark Gray Canvas — free, no API key required
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
@@ -702,27 +702,17 @@ function mkCluster() {
     maxClusterRadius:40, disableClusteringAtZoom:CLUSTER_ZOOM,
     spiderfyOnMaxZoom:true, showCoverageOnHover:false, chunkedLoading:true,
     iconCreateFunction: c => {
-      const kids = c.getAllChildMarkers();
-      let m95 = null, mD = null, mF = null;
-      for (const m of kids) {
-        const a = m.options._p95, d = m.options._pd, f = m.options._cp;
-        if (a && (!m95 || a.price < m95.price)) m95 = a;
-        if (d && (!mD  || d.price < mD.price))  mD  = d;
-        if (fFuel && f && (!mF || f.price < mF.price)) mF = f;
-      }
-      const fmt = p => `${SYM[p.currency]||'€'}${p.price.toFixed(2)}`;
+      // Clusters show a plain count only. A per-cluster price line was tried and dropped: on a
+      // real phone, densely packed clusters (common in cities) made the extra text bleed across
+      // neighbouring bubbles and become unreadable, whatever the zoom gate. Prices belong on the
+      // individual station marker/tooltip once you're zoomed in far enough to see one (see
+      // mkMarker / PRICE_ZOOM) — that is the one place they render without overlap.
       const n  = c.getChildCount();
       const sz = n<50?'small':n<200?'medium':'large';
-      // Price sub-lines only once zoomed in enough to be meaningful (same threshold as marker
-      // tooltips) — at country-wide zoom a cluster's "cheapest here" spans too wide an area and
-      // the extra lines just overlap neighbouring cluster icons.
-      const showPrices = map.getZoom() >= PRICE_ZOOM;
-      const line = (lbl, p) => p ? `<br><span style="font-size:0.52rem;opacity:0.9;white-space:nowrap">${lbl} ${fmt(p)}</span>` : '';
-      const lines = showPrices ? (fFuel ? line(fFuel, mF) : line('95', m95) + line('D', mD)) : '';
       return L.divIcon({
-        html:`<div>${n}${lines}</div>`,
-        className:`marker-cluster marker-cluster-${sz}${lines ? ' has-prices' : ''}`,
-        iconSize: lines ? [52,52] : [40,40],
+        html:`<div>${n}</div>`,
+        className:`marker-cluster marker-cluster-${sz}`,
+        iconSize:[40,40],
       });
     },
   });
