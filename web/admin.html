@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a0f1e">
+<meta name="theme-color" content="#F4F5F7">
 <title>EuroFuelPrices — Data Health Dashboard</title>
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="Content-Security-Policy" content="
@@ -25,18 +25,19 @@
         data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
 <style>
 :root {
-  --bg:    #0a0f1e;
-  --surf:  #111827;
-  --surf2: #1e293b;
-  --b:     #1e2d45;
-  --text:  #e2e8f0;
-  --t2:    #94a3b8;
-  --t3:    #475569;
-  --blue:  #3b82f6;
-  --green: #22c55e;
-  --amber: #f59e0b;
-  --red:   #ef4444;
-  --purple:#a855f7;
+  --bg:    #F4F5F7;
+  --surf:  #FFFFFF;
+  --surf2: #F7F8FA;
+  --b:     #E6E8EB;
+  --text:  #16181D;
+  --t2:    #6B7280;
+  --t3:    #9AA1AC;
+  --blue:  #0F766E;
+  --green: #16A34A;
+  --amber: #F59E0B;
+  --red:   #EF4444;
+  --purple:#9333EA;
+  --coral: #E8542F;
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -50,33 +51,33 @@ a:hover { text-decoration:underline; }
 /* Header */
 .hd {
   background:var(--surf); border-bottom:1px solid var(--b);
-  padding:18px 24px; display:flex; align-items:center; justify-content:space-between;
-  position:sticky; top:0; z-index:100; gap:16px;
+  padding:12px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100; gap:8px 12px;
 }
-.hd-left { display:flex; align-items:center; gap:12px; }
-.hd-logo { font-size:1.4rem; font-weight:800; display:flex; align-items:center; gap:8px; }
+.hd-left { display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; }
+.hd-logo { font-size:1.05rem; font-weight:500; display:flex; align-items:center; gap:6px; white-space:nowrap; }
 .hd-logo span { color:var(--green); }
-.hd-sub { font-size:0.72rem; color:var(--t2); }
-.hd-right { display:flex; align-items:center; gap:12px; }
-#last-run { font-size:0.7rem; color:var(--t3); }
+.hd-sub { font-size:0.68rem; color:var(--t2); white-space:nowrap; }
+.hd-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; }
+#last-run { font-size:0.65rem; color:var(--t3); white-space:nowrap; }
 .back-btn {
-  background:var(--surf2); border:1px solid var(--b); border-radius:8px;
+  background:var(--surf2); border:1px solid var(--b); border-radius:12px;
   color:var(--t2); font-size:0.75rem; padding:6px 14px; cursor:pointer; text-decoration:none;
-  display:flex; align-items:center; gap:5px;
+  display:flex; align-items:center; gap:5px; white-space:nowrap;
 }
 .back-btn:hover { color:var(--text); }
 
 /* Layout */
-.wrap { max-width:520px; margin:0 auto; padding:24px 20px; }
+.wrap { max-width:520px; margin:0 auto; padding:16px 14px; }
 
 /* Summary cards */
 .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:28px; }
 .kpi {
-  background:var(--surf); border:1px solid var(--b); border-radius:14px;
-  padding:18px 20px; display:flex; flex-direction:column; gap:4px;
+  background:var(--surf); border:1px solid var(--b); border-radius:16px;
+  padding:16px 18px; display:flex; flex-direction:column; gap:4px;
 }
-.kpi-val { font-size:2rem; font-weight:800; line-height:1; }
-.kpi-lbl { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--t2); }
+.kpi-val { font-size:1.9rem; font-weight:500; line-height:1; }
+.kpi-lbl { font-size:0.7rem; font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--t2); }
 .kpi-sub { font-size:0.68rem; color:var(--t3); margin-top:2px; }
 .kpi.green .kpi-val { color:var(--green); }
 .kpi.blue  .kpi-val { color:var(--blue); }
@@ -85,7 +86,7 @@ a:hover { text-decoration:underline; }
 
 /* Section headers */
 .sec-hd {
-  font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em;
+  font-size:0.7rem; font-weight:500; text-transform:uppercase; letter-spacing:0.07em;
   color:var(--t3); margin:28px 0 12px; display:flex; align-items:center; gap:8px;
 }
 .sec-hd::after { content:''; flex:1; height:1px; background:var(--b); }
@@ -96,7 +97,7 @@ a:hover { text-decoration:underline; }
   width:100%; border-collapse:collapse; font-size:0.8rem;
 }
 .tbl th {
-  text-align:left; font-size:0.65rem; font-weight:700;
+  text-align:left; font-size:0.65rem; font-weight:500;
   text-transform:uppercase; letter-spacing:0.05em; color:var(--t3);
   padding:8px 12px; border-bottom:1px solid var(--b);
   white-space:nowrap;
@@ -112,7 +113,7 @@ a:hover { text-decoration:underline; }
 /* Confidence pill */
 .conf {
   display:inline-flex; align-items:center; gap:4px;
-  padding:2px 8px; border-radius:20px; font-size:0.67rem; font-weight:700;
+  padding:2px 8px; border-radius:20px; font-size:0.67rem; font-weight:500;
 }
 .conf.c1 { background:rgba(34,197,94,0.15); color:var(--green); }
 .conf.c09 { background:rgba(59,130,246,0.15); color:var(--blue); }
@@ -122,7 +123,7 @@ a:hover { text-decoration:underline; }
 /* Status pill */
 .status-pill {
   display:inline-flex; align-items:center; gap:4px;
-  padding:3px 10px; border-radius:20px; font-size:0.67rem; font-weight:700;
+  padding:3px 10px; border-radius:20px; font-size:0.67rem; font-weight:500;
 }
 .status-pill.live { background:rgba(34,197,94,0.12); color:var(--green); }
 .status-pill.warn { background:rgba(245,158,11,0.12); color:var(--amber); }
@@ -134,12 +135,12 @@ a:hover { text-decoration:underline; }
 .bar-wrap { display:flex; align-items:center; gap:8px; min-width:120px; }
 .bar-bg { flex:1; height:4px; background:var(--surf2); border-radius:2px; overflow:hidden; }
 .bar-fill { height:100%; border-radius:2px; transition:width 0.3s; }
-.bar-n { font-size:0.72rem; font-weight:700; color:var(--text); min-width:52px; text-align:right; }
+.bar-n { font-size:0.72rem; font-weight:500; color:var(--text); min-width:52px; text-align:right; }
 
 /* Source type chips */
 .src-chip {
   display:inline-block; font-size:0.62rem; padding:2px 7px; border-radius:10px;
-  font-weight:600; white-space:nowrap;
+  font-weight:500; white-space:nowrap;
 }
 .src-chip.gov { background:rgba(34,197,94,0.12); color:var(--green); }
 .src-chip.anwb { background:rgba(59,130,246,0.12); color:var(--blue); }
@@ -149,9 +150,9 @@ a:hover { text-decoration:underline; }
 /* Analytics section */
 .analytics-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
 .analytics-card {
-  background:var(--surf); border:1px solid var(--b); border-radius:14px; padding:20px;
+  background:var(--surf); border:1px solid var(--b); border-radius:16px; padding:20px;
 }
-.analytics-card h3 { font-size:0.88rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:7px; }
+.analytics-card h3 { font-size:0.88rem; font-weight:500; margin-bottom:4px; display:flex; align-items:center; gap:7px; }
 .analytics-card p { font-size:0.75rem; color:var(--t2); line-height:1.6; margin-bottom:10px; }
 .analytics-card code {
   display:block; background:var(--bg); border:1px solid var(--b); border-radius:8px;
@@ -159,19 +160,19 @@ a:hover { text-decoration:underline; }
   margin-bottom:8px;
 }
 .analytics-card .tag {
-  display:inline-block; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3);
-  color:var(--blue); font-size:0.65rem; font-weight:600; padding:2px 8px; border-radius:10px;
+  display:inline-block; background:rgba(15,118,110,0.08); border:1px solid rgba(15,118,110,0.25);
+  color:var(--blue); font-size:0.65rem; font-weight:500; padding:2px 8px; border-radius:10px;
   margin-right:4px; margin-bottom:4px;
 }
 
 /* Source breakdown */
 .source-breakdown { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:28px; }
 .src-box {
-  background:var(--surf); border:1px solid var(--b); border-radius:12px;
+  background:var(--surf); border:1px solid var(--b); border-radius:16px;
   padding:16px; text-align:center;
 }
-.src-box .n { font-size:2.2rem; font-weight:800; line-height:1; margin-bottom:4px; }
-.src-box .lbl { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--t2); }
+.src-box .n { font-size:2.2rem; font-weight:500; line-height:1; margin-bottom:4px; }
+.src-box .lbl { font-size:0.7rem; font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--t2); }
 .src-box .desc { font-size:0.65rem; color:var(--t3); margin-top:4px; }
 .src-box.gov .n { color:var(--green); }
 .src-box.anwb .n { color:var(--blue); }
@@ -184,16 +185,16 @@ a:hover { text-decoration:underline; }
 
 /* Refresh button */
 .refresh-btn {
-  background:none; border:1px solid var(--b); border-radius:8px;
+  background:none; border:1px solid var(--b); border-radius:12px;
   color:var(--t2); font-size:0.75rem; padding:5px 12px; cursor:pointer;
-  display:flex; align-items:center; gap:5px; font-family:inherit;
+  display:flex; align-items:center; gap:5px; font-family:inherit; white-space:nowrap;
 }
 .refresh-btn:hover { border-color:var(--blue); color:var(--blue); }
 @keyframes spin { to { transform:rotate(360deg); } }
 .refresh-btn.loading .icon { animation:spin 0.8s linear infinite; display:inline-block; }
 
 /* Error */
-.err { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; padding:16px 20px; font-size:0.8rem; color:var(--red); margin-bottom:20px; }
+.err { background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.25); border-radius:16px; padding:16px 20px; font-size:0.8rem; color:#B91C1C; margin-bottom:20px; }
 
 /* Responsive */
 @media all {
@@ -267,7 +268,7 @@ a:hover { text-decoration:underline; }
   </p>
   <div class="analytics-grid">
     <div class="analytics-card">
-      <h3>📊 GoatCounter <span style="font-size:0.65rem;color:var(--green);font-weight:600">Free · Privacy-first</span></h3>
+      <h3>📊 GoatCounter <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free · Privacy-first</span></h3>
       <p>Simple, open-source, GDPR-compliant. No cookies. Free for public sites. Shows page views, countries, referrers, device types. Takes 2 minutes to set up.</p>
       <div class="tag">No cookies</div><div class="tag">GDPR OK</div><div class="tag">Open source</div>
       <br><br>
@@ -281,7 +282,7 @@ window.goatcounter?.count({ path:'nearby-used', title:'Near Me tapped' });</code
     </div>
 
     <div class="analytics-card">
-      <h3>🌐 Plausible Analytics <span style="font-size:0.65rem;color:var(--amber);font-weight:600">€9/mo · Best UX</span></h3>
+      <h3>🌐 Plausible Analytics <span style="font-size:0.65rem;color:var(--amber);font-weight:500">€9/mo · Best UX</span></h3>
       <p>Best-in-class privacy-friendly analytics. Beautiful dashboard. Custom events for fuel types, Near Me, country filters. EU-hosted (Estonia). GDPR/CCPA compliant out of the box.</p>
       <div class="tag">EU-hosted</div><div class="tag">Custom events</div><div class="tag">Best dashboard</div>
       <br><br>
@@ -300,7 +301,7 @@ window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
     </div>
 
     <div class="analytics-card">
-      <h3>☁️ Cloudflare Web Analytics <span style="font-size:0.65rem;color:var(--green);font-weight:600">Free forever</span></h3>
+      <h3>☁️ Cloudflare Web Analytics <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free forever</span></h3>
       <p>100% free, requires a Cloudflare account (free). Works without proxying the site. Cookie-less. Shows Core Web Vitals, pages, countries, referrers. No custom events on free plan.</p>
       <div class="tag">Free</div><div class="tag">Core Web Vitals</div><div class="tag">No config</div>
       <br><br>
@@ -316,7 +317,7 @@ window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
 
   <!-- What to track -->
   <div class="sec-hd">Recommended events to track</div>
-  <div style="background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:20px;font-size:0.78rem;line-height:1.8;color:var(--t2)">
+  <div style="background:var(--surf);border:1px solid var(--b);border-radius:16px;padding:20px;font-size:0.78rem;line-height:1.8;color:var(--t2)">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
       <div>
         <strong style="color:var(--text);display:block;margin-bottom:6px">🗺 Map interactions</strong>

@@ -945,23 +945,33 @@ function resetAll() {
 // ════════════════════════════════════════════════════
 // List management
 // ════════════════════════════════════════════════════
+// Priced stations always come first (sorted the way the user asked), unpriced stations follow
+// in a second group sorted the same way where that's meaningful — never interleaved.
+function splitPricedFirst(arr, pricedCmp, unpricedCmp) {
+  const priced = [], unpriced = [];
+  for (const item of arr) (cheapest(item.s ?? item) ? priced : unpriced).push(item);
+  if (pricedCmp) priced.sort(pricedCmp);
+  if (unpricedCmp) unpriced.sort(unpricedCmp);
+  return priced.concat(unpriced);
+}
+
 function getAll() {
   const all = [];
   for (const arr of Object.values(data))
     for (const s of arr) { if (matches(s)) all.push(s); }
-  if (sortMode === 'distance' && myLat != null)
-    all.sort((a,b) => {
+  let pricedCmp = null, unpricedCmp = null;
+  if (sortMode === 'distance' && myLat != null) {
+    const byDist = (a,b) => {
       const da = (a.lat&&a.lon) ? dist(myLat,myLon,a.lat,a.lon) : 99999;
       const db = (b.lat&&b.lon) ? dist(myLat,myLon,b.lat,b.lon) : 99999;
       return da-db;
-    });
-  else if (sortMode === 'price')
-    all.sort((a,b) => {
-      const pa=cheapest(a), pb=cheapest(b);
-      if(!pa&&!pb) return 0; if(!pa) return 1; if(!pb) return -1;
-      return pa.price-pb.price;
-    });
-  return all;
+    };
+    pricedCmp = unpricedCmp = byDist;   // distance is meaningful for both groups
+  } else if (sortMode === 'price') {
+    pricedCmp = (a,b) => cheapest(a).price - cheapest(b).price;
+    // unpricedCmp stays null: there's no price to sort by, so that group keeps its original order
+  }
+  return splitPricedFirst(all, pricedCmp, unpricedCmp);
 }
 
 function updCounts() {
@@ -1091,12 +1101,16 @@ function showNearby() {
       if (!s.lat || !s.lon) continue;
       all.push({ s, km: dist(myLat,myLon,s.lat,s.lon) });
     }
-  all.sort((a,b) => a.km-b.km);
+  all.sort((a,b) => a.km-b.km);   // only used below to find the nearest country; final order comes from splitPricedFirst
 
   // Same-country only: the user's own country (reverse-geocoded), falling back to whatever
   // country the nearest already-loaded station belongs to. Never suggests a cross-border station.
   const country = myCountry || all.find(c => c.km <= NEARBY_RADIUS_KM * 2)?.s.country || null;
-  const cands = all.filter(c => c.km <= NEARBY_RADIUS_KM && (!country || c.s.country === country) && matches(c.s));
+  const byKm = (a,b) => a.km - b.km;
+  const cands = splitPricedFirst(
+    all.filter(c => c.km <= NEARBY_RADIUS_KM && (!country || c.s.country === country) && matches(c.s)),
+    byKm, byKm,
+  );
 
   const el = document.getElementById('nearby-list');
   if (!el) return;
@@ -1161,7 +1175,9 @@ async function runSearch(isMob) {
       }
     }
     if (hits.length) {
-      hits.sort((a,b) => (a.km||99999)-(b.km||99999));
+      const byKm = (a,b) => (a.km??99999)-(b.km??99999);
+      const sorted = splitPricedFirst(hits, byKm, byKm);
+      hits.length = 0; hits.push(...sorted);
       if (isMob) {
         resEl.innerHTML = hits.slice(0,40).map(({s,km}) => mkCard(s,km)).join('');
       } else {

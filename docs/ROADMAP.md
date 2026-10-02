@@ -300,6 +300,8 @@ Source: comp-fr, comp-de, comp-intl. P1 is highest.
 
 **TODO V1 - visual mobile-layout inspection NOT done.** Spend about 2 hours taking phone screenshots at 375 px of clever-tanken, mehr-tanken, carbu.com, Essence&CO, Drivstoffappen, bensinpriser.nu, plein-moins-cher.fr and GasBuddy before finalising UI for ad, sponsored and affiliate slots. Until then, layout recommendations here are text-derived only.
 
+**Potential scope expansion - Turkey (parked, 2026-10-02).** Not in the current 42-country set; deliberately out of scope so far (EU candidate, not EEA - same line drawn against Ukraine/Belarus/Russia). Earlier research flagged a plausible path: EPDK (the Turkish energy-market regulator) mandates distributor price notifications, and the major chains (Opet, Petrol Ofisi, BP Turkey, Shell Turkey) run their own station-finder apps with live prices - but none of this was verified live or built. If pursued, treat it like any other country: live-test EPDK's data and the chain APIs with the same rigor as the existing audits (coverage %, timestamp evidence, licence) before writing a scraper. Owner has not requested this yet.
+
 ---
 
 ## 9. Risks and mitigations
