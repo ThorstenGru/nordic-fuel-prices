@@ -684,11 +684,20 @@ let   activeTab = 'map';
 // ════════════════════════════════════════════════════
 // Helpers
 // ════════════════════════════════════════════════════
+// Mainstream fuels only: 95 (E10/E5) and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
+// so they must never set the headline price (unless the user filters for them).
+const F95 = ['E10','E5'], FDIE = ['DIESEL'];
+function minOf(s, types) {
+  let best = null;
+  for (const p of (s.prices||[])) if (types.includes(p.fuel_type) && p.price > 0 && (!best || p.price < best.price)) best = p;
+  return best;
+}
 function cheapest(s) {
   if (!s.prices?.length) return null;
-  const liq = s.prices.filter(p => p.unit === 'L' && p.price > 0);
-  const pool = liq.length ? liq : s.prices.filter(p => p.price > 0);
-  return pool.length ? pool.reduce((a,b) => a.price < b.price ? a : b) : null;
+  if (fFuel) return minOf(s, [fFuel]);
+  const a = minOf(s, F95), d = minOf(s, FDIE);
+  if (a && d) return a.price <= d.price ? a : d;
+  return a || d || null;       // no mainstream fuel => no headline price
 }
 
 function dist(a, b, c, d) {
@@ -785,20 +794,22 @@ function mkCluster() {
     spiderfyOnMaxZoom:true, showCoverageOnHover:false, chunkedLoading:true,
     iconCreateFunction: c => {
       const kids = c.getAllChildMarkers();
-      let minP = Infinity, minCur = 'EUR';
+      let m95 = null, mD = null, mF = null;
       for (const m of kids) {
-        const cp = m.options._cp;
-        if (cp && cp.price < minP) { minP = cp.price; minCur = cp.currency; }
+        const a = m.options._p95, d = m.options._pd, f = m.options._cp;
+        if (a && (!m95 || a.price < m95.price)) m95 = a;
+        if (d && (!mD  || d.price < mD.price))  mD  = d;
+        if (fFuel && f && (!mF || f.price < mF.price)) mF = f;
       }
+      const fmt = p => `${SYM[p.currency]||'€'}${p.price.toFixed(2)}`;
       const n  = c.getChildCount();
       const sz = n<50?'small':n<200?'medium':'large';
-      const pStr = minP < Infinity
-        ? `<span style="font-size:0.57rem;opacity:0.85">${SYM[minCur]||'€'}${minP.toFixed(2)}</span>`
-        : '';
+      const line = (lbl, p) => p ? `<br><span style="font-size:0.54rem;opacity:0.9;white-space:nowrap">${lbl} ${fmt(p)}</span>` : '';
+      const lines = fFuel ? line(fFuel, mF) : line('95', m95) + line('D', mD);
       return L.divIcon({
-        html:`<div>${n}${pStr?'<br>'+pStr:''}</div>`,
+        html:`<div>${n}${lines}</div>`,
         className:`marker-cluster marker-cluster-${sz}`,
-        iconSize:[40,40],
+        iconSize:[46,46],
       });
     },
   });
@@ -819,9 +830,12 @@ function mkMarker(s) {
     html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:1.5px solid rgba(255,255,255,0.55);opacity:${op};box-shadow:0 0 5px rgba(0,0,0,0.4)"></div>`,
     iconSize:[sz,sz], iconAnchor:[sz>>1,sz>>1],
   });
-  const m = L.marker([s.lat, s.lon], { icon, _cp:cp });
+  const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE) });
   if (cp) {
-    m.bindTooltip(`${cp.fuel_type} ${cp.price.toFixed(2)}${SYM[cp.currency]||cp.currency}`,
+    const a95 = minOf(s,F95), dd = minOf(s,FDIE), sy = SYM[cp.currency]||cp.currency;
+    const tip = fFuel ? `${cp.fuel_type} ${cp.price.toFixed(2)}${sy}`
+      : [a95 && `95 ${a95.price.toFixed(2)}${sy}`, dd && `D ${dd.price.toFixed(2)}${sy}`].filter(Boolean).join(' · ');
+    m.bindTooltip(tip,
       { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
   }
   m.bindPopup(mkPopup(s), { maxWidth:290 });
