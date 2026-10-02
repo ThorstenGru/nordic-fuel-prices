@@ -4,8 +4,8 @@
   "description": "Live fuel prices at every station across Europe",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0a0f1e",
-  "theme_color": "#0a0f1e",
+  "background_color": "#F4F5F7",
+  "theme_color": "#F4F5F7",
   "orientation": "portrait",
   "icons": [
     {

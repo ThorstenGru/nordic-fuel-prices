@@ -25,6 +25,7 @@ import re
 import unicodedata
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
 from .base import BaseScraper, iso_utc
@@ -279,7 +280,27 @@ class SwedenScraper(BaseScraper):
                         return els
         except Exception as e:
             print(f"[SE/OSM] cached backbone unavailable: {e}")
-        raise RuntimeError("OSM backbone unavailable (all Overpass mirrors and cache failed)")
+        # Last resort: a snapshot committed to the repo itself. This is the one tier that can
+        # never be wiped — gh-pages is force-orphaned every run, so if Overpass AND the published
+        # cache both fail on the same run (as happened 2026-10-02: a Overpass outage hit before any
+        # cache snapshot had ever been published), there would otherwise be nothing left to fall
+        # back to and Sweden goes to zero stations. Goes stale over time but keeps the map alive.
+        try:
+            seed_path = Path(__file__).parent.parent / "seed" / BACKBONE_FILE
+            with open(seed_path, "r", encoding="utf-8") as f:
+                els = json.load(f)
+            if els:
+                print(f"[SE/OSM] Overpass + published cache both down — using repo seed ({len(els)} elements, may be stale)")
+                try:
+                    _geo._DATA_DIR.mkdir(exist_ok=True)
+                    with open(path, "w", encoding="utf-8") as f:   # keep it published so the next run's cache tier has something
+                        json.dump(els, f, ensure_ascii=False, separators=(",", ":"))
+                except OSError as e:
+                    print(f"[SE/OSM] snapshot save failed: {e}")
+                return els
+        except Exception as e:
+            print(f"[SE/OSM] repo seed unavailable: {e}")
+        raise RuntimeError("OSM backbone unavailable (all Overpass mirrors, cache and repo seed failed)")
 
     async def _fetch_osm_live(self) -> list:
         last_err = "no mirror tried"
