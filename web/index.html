@@ -65,9 +65,9 @@ html, body {
 .chip:active, .chip.on { background:var(--blue); border-color:var(--blue); color:#fff; }
 .chip.install-chip { background:rgba(34,197,94,0.15); border-color:var(--green); color:var(--green); }
 
-/* ── Status badge ── */
+/* ── Status badge (sits below the chip row so it never overlaps it) ── */
 #badge {
-  position:absolute; top:10px; right:10px; z-index:500;
+  position:absolute; top:48px; right:10px; z-index:500;
   background:rgba(10,15,30,0.88); border:1px solid var(--border);
   border-radius:8px; padding:4px 10px;
   font-size:0.63rem; color:var(--text2); line-height:1.5;
@@ -114,6 +114,10 @@ html, body {
 
 /* ── Clusters ── */
 .marker-cluster { background:rgba(30,41,59,0.9) !important; }
+/* Bigger icon with two price lines needs a taller box than the default round bubble */
+.marker-cluster-small.has-prices, .marker-cluster-medium.has-prices, .marker-cluster-large.has-prices {
+  border-radius:12px !important;
+}
 .marker-cluster div {
   background:rgba(59,130,246,0.85) !important;
   color:#fff !important; font-weight:700 !important;
@@ -399,7 +403,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   <div class="drag-handle"></div>
   <div class="panel-title">📍 Cheapest Near You</div>
   <div id="nearby-summary" style="display:none" class="nearby-summary">
-    <div class="ns-label">Best price within 5 km</div>
+    <div class="ns-label">Best price nearby</div>
     <div class="ns-price" id="ns-price">—</div>
     <div class="ns-detail" id="ns-detail"></div>
   </div>
@@ -564,7 +568,7 @@ const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
 let cluster   = null;
 const byId    = new Map();    // id → marker
 let   selId   = null;
-let   myLat   = null, myLon = null;
+let   myLat   = null, myLon = null, myCountry = null;
 let   myMark  = null, myCirc = null;
 let   metaAt  = null;
 let   fCountry= '', fFuel = '';
@@ -709,12 +713,16 @@ function mkCluster() {
       const fmt = p => `${SYM[p.currency]||'€'}${p.price.toFixed(2)}`;
       const n  = c.getChildCount();
       const sz = n<50?'small':n<200?'medium':'large';
-      const line = (lbl, p) => p ? `<br><span style="font-size:0.54rem;opacity:0.9;white-space:nowrap">${lbl} ${fmt(p)}</span>` : '';
-      const lines = fFuel ? line(fFuel, mF) : line('95', m95) + line('D', mD);
+      // Price sub-lines only once zoomed in enough to be meaningful (same threshold as marker
+      // tooltips) — at country-wide zoom a cluster's "cheapest here" spans too wide an area and
+      // the extra lines just overlap neighbouring cluster icons.
+      const showPrices = map.getZoom() >= PRICE_ZOOM;
+      const line = (lbl, p) => p ? `<br><span style="font-size:0.52rem;opacity:0.9;white-space:nowrap">${lbl} ${fmt(p)}</span>` : '';
+      const lines = showPrices ? (fFuel ? line(fFuel, mF) : line('95', m95) + line('D', mD)) : '';
       return L.divIcon({
         html:`<div>${n}${lines}</div>`,
-        className:`marker-cluster marker-cluster-${sz}`,
-        iconSize:[46,46],
+        className:`marker-cluster marker-cluster-${sz}${lines ? ' has-prices' : ''}`,
+        iconSize: lines ? [52,52] : [40,40],
       });
     },
   });
@@ -1002,14 +1010,32 @@ function selectStation(id) {
 // ════════════════════════════════════════════════════
 // Near Me
 // ════════════════════════════════════════════════════
+// "Near Me" never crosses a border: resolve the user's own country via reverse geocoding
+// (falls back, in showNearby(), to the nearest already-loaded station's country if this fails).
+async function detectCountry(lat, lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=5`,
+      { headers:{ 'Accept-Language':'en' } });
+    if (r.ok) {
+      const j = await r.json();
+      const cc = (j.address?.country_code || '').toUpperCase();
+      if (cc && CNAMES[cc]) return cc;
+    }
+  } catch (_) {}
+  return null;
+}
+
+const NEARBY_RADIUS_KM = 15;
+
 function goNearby() {
   if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
   const fab = document.getElementById('fab');
   fab.textContent = '⏳ Locating…'; fab.classList.add('busy');
 
-  navigator.geolocation.getCurrentPosition(pos => {
+  navigator.geolocation.getCurrentPosition(async pos => {
     myLat = pos.coords.latitude; myLon = pos.coords.longitude;
     fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
+    myCountry = await detectCountry(myLat, myLon);
 
     if (myMark) { map.removeLayer(myMark); map.removeLayer(myCirc); }
     myMark = L.marker([myLat,myLon], {
@@ -1032,27 +1058,31 @@ function goNearby() {
 
 function showNearby() {
   if (myLat == null) return;
-  const cands = [];
+  const all = [];
   for (const arr of Object.values(data))
     for (const s of arr) {
-      if (!s.lat || !s.lon || !matches(s)) continue;
-      cands.push({ s, km: dist(myLat,myLon,s.lat,s.lon) });
+      if (!s.lat || !s.lon) continue;
+      all.push({ s, km: dist(myLat,myLon,s.lat,s.lon) });
     }
-  cands.sort((a,b) => a.km-b.km);
+  all.sort((a,b) => a.km-b.km);
+
+  // Same-country only: the user's own country (reverse-geocoded), falling back to whatever
+  // country the nearest already-loaded station belongs to. Never suggests a cross-border station.
+  const country = myCountry || all.find(c => c.km <= NEARBY_RADIUS_KM * 2)?.s.country || null;
+  const cands = all.filter(c => c.km <= NEARBY_RADIUS_KM && (!country || c.s.country === country) && matches(c.s));
+
   const el = document.getElementById('nearby-list');
   if (!el) return;
   if (!cands.length) {
-    el.innerHTML = '<p class="empty">No stations loaded near your location yet.\nPan the map to load more countries.</p>';
+    const cname = country ? (CNAMES[country] || country) : 'your country';
+    el.innerHTML = `<p class="empty">No stations within ${NEARBY_RADIUS_KM} km in ${cname} yet.\nPan the map, or try again once more data has loaded.</p>`;
     document.getElementById('nearby-summary').style.display = 'none';
     return;
   }
 
-  // Build summary: cheapest station with a price within 5 km
-  const within5 = cands.filter(c => c.km <= 5 && c.s.prices?.length);
   const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£' };
   let bestGlobal = null, bestGlobalKm = null;
-  // find cheapest by cheapest() across nearest 25
-  for (const {s,km} of cands.slice(0,25)) {
+  for (const {s,km} of cands) {
     const cp = cheapest(s);
     if (!cp) continue;
     const ftMatch = !fFuel || cp.fuel_type === fFuel;
@@ -1066,13 +1096,13 @@ function showNearby() {
   if (bestGlobal) {
     const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
     priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${bestGlobal.fuel_type}`;
-    detailEl.textContent = `Best within ${fmtDist(bestGlobalKm)} · ${within5.length} stations within 5 km`;
+    detailEl.textContent = `Best within ${fmtDist(bestGlobalKm)} · ${cands.length} stations within ${NEARBY_RADIUS_KM} km in ${CNAMES[country]||country||'your country'}`;
     sumEl.style.display = 'flex';
   } else {
     sumEl.style.display = 'none';
   }
 
-  el.innerHTML = cands.slice(0,25).map(({s,km}) => mkCard(s,km)).join('');
+  el.innerHTML = cands.slice(0,40).map(({s,km}) => mkCard(s,km)).join('');
 }
 
 // ════════════════════════════════════════════════════
