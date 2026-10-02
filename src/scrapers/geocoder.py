@@ -12,16 +12,53 @@ Rate limit: 1 request per second (Nominatim policy).
 
 import asyncio
 import json
+import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import aiohttp
 
 NOMINATIM_URL  = "https://nominatim.openstreetmap.org/search"
-NOMINATIM_UA   = "EuroFuelPrices/1.0 (https://github.com/ThorstenGru/nordic-fuel-prices)"
-PAGES_BASE     = "https://thorstengru.github.io/nordic-fuel-prices"
+NOMINATIM_UA   = "EuroFuelPrices/1.0 (https://eurofuelprices.com)"
 _DATA_DIR      = Path(__file__).parent.parent.parent / "data"
 GEOCODE_LIMIT  = 250   # max new Nominatim calls per country per scrape run
+
+# Custom domain first; falls back to the GitHub Pages project URL. This makes the cutover to the
+# custom domain self-healing — no code change/redeploy needed the moment DNS + the GitHub Pages
+# cert go live, and no breakage if a user still has the old URL cached somewhere in the meantime.
+PAGES_BASES: List[str] = [
+    b.strip() for b in os.environ.get(
+        "PAGES_BASES",
+        "https://eurofuelprices.com,https://thorstengru.github.io/nordic-fuel-prices",
+    ).split(",") if b.strip()
+]
+_resolved_base: Optional[str] = None
+_resolve_lock: Optional[asyncio.Lock] = None
+
+
+async def resolve_pages_base(session: aiohttp.ClientSession) -> str:
+    """Return whichever of PAGES_BASES actually serves meta.json right now (checked once per
+    process, cached). Falls back to the last candidate (the known-good github.io URL) if none
+    of them answer, so a DNS hiccup never breaks a run."""
+    global _resolved_base, _resolve_lock
+    if _resolved_base:
+        return _resolved_base
+    if _resolve_lock is None:
+        _resolve_lock = asyncio.Lock()
+    async with _resolve_lock:
+        if _resolved_base:          # a concurrent caller may have resolved it while we waited
+            return _resolved_base
+        for base in PAGES_BASES:
+            try:
+                async with session.head(f"{base}/meta.json", timeout=aiohttp.ClientTimeout(total=6),
+                                        allow_redirects=True) as resp:
+                    if resp.status == 200:
+                        _resolved_base = base
+                        return base
+            except Exception:
+                continue
+        _resolved_base = PAGES_BASES[-1]
+        return _resolved_base
 GLOBAL_BUDGET  = 150   # max new Nominatim calls per run across ALL countries (keeps runs short)
 _used = 0
 _MIN_INTERVAL  = 1.1   # Nominatim policy: max 1 request/second for the WHOLE process
@@ -57,7 +94,8 @@ async def _load_cache(country_code: str, session: aiohttp.ClientSession) -> Dict
         except Exception:
             pass
 
-    url = f"{PAGES_BASE}/{country_code.lower()}_geocache.json"
+    base = await resolve_pages_base(session)
+    url = f"{base}/{country_code.lower()}_geocache.json"
     try:
         async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
             if resp.status == 200:

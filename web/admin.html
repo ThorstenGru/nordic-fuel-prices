@@ -5,6 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0a0f1e">
 <title>EuroFuelPrices — Data Health Dashboard</title>
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self';
+  connect-src 'self' https://cloudflareinsights.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+">
+<!-- Cloudflare Web Analytics (cookieless, no visitor PII) — get your token at
+     Cloudflare dashboard -> Analytics & Logs -> Web Analytics -> Add a site.
+     The token is not a secret (it ships in every page's public source); replace the
+     placeholder below with the real one to activate. -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "REPLACE_WITH_YOUR_CLOUDFLARE_WEB_ANALYTICS_TOKEN"}'></script>
 <style>
 :root {
   --bg:    #0a0f1e;
@@ -474,10 +492,10 @@ function render(meta, health) {
     return `<tr${trCls}>
       <td style="white-space:nowrap">${FLAGS[c.country]||''} <strong>${c.country}</strong></td>
       <td>${barHtml(c.station_count || 0, c.priced_count || 0, maxN)}<div style="font-size:0.62rem;color:var(--t3)">${(c.priced_count||0).toLocaleString()} priced</div></td>
-      <td style="max-width:230px;font-size:0.72rem;color:var(--t2)"><span class="src-chip ${gi.chip}">${gi.txt}</span><br><span style="font-size:0.66rem">${(c.source||'').split('(')[0].trim()}</span></td>
+      <td style="max-width:230px;font-size:0.72rem;color:var(--t2)"><span class="src-chip ${gi.chip}">${gi.txt}</span><br><span style="font-size:0.66rem">${esc((c.source||'').split('(')[0].trim())}</span></td>
       <td style="white-space:nowrap;font-size:0.72rem;color:var(--t2)">${priceAge}</td>
       <td style="white-space:nowrap;font-size:0.72rem;color:var(--t2)">${ago(c.fetched_at)}</td>
-      <td>${STATE_PILL[st]}${err ? `<div title="${String(err).replace(/"/g,'&quot;')}" style="font-size:0.6rem;color:var(--red);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${err}</div>` : ''}</td>
+      <td>${STATE_PILL[st]}${err ? `<div title="${esc(err)}" style="font-size:0.6rem;color:var(--red);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(err)}</div>` : ''}</td>
     </tr>`;
   }).join('');
 

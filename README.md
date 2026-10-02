@@ -3,8 +3,8 @@
 Live fuel prices at every station across **Europe + EEA** — 42 countries/territories, 100,000+ stations, mobile-first PWA, Sweden-first.
 A GitHub Actions job scrapes official and third-party feeds about every 15 minutes and publishes static JSON to GitHub Pages.
 
-**Live map:** `https://thorstengru.github.io/nordic-fuel-prices/`
-**Data health dashboard:** `https://thorstengru.github.io/nordic-fuel-prices/admin.html` (per-country status, source grade, real price age)
+**Live map:** `https://eurofuelprices.com/` (custom domain; also reachable at `https://thorstengru.github.io/nordic-fuel-prices/` during DNS cutover)
+**Data health dashboard:** `https://eurofuelprices.com/admin.html` (per-country status, source grade, real price age)
 
 > **Data is king.** Every price carries its **source grade** and its **real age**. Where a source gives no timestamp we say
 > "price time unknown" instead of faking freshness. See the research behind the choices:

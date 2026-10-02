@@ -266,7 +266,8 @@ class SwedenScraper(BaseScraper):
             return els
         # Overpass is down: fall back to the last good snapshot published on GitHub Pages
         try:
-            async with self.session.get(f"{_geo.PAGES_BASE}/{BACKBONE_FILE}",
+            base = await _geo.resolve_pages_base(self.session)
+            async with self.session.get(f"{base}/{BACKBONE_FILE}",
                                         timeout=aiohttp.ClientTimeout(total=60)) as resp:
                 if resp.status == 200:
                     els = await resp.json(content_type=None)

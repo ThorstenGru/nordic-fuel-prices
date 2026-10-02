@@ -9,13 +9,40 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="EuroFuelPrices">
 <meta name="description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
+<link rel="canonical" href="https://eurofuelprices.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EuroFuelPrices">
+<meta property="og:title" content="EuroFuelPrices — Live European Fuel Prices">
+<meta property="og:description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
+<meta property="og:url" content="https://eurofuelprices.com/">
+<meta property="og:image" content="https://eurofuelprices.com/icon.svg">
+<meta name="twitter:card" content="summary">
+<!-- Defense-in-depth only (GitHub Pages can't set real HTTP headers, so this is weaker than a
+     Content-Security-Policy header would be — e.g. it can't block framing; that needs a move to
+     a host that supports response headers, see docs/ROADMAP.md). The app's inline <script> and
+     onclick="" handlers mean script-src/style-src still need 'unsafe-inline'; what this actually
+     buys us is blocking any OTHER script origin and any exfiltration to an unlisted endpoint. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://unpkg.com;
+  style-src 'self' 'unsafe-inline' https://unpkg.com;
+  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com;
+  connect-src 'self' https://nominatim.openstreetmap.org https://server.arcgisonline.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>EuroFuelPrices — Live European Fuel Prices</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+      integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+      integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+" crossorigin="anonymous"/>
 <style>
 :root {
   --bg:     #0a0f1e;
@@ -485,8 +512,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <!-- Backdrop -->
 <div id="bd" onclick="closePanel()"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+        integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr" crossorigin="anonymous"></script>
 <script>
 // ════════════════════════════════════════════════════
 // Constants
@@ -599,6 +628,20 @@ let   activeTab = 'map';
 // ════════════════════════════════════════════════════
 // Helpers
 // ════════════════════════════════════════════════════
+// Station name/brand/address/city/source come from third-party feeds (ANWB resold data, OSM
+// tags, government CSVs) we don't control, and search results come live from Nominatim — none of
+// it is trusted input. Every one of those fields gets HTML-escaped before it goes into innerHTML.
+const _escDiv = document.createElement('div');
+function esc(v) {
+  _escDiv.textContent = v ?? '';
+  return _escDiv.innerHTML;
+}
+// For an id interpolated inside onclick="fn('${id}')" (a single-quoted JS string literal that
+// itself sits inside a double-quoted HTML attribute) — needs escaping for BOTH contexts.
+function escId(v) {
+  return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
 // Mainstream fuels only: 95 (E10/E5) and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
 // so they must never set the headline price (unless the user filters for them).
 const F95 = ['E10','E5'], FDIE = ['DIESEL'];
@@ -775,9 +818,9 @@ function mkPopup(s) {
   const noP   = !s.prices?.length ? '<div style="color:#64748b;font-style:italic;font-size:0.75rem;margin:4px 0">No price data available</div>' : '';
   const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
   return `<div class="pop">
-    <div class="pop-name">${flag} ${s.name||s.brand||'—'}</div>
-    ${s.address ? `<div class="pop-addr">${s.address}</div>` : ''}
-    <div class="pop-meta">${[s.city, s.source].filter(Boolean).join(' · ')}</div>
+    <div class="pop-name">${flag} ${esc(s.name||s.brand||'—')}</div>
+    ${s.address ? `<div class="pop-addr">${esc(s.address)}</div>` : ''}
+    <div class="pop-meta">${esc([s.city, s.source].filter(Boolean).join(' · '))}</div>
     <table class="pop-tbl">${rows}</table>${noP}
     ${ageHtml(s)}
     <div class="pop-foot">
@@ -806,15 +849,15 @@ function mkCard(s, km) {
   }).join('');
   const noPin = (!s.lat||!s.lon) ? ' <span title="No GPS" style="color:#475569">📍✕</span>' : '';
   const goBtn = (s.lat && s.lon)
-    ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${s.id}')">🧭 Go</button>` : '';
+    ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${escId(s.id)}')">🧭 Go</button>` : '';
   const distHtml = km != null
     ? `<span class="dist-badge">📏 ${fmtDist(km)}</span>` : '';
-  return `<div class="scard ${fc}${isSel}" id="c-${s.id}" onclick="selectStation('${s.id}')">
+  return `<div class="scard ${fc}${isSel}" id="c-${esc(s.id)}" onclick="selectStation('${escId(s.id)}')">
     <div class="scard-top">
-      <div class="scard-name">${flag} ${s.name||s.brand||'—'}${noPin}</div>
+      <div class="scard-name">${flag} ${esc(s.name||s.brand||'—')}${noPin}</div>
       ${goBtn}
     </div>
-    <div class="scard-meta">${[s.city,s.source].filter(Boolean).join(' · ')}${distHtml ? ' '+distHtml : ''}</div>
+    <div class="scard-meta">${esc([s.city,s.source].filter(Boolean).join(' · '))}${distHtml ? ' '+distHtml : ''}</div>
     <div class="pchips">${chips||'<span style="color:#475569;font-size:0.71rem">No prices</span>'}</div>
     ${ageHtml(s)}
   </div>`;
@@ -1148,16 +1191,16 @@ async function runSearch(isMob) {
     const r    = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers:{'Accept-Language':'en'} });
     const rows = await r.json();
     if (!rows.length) {
-      if (isMob) resEl.innerHTML = `<p class="empty">Nothing found for "${q}"</p>`;
+      if (isMob) resEl.innerHTML = `<p class="empty">Nothing found for "${esc(q)}"</p>`;
       else alert(`"${q}" not found.`);
       return;
     }
-    const { lat, lon, display_name } = rows[0];
+    const { lat, lon, display_name } = rows[0];   // display_name comes live from Nominatim — not trusted
     map.setView([+lat,+lon], 13);
     if (isMob) closePanel();
-    L.popup().setLatLng([+lat,+lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${display_name}</div>`).openOn(map);
+    L.popup().setLatLng([+lat,+lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${esc(display_name)}</div>`).openOn(map);
   } catch(e) {
-    const msg = 'Search error: ' + e.message;
+    const msg = 'Search error: ' + esc(e.message);
     if (isMob) resEl.innerHTML = `<p class="empty">${msg}</p>`; else alert(msg);
   }
 }

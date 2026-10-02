@@ -23,9 +23,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import aiohttp
 
 from scrapers import ALL_SCRAPERS
+from scrapers.geocoder import resolve_pages_base
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
-PAGES_BASE = os.environ.get("PAGES_BASE", "https://thorstengru.github.io/nordic-fuel-prices")
 SCRAPER_TIMEOUT_S = int(os.environ.get("SCRAPER_TIMEOUT_S", "900"))
 MIN_KEEP_RATIO = 0.6          # new result smaller than 60 % of the last good one => suspicious
 SCHEMA_VERSION = 2
@@ -158,7 +158,8 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
     fetched = parse_iso(last.get("fetched_at"))
     if (not FORCE_REFRESH and fetched and last.get("status") == "ok"
             and (datetime.now(timezone.utc) - fetched).total_seconds() / 60 < scraper_cls.REFRESH_MINUTES * 0.9):
-        old = await fetch_json(session, f"{PAGES_BASE}/{cc.lower()}.json")
+        base = await resolve_pages_base(session)
+        old = await fetch_json(session, f"{base}/{cc.lower()}.json")
         if old and old.get("stations"):
             write_json(OUTPUT_DIR / f"{cc.lower()}.json", old)
             print(f"[{cc}] re-published (refreshed {int((datetime.now(timezone.utc) - fetched).total_seconds() / 60)} min ago, "
@@ -206,7 +207,8 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
     health: Dict[str, Any] = {"seconds": round(time.monotonic() - started, 1), "dropped": dropped, "error": error}
 
     if reason:
-        old = await fetch_json(session, f"{PAGES_BASE}/{cc.lower()}.json")
+        base = await resolve_pages_base(session)
+        old = await fetch_json(session, f"{base}/{cc.lower()}.json")
         old_stations = (old or {}).get("stations") or []
         if old_stations:
             old_meta = old.get("meta", {})
@@ -241,7 +243,8 @@ async def run_all() -> None:
     t0 = time.monotonic()
     connector = aiohttp.TCPConnector(limit=60, limit_per_host=12)
     async with aiohttp.ClientSession(connector=connector) as session:
-        prev = await fetch_json(session, f"{PAGES_BASE}/meta.json", timeout=30) or {}
+        base = await resolve_pages_base(session)
+        prev = await fetch_json(session, f"{base}/meta.json", timeout=30) or {}
         prev_meta = {c["country"]: c for c in prev.get("countries", []) if isinstance(c, dict) and "country" in c}
         results = await asyncio.gather(*(run_one(sc, session, prev_meta) for sc in ALL_SCRAPERS))
 
