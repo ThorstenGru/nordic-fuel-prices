@@ -79,7 +79,7 @@ html, body {
 
 /* ── FAB – Near Me ── */
 #fab {
-  position:absolute; right:14px; z-index:500;
+  position:absolute; right:14px; z-index:1100; /* above Leaflet's own controls (z-index:1000) */
   background:var(--green); color:#000;
   border:none; border-radius:28px;
   padding:11px 18px; font-size:0.85rem; font-weight:700;
@@ -215,6 +215,11 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   #fab { bottom:calc(var(--tab-h) + var(--safe-b) + 14px); }
   .leaflet-bottom { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); }
   .leaflet-top { top:52px; }
+  /* Keep the (legally required) Esri/OSM attribution narrow and left-weighted so it can never
+     reach under the Near Me FAB on a small phone, however many lines it wraps to. */
+  .leaflet-control-attribution {
+    max-width:58vw; font-size:0.62rem !important; line-height:1.3; padding:2px 6px !important;
+  }
 
   /* Tab bar */
   #tabbar {
@@ -547,6 +552,7 @@ const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
 // Bottom-left (not bottom-right): the Near Me FAB lives bottom-right and a long attribution
 // string was wrapping to 2 lines and colliding with it on narrow phones.
 map.attributionControl.setPosition('bottomleft');
+map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
 map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
 // ESRI World Dark Gray Canvas — free, no API key required
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
