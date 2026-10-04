@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F4F5F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="EuroFuelPrices">
+<meta name="description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
+<link rel="canonical" href="https://eurofuelprices.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EuroFuelPrices">
+<meta property="og:title" content="EuroFuelPrices — Live European Fuel Prices">
+<meta property="og:description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
+<meta property="og:url" content="https://eurofuelprices.com/">
+<meta property="og:image" content="https://eurofuelprices.com/icon.svg">
+<meta name="twitter:card" content="summary">
+<!-- Defense-in-depth only (GitHub Pages can't set real HTTP headers, so this is weaker than a
+     Content-Security-Policy header would be — e.g. it can't block framing; that needs a move to
+     a host that supports response headers, see docs/ROADMAP.md). The app's inline <script> and
+     onclick="" handlers mean script-src/style-src still need 'unsafe-inline'; what this actually
+     buys us is blocking any OTHER script origin and any exfiltration to an unlisted endpoint. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://unpkg.com;
+  style-src 'self' 'unsafe-inline' https://unpkg.com;
+  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com;
+  connect-src 'self' https://nominatim.openstreetmap.org https://server.arcgisonline.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<title>EuroFuelPrices — Live European Fuel Prices</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+      integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+      integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+" crossorigin="anonymous"/>
+<style>
+:root {
+  --bg:     #F4F5F7;
+  --surf:   #FFFFFF;
+  --surf2:  #F7F8FA;
+  --border: #E6E8EB;
+  --text:   #16181D;
+  --text2:  #6B7280;
+  --text3:  #9AA1AC;
+  --blue:   #0F766E;   /* teal — "selected / active" accent */
+  --green:  #16A34A;   /* fresh green — official / best-price semantic */
+  --amber:  #F59E0B;
+  --red:    #EF4444;
+  --coral:  #E8542F;   /* primary CTA / cluster markers */
+  --tab-h:  58px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height:100%; height:100dvh;
+  overflow:hidden;
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text);
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ── Map fills viewport ── */
+#map-wrap {
+  position:fixed; inset:0;
+}
+#map { width:100%; height:100%; }
+
+/* ── Floating fuel-type chip bar ── */
+#chips {
+  position:absolute; top:10px; left:10px; right:10px; z-index:500;
+  display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:2px 0;
+}
+#chips::-webkit-scrollbar { display:none; }
+.chip {
+  flex-shrink:0;
+  background:rgba(255,255,255,0.88); border:1px solid var(--border);
+  border-radius:20px; padding:5px 13px;
+  font-size:0.73rem; font-weight:500; color:var(--text2);
+  cursor:pointer; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  transition:all 0.15s; white-space:nowrap; user-select:none;
+}
+.chip:active, .chip.on { background:var(--coral); border-color:var(--coral); color:#fff; }
+.chip.install-chip { background:rgba(34,197,94,0.15); border-color:var(--green); color:var(--green); }
+
+/* ── Status badge (sits below the chip row so it never overlaps it) ── */
+#badge {
+  position:absolute; top:48px; right:10px; z-index:500;
+  background:rgba(255,255,255,0.88); border:1px solid var(--border);
+  border-radius:8px; padding:4px 10px;
+  font-size:0.63rem; color:var(--text2); line-height:1.5;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  pointer-events:none; max-width:160px; text-align:right;
+}
+#badge.ok  { color:var(--green); }
+#badge.loading { color:var(--amber); }
+
+/* ── FAB – Near Me ── */
+#fab {
+  position:absolute; right:14px; z-index:1100; /* above Leaflet's own controls (z-index:1000) */
+  background:var(--coral); color:#fff;
+  border:none; border-radius:28px;
+  padding:11px 18px; font-size:0.85rem; font-weight:500;
+  display:flex; align-items:center; gap:7px; cursor:pointer;
+  box-shadow:0 4px 16px rgba(232,84,47,0.35);
+  transition:transform 0.12s, box-shadow 0.12s;
+}
+#fab:active { transform:scale(0.95); box-shadow:0 2px 8px rgba(232,84,47,0.25); }
+#fab.busy   { background:var(--surf2); color:var(--text2); box-shadow:none; }
+
+/* ── Location dot ── */
+.loc-dot {
+  width:14px; height:14px; border-radius:50%;
+  background:var(--blue); border:3px solid #fff;
+  box-shadow:0 0 0 4px rgba(15,118,110,0.25);
+  animation:pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%  { box-shadow:0 0 0 0   rgba(15,118,110,0.40); }
+  70% { box-shadow:0 0 0 12px rgba(15,118,110,0); }
+  100%{ box-shadow:0 0 0 0   rgba(15,118,110,0); }
+}
+
+/* ── Price tooltips ── */
+.leaflet-tooltip.ptip {
+  background:rgba(255,255,255,0.95); border:1px solid rgba(15,118,110,0.25);
+  color:var(--green); font-size:0.63rem; font-weight:500;
+  padding:1px 5px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+.leaflet-tooltip.ptip::before { display:none; }
+#map.hide-prices .ptip { display:none; }
+
+/* ── Clusters ── */
+.marker-cluster { background:rgba(255,255,255,0.85) !important; }
+/* Bigger icon with two price lines needs a taller box than the default round bubble */
+.marker-cluster div {
+  background:rgba(232,84,47,0.92) !important;
+  color:#fff !important; font-weight:500 !important;
+  font-size:0.68rem !important; display:flex !important;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:1px; line-height:1.2 !important;
+}
+
+/* ══════════════════════════════════════════
+   MOBILE ONLY — one phone-sized app at every viewport.
+   On a wide screen the app stays a centred phone column (the transform makes
+   position:fixed children relative to the column instead of the window).
+══════════════════════════════════════════ */
+html { background:#E7E9EC; height:100%; }
+body { max-width:520px; margin:0 auto; height:100%; position:relative; overflow:hidden;
+       transform:translateZ(0); box-shadow:0 0 30px rgba(0,0,0,0.08); }
+button, .tb, .chip, select, input { touch-action:manipulation; }
+body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
+
+/* ══════════════════════════════════════════
+   STATION CARDS
+══════════════════════════════════════════ */
+.scard {
+  background:var(--surf2); border:1px solid var(--border);
+  border-left:3px solid var(--border);
+  border-radius:16px; padding:10px 12px; margin-bottom:8px;
+  cursor:pointer; transition:border-color 0.12s, background 0.12s;
+}
+.scard:active, .scard.sel {
+  border-color:var(--blue); border-left-color:var(--blue);
+  background:rgba(15,118,110,0.06);
+}
+.scard.fh { border-left-color:var(--green); }
+.scard.fm { border-left-color:var(--blue); }
+.scard.fl { border-left-color:var(--amber); }
+.scard.fs { border-left-color:var(--red); }
+.scard.fu { border-left-color:var(--text3); }
+.gb { display:inline-block; padding:1px 6px; border-radius:8px; font-size:0.58rem; font-weight:500; letter-spacing:.2px; color:#16181D; vertical-align:middle; }
+.gb.gA { background:#86E8A8; } .gb.gB { background:#93C5FD; } .gb.gC { background:#FDD68B; } .gb.gD { background:#F2A6A6; } .gb.gL { background:#D7DADF; }
+.stale-note { margin-top:5px; padding:3px 6px; border-radius:10px; background:rgba(239,68,68,.10); color:#B91C1C; font-size:0.62rem; }
+.age-line { font-size:0.62rem; color:var(--text3); margin-top:4px; line-height:1.35; }
+
+.scard-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:3px; }
+.scard-name { font-size:0.88rem; font-weight:500; color:var(--text); flex:1; line-height:1.3; }
+.go-btn {
+  flex-shrink:0; background:none; border:1px solid var(--border);
+  border-radius:10px; color:var(--blue); font-size:0.72rem;
+  padding:3px 8px; cursor:pointer; display:flex; align-items:center; gap:3px;
+  white-space:nowrap; font-family:inherit;
+}
+.go-btn:active { background:var(--surf); }
+.scard-meta { font-size:0.67rem; color:var(--text3); margin-bottom:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.dist-badge { color:var(--text2); font-weight:500; }
+.pchips { display:flex; flex-wrap:wrap; gap:4px; }
+.pc {
+  background:var(--surf); border:1px solid var(--border);
+  border-radius:10px; padding:3px 8px; font-size:0.71rem;
+  display:flex; align-items:center; gap:3px;
+}
+.pc .t { color:var(--text2); }
+.pc .v { color:var(--green); font-weight:500; }
+.pc .u { color:var(--text3); font-size:0.63rem; }
+.pc.best { border-color:var(--green); background:rgba(22,163,74,0.08); }
+.pc.best .t { color:#15803D; }
+.scard-foot { margin-top:4px; font-size:0.61rem; color:var(--text3); }
+
+.empty { color:var(--text3); font-size:0.82rem; padding:24px 8px; text-align:center; line-height:1.6; }
+.load-more {
+  text-align:center; padding:12px; font-size:0.75rem; color:var(--blue);
+  cursor:pointer; border-top:1px solid var(--border); margin-top:4px;
+}
+.load-more:active { opacity:0.6; }
+
+/* ══════════════════════════════════════════
+   POPUP
+══════════════════════════════════════════ */
+.pop { font-family:system-ui,sans-serif; font-size:0.82rem; min-width:150px; max-width:270px; }
+.pop-name { font-weight:500; color:var(--text); font-size:0.92rem; margin-bottom:2px; }
+.pop-addr { color:var(--text2); font-size:0.7rem; margin-bottom:1px; }
+.pop-meta { color:var(--text2); font-size:0.67rem; margin-bottom:7px; }
+.pop-tbl { border-collapse:collapse; margin-bottom:4px; }
+.pop-tbl td { padding:2px 5px 2px 0; }
+.pop-tbl .ft { color:var(--text2); }
+.pop-tbl .pr { color:var(--green); font-weight:500; }
+.pop-tbl .un { color:var(--text3); font-size:0.68rem; }
+.pop-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
+.pop-date { color:var(--text3); font-size:0.61rem; }
+.pop-go {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--coral); color:#fff; text-decoration:none;
+  border-radius:10px; padding:5px 11px; font-size:0.75rem; font-weight:500;
+}
+
+/* ══════════════════════════════════════════
+   MOBILE LAYOUT
+══════════════════════════════════════════ */
+@media all {
+  #fab { bottom:calc(var(--tab-h) + var(--safe-b) + 14px); }
+  .leaflet-bottom { bottom:calc(var(--tab-h) + var(--safe-b) + 8px); }
+  .leaflet-top { top:52px; }
+  /* Keep the (legally required) Esri/OSM attribution narrow and left-weighted so it can never
+     reach under the Near Me FAB on a small phone, however many lines it wraps to. */
+  .leaflet-control-attribution {
+    max-width:58vw; font-size:0.62rem !important; line-height:1.3; padding:2px 6px !important;
+  }
+
+  /* Tab bar */
+  #tabbar {
+    position:fixed; bottom:0; left:0; right:0;
+    height:calc(var(--tab-h) + var(--safe-b));
+    padding-bottom:var(--safe-b);
+    background:var(--surf); border-top:1px solid var(--border);
+    display:grid; grid-template-columns:repeat(5,1fr); z-index:800;
+  }
+  .tb {
+    background:none; border:none; color:var(--text3);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; cursor:pointer; font-family:inherit; padding:4px 2px;
+    transition:color 0.15s; position:relative;
+  }
+  .tb.on { color:var(--blue); }
+  .tb.on.nb { color:var(--coral); }
+  .tb.on::before {
+    content:''; position:absolute; top:0; left:25%; right:25%;
+    height:2px; background:var(--blue); border-radius:0 0 2px 2px;
+  }
+  .tb.on.nb::before { background:var(--coral); }
+  .tb-icon { font-size:1.3rem; line-height:1; }
+  .tb-lbl  { font-size:0.57rem; font-weight:500; letter-spacing:0.02em; }
+
+  /* Panels */
+  .panel {
+    position:fixed; bottom:calc(var(--tab-h) + var(--safe-b)); left:0; right:0;
+    background:var(--surf); border-top:1px solid var(--border);
+    border-radius:24px 24px 0 0; z-index:700;
+    display:flex; flex-direction:column; max-height:78vh;
+    transform:translateY(100%);
+    transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    overflow:hidden;
+  }
+  .panel.open { transform:translateY(0); }
+  .drag-handle {
+    width:36px; height:4px; background:var(--border); border-radius:2px;
+    margin:10px auto 6px; flex-shrink:0; cursor:grab;
+  }
+  .panel-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Backdrop */
+  #bd { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:690; }
+  #bd.on { display:block; }
+
+  /* Near Me panel */
+  #p-nearby .panel-title {
+    padding:2px 16px 10px; font-size:0.75rem; font-weight:500;
+    text-transform:uppercase; letter-spacing:0.06em; color:var(--text2);
+  }
+  #p-nearby .panel-scroll { padding:0 12px 14px; }
+
+  /* Search panel */
+  #p-search .sbox {
+    padding:4px 12px 10px; display:flex; gap:8px;
+  }
+  #p-search input {
+    flex:1; background:var(--surf); color:var(--text);
+    border:1px solid var(--border); border-radius:14px;
+    padding:11px 14px; font-size:16px; font-family:inherit;
+  }
+  #p-search input:focus { outline:2px solid var(--blue); outline-offset:1px; }
+  #p-search input::placeholder { color:var(--text3); }
+  #p-search .sbtn {
+    background:var(--coral); border:none; border-radius:14px;
+    color:#fff; font-size:1.1rem; padding:0 18px; cursor:pointer; min-height:44px;
+  }
+  #p-search .stabs {
+    display:flex; border-bottom:1px solid var(--border); padding:0 12px;
+  }
+  .stab {
+    flex:1; background:none; border:none; border-bottom:2px solid transparent;
+    color:var(--text3); font-size:0.76rem; font-weight:500; padding:6px 4px;
+    cursor:pointer; font-family:inherit; text-align:center;
+    transition:color 0.12s, border-color 0.12s;
+  }
+  .stab.on { color:var(--blue); border-bottom-color:var(--blue); }
+  #p-search .panel-scroll { padding:8px 12px 14px; }
+
+  /* Stations panel */
+  #p-stations .phead {
+    padding:2px 16px 10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  #p-stations .phead h2 { font-size:0.76rem; font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--text2); }
+  #p-stations .sort-btn {
+    background:none; border:1px solid var(--border); border-radius:10px;
+    color:var(--text2); font-size:0.66rem; padding:4px 9px; cursor:pointer; font-family:inherit;
+  }
+  #p-stations .panel-scroll { padding:0 12px 14px; }
+
+  /* Filter panel */
+  #p-filter .panel-scroll { padding:6px 14px 20px; }
+  #p-filter label {
+    display:block; font-size:0.7rem; font-weight:500; text-transform:uppercase;
+    letter-spacing:0.05em; color:var(--text2); margin:14px 0 6px;
+  }
+  #p-filter label:first-of-type { margin-top:4px; }
+  #p-filter select {
+    width:100%; background:var(--surf); color:var(--text);
+    border:1px solid var(--border); border-radius:14px;
+    padding:12px 14px; font-size:16px; font-family:inherit;
+  }
+  #p-filter .rbtn {
+    width:100%; margin-top:18px; background:var(--surf2);
+    border:1px solid var(--border); border-radius:14px;
+    color:var(--text); font-size:0.9rem; padding:13px; cursor:pointer; font-family:inherit;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ── Loading progress bar ── */
+#progress {
+  position:fixed; top:0; left:0; right:0; height:2px; z-index:2000;
+  background:transparent; pointer-events:none;
+}
+#progress-fill {
+  height:100%; background:linear-gradient(90deg,var(--green),var(--blue));
+  transition:width 0.35s ease; width:0%;
+}
+
+/* ── Near Me summary card ── */
+.nearby-summary {
+  background:rgba(22,163,74,0.08); border:1px solid rgba(22,163,74,0.18);
+  border-radius:16px; padding:12px 16px; margin:0 12px 10px;
+  font-size:0.8rem; display:flex; flex-direction:column; gap:3px;
+}
+.nearby-summary .ns-label { color:var(--green); font-weight:500; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; }
+.nearby-summary .ns-price { font-size:1.4rem; font-weight:500; color:var(--text); line-height:1.1; }
+.nearby-summary .ns-detail { color:var(--text2); font-size:0.73rem; }
+
+</style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div id="progress"><div id="progress-fill"></div></div>
+
+<!-- ══ MAP ══ -->
+<div id="map-wrap">
+  <div id="map"></div>
+
+  <!-- Fuel type chips -->
+  <div id="chips">
+    <button class="chip on" data-f="" onclick="setFuel(this,'')">All fuels</button>
+    <button class="chip" data-f="E10" onclick="setFuel(this,'E10')">⛽ E10 / 95</button>
+    <button class="chip" data-f="E5"  onclick="setFuel(this,'E5')">⛽ E5 / 98</button>
+    <button class="chip" data-f="DIESEL" onclick="setFuel(this,'DIESEL')">🛢 Diesel</button>
+    <button class="chip" data-f="HVO100" onclick="setFuel(this,'HVO100')">🌿 HVO</button>
+    <button class="chip" data-f="LPG" onclick="setFuel(this,'LPG')">💨 LPG</button>
+    <button class="chip" data-f="CNG" onclick="setFuel(this,'CNG')">💨 CNG</button>
+    <button class="chip" data-f="E85" onclick="setFuel(this,'E85')">🌽 E85</button>
+  </div>
+
+  <!-- Status -->
+  <div id="badge" class="loading">Loading…</div>
+
+  <!-- FAB -->
+  <button id="fab" onclick="goNearby()">📍 Near Me</button>
+</div>
+
+<!-- ══ MOBILE PANELS ══ -->
+
+<!-- Near Me -->
+<div class="panel" id="p-nearby">
+  <div class="drag-handle"></div>
+  <div class="panel-title">📍 Cheapest Near You</div>
+  <div id="nearby-summary" style="display:none" class="nearby-summary">
+    <div class="ns-label">Best price nearby</div>
+    <div class="ns-price" id="ns-price">—</div>
+    <div class="ns-detail" id="ns-detail"></div>
+  </div>
+  <div class="panel-scroll" id="nearby-list">
+    <p class="empty">Tap the button to find your location…</p>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="panel" id="p-search">
+  <div class="drag-handle"></div>
+  <div class="sbox">
+    <input type="text" id="mobSearch" placeholder="City, address, or station…"
+           autocomplete="off" autocorrect="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter')runSearch(true)">
+    <button class="sbtn" onclick="runSearch(true)">🔍</button>
+  </div>
+  <div class="stabs">
+    <button class="stab on" onclick="setSMode(this,'addr')">📍 Address</button>
+    <button class="stab"    onclick="setSMode(this,'name')">⛽ Station name</button>
+  </div>
+  <div class="panel-scroll" id="search-results">
+    <p class="empty" style="padding:18px 0">Enter a location or station name</p>
+  </div>
+</div>
+
+<!-- Stations list -->
+<div class="panel" id="p-stations">
+  <div class="drag-handle"></div>
+  <div class="phead">
+    <h2>Stations <span id="mobCount">—</span></h2>
+    <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl">Default</span></button>
+  </div>
+  <div class="panel-scroll" id="mobList"><p class="empty">Loading…</p></div>
+</div>
+
+<!-- Filters -->
+<div class="panel" id="p-filter">
+  <div class="drag-handle"></div>
+  <div class="panel-scroll">
+    <label>Country</label>
+    <select id="mobCountry" onchange="setCountry(this.value)"></select>
+    <label>Fuel Type</label>
+    <select id="mobFuel" onchange="setFuel(null,this.value)">
+      <option value="">All fuels</option>
+      <option value="E10">E10 / 95 Octane</option>
+      <option value="E5">E5 / 98 Octane</option>
+      <option value="DIESEL">Diesel</option>
+      <option value="HVO100">HVO100</option>
+      <option value="E85">E85</option>
+      <option value="LPG">LPG</option>
+      <option value="CNG">CNG</option>
+    </select>
+    <button class="rbtn" onclick="resetAll()">↺ Reset all filters</button>
+  </div>
+</div>
+
+<!-- Tab bar -->
+<div id="tabbar">
+  <button class="tb on"  id="tb-map"     onclick="goTab('map')">
+    <span class="tb-icon">🗺</span><span class="tb-lbl">Map</span>
+  </button>
+  <button class="tb nb"  id="tb-nearby"  onclick="goTab('nearby')">
+    <span class="tb-icon">📍</span><span class="tb-lbl">Near Me</span>
+  </button>
+  <button class="tb"     id="tb-search"  onclick="goTab('search')">
+    <span class="tb-icon">🔍</span><span class="tb-lbl">Search</span>
+  </button>
+  <button class="tb"     id="tb-stations" onclick="goTab('stations')">
+    <span class="tb-icon">⛽</span><span class="tb-lbl" id="tb-list-lbl">List</span>
+  </button>
+  <button class="tb"     id="tb-filter"  onclick="goTab('filter')">
+    <span class="tb-icon">⚡</span><span class="tb-lbl">Filter</span>
+  </button>
+</div>
+
+<!-- Backdrop -->
+<div id="bd" onclick="closePanel()"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+        integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr" crossorigin="anonymous"></script>
+<script>
+// ════════════════════════════════════════════════════
+// Constants
+// ════════════════════════════════════════════════════
+const FLAGS = {
+  AT:'🇦🇹',BE:'🇧🇪',HR:'🇭🇷',CZ:'🇨🇿',DK:'🇩🇰',EE:'🇪🇪',FI:'🇫🇮',FR:'🇫🇷',
+  DE:'🇩🇪',GR:'🇬🇷',HU:'🇭🇺',IS:'🇮🇸',IT:'🇮🇹',LV:'🇱🇻',LT:'🇱🇹',LU:'🇱🇺',
+  NL:'🇳🇱',NO:'🇳🇴',PL:'🇵🇱',PT:'🇵🇹',RO:'🇷🇴',SK:'🇸🇰',SI:'🇸🇮',ES:'🇪🇸',
+  SE:'🇸🇪',CH:'🇨🇭',BG:'🇧🇬',RS:'🇷🇸',ME:'🇲🇪',MK:'🇲🇰',AL:'🇦🇱',BA:'🇧🇦',
+  XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
+  GB:'🇬🇧',IE:'🇮🇪',MC:'🇲🇨',SM:'🇸🇲',
+};
+const CNAMES = {
+  AT:'Austria',BE:'Belgium',HR:'Croatia',CZ:'Czechia',DK:'Denmark',EE:'Estonia',
+  FI:'Finland',FR:'France',DE:'Germany',GR:'Greece',HU:'Hungary',IS:'Iceland',
+  IT:'Italy',LV:'Latvia',LT:'Lithuania',LU:'Luxembourg',NL:'Netherlands',NO:'Norway',
+  PL:'Poland',PT:'Portugal',RO:'Romania',SK:'Slovakia',SI:'Slovenia',ES:'Spain',
+  SE:'Sweden',CH:'Switzerland',BG:'Bulgaria',RS:'Serbia',ME:'Montenegro',
+  MK:'N.Macedonia',AL:'Albania',BA:'Bosnia',XK:'Kosovo',AD:'Andorra',
+  MD:'Moldova',MT:'Malta',CY:'Cyprus',LI:'Liechtenstein',
+  GB:'United Kingdom',IE:'Ireland',MC:'Monaco',SM:'San Marino',
+};
+const SYM = {
+  EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',
+  PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',
+  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£',
+};
+const UNIT = { L:'/L', kWh:'/kWh', kg:'/kg' };
+const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40;
+
+const BBOX = {
+  AT:[[46.37,9.52],[49.02,17.16]],  BE:[[49.50,2.50],[51.50,6.40]],
+  HR:[[42.39,13.49],[46.55,19.45]], CZ:[[48.55,12.10],[51.06,18.87]],
+  DK:[[54.56,8.07],[57.77,15.19]],  EE:[[57.52,21.83],[59.68,28.21]],
+  FI:[[59.81,20.55],[70.09,29.58]], FR:[[41.33,-5.14],[51.09,9.56]],
+  DE:[[47.27,5.87],[55.06,15.04]],  GR:[[34.70,19.30],[41.80,29.70]],
+  HU:[[45.70,16.10],[48.60,22.90]], IS:[[63.29,-24.54],[66.56,-13.49]],
+  IT:[[36.49,6.63],[47.09,18.52]],  LV:[[55.68,20.97],[57.84,28.24]],
+  LT:[[53.90,20.95],[56.45,26.83]], LU:[[49.44,5.73],[50.18,6.53]],
+  NL:[[50.75,3.36],[53.55,7.22]],   NO:[[57.97,4.64],[71.19,31.15]],
+  PL:[[49.00,14.10],[54.90,24.10]], PT:[[36.84,-9.52],[42.15,-6.19]],
+  RO:[[43.62,22.34],[48.26,29.68]], SK:[[47.73,16.84],[49.62,22.57]],
+  SI:[[45.42,13.38],[46.88,16.61]], ES:[[27.60,-18.40],[43.79,4.32]],
+  SE:[[55.34,11.11],[69.06,24.17]], CH:[[45.80,5.90],[47.80,10.50]],
+  BG:[[41.23,22.36],[44.22,28.69]], RS:[[42.23,18.84],[46.19,23.01]],
+  ME:[[41.87,18.43],[43.57,20.36]], MK:[[40.85,20.44],[42.37,23.04]],
+  AL:[[39.63,19.27],[42.68,21.06]], BA:[[42.55,15.72],[45.28,19.62]],
+  XK:[[41.85,20.01],[43.27,21.79]], AD:[[42.43,1.41],[42.66,1.79]],
+  MD:[[45.47,26.62],[48.49,30.14]], MT:[[35.78,14.18],[36.08,14.58]],
+  CY:[[34.63,32.26],[35.71,34.59]], LI:[[47.05,9.47],[47.27,9.64]],
+  GB:[[49.80,-8.70],[60.90,1.90]],  IE:[[51.30,-10.70],[55.50,-5.30]],
+  MC:[[43.72,7.40],[43.76,7.45]],   SM:[[43.88,12.40],[43.99,12.52]],
+};
+const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
+  [cc, L.latLngBounds(b[0], b[1])]
+));
+
+// ════════════════════════════════════════════════════
+// Map
+// ════════════════════════════════════════════════════
+// Default view: Sweden (slightly north of center, covers the whole country nicely)
+const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
+// Bottom-left (not bottom-right): the Near Me FAB lives bottom-right and a long attribution
+// string was wrapping to 2 lines and colliding with it on narrow phones.
+map.attributionControl.setPosition('bottomleft');
+map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
+map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
+// ESRI World Dark Gray Canvas — free, no API key required
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
+  maxZoom:16,
+}).addTo(map);
+// Reference layer (labels) on top
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'', maxZoom:16, pane:'overlayPane',
+}).addTo(map);
+
+// ════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════
+const data    = {};           // cc → station[]
+const loaded  = new Set();
+const loading = new Set();
+const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
+let cluster   = null;
+const byId    = new Map();    // id → marker
+let   selId   = null;
+let   myLat   = null, myLon = null, myCountry = null;
+let   myMark  = null, myCirc = null;
+let   metaAt  = null;
+let   fCountry= '', fFuel = '';
+let   sortMode= 'default';    // 'default'|'price'|'distance'
+let   sMode   = 'addr';       // search mode
+let   vpOff   = 0;            // virtual scroll offset
+let   activeTab = 'map';
+
+// ════════════════════════════════════════════════════
+// Country select builder
+// ════════════════════════════════════════════════════
+(function buildSelects() {
+  const opts = '<option value="">All countries</option>' +
+    Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
+      .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
+  ['mobCountry'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+})();
+
+// ════════════════════════════════════════════════════
+// Helpers
+// ════════════════════════════════════════════════════
+// Station name/brand/address/city/source come from third-party feeds (ANWB resold data, OSM
+// tags, government CSVs) we don't control, and search results come live from Nominatim — none of
+// it is trusted input. Every one of those fields gets HTML-escaped before it goes into innerHTML.
+const _escDiv = document.createElement('div');
+function esc(v) {
+  _escDiv.textContent = v ?? '';
+  return _escDiv.innerHTML;
+}
+// For an id interpolated inside onclick="fn('${id}')" (a single-quoted JS string literal that
+// itself sits inside a double-quoted HTML attribute) — needs escaping for BOTH contexts.
+function escId(v) {
+  return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// Mainstream fuels only: 95 (E10/E5) and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
+// so they must never set the headline price (unless the user filters for them).
+const F95 = ['E10','E5'], FDIE = ['DIESEL'];
+function minOf(s, types) {
+  let best = null;
+  for (const p of (s.prices||[])) if (types.includes(p.fuel_type) && p.price > 0 && (!best || p.price < best.price)) best = p;
+  return best;
+}
+function cheapest(s) {
+  if (!s.prices?.length) return null;
+  if (fFuel) return minOf(s, [fFuel]);
+  const a = minOf(s, F95), d = minOf(s, FDIE);
+  if (a && d) return a.price <= d.price ? a : d;
+  return a || d || null;       // no mainstream fuel => no headline price
+}
+
+function dist(a, b, c, d) {
+  const R=6371, dLat=(c-a)*Math.PI/180, dLon=(d-b)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`; }
+
+// Source grade: A official statutory feed · B official periodic/regulated · C third-party aggregator
+// (no price timestamps) · D community-reported · L location only. Set per country in meta.json,
+// optionally overridden per station (e.g. Germany stations upgraded to the statutory MTS-K feed).
+const GRADE_COL = { A:'#16A34A', B:'#2563EB', C:'#F59E0B', D:'#E8542F', L:'#94A3B8' };
+const GRADE_TXT = {
+  A:'Official feed · stations must report price changes',
+  B:'Official feed · periodic / regulated prices',
+  C:'Third-party data · price time unknown',
+  D:'Community-reported prices',
+  L:'Location only',
+};
+function gradeOf(s) { return s.grade || metaOf[s.country]?.grade || 'C'; }
+
+function fmtAgo(iso) {
+  if (!iso) return '';
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (m < 2)    return 'just now';
+  if (m < 90)   return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 36)   return `${h} h ago`;
+  return `${Math.round(h / 24)} days ago`;
+}
+
+// Age of the NEWEST price on the station (hours) or null when the source gives no timestamp
+function priceAgeH(s) {
+  let best = null;
+  for (const p of (s.prices || [])) {
+    if (!p.updated_at) continue;
+    const h = (Date.now() - new Date(p.updated_at)) / 3600000;
+    if (best === null || h < best) best = h;
+  }
+  return best;
+}
+
+function freshCls(s) {
+  if (!s.prices?.length) return '';
+  const h = priceAgeH(s);
+  if (h === null) return 'fu';
+  return h<2 ? 'fh' : h<12 ? 'fm' : h<36 ? 'fl' : 'fs';
+}
+
+// One honest line: how old is the price, who says so, and is the whole feed stale?
+function ageHtml(s) {
+  if (!s.prices?.length) return '';
+  const g = gradeOf(s), m = metaOf[s.country] || {};
+  const h = priceAgeH(s);
+  const when = h === null
+    ? `price time unknown${m.fetched_at ? ' · checked ' + fmtAgo(m.fetched_at) : ''}`
+    : `price set ${fmtAgo(new Date(Date.now() - h*3600000).toISOString())}`;
+  const stale = m.status === 'stale'
+    ? `<div class="stale-note">⚠ Source temporarily unavailable — showing data from ${fmtAgo(m.fetched_at)}</div>` : '';
+  return `<div class="age-line"><span class="gb g${g}">${g}</span> ${GRADE_TXT[g]}<br>⏱ ${when}</div>${stale}`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
+    return `${d.getUTCDate()} ${mo} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`;
+  } catch { return ''; }
+}
+
+function matches(s) {
+  if (fCountry && s.country !== fCountry) return false;
+  if (fFuel && !s.prices?.some(p => p.fuel_type === fFuel)) return false;
+  return true;
+}
+
+function navUrl(lat, lon, name) {
+  const lbl = encodeURIComponent(name || 'Fuel Station');
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent))
+    return `maps:?daddr=${lat},${lon}&dirflg=d`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`;
+}
+
+// ════════════════════════════════════════════════════
+// Cluster
+// ════════════════════════════════════════════════════
+function mkCluster() {
+  if (cluster) map.removeLayer(cluster);
+  cluster = L.markerClusterGroup({
+    maxClusterRadius:40, disableClusteringAtZoom:CLUSTER_ZOOM,
+    spiderfyOnMaxZoom:true, showCoverageOnHover:false, chunkedLoading:true,
+    iconCreateFunction: c => {
+      // Clusters show a plain count only. A per-cluster price line was tried and dropped: on a
+      // real phone, densely packed clusters (common in cities) made the extra text bleed across
+      // neighbouring bubbles and become unreadable, whatever the zoom gate. Prices belong on the
+      // individual station marker/tooltip once you're zoomed in far enough to see one (see
+      // mkMarker / PRICE_ZOOM) — that is the one place they render without overlap.
+      const n  = c.getChildCount();
+      const sz = n<50?'small':n<200?'medium':'large';
+      return L.divIcon({
+        html:`<div>${n}</div>`,
+        className:`marker-cluster marker-cluster-${sz}`,
+        iconSize:[40,40],
+      });
+    },
+  });
+  map.addLayer(cluster);
+}
+mkCluster();
+
+// ════════════════════════════════════════════════════
+// Markers
+// ════════════════════════════════════════════════════
+function mkMarker(s) {
+  const cp   = cheapest(s);
+  const col  = cp ? (GRADE_COL[gradeOf(s)] || '#f59e0b') : '#334155';
+  const sz   = cp ? 10 : 7;
+  const op   = cp ? 1 : 0.45;
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:1.5px solid rgba(255,255,255,0.55);opacity:${op};box-shadow:0 0 5px rgba(0,0,0,0.4)"></div>`,
+    iconSize:[sz,sz], iconAnchor:[sz>>1,sz>>1],
+  });
+  const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE) });
+  if (cp) {
+    const a95 = minOf(s,F95), dd = minOf(s,FDIE), sy = SYM[cp.currency]||cp.currency;
+    const tip = fFuel ? `${cp.fuel_type} ${cp.price.toFixed(2)}${sy}`
+      : [a95 && `95 ${a95.price.toFixed(2)}${sy}`, dd && `D ${dd.price.toFixed(2)}${sy}`].filter(Boolean).join(' · ');
+    m.bindTooltip(tip,
+      { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
+  }
+  m.bindPopup(mkPopup(s), { maxWidth:290 });
+  m.on('click', () => selectStation(s.id));
+  return m;
+}
+
+function addToMap(cc, stations) {
+  const toAdd = [];
+  for (const s of stations) {
+    if (!s.lat || !s.lon || !matches(s) || byId.has(s.id)) continue;
+    const m = mkMarker(s);
+    byId.set(s.id, m);
+    toAdd.push(m);
+  }
+  if (toAdd.length) cluster.addLayers(toAdd);
+}
+
+// ════════════════════════════════════════════════════
+// Popup
+// ════════════════════════════════════════════════════
+function mkPopup(s) {
+  const flag = FLAGS[s.country] || '';
+  const rows = (s.prices||[]).map(p => {
+    const sym = SYM[p.currency] || p.currency || '';
+    return `<tr><td class="ft">${p.fuel_type}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
+  }).join('');
+  const noP   = !s.prices?.length ? '<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">No price data available</div>' : '';
+  const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
+  return `<div class="pop">
+    <div class="pop-name">${flag} ${esc(s.name||s.brand||'—')}</div>
+    ${s.address ? `<div class="pop-addr">${esc(s.address)}</div>` : ''}
+    <div class="pop-meta">${esc([s.city, s.source].filter(Boolean).join(' · '))}</div>
+    <table class="pop-tbl">${rows}</table>${noP}
+    ${ageHtml(s)}
+    <div class="pop-foot">
+      <span></span>
+      ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 Go</a>` : ''}
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════
+// Station card
+// ════════════════════════════════════════════════════
+function mkCard(s, km) {
+  const flag = FLAGS[s.country] || '';
+  const fc   = freshCls(s);
+  const isSel= s.id === selId ? ' sel' : '';
+  const cp   = cheapest(s);
+  const chips = (s.prices||[]).map(p => {
+    const sym = SYM[p.currency] || p.currency || '';
+    const best = cp && p.fuel_type === cp.fuel_type && Math.abs(p.price-cp.price) < 0.001;
+    return `<span class="pc${best?' best':''}">
+      <span class="t">${p.fuel_type}</span>
+      <span class="v">${p.price.toFixed(2)}</span>
+      <span class="u">${sym}</span>
+    </span>`;
+  }).join('');
+  const noPin = (!s.lat||!s.lon) ? ' <span title="No GPS" style="color:var(--text3)">📍✕</span>' : '';
+  const goBtn = (s.lat && s.lon)
+    ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${escId(s.id)}')">🧭 Go</button>` : '';
+  const distHtml = km != null
+    ? `<span class="dist-badge">📏 ${fmtDist(km)}</span>` : '';
+  return `<div class="scard ${fc}${isSel}" id="c-${esc(s.id)}" onclick="selectStation('${escId(s.id)}')">
+    <div class="scard-top">
+      <div class="scard-name">${flag} ${esc(s.name||s.brand||'—')}${noPin}</div>
+      ${goBtn}
+    </div>
+    <div class="scard-meta">${esc([s.city,s.source].filter(Boolean).join(' · '))}${distHtml ? ' '+distHtml : ''}</div>
+    <div class="pchips">${chips||'<span style="color:var(--text3);font-size:0.71rem">No prices</span>'}</div>
+    ${ageHtml(s)}
+  </div>`;
+}
+
+function doNav(id) {
+  for (const arr of Object.values(data)) {
+    const s = arr.find(x => x.id === id);
+    if (s?.lat && s?.lon) { window.open(navUrl(s.lat, s.lon, s.name||s.brand), '_blank', 'noopener'); return; }
+  }
+}
+
+// ════════════════════════════════════════════════════
+// Data loading
+// ════════════════════════════════════════════════════
+async function loadCC(cc) {
+  if (loaded.has(cc) || loading.has(cc)) return;
+  loading.add(cc); updStatus();
+  try {
+    const r = await fetch(`${cc.toLowerCase()}.json`);
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    if (j.meta?.fetched_at && !metaAt) metaAt = j.meta.fetched_at;
+    data[cc] = j.stations || [];
+    metaOf[cc] = j.meta || {};
+    loaded.add(cc);
+    addToMap(cc, data[cc]);
+    onNewData();
+  } catch(e) {
+    console.warn(`[${cc}] ${e.message}`);
+  } finally {
+    loading.delete(cc); updStatus();
+  }
+}
+
+function onNewData() {
+  updStatus();
+  // Rebuild sidebar only if count is small or loading is done
+  const tot = Object.values(data).reduce((s,a) => s+a.length, 0);
+  if (tot < 2000 || loading.size === 0) rebuildList();
+  else updCounts();
+  if (activeTab === 'nearby' && myLat != null) showNearby();
+}
+
+// ════════════════════════════════════════════════════
+// Viewport lazy load
+// ════════════════════════════════════════════════════
+let _vpt = null;
+function schedVP() { clearTimeout(_vpt); _vpt = setTimeout(checkVP, 150); }
+function checkVP() {
+  const b = map.getBounds();
+  for (const [cc, bbox] of Object.entries(CB)) {
+    if (loaded.has(cc) || loading.has(cc)) continue;
+    if (fCountry && cc !== fCountry) continue;
+    if (b.intersects(bbox)) loadCC(cc);
+  }
+}
+map.on('moveend zoomend', schedVP);
+
+// ════════════════════════════════════════════════════
+// Filters
+// ════════════════════════════════════════════════════
+function setCountry(val) {
+  fCountry = val;
+  ['mobCountry'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
+  applyFilters();
+  if (val && !loaded.has(val)) loadCC(val);
+}
+
+function setFuel(chipEl, val) {
+  fFuel = val;
+  document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
+  if (chipEl) chipEl.classList.add('on');
+  else { const c = document.querySelector(`.chip[data-f="${val}"]`); if(c) c.classList.add('on'); }
+  ['mobFuel'].forEach(id => { const e=document.getElementById(id); if(e) e.value=val; });
+  applyFilters();
+}
+
+function applyFilters() {
+  cluster.clearLayers(); byId.clear();
+  for (const [cc, arr] of Object.entries(data)) addToMap(cc, arr);
+  rebuildList();
+  updPriceLbls();
+  schedVP();
+}
+
+function resetAll() {
+  fCountry=''; fFuel='';
+  ['mobCountry','mobFuel'].forEach(id => {
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+  document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
+  document.querySelector('.chip[data-f=""]')?.classList.add('on');
+  applyFilters();
+}
+
+// ════════════════════════════════════════════════════
+// List management
+// ════════════════════════════════════════════════════
+// Priced stations always come first (sorted the way the user asked), unpriced stations follow
+// in a second group sorted the same way where that's meaningful — never interleaved.
+function splitPricedFirst(arr, pricedCmp, unpricedCmp) {
+  const priced = [], unpriced = [];
+  for (const item of arr) (cheapest(item.s ?? item) ? priced : unpriced).push(item);
+  if (pricedCmp) priced.sort(pricedCmp);
+  if (unpricedCmp) unpriced.sort(unpricedCmp);
+  return priced.concat(unpriced);
+}
+
+function getAll() {
+  const all = [];
+  for (const arr of Object.values(data))
+    for (const s of arr) { if (matches(s)) all.push(s); }
+  let pricedCmp = null, unpricedCmp = null;
+  if (sortMode === 'distance' && myLat != null) {
+    const byDist = (a,b) => {
+      const da = (a.lat&&a.lon) ? dist(myLat,myLon,a.lat,a.lon) : 99999;
+      const db = (b.lat&&b.lon) ? dist(myLat,myLon,b.lat,b.lon) : 99999;
+      return da-db;
+    };
+    pricedCmp = unpricedCmp = byDist;   // distance is meaningful for both groups
+  } else if (sortMode === 'price') {
+    pricedCmp = (a,b) => cheapest(a).price - cheapest(b).price;
+    // unpricedCmp stays null: there's no price to sort by, so that group keeps its original order
+  }
+  return splitPricedFirst(all, pricedCmp, unpricedCmp);
+}
+
+function updCounts() {
+  const n = getAll().length;
+  document.getElementById('mobCount').textContent   = n.toLocaleString();
+  document.getElementById('tb-list-lbl').textContent = n > 0 ? `List (${n.toLocaleString()})` : 'List';
+}
+
+function rebuildList() {
+  vpOff = 0;
+  const all = getAll();
+  updCounts();
+  renderPage(all, 0, true);
+}
+
+function renderPage(all, offset, reset) {
+  vpOff = offset;
+  const page = all.slice(offset, offset + PAGE);
+  const isMob = true;
+  const listId = 'mobList';
+  const list = document.getElementById(listId);
+  if (!list) return;
+
+  const html = page.map(s => {
+    const km = (myLat!=null && s.lat && s.lon) ? dist(myLat,myLon,s.lat,s.lon) : null;
+    return mkCard(s, km);
+  }).join('');
+
+  if (reset || offset === 0) {
+    if (!all.length) {
+      list.innerHTML = loading.size
+        ? '<p class="empty">Loading data…</p>'
+        : '<p class="empty">No stations match. Try adjusting the filters.</p>';
+      return;
+    }
+    list.innerHTML = html;
+  } else {
+    list.querySelector('.load-more')?.remove();
+    list.insertAdjacentHTML('beforeend', html);
+  }
+
+  if (offset + PAGE < all.length) {
+    const rem = all.length - offset - PAGE;
+    list.insertAdjacentHTML('beforeend',
+      `<div class="load-more" onclick="loadMore()">⬇ Load ${Math.min(PAGE,rem)} more  (${rem.toLocaleString()} remaining)</div>`);
+  }
+}
+
+function loadMore() {
+  renderPage(getAll(), vpOff + PAGE, false);
+}
+
+function cycleSort() {
+  const modes  = ['default','price','distance'];
+  const labels = { default:'Default', price:'By price ↑', distance:'By distance' };
+  sortMode = modes[(modes.indexOf(sortMode)+1) % modes.length];
+  document.getElementById('mob-sort-lbl').textContent = labels[sortMode];
+  rebuildList();
+}
+
+// ════════════════════════════════════════════════════
+// Station select
+// ════════════════════════════════════════════════════
+function selectStation(id) {
+  document.getElementById(`c-${selId}`)?.classList.remove('sel');
+  selId = id;
+  const card = document.getElementById(`c-${id}`);
+  if (card) { card.classList.add('sel'); card.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+  const m = byId.get(id);
+  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); if (true) closePanel(); }
+}
+
+// ════════════════════════════════════════════════════
+// Near Me
+// ════════════════════════════════════════════════════
+// "Near Me" never crosses a border: resolve the user's own country via reverse geocoding
+// (falls back, in showNearby(), to the nearest already-loaded station's country if this fails).
+async function detectCountry(lat, lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=5`,
+      { headers:{ 'Accept-Language':'en' } });
+    if (r.ok) {
+      const j = await r.json();
+      const cc = (j.address?.country_code || '').toUpperCase();
+      if (cc && CNAMES[cc]) return cc;
+    }
+  } catch (_) {}
+  return null;
+}
+
+const NEARBY_RADIUS_KM = 15;
+
+function goNearby() {
+  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+  const fab = document.getElementById('fab');
+  fab.textContent = '⏳ Locating…'; fab.classList.add('busy');
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    myLat = pos.coords.latitude; myLon = pos.coords.longitude;
+    fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
+    myCountry = await detectCountry(myLat, myLon);
+
+    if (myMark) { map.removeLayer(myMark); map.removeLayer(myCirc); }
+    myMark = L.marker([myLat,myLon], {
+      icon: L.divIcon({ className:'', html:'<div class="loc-dot"></div>', iconSize:[14,14], iconAnchor:[7,7] }),
+      zIndexOffset:1000,
+    }).addTo(map).bindPopup('📍 You are here');
+    myCirc = L.circle([myLat,myLon], {
+      radius:Math.min(pos.coords.accuracy,500), color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.08, weight:1,
+    }).addTo(map);
+
+    map.setView([myLat,myLon], 13);
+    schedVP();
+    if (true) goTab('nearby');
+    else showNearby();
+  }, err => {
+    fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
+    alert('Location error: ' + ({ 1:'Permission denied.',2:'Position unavailable.',3:'Timed out.'}[err.code]||err.message));
+  }, { timeout:10000, maximumAge:60000 });
+}
+
+function showNearby() {
+  if (myLat == null) return;
+  const all = [];
+  for (const arr of Object.values(data))
+    for (const s of arr) {
+      if (!s.lat || !s.lon) continue;
+      all.push({ s, km: dist(myLat,myLon,s.lat,s.lon) });
+    }
+  all.sort((a,b) => a.km-b.km);   // only used below to find the nearest country; final order comes from splitPricedFirst
+
+  // Same-country only: the user's own country (reverse-geocoded), falling back to whatever
+  // country the nearest already-loaded station belongs to. Never suggests a cross-border station.
+  const country = myCountry || all.find(c => c.km <= NEARBY_RADIUS_KM * 2)?.s.country || null;
+  const byKm = (a,b) => a.km - b.km;
+  const cands = splitPricedFirst(
+    all.filter(c => c.km <= NEARBY_RADIUS_KM && (!country || c.s.country === country) && matches(c.s)),
+    byKm, byKm,
+  );
+
+  const el = document.getElementById('nearby-list');
+  if (!el) return;
+  if (!cands.length) {
+    const cname = country ? (CNAMES[country] || country) : 'your country';
+    el.innerHTML = `<p class="empty">No stations within ${NEARBY_RADIUS_KM} km in ${cname} yet.\nPan the map, or try again once more data has loaded.</p>`;
+    document.getElementById('nearby-summary').style.display = 'none';
+    return;
+  }
+
+  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£' };
+  let bestGlobal = null, bestGlobalKm = null;
+  for (const {s,km} of cands) {
+    const cp = cheapest(s);
+    if (!cp) continue;
+    const ftMatch = !fFuel || cp.fuel_type === fFuel;
+    if (!ftMatch) continue;
+    if (!bestGlobal || cp.price < bestGlobal.price) { bestGlobal = cp; bestGlobalKm = km; }
+  }
+
+  const sumEl = document.getElementById('nearby-summary');
+  const priceEl = document.getElementById('ns-price');
+  const detailEl = document.getElementById('ns-detail');
+  if (bestGlobal) {
+    const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
+    priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${bestGlobal.fuel_type}`;
+    detailEl.textContent = `Best within ${fmtDist(bestGlobalKm)} · ${cands.length} stations within ${NEARBY_RADIUS_KM} km in ${CNAMES[country]||country||'your country'}`;
+    sumEl.style.display = 'flex';
+  } else {
+    sumEl.style.display = 'none';
+  }
+
+  el.innerHTML = cands.slice(0,40).map(({s,km}) => mkCard(s,km)).join('');
+}
+
+// ════════════════════════════════════════════════════
+// Search
+// ════════════════════════════════════════════════════
+function setSMode(el, mode) {
+  sMode = mode;
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  const ph = mode==='addr' ? 'City, address, or country…' : 'Station name or brand…';
+  document.getElementById('mobSearch').placeholder = ph;
+  document.getElementById('search-results').innerHTML = '<p class="empty" style="padding:18px 0">Enter a search query above</p>';
+}
+
+async function runSearch(isMob) {
+  const q = document.getElementById('mobSearch')?.value.trim();
+  if (!q) return;
+  const resEl = document.getElementById('search-results');
+
+  // Station name search
+  if (sMode === 'name' || (!isMob)) {
+    const hits = [];
+    for (const arr of Object.values(data)) {
+      for (const s of arr) {
+        if ((s.name||s.brand||'').toLowerCase().includes(q.toLowerCase())) {
+          const km = (myLat!=null && s.lat&&s.lon) ? dist(myLat,myLon,s.lat,s.lon) : null;
+          hits.push({ s, km });
+        }
+      }
+    }
+    if (hits.length) {
+      const byKm = (a,b) => (a.km??99999)-(b.km??99999);
+      const sorted = splitPricedFirst(hits, byKm, byKm);
+      hits.length = 0; hits.push(...sorted);
+      if (isMob) {
+        resEl.innerHTML = hits.slice(0,40).map(({s,km}) => mkCard(s,km)).join('');
+      } else {
+        const first = hits[0].s;
+        if (first.lat && first.lon) map.setView([first.lat,first.lon], 14);
+        selectStation(first.id);
+      }
+      return;
+    }
+  }
+
+  // Address search (Nominatim)
+  try {
+    if (isMob && resEl) resEl.innerHTML = '<p class="empty">Searching…</p>';
+    const r    = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers:{'Accept-Language':'en'} });
+    const rows = await r.json();
+    if (!rows.length) {
+      if (isMob) resEl.innerHTML = `<p class="empty">Nothing found for "${esc(q)}"</p>`;
+      else alert(`"${q}" not found.`);
+      return;
+    }
+    const { lat, lon, display_name } = rows[0];   // display_name comes live from Nominatim — not trusted
+    map.setView([+lat,+lon], 13);
+    if (isMob) closePanel();
+    L.popup().setLatLng([+lat,+lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${esc(display_name)}</div>`).openOn(map);
+  } catch(e) {
+    const msg = 'Search error: ' + esc(e.message);
+    if (isMob) resEl.innerHTML = `<p class="empty">${msg}</p>`; else alert(msg);
+  }
+}
+
+// ════════════════════════════════════════════════════
+// Tab / Panel management
+// ════════════════════════════════════════════════════
+const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', filter:'p-filter' };
+
+function goTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById(`tb-${tab}`)?.classList.add('on');
+
+  if (tab === 'map') { closePanel(); return; }
+
+  Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
+  const pid = PANEL_MAP[tab];
+  if (pid) { document.getElementById(pid)?.classList.add('open'); document.getElementById('bd').classList.add('on'); }
+
+  if (tab === 'nearby') {
+    if (myLat == null) goNearby(); else showNearby();
+  } else if (tab === 'stations') {
+    rebuildList();
+  }
+}
+
+function closePanel() {
+  Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
+  document.getElementById('bd').classList.remove('on');
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tb-map')?.classList.add('on');
+  activeTab = 'map';
+}
+
+map.on('click movestart', () => { if (true) closePanel(); });
+
+// Swipe down to close
+document.querySelectorAll('.panel').forEach(p => {
+  let sy=0, st=0;
+  p.addEventListener('touchstart', e => { sy=e.touches[0].clientY; st=Date.now(); }, { passive:true });
+  p.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY-sy > 70 && Date.now()-st < 500) closePanel(); }, { passive:true });
+});
+
+// ════════════════════════════════════════════════════
+// Price labels
+// ════════════════════════════════════════════════════
+function updPriceLbls() { map.getContainer().classList.toggle('hide-prices', map.getZoom() < PRICE_ZOOM); }
+map.on('zoomend', updPriceLbls);
+
+// ════════════════════════════════════════════════════
+// Progress bar
+// ════════════════════════════════════════════════════
+function updProgress() {
+  const tot = Object.keys(CB).length;
+  const done = loaded.size;
+  const pct  = tot > 0 ? Math.round((done / tot) * 100) : 0;
+  const fill = document.getElementById('progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  if (pct >= 100) setTimeout(() => { if (fill) fill.style.opacity = '0'; }, 600);
+}
+
+// ════════════════════════════════════════════════════
+// Status
+// ════════════════════════════════════════════════════
+function updStatus() {
+  const n    = Object.values(data).reduce((s,a) => s+a.length, 0);
+  const ld   = loaded.size, tot = Object.keys(CB).length;
+  const act  = loading.size;
+  const badge = document.getElementById('badge');
+
+  let txt, cls;
+  if (act > 0) {
+    txt = `${n.toLocaleString()} stations\nLoading ${act} more…`; cls = 'loading';
+  } else {
+    const t = metaAt ? new Date(metaAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    txt = `${n.toLocaleString()} stations\n${ld}/${tot} countries${t?' · '+t:''}`;
+    cls = ld > 0 ? 'ok' : 'loading';
+  }
+  badge.textContent = txt; badge.className = cls;
+    updCounts();
+  updProgress();
+}
+
+// ════════════════════════════════════════════════════
+// PWA
+// ════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e))
+  );
+}
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  const btn = document.createElement('button');
+  btn.className = 'chip install-chip';
+  btn.textContent = '📲 Install app';
+  btn.onclick = () => { e.prompt(); btn.remove(); };
+  document.getElementById('chips').appendChild(btn);
+});
+
+// ════════════════════════════════════════════════════
+// Boot
+// ════════════════════════════════════════════════════
+(async () => {
+  try {
+    const r = await fetch('meta.json');
+    if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; }
+  } catch(_) {}
+  updStatus(); updPriceLbls();
+
+  // Always pre-load Sweden (home country priority)
+  loadCC('SE');
+  schedVP();
+
+  // Auto-trigger Near Me on mobile if geolocation was previously granted
+  if (true && navigator.permissions) {
+    try {
+      const perm = await navigator.permissions.query({ name:'geolocation' });
+      if (perm.state === 'granted') goNearby();
+    } catch (_) {}
+  }
+})();
+</script>
+</body>
+</html>

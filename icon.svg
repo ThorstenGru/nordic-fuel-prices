@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0f1e"/>
+  <!-- Pump body -->
+  <rect x="120" y="160" width="200" height="260" rx="18" fill="#1e293b" stroke="#334155" stroke-width="6"/>
+  <!-- Screen -->
+  <rect x="142" y="185" width="156" height="80" rx="10" fill="#0f172a"/>
+  <text x="220" y="240" font-family="system-ui,sans-serif" font-size="36" font-weight="700" fill="#22c55e" text-anchor="middle">€1.45</text>
+  <!-- Nozzle holder -->
+  <rect x="315" y="200" width="30" height="10" rx="5" fill="#475569"/>
+  <!-- Hose -->
+  <path d="M345 205 Q390 205 390 250 Q390 295 360 300 L345 305" stroke="#475569" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <!-- Nozzle -->
+  <rect x="330" y="298" width="40" height="16" rx="6" fill="#334155"/>
+  <!-- Fuel type buttons -->
+  <rect x="142" y="285" width="46" height="22" rx="6" fill="#22c55e" opacity="0.9"/>
+  <rect x="196" y="285" width="46" height="22" rx="6" fill="#3b82f6" opacity="0.9"/>
+  <rect x="250" y="285" width="46" height="22" rx="6" fill="#f59e0b" opacity="0.9"/>
+  <!-- Bottom strip -->
+  <rect x="120" y="390" width="200" height="30" rx="0" fill="#111827"/>
+  <rect x="120" y="400" width="200" height="20" rx="0" fill="#22c55e" opacity="0.15"/>
+  <!-- Stars (EU-inspired) -->
+  <circle cx="410" cy="120" r="6" fill="#f59e0b"/>
+  <circle cx="430" cy="100" r="5" fill="#f59e0b"/>
+  <circle cx="455" cy="95" r="6" fill="#f59e0b"/>
+  <circle cx="470" cy="115" r="5" fill="#f59e0b"/>
+  <circle cx="460" cy="140" r="6" fill="#f59e0b"/>
+  <circle cx="440" cy="150" r="5" fill="#f59e0b"/>
+</svg>
