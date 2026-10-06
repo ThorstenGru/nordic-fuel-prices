@@ -11,10 +11,10 @@ Country status of the SEO pages (built on every scrape):
 | FR | prix-carburants.gouv.fr / data.economie.gouv.fr | **live** | Licence Ouverte 2.0 (Etalab); attribution shown |
 | SE | bensinpriser.nu via henrikhjelm.se (community, grade D) | **live, licence unconfirmed** | No published reuse terms; send mail 1 |
 | AT | E-Control Spritpreisrechner | **live, licence unconfirmed** | No bulk licence found; send mail 3 |
-| DE | currently ANWB (unofficial) | **gated** | Switches on by itself once the source is Tankerkönig (set `TANKERKOENIG_API_KEY`); send mail 2 first |
-| CH | ANWB (unofficial) | **gated** | No licensed source; stays off |
+| DE | currently ANWB (unofficial) | **live (released by owner 2026-10-06)** | Footer states the ANWB source; attribution switches to Tankerkönig automatically once `TANKERKOENIG_API_KEY` is set; send mail 2 |
+| CH | ANWB (unofficial) | **live (released by owner 2026-10-06)** | No licensed source; footer states ANWB; risk accepted |
 
-To test gated pages locally: `SEO_INCLUDE_GATED=1 python src/seo_pages.py`.
+Kill switch for every ANWB-fed country (DE, CH): set `SEO_EXCLUDE_ANWB=1` in the scrape step of `scrape.yml` and the pages disappear on the next run.
 
 ---
 

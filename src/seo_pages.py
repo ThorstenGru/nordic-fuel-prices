@@ -4,11 +4,11 @@ Runs after ``main.py`` in the scrape workflow and writes plain, JS-free HTML int
 pages are crawlable and fast. Targets local-intent queries ("bensinpriser Växjö", "Spritpreise
 Wien", "prix carburant Lyon") — see docs/ROADMAP.md, experiment E3.
 
-Countries (COUNTRIES below): SE (sv), AT (de), FR (fr) are live; DE and CH (de) are built but GATED:
-their feed currently comes from the unofficial ANWB API, which the roadmap flags as a licence /
-cease-and-desist risk. A country whose ``meta.source`` mentions "anwb" is skipped unless
-SEO_INCLUDE_GATED=1 (local testing). The moment DE switches to a licensed source (Tankerkönig key,
-roadmap D3) its pages build automatically.
+Countries (COUNTRIES below): SE (sv), AT (de), FR (fr), DE (de), CH (de). DE and CH are currently fed
+by the unofficial ANWB API, which the roadmap flags as a licence / cease-and-desist risk; the owner
+released them anyway (2026-10-06). Their pages say so in the footer. Kill switch: SEO_EXCLUDE_ANWB=1
+skips every ANWB-fed country. When DE switches to Tankerkönig (roadmap D3) the footer attribution
+switches to Tankerkönig automatically (it follows ``meta.source``).
 
 Town model — two modes:
   * "places": stations are assigned to the nearest OSM town centre (src/seed/<cc>_places.json) when
@@ -48,7 +48,7 @@ ASSIGN_RADIUS_KM = 12     # places mode: a station belongs to the nearest centre
 CITY_SPREAD_KM = 25       # city mode: same-name stations further than this from the median are another town
 NEARBY_PRICED_KM = 50     # fallback radius for "nearest priced stations"
 MAX_PRICE_AGE_H = 72      # ignore prices older than this when the source gives a price time
-INCLUDE_GATED = os.environ.get("SEO_INCLUDE_GATED") == "1"
+EXCLUDE_ANWB = os.environ.get("SEO_EXCLUDE_ANWB") == "1"   # kill switch: skip countries fed by the unofficial ANWB API
 
 COUNTRIES: Dict[str, Dict[str, Any]] = {
     "se": dict(lang="sv", currency="SEK", sym="kr", mode="places", ts_kind="snapshot", fallback_nearby=True,
@@ -102,7 +102,7 @@ TXT: Dict[str, Dict[str, str]] = {
                  "fetched": "Tiden är när vi hämtade priset; källan anger ingen pristid.",
                  "price": "Tiden är när priset senast ändrades enligt källan."},
         foot_src="Priser rapporteras av användare och stationsägare via bensinpriser.nu (källklass D, community) och kan vara inaktuella – kontrollera alltid vid pump.",
-        foot_grades="Så graderar vi datakällor", foot_osm="Stationsplatser och ortnamn ©", foot_osm_who="OpenStreetMap-bidragsgivare",
+foot_unofficial="Källa: ANWB-data (inofficiell tredjepartskälla). Priserna kan avvika – kontrollera vid pump.", foot_grades="Så graderar vi datakällor", foot_osm="Stationsplatser och ortnamn ©", foot_osm_who="OpenStreetMap-bidragsgivare",
         foot_upd="Senast uppdaterad", ad="Priser", dash_crumb="Brödsmulor"),
     "de": dict(
         locale="de_DE", home="Startseite", map="Zur Karte →", crumbs="Brotkrumen",
@@ -120,6 +120,7 @@ TXT: Dict[str, Dict[str, str]] = {
                  "fetched": "Die Zeit ist der Zeitpunkt unseres Abrufs; die Quelle liefert keinen Preiszeitpunkt.",
                  "price": "Die Zeit ist die letzte Preisänderung laut Quelle."},
         foot_src="Quelle: {src}. Preise können abweichen – bitte vor Ort prüfen.",
+        foot_unofficial="Quelle: ANWB-Daten (inoffizielle Drittquelle, nicht amtlich; Preise ggf. umgerechnet). Preise können erheblich abweichen – bitte vor Ort prüfen.",
         foot_grades="So bewerten wir Datenquellen", foot_osm="Ortsnamen ©", foot_osm_who="OpenStreetMap-Mitwirkende",
         foot_upd="Zuletzt aktualisiert", ad=""),
     "fr": dict(
@@ -138,6 +139,7 @@ TXT: Dict[str, Dict[str, str]] = {
                  "fetched": "L’heure est celle de notre relevé ; la source ne fournit pas d’horodatage du prix.",
                  "price": "L’heure est celle de la dernière modification du prix selon la source."},
         foot_src="Source : {src}, données ouvertes sous Licence Ouverte 2.0 (Etalab). Les prix peuvent différer en station.",
+        foot_unofficial="Source : données ANWB (source tierce non officielle). Les prix peuvent différer – vérifiez en station.",
         foot_grades="Comment nous évaluons les sources", foot_osm="Noms de lieux ©", foot_osm_who="contributeurs d’OpenStreetMap",
         foot_upd="Dernière mise à jour", ad=""),
 }
@@ -464,9 +466,10 @@ def summary_cards(rows: List[Tuple[Dict, float]], c: Ctx) -> str:
     return f'<div class="cards">{"".join(cards)}</div>' if cards else ""
 
 
-def footer_html(c: Ctx) -> str:
+def footer_html(c: Ctx, unofficial: bool = False) -> str:
     cfg, x = c.cfg, c.x
-    parts = [escape(x["foot_src"].format(src=cfg["src"])), escape(x["foot_ts"][cfg["ts_kind"]]),
+    src_line = x["foot_unofficial"] if unofficial else x["foot_src"].format(src=cfg["src"])
+    parts = [escape(src_line), escape(x["foot_ts"][cfg["ts_kind"]]),
              f'<a href="/about.html">{escape(x["foot_grades"])}</a>.']
     if cfg["osm"]:
         parts.append(f'{escape(x["foot_osm"])} <a href="https://www.openstreetmap.org/copyright">{escape(x["foot_osm_who"])}</a>.')
@@ -482,8 +485,9 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         return None
     doc = json.loads(f.read_text(encoding="utf-8"))
     meta, stations = doc.get("meta") or {}, doc.get("stations") or []
-    if "anwb" in (meta.get("source") or "").lower() and not INCLUDE_GATED:
-        print(f"seo_pages[{cc}]: GATED (source {meta.get('source')!r} is unofficial) - skipped")
+    unofficial = "anwb" in (meta.get("source") or "").lower()
+    if unofficial and EXCLUDE_ANWB:
+        print(f"seo_pages[{cc}]: excluded by SEO_EXCLUDE_ANWB (source {meta.get('source')!r})")
         return None
     if meta.get("status") == "stale":
         print(f"seo_pages[{cc}]: source stale - skipped")
@@ -514,7 +518,7 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
     lastmod = fetched.date().isoformat()
     modified = fmt_when(fetched, lang)
     hub_url = f"{SITE}/{cc}/"
-    foot = footer_html(c)
+    foot = footer_html(c, unofficial)
     urls = [(hub_url, lastmod)]
     hub_rows = []
 
