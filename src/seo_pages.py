@@ -252,19 +252,19 @@ def clean_city(name: str) -> str:
     return n
 
 
-def towns_from_city(stations: List[Dict]) -> List[Town]:
+def towns_from_city(stations: List[Dict], lang: str) -> List[Town]:
     groups: Dict[str, List[Dict]] = defaultdict(list)
     spelling: Dict[str, Counter] = defaultdict(Counter)
     for s in stations:
         c = clean_city(s.get("city") or "")
         if not c or "lat" not in s:
             continue
-        key = unicodedata.normalize("NFKC", c).casefold()
+        key = slugify(c, lang)                       # "Zürich" and "Zuerich" are one town
         groups[key].append(s)
         spelling[key][c] += 1
     towns: List[Town] = []
     for key, sts in groups.items():
-        name = spelling[key].most_common(1)[0][0]
+        name = max(spelling[key].items(), key=lambda kv: (kv[1], not kv[0].isascii()))[0]   # tie -> spelling with diacritics
         remaining = sts
         for _ in range(3):               # split same-name towns that are far apart
             if not remaining:
@@ -500,7 +500,7 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         if len(vals) >= 5:
             c.national[fuel] = statistics.median(vals)
 
-    towns = towns_from_places(stations, cc) if cfg["mode"] == "places" else towns_from_city(stations)
+    towns = towns_from_places(stations, cc) if cfg["mode"] == "places" else towns_from_city(stations, lang)
     towns = [t for t in towns if len(t["rows"]) >= MIN_STATIONS]
     priced_all = [(s, t) for t in towns for s, _ in t["rows"] if has_price(s, now, cfg)]
     if cfg["fallback_nearby"]:
