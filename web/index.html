@@ -26,10 +26,10 @@
      buys us is blocking any OTHER script origin and any exfiltration to an unlisted endpoint. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://unpkg.com;
+  script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
   img-src 'self' data: https://unpkg.com https://server.arcgisonline.com;
-  connect-src 'self' https://nominatim.openstreetmap.org https://server.arcgisonline.com;
+  connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -420,6 +420,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .nearby-summary .ns-detail { color:var(--text2); font-size:0.73rem; }
 
 </style>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
 </head>
 <body>
 
