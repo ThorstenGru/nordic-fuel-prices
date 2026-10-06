@@ -15,8 +15,10 @@
 <meta property="og:title" content="EuroFuelPrices — Live European Fuel Prices">
 <meta property="og:description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
 <meta property="og:url" content="https://eurofuelprices.com/">
-<meta property="og:image" content="https://eurofuelprices.com/icon.svg">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://eurofuelprices.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <!-- Defense-in-depth only (GitHub Pages can't set real HTTP headers, so this is weaker than a
      Content-Security-Policy header would be — e.g. it can't block framing; that needs a move to
      a host that supports response headers, see docs/ROADMAP.md). The app's inline <script> and
@@ -386,8 +388,9 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   padding:7px 0; border-top:1px solid var(--border);
 }
 .trust-row .gb { flex-shrink:0; font-size:0.7rem; padding:3px 8px; }
+.trust-more { display:block; text-align:center; margin-top:16px; font-size:0.82rem; color:var(--blue); text-decoration:none; }
 .trust-dismiss {
-  width:100%; margin-top:18px; background:var(--coral); border:none; border-radius:14px;
+  width:100%; margin-top:12px; background:var(--coral); border:none; border-radius:14px;
   color:#fff; font-size:0.9rem; font-weight:500; padding:13px; cursor:pointer; font-family:inherit;
 }
 
@@ -532,6 +535,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <div class="trust-row"><span class="gb gC">C</span><span data-i18n="grade_C">Third-party data · price time unknown</span></div>
     <div class="trust-row"><span class="gb gD">D</span><span data-i18n="grade_D">Community-reported prices</span></div>
     <div class="trust-row"><span class="gb gL">L</span><span data-i18n="grade_L">Location only</span></div>
+    <a class="trust-more" href="about.html">Full methodology →</a>
     <button class="trust-dismiss" onclick="closeTrust()"><span data-i18n="trustDismiss">Got it</span></button>
   </div>
 </div>
