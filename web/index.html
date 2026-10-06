@@ -356,6 +356,39 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     border:1px solid var(--border); border-radius:14px;
     color:var(--text); font-size:0.9rem; padding:13px; cursor:pointer; font-family:inherit;
   }
+  .lang-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .lang-btn {
+    flex:1; min-width:64px; background:var(--surf2); border:1px solid var(--border);
+    border-radius:12px; padding:9px 6px; font-size:0.8rem; font-weight:500; color:var(--text2);
+    cursor:pointer; font-family:inherit; transition:all 0.12s;
+  }
+  .lang-btn.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .trust-link {
+    width:100%; margin-top:22px; background:none; border:1px solid var(--border);
+    border-radius:14px; color:var(--blue); font-size:0.82rem; padding:12px; cursor:pointer; font-family:inherit;
+  }
+}
+
+/* ── Trust / source-grade explainer overlay ── */
+.trust-overlay {
+  display:none; position:fixed; inset:0; z-index:2500;
+  background:rgba(22,24,29,0.45); align-items:flex-end; justify-content:center;
+}
+.trust-overlay.on { display:flex; }
+.trust-card {
+  width:100%; max-width:520px; background:var(--surf); border-radius:24px 24px 0 0;
+  padding:22px 20px calc(22px + var(--safe-b)); box-shadow:0 -4px 30px rgba(0,0,0,0.15);
+}
+.trust-title { font-size:1.05rem; font-weight:500; margin-bottom:8px; }
+.trust-intro { font-size:0.82rem; color:var(--text2); line-height:1.5; margin-bottom:14px; }
+.trust-row {
+  display:flex; align-items:center; gap:10px; font-size:0.82rem; color:var(--text);
+  padding:7px 0; border-top:1px solid var(--border);
+}
+.trust-row .gb { flex-shrink:0; font-size:0.7rem; padding:3px 8px; }
+.trust-dismiss {
+  width:100%; margin-top:18px; background:var(--coral); border:none; border-radius:14px;
+  color:#fff; font-size:0.9rem; font-weight:500; padding:13px; cursor:pointer; font-family:inherit;
 }
 
 /* Scrollbar */
@@ -396,7 +429,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
   <!-- Fuel type chips -->
   <div id="chips">
-    <button class="chip on" data-f="" onclick="setFuel(this,'')">All fuels</button>
+    <button class="chip on" data-f="" onclick="setFuel(this,'')"><span data-i18n="fuelAll">All fuels</span></button>
     <button class="chip" data-f="E10" onclick="setFuel(this,'E10')">⛽ E10 / 95</button>
     <button class="chip" data-f="E5"  onclick="setFuel(this,'E5')">⛽ E5 / 98</button>
     <button class="chip" data-f="DIESEL" onclick="setFuel(this,'DIESEL')">🛢 Diesel</button>
@@ -418,14 +451,14 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <!-- Near Me -->
 <div class="panel" id="p-nearby">
   <div class="drag-handle"></div>
-  <div class="panel-title">📍 Cheapest Near You</div>
+  <div class="panel-title">📍 <span data-i18n="nearbyTitle">Cheapest Near You</span></div>
   <div id="nearby-summary" style="display:none" class="nearby-summary">
-    <div class="ns-label">Best price nearby</div>
+    <div class="ns-label" data-i18n="bestPriceNearby">Best price nearby</div>
     <div class="ns-price" id="ns-price">—</div>
     <div class="ns-detail" id="ns-detail"></div>
   </div>
   <div class="panel-scroll" id="nearby-list">
-    <p class="empty">Tap the button to find your location…</p>
+    <p class="empty" data-i18n="tapToLocate">Tap the button to find your location…</p>
   </div>
 </div>
 
@@ -433,17 +466,17 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <div class="panel" id="p-search">
   <div class="drag-handle"></div>
   <div class="sbox">
-    <input type="text" id="mobSearch" placeholder="City, address, or station…"
+    <input type="text" id="mobSearch" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr"
            autocomplete="off" autocorrect="off" spellcheck="false"
            onkeydown="if(event.key==='Enter')runSearch(true)">
     <button class="sbtn" onclick="runSearch(true)">🔍</button>
   </div>
   <div class="stabs">
-    <button class="stab on" onclick="setSMode(this,'addr')">📍 Address</button>
-    <button class="stab"    onclick="setSMode(this,'name')">⛽ Station name</button>
+    <button class="stab on" onclick="setSMode(this,'addr')">📍 <span data-i18n="tabAddress">Address</span></button>
+    <button class="stab"    onclick="setSMode(this,'name')">⛽ <span data-i18n="tabStationName">Station name</span></button>
   </div>
   <div class="panel-scroll" id="search-results">
-    <p class="empty" style="padding:18px 0">Enter a location or station name</p>
+    <p class="empty" style="padding:18px 0" data-i18n="enterLocationOrStation">Enter a location or station name</p>
   </div>
 </div>
 
@@ -451,49 +484,74 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <div class="panel" id="p-stations">
   <div class="drag-handle"></div>
   <div class="phead">
-    <h2>Stations <span id="mobCount">—</span></h2>
-    <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl">Default</span></button>
+    <h2><span data-i18n="stationsHeader">Stations</span> <span id="mobCount">—</span></h2>
+    <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortDefault">Default</span></button>
   </div>
-  <div class="panel-scroll" id="mobList"><p class="empty">Loading…</p></div>
+  <div class="panel-scroll" id="mobList"><p class="empty" data-i18n="loadingEllipsis">Loading…</p></div>
 </div>
 
 <!-- Filters -->
 <div class="panel" id="p-filter">
   <div class="drag-handle"></div>
   <div class="panel-scroll">
-    <label>Country</label>
+    <label data-i18n="labelCountry">Country</label>
     <select id="mobCountry" onchange="setCountry(this.value)"></select>
-    <label>Fuel Type</label>
+    <label data-i18n="labelFuelType">Fuel Type</label>
     <select id="mobFuel" onchange="setFuel(null,this.value)">
-      <option value="">All fuels</option>
-      <option value="E10">E10 / 95 Octane</option>
-      <option value="E5">E5 / 98 Octane</option>
-      <option value="DIESEL">Diesel</option>
+      <option value="" data-i18n="fuelAll">All fuels</option>
+      <option value="E10" data-i18n="fuelOptE10">E10 / 95 Octane</option>
+      <option value="E5" data-i18n="fuelOptE5">E5 / 98 Octane</option>
+      <option value="DIESEL" data-i18n="fuelOptDiesel">Diesel</option>
       <option value="HVO100">HVO100</option>
       <option value="E85">E85</option>
-      <option value="LPG">LPG</option>
-      <option value="CNG">CNG</option>
+      <option value="LPG" data-i18n="fuelOptLPG">LPG</option>
+      <option value="CNG" data-i18n="fuelOptCNG">CNG</option>
     </select>
-    <button class="rbtn" onclick="resetAll()">↺ Reset all filters</button>
+    <button class="rbtn" onclick="resetAll()">↺ <span data-i18n="resetFilters">Reset all filters</span></button>
+
+    <label data-i18n="labelLanguage">Language</label>
+    <div class="lang-row">
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">🇬🇧 EN</button>
+      <button class="lang-btn" data-lang="sv" onclick="setLang('sv')">🇸🇪 SV</button>
+      <button class="lang-btn" data-lang="de" onclick="setLang('de')">🇩🇪 DE</button>
+      <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">🇫🇷 FR</button>
+      <button class="lang-btn" data-lang="es" onclick="setLang('es')">🇪🇸 ES</button>
+    </div>
+
+    <button class="trust-link" onclick="openTrust()"><span data-i18n="trustLinkLabel">ℹ How we grade sources</span></button>
+  </div>
+</div>
+
+<!-- Trust / source-grade explainer (shown once on first visit; reopenable from Filter) -->
+<div id="trust-overlay" class="trust-overlay">
+  <div class="trust-card">
+    <div class="trust-title" data-i18n="trustTitle">How we grade sources</div>
+    <p class="trust-intro" data-i18n="trustIntro">Every price shows where it came from and how old it is. We grade each country\'s data source so you know how much to trust it:</p>
+    <div class="trust-row"><span class="gb gA">A</span><span data-i18n="grade_A">Official feed · stations must report price changes</span></div>
+    <div class="trust-row"><span class="gb gB">B</span><span data-i18n="grade_B">Official feed · periodic / regulated prices</span></div>
+    <div class="trust-row"><span class="gb gC">C</span><span data-i18n="grade_C">Third-party data · price time unknown</span></div>
+    <div class="trust-row"><span class="gb gD">D</span><span data-i18n="grade_D">Community-reported prices</span></div>
+    <div class="trust-row"><span class="gb gL">L</span><span data-i18n="grade_L">Location only</span></div>
+    <button class="trust-dismiss" onclick="closeTrust()"><span data-i18n="trustDismiss">Got it</span></button>
   </div>
 </div>
 
 <!-- Tab bar -->
 <div id="tabbar">
   <button class="tb on"  id="tb-map"     onclick="goTab('map')">
-    <span class="tb-icon">🗺</span><span class="tb-lbl">Map</span>
+    <span class="tb-icon">🗺</span><span class="tb-lbl" data-i18n="tabMap">Map</span>
   </button>
   <button class="tb nb"  id="tb-nearby"  onclick="goTab('nearby')">
-    <span class="tb-icon">📍</span><span class="tb-lbl">Near Me</span>
+    <span class="tb-icon">📍</span><span class="tb-lbl" data-i18n="tabNearby">Near Me</span>
   </button>
   <button class="tb"     id="tb-search"  onclick="goTab('search')">
-    <span class="tb-icon">🔍</span><span class="tb-lbl">Search</span>
+    <span class="tb-icon">🔍</span><span class="tb-lbl" data-i18n="tabSearch">Search</span>
   </button>
   <button class="tb"     id="tb-stations" onclick="goTab('stations')">
-    <span class="tb-icon">⛽</span><span class="tb-lbl" id="tb-list-lbl">List</span>
+    <span class="tb-icon">⛽</span><span class="tb-lbl" id="tb-list-lbl" data-i18n="tabList">List</span>
   </button>
   <button class="tb"     id="tb-filter"  onclick="goTab('filter')">
-    <span class="tb-icon">⚡</span><span class="tb-lbl">Filter</span>
+    <span class="tb-icon">⚡</span><span class="tb-lbl" data-i18n="tabFilter">Filter</span>
   </button>
 </div>
 
@@ -604,7 +662,7 @@ let   activeTab = 'map';
 // Country select builder
 // ════════════════════════════════════════════════════
 (function buildSelects() {
-  const opts = '<option value="">All countries</option>' +
+  const opts = `<option value="">${t('allCountries')}</option>` +
     Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
       .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
   ['mobCountry'].forEach(id => {
@@ -629,6 +687,171 @@ function esc(v) {
 function escId(v) {
   return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
+
+// ════════════════════════════════════════════════════
+// i18n — English default, switchable to Swedish/German/French/Spanish.
+// This is a CLIENT-SIDE preference (localStorage), not separate crawlable URLs per language —
+// real per-language SEO would need that too (see docs/ROADMAP.md), this just serves the visitor.
+// ════════════════════════════════════════════════════
+const I18N = {
+en: { fuelAll:'All fuels', tabMap:'Map', tabNearby:'Near Me', tabSearch:'Search', tabList:'List', tabListCount:'List ({n})', tabFilter:'Filter',
+  nearbyTitle:'Cheapest Near You', bestPriceNearby:'Best price nearby', tapToLocate:'Tap the button to find your location…',
+  noStationsNearby:'No stations within {r} km in {c} yet.', panMore:'Pan the map, or try again once more data has loaded.',
+  bestWithinDetail:'Best within {d} · {n} stations within {r} km in {c}', yourCountry:'your country',
+  searchPhAddr:'City, address, or station…', searchPhName:'Station name or brand…',
+  tabAddress:'Address', tabStationName:'Station name', enterSearchQuery:'Enter a search query above', enterLocationOrStation:'Enter a location or station name',
+  searching:'Searching…', locating:'Locating…', nothingFoundFor:'Nothing found for "{q}"', searchErrorPrefix:'Search error: ',
+  stationsHeader:'Stations', sortDefault:'Default', sortPrice:'By price ↑', sortDistance:'By distance',
+  loadingEllipsis:'Loading…', loadingData:'Loading data…', noMatch:'No stations match. Try adjusting the filters.',
+  loadMore:'⬇ Load {n} more  ({rem} remaining)',
+  labelCountry:'Country', labelFuelType:'Fuel Type', labelLanguage:'Language', resetFilters:'Reset all filters', allCountries:'All countries',
+  fuelOptE10:'E10 / 95 Octane', fuelOptE5:'E5 / 98 Octane', fuelOptDiesel:'Diesel', fuelOptLPG:'LPG', fuelOptCNG:'CNG',
+  grade_A:'Official feed · stations must report price changes', grade_B:'Official feed · periodic / regulated prices',
+  grade_C:'Third-party data · price time unknown', grade_D:'Community-reported prices', grade_L:'Location only',
+  justNow:'just now', minAgo:'{m} min ago', hAgo:'{h} h ago', daysAgo:'{d} days ago',
+  priceTimeUnknown:'price time unknown', checkedAt:' · checked {t}', priceSetAt:'price set {t}',
+  staleNote:'⚠ Source temporarily unavailable — showing data from {t}',
+  noPriceData:'No price data available', noPricesShort:'No prices', noGpsTitle:'No GPS', go:'Go', youAreHere:'📍 You are here',
+  geoNotSupported:'Geolocation not supported.', locErrorPrefix:'Location error: ', permDenied:'Permission denied.',
+  posUnavailable:'Position unavailable.', timedOut:'Timed out.',
+  statsStations:'{n} stations', loadingMore:'Loading {n} more…', countriesShort:'{ld}/{tot} countries',
+  installApp:'📲 Install app',
+  trustTitle:'How we grade sources', trustIntro:'Every price shows where it came from and how old it is. We grade each country’s data source so you know how much to trust it:',
+  trustLinkLabel:'ℹ How we grade sources', trustDismiss:'Got it' },
+sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabNearby:'Nära mig', tabSearch:'Sök', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filter',
+  nearbyTitle:'Billigast nära dig', bestPriceNearby:'Bästa pris i närheten', tapToLocate:'Tryck på knappen för att hitta din plats…',
+  noStationsNearby:'Inga stationer inom {r} km i {c} än.', panMore:'Panorera kartan, eller försök igen när mer data har laddats.',
+  bestWithinDetail:'Bäst inom {d} · {n} stationer inom {r} km i {c}', yourCountry:'ditt land',
+  searchPhAddr:'Stad, adress eller station…', searchPhName:'Stationsnamn eller märke…',
+  tabAddress:'Adress', tabStationName:'Stationsnamn', enterSearchQuery:'Ange en sökfråga ovan', enterLocationOrStation:'Ange en plats eller stationsnamn',
+  searching:'Söker…', locating:'Lokaliserar…', nothingFoundFor:'Inget hittades för "{q}"', searchErrorPrefix:'Sökfel: ',
+  stationsHeader:'Stationer', sortDefault:'Standard', sortPrice:'Efter pris ↑', sortDistance:'Efter avstånd',
+  loadingEllipsis:'Laddar…', loadingData:'Laddar data…', noMatch:'Inga stationer matchar. Prova att justera filtren.',
+  loadMore:'⬇ Visa {n} till  ({rem} kvar)',
+  labelCountry:'Land', labelFuelType:'Bränsletyp', labelLanguage:'Språk', resetFilters:'Återställ alla filter', allCountries:'Alla länder',
+  fuelOptE10:'E10 / 95 Oktan', fuelOptE5:'E5 / 98 Oktan', fuelOptDiesel:'Diesel', fuelOptLPG:'Gasol (LPG)', fuelOptCNG:'Fordonsgas (CNG)',
+  grade_A:'Officiellt flöde · stationer måste rapportera prisändringar', grade_B:'Officiellt flöde · periodiska/reglerade priser',
+  grade_C:'Tredjepartsdata · okänd pristid', grade_D:'Priser rapporterade av communityn', grade_L:'Endast plats',
+  justNow:'just nu', minAgo:'{m} min sedan', hAgo:'{h} tim sedan', daysAgo:'{d} dagar sedan',
+  priceTimeUnknown:'okänd pristid', checkedAt:' · kontrollerad {t}', priceSetAt:'pris satt {t}',
+  staleNote:'⚠ Källan är tillfälligt otillgänglig — visar data från {t}',
+  noPriceData:'Inga prisuppgifter tillgängliga', noPricesShort:'Inga priser', noGpsTitle:'Ingen GPS', go:'Kör', youAreHere:'📍 Du är här',
+  geoNotSupported:'Geolokalisering stöds inte.', locErrorPrefix:'Platsfel: ', permDenied:'Behörighet nekad.',
+  posUnavailable:'Position ej tillgänglig.', timedOut:'Tidsgräns överskriden.',
+  statsStations:'{n} stationer', loadingMore:'Laddar {n} till…', countriesShort:'{ld}/{tot} länder',
+  installApp:'📲 Installera app',
+  trustTitle:'Så betygsätter vi källor', trustIntro:'Varje pris visar varifrån den kommer och hur gammal den är. Vi betygsätter varje lands datakälla så att du vet hur mycket du kan lita på den:',
+  trustLinkLabel:'ℹ Så betygsätter vi källor', trustDismiss:'Jag förstår' },
+de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabNearby:'In der Nähe', tabSearch:'Suche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filter',
+  nearbyTitle:'Günstigste in der Nähe', bestPriceNearby:'Bester Preis in der Nähe', tapToLocate:'Tippe auf die Schaltfläche, um deinen Standort zu ermitteln…',
+  noStationsNearby:'Noch keine Tankstellen innerhalb von {r} km in {c}.', panMore:'Verschiebe die Karte oder versuche es erneut, sobald mehr Daten geladen sind.',
+  bestWithinDetail:'Bester Preis innerhalb {d} · {n} Tankstellen innerhalb von {r} km in {c}', yourCountry:'deinem Land',
+  searchPhAddr:'Stadt, Adresse oder Tankstelle…', searchPhName:'Tankstellenname oder Marke…',
+  tabAddress:'Adresse', tabStationName:'Tankstellenname', enterSearchQuery:'Gib oben einen Suchbegriff ein', enterLocationOrStation:'Gib einen Ort oder Tankstellennamen ein',
+  searching:'Suche läuft…', locating:'Standort wird ermittelt…', nothingFoundFor:'Nichts gefunden für „{q}“', searchErrorPrefix:'Suchfehler: ',
+  stationsHeader:'Tankstellen', sortDefault:'Standard', sortPrice:'Nach Preis ↑', sortDistance:'Nach Entfernung',
+  loadingEllipsis:'Lädt…', loadingData:'Daten werden geladen…', noMatch:'Keine Tankstellen gefunden. Passe die Filter an.',
+  loadMore:'⬇ {n} weitere laden  ({rem} übrig)',
+  labelCountry:'Land', labelFuelType:'Kraftstoffart', labelLanguage:'Sprache', resetFilters:'Alle Filter zurücksetzen', allCountries:'Alle Länder',
+  fuelOptE10:'E10 / 95 Oktan', fuelOptE5:'E5 / 98 Oktan', fuelOptDiesel:'Diesel', fuelOptLPG:'Autogas (LPG)', fuelOptCNG:'Erdgas (CNG)',
+  grade_A:'Offizieller Feed · Tankstellen müssen Preisänderungen melden', grade_B:'Offizieller Feed · periodische/regulierte Preise',
+  grade_C:'Daten von Drittanbietern · Preiszeitpunkt unbekannt', grade_D:'Von der Community gemeldete Preise', grade_L:'Nur Standort',
+  justNow:'gerade eben', minAgo:'vor {m} Min.', hAgo:'vor {h} Std.', daysAgo:'vor {d} Tagen',
+  priceTimeUnknown:'Preiszeitpunkt unbekannt', checkedAt:' · geprüft {t}', priceSetAt:'Preis festgelegt {t}',
+  staleNote:'⚠ Quelle vorübergehend nicht verfügbar — zeige Daten von {t}',
+  noPriceData:'Keine Preisdaten verfügbar', noPricesShort:'Keine Preise', noGpsTitle:'Kein GPS', go:'Los', youAreHere:'📍 Du bist hier',
+  geoNotSupported:'Standortbestimmung wird nicht unterstützt.', locErrorPrefix:'Standortfehler: ', permDenied:'Zugriff verweigert.',
+  posUnavailable:'Standort nicht verfügbar.', timedOut:'Zeitüberschreitung.',
+  statsStations:'{n} Tankstellen', loadingMore:'Lade {n} weitere…', countriesShort:'{ld}/{tot} Länder',
+  installApp:'📲 App installieren',
+  trustTitle:'So bewerten wir Quellen', trustIntro:'Jeder Preis zeigt, woher er stammt und wie alt er ist. Wir bewerten die Datenquelle jedes Landes, damit du weißt, wie sehr du ihr vertrauen kannst:',
+  trustLinkLabel:'ℹ So bewerten wir Quellen', trustDismiss:'Verstanden' },
+fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabNearby:'Près de moi', tabSearch:'Recherche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filtre',
+  nearbyTitle:'Le moins cher près de vous', bestPriceNearby:'Meilleur prix à proximité', tapToLocate:'Appuyez sur le bouton pour localiser votre position…',
+  noStationsNearby:'Aucune station à moins de {r} km en {c} pour le moment.', panMore:'Déplacez la carte, ou réessayez une fois que plus de données seront chargées.',
+  bestWithinDetail:'Meilleur prix à {d} · {n} stations à moins de {r} km en {c}', yourCountry:'votre pays',
+  searchPhAddr:'Ville, adresse ou station…', searchPhName:'Nom de station ou marque…',
+  tabAddress:'Adresse', tabStationName:'Nom de station', enterSearchQuery:'Saisissez une recherche ci-dessus', enterLocationOrStation:'Saisissez un lieu ou un nom de station',
+  searching:'Recherche…', locating:'Localisation…', nothingFoundFor:'Aucun résultat pour « {q} »', searchErrorPrefix:'Erreur de recherche : ',
+  stationsHeader:'Stations', sortDefault:'Par défaut', sortPrice:'Par prix ↑', sortDistance:'Par distance',
+  loadingEllipsis:'Chargement…', loadingData:'Chargement des données…', noMatch:'Aucune station ne correspond. Essayez d’ajuster les filtres.',
+  loadMore:'⬇ Afficher {n} de plus  ({rem} restantes)',
+  labelCountry:'Pays', labelFuelType:'Type de carburant', labelLanguage:'Langue', resetFilters:'Réinitialiser les filtres', allCountries:'Tous les pays',
+  fuelOptE10:'E10 / 95 Octane', fuelOptE5:'E5 / 98 Octane', fuelOptDiesel:'Diesel', fuelOptLPG:'GPL', fuelOptCNG:'GNV',
+  grade_A:'Flux officiel · les stations doivent déclarer tout changement de prix', grade_B:'Flux officiel · prix périodiques / réglementés',
+  grade_C:'Données tierces · horodatage du prix inconnu', grade_D:'Prix signalés par la communauté', grade_L:'Emplacement uniquement',
+  justNow:'à l’instant', minAgo:'il y a {m} min', hAgo:'il y a {h} h', daysAgo:'il y a {d} jours',
+  priceTimeUnknown:'horodatage du prix inconnu', checkedAt:' · vérifié {t}', priceSetAt:'prix fixé {t}',
+  staleNote:'⚠ Source temporairement indisponible — affichage des données de {t}',
+  noPriceData:'Aucune donnée de prix disponible', noPricesShort:'Aucun prix', noGpsTitle:'Pas de GPS', go:'Y aller', youAreHere:'📍 Vous êtes ici',
+  geoNotSupported:'La géolocalisation n’est pas prise en charge.', locErrorPrefix:'Erreur de localisation : ', permDenied:'Autorisation refusée.',
+  posUnavailable:'Position indisponible.', timedOut:'Délai dépassé.',
+  statsStations:'{n} stations', loadingMore:'Chargement de {n} de plus…', countriesShort:'{ld}/{tot} pays',
+  installApp:'📲 Installer l’application',
+  trustTitle:'Comment nous évaluons les sources', trustIntro:'Chaque prix indique d’où il vient et son âge. Nous évaluons la source de données de chaque pays pour que vous sachiez à quel point lui faire confiance :',
+  trustLinkLabel:'ℹ Comment nous évaluons les sources', trustDismiss:'Compris' },
+es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí', tabSearch:'Buscar', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filtro',
+  nearbyTitle:'Más barato cerca de ti', bestPriceNearby:'Mejor precio cerca', tapToLocate:'Toca el botón para encontrar tu ubicación…',
+  noStationsNearby:'Aún no hay estaciones a {r} km en {c}.', panMore:'Mueve el mapa o inténtalo de nuevo cuando se hayan cargado más datos.',
+  bestWithinDetail:'Mejor precio a {d} · {n} estaciones a {r} km en {c}', yourCountry:'tu país',
+  searchPhAddr:'Ciudad, dirección o estación…', searchPhName:'Nombre de estación o marca…',
+  tabAddress:'Dirección', tabStationName:'Nombre de estación', enterSearchQuery:'Introduce una búsqueda arriba', enterLocationOrStation:'Introduce una ubicación o el nombre de una estación',
+  searching:'Buscando…', locating:'Localizando…', nothingFoundFor:'No se encontró nada para "{q}"', searchErrorPrefix:'Error de búsqueda: ',
+  stationsHeader:'Estaciones', sortDefault:'Predeterminado', sortPrice:'Por precio ↑', sortDistance:'Por distancia',
+  loadingEllipsis:'Cargando…', loadingData:'Cargando datos…', noMatch:'Ninguna estación coincide. Prueba a ajustar los filtros.',
+  loadMore:'⬇ Cargar {n} más  ({rem} restantes)',
+  labelCountry:'País', labelFuelType:'Tipo de combustible', labelLanguage:'Idioma', resetFilters:'Restablecer todos los filtros', allCountries:'Todos los países',
+  fuelOptE10:'E10 / 95 Octanos', fuelOptE5:'E5 / 98 Octanos', fuelOptDiesel:'Diésel', fuelOptLPG:'GLP', fuelOptCNG:'GNC',
+  grade_A:'Fuente oficial · las estaciones deben declarar los cambios de precio', grade_B:'Fuente oficial · precios periódicos / regulados',
+  grade_C:'Datos de terceros · hora del precio desconocida', grade_D:'Precios reportados por la comunidad', grade_L:'Solo ubicación',
+  justNow:'justo ahora', minAgo:'hace {m} min', hAgo:'hace {h} h', daysAgo:'hace {d} días',
+  priceTimeUnknown:'hora del precio desconocida', checkedAt:' · comprobado {t}', priceSetAt:'precio fijado {t}',
+  staleNote:'⚠ Fuente temporalmente no disponible — mostrando datos de {t}',
+  noPriceData:'No hay datos de precio disponibles', noPricesShort:'Sin precios', noGpsTitle:'Sin GPS', go:'Ir', youAreHere:'📍 Estás aquí',
+  geoNotSupported:'La geolocalización no es compatible.', locErrorPrefix:'Error de ubicación: ', permDenied:'Permiso denegado.',
+  posUnavailable:'Posición no disponible.', timedOut:'Tiempo agotado.',
+  statsStations:'{n} estaciones', loadingMore:'Cargando {n} más…', countriesShort:'{ld}/{tot} países',
+  installApp:'📲 Instalar app',
+  trustTitle:'Cómo calificamos las fuentes', trustIntro:'Cada precio muestra de dónde viene y qué antigüedad tiene. Calificamos la fuente de datos de cada país para que sepas cuánto confiar en ella:',
+  trustLinkLabel:'ℹ Cómo calificamos las fuentes', trustDismiss:'Entendido' },
+};
+
+let lang = (function () {
+  try {
+    const saved = localStorage.getItem('efp_lang');
+    if (saved && I18N[saved]) return saved;
+  } catch (_) {}
+  const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return I18N[nav] ? nav : 'en';
+})();
+
+function t(key, vars) {
+  let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
+  if (vars) for (const k in vars) s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
+  return s;
+}
+
+function applyStaticI18n() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+  const fab = document.getElementById('fab');
+  if (fab && !fab.classList.contains('busy')) fab.textContent = '📍 ' + t('tabNearby');
+  const sortLbl = document.getElementById('mob-sort-lbl');
+  if (sortLbl) sortLbl.textContent = { default: t('sortDefault'), price: t('sortPrice'), distance: t('sortDistance') }[sortMode];
+}
+
+function setLang(l) {
+  if (!I18N[l]) return;
+  lang = l;
+  try { localStorage.setItem('efp_lang', l); } catch (_) {}
+  applyStaticI18n();
+  updStatus();
+  if (typeof rebuildList === 'function') rebuildList();
+  if (activeTab === 'nearby' && myLat != null) showNearby();
+}
+
 
 // Mainstream fuels only: 95 (E10/E5) and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
 // so they must never set the headline price (unless the user filters for them).
@@ -658,23 +881,17 @@ function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixe
 // (no price timestamps) · D community-reported · L location only. Set per country in meta.json,
 // optionally overridden per station (e.g. Germany stations upgraded to the statutory MTS-K feed).
 const GRADE_COL = { A:'#16A34A', B:'#2563EB', C:'#F59E0B', D:'#E8542F', L:'#94A3B8' };
-const GRADE_TXT = {
-  A:'Official feed · stations must report price changes',
-  B:'Official feed · periodic / regulated prices',
-  C:'Third-party data · price time unknown',
-  D:'Community-reported prices',
-  L:'Location only',
-};
+function gradeTxt(g) { return t('grade_' + g); }
 function gradeOf(s) { return s.grade || metaOf[s.country]?.grade || 'C'; }
 
 function fmtAgo(iso) {
   if (!iso) return '';
   const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
-  if (m < 2)    return 'just now';
-  if (m < 90)   return `${m} min ago`;
+  if (m < 2)    return t('justNow');
+  if (m < 90)   return t('minAgo', { m });
   const h = Math.round(m / 60);
-  if (h < 36)   return `${h} h ago`;
-  return `${Math.round(h / 24)} days ago`;
+  if (h < 36)   return t('hAgo', { h });
+  return t('daysAgo', { d: Math.round(h / 24) });
 }
 
 // Age of the NEWEST price on the station (hours) or null when the source gives no timestamp
@@ -701,11 +918,11 @@ function ageHtml(s) {
   const g = gradeOf(s), m = metaOf[s.country] || {};
   const h = priceAgeH(s);
   const when = h === null
-    ? `price time unknown${m.fetched_at ? ' · checked ' + fmtAgo(m.fetched_at) : ''}`
-    : `price set ${fmtAgo(new Date(Date.now() - h*3600000).toISOString())}`;
+    ? t('priceTimeUnknown') + (m.fetched_at ? t('checkedAt', { t: fmtAgo(m.fetched_at) }) : '')
+    : t('priceSetAt', { t: fmtAgo(new Date(Date.now() - h*3600000).toISOString()) });
   const stale = m.status === 'stale'
-    ? `<div class="stale-note">⚠ Source temporarily unavailable — showing data from ${fmtAgo(m.fetched_at)}</div>` : '';
-  return `<div class="age-line"><span class="gb g${g}">${g}</span> ${GRADE_TXT[g]}<br>⏱ ${when}</div>${stale}`;
+    ? `<div class="stale-note">${t('staleNote', { t: fmtAgo(m.fetched_at) })}</div>` : '';
+  return `<div class="age-line"><span class="gb g${g}">${g}</span> ${gradeTxt(g)}<br>⏱ ${when}</div>${stale}`;
 }
 
 function fmtDate(iso) {
@@ -803,7 +1020,7 @@ function mkPopup(s) {
     const sym = SYM[p.currency] || p.currency || '';
     return `<tr><td class="ft">${p.fuel_type}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
   }).join('');
-  const noP   = !s.prices?.length ? '<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">No price data available</div>' : '';
+  const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
   const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
   return `<div class="pop">
     <div class="pop-name">${flag} ${esc(s.name||s.brand||'—')}</div>
@@ -813,7 +1030,7 @@ function mkPopup(s) {
     ${ageHtml(s)}
     <div class="pop-foot">
       <span></span>
-      ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 Go</a>` : ''}
+      ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 ${t('go')}</a>` : ''}
     </div>
   </div>`;
 }
@@ -835,9 +1052,9 @@ function mkCard(s, km) {
       <span class="u">${sym}</span>
     </span>`;
   }).join('');
-  const noPin = (!s.lat||!s.lon) ? ' <span title="No GPS" style="color:var(--text3)">📍✕</span>' : '';
+  const noPin = (!s.lat||!s.lon) ? ` <span title="${t('noGpsTitle')}" style="color:var(--text3)">📍✕</span>` : '';
   const goBtn = (s.lat && s.lon)
-    ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${escId(s.id)}')">🧭 Go</button>` : '';
+    ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${escId(s.id)}')">🧭 ${t('go')}</button>` : '';
   const distHtml = km != null
     ? `<span class="dist-badge">📏 ${fmtDist(km)}</span>` : '';
   return `<div class="scard ${fc}${isSel}" id="c-${esc(s.id)}" onclick="selectStation('${escId(s.id)}')">
@@ -846,7 +1063,7 @@ function mkCard(s, km) {
       ${goBtn}
     </div>
     <div class="scard-meta">${esc([s.city,s.source].filter(Boolean).join(' · '))}${distHtml ? ' '+distHtml : ''}</div>
-    <div class="pchips">${chips||'<span style="color:var(--text3);font-size:0.71rem">No prices</span>'}</div>
+    <div class="pchips">${chips||`<span style="color:var(--text3);font-size:0.71rem">${t('noPricesShort')}</span>`}</div>
     ${ageHtml(s)}
   </div>`;
 }
@@ -977,7 +1194,7 @@ function getAll() {
 function updCounts() {
   const n = getAll().length;
   document.getElementById('mobCount').textContent   = n.toLocaleString();
-  document.getElementById('tb-list-lbl').textContent = n > 0 ? `List (${n.toLocaleString()})` : 'List';
+  document.getElementById('tb-list-lbl').textContent = n > 0 ? t('tabListCount', { n: n.toLocaleString() }) : t('tabList');
 }
 
 function rebuildList() {
@@ -1003,8 +1220,8 @@ function renderPage(all, offset, reset) {
   if (reset || offset === 0) {
     if (!all.length) {
       list.innerHTML = loading.size
-        ? '<p class="empty">Loading data…</p>'
-        : '<p class="empty">No stations match. Try adjusting the filters.</p>';
+        ? `<p class="empty">${t('loadingData')}</p>`
+        : `<p class="empty">${t('noMatch')}</p>`;
       return;
     }
     list.innerHTML = html;
@@ -1016,7 +1233,7 @@ function renderPage(all, offset, reset) {
   if (offset + PAGE < all.length) {
     const rem = all.length - offset - PAGE;
     list.insertAdjacentHTML('beforeend',
-      `<div class="load-more" onclick="loadMore()">⬇ Load ${Math.min(PAGE,rem)} more  (${rem.toLocaleString()} remaining)</div>`);
+      `<div class="load-more" onclick="loadMore()">${t('loadMore', { n: Math.min(PAGE,rem), rem: rem.toLocaleString() })}</div>`);
   }
 }
 
@@ -1025,10 +1242,10 @@ function loadMore() {
 }
 
 function cycleSort() {
-  const modes  = ['default','price','distance'];
-  const labels = { default:'Default', price:'By price ↑', distance:'By distance' };
+  const modes = ['default','price','distance'];
   sortMode = modes[(modes.indexOf(sortMode)+1) % modes.length];
-  document.getElementById('mob-sort-lbl').textContent = labels[sortMode];
+  document.getElementById('mob-sort-lbl').textContent =
+    { default: t('sortDefault'), price: t('sortPrice'), distance: t('sortDistance') }[sortMode];
   rebuildList();
 }
 
@@ -1065,20 +1282,20 @@ async function detectCountry(lat, lon) {
 const NEARBY_RADIUS_KM = 15;
 
 function goNearby() {
-  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+  if (!navigator.geolocation) { alert(t('geoNotSupported')); return; }
   const fab = document.getElementById('fab');
-  fab.textContent = '⏳ Locating…'; fab.classList.add('busy');
+  fab.textContent = '⏳ ' + t('locating'); fab.classList.add('busy');
 
   navigator.geolocation.getCurrentPosition(async pos => {
     myLat = pos.coords.latitude; myLon = pos.coords.longitude;
-    fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
+    fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy');
     myCountry = await detectCountry(myLat, myLon);
 
     if (myMark) { map.removeLayer(myMark); map.removeLayer(myCirc); }
     myMark = L.marker([myLat,myLon], {
       icon: L.divIcon({ className:'', html:'<div class="loc-dot"></div>', iconSize:[14,14], iconAnchor:[7,7] }),
       zIndexOffset:1000,
-    }).addTo(map).bindPopup('📍 You are here');
+    }).addTo(map).bindPopup(t('youAreHere'));
     myCirc = L.circle([myLat,myLon], {
       radius:Math.min(pos.coords.accuracy,500), color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.08, weight:1,
     }).addTo(map);
@@ -1088,8 +1305,8 @@ function goNearby() {
     if (true) goTab('nearby');
     else showNearby();
   }, err => {
-    fab.textContent = '📍 Near Me'; fab.classList.remove('busy');
-    alert('Location error: ' + ({ 1:'Permission denied.',2:'Position unavailable.',3:'Timed out.'}[err.code]||err.message));
+    fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy');
+    alert(t('locErrorPrefix') + ({ 1:t('permDenied'),2:t('posUnavailable'),3:t('timedOut')}[err.code]||err.message));
   }, { timeout:10000, maximumAge:60000 });
 }
 
@@ -1115,8 +1332,8 @@ function showNearby() {
   const el = document.getElementById('nearby-list');
   if (!el) return;
   if (!cands.length) {
-    const cname = country ? (CNAMES[country] || country) : 'your country';
-    el.innerHTML = `<p class="empty">No stations within ${NEARBY_RADIUS_KM} km in ${cname} yet.\nPan the map, or try again once more data has loaded.</p>`;
+    const cname = country ? (CNAMES[country] || country) : t('yourCountry');
+    el.innerHTML = `<p class="empty">${t('noStationsNearby', { r: NEARBY_RADIUS_KM, c: cname })}\n${t('panMore')}</p>`;
     document.getElementById('nearby-summary').style.display = 'none';
     return;
   }
@@ -1137,7 +1354,7 @@ function showNearby() {
   if (bestGlobal) {
     const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
     priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${bestGlobal.fuel_type}`;
-    detailEl.textContent = `Best within ${fmtDist(bestGlobalKm)} · ${cands.length} stations within ${NEARBY_RADIUS_KM} km in ${CNAMES[country]||country||'your country'}`;
+    detailEl.textContent = t('bestWithinDetail', { d: fmtDist(bestGlobalKm), n: cands.length, r: NEARBY_RADIUS_KM, c: CNAMES[country]||country||t('yourCountry') });
     sumEl.style.display = 'flex';
   } else {
     sumEl.style.display = 'none';
@@ -1153,9 +1370,8 @@ function setSMode(el, mode) {
   sMode = mode;
   document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
   el.classList.add('on');
-  const ph = mode==='addr' ? 'City, address, or country…' : 'Station name or brand…';
-  document.getElementById('mobSearch').placeholder = ph;
-  document.getElementById('search-results').innerHTML = '<p class="empty" style="padding:18px 0">Enter a search query above</p>';
+  document.getElementById('mobSearch').placeholder = mode==='addr' ? t('searchPhAddr') : t('searchPhName');
+  document.getElementById('search-results').innerHTML = `<p class="empty" style="padding:18px 0">${t('enterSearchQuery')}</p>`;
 }
 
 async function runSearch(isMob) {
@@ -1191,11 +1407,11 @@ async function runSearch(isMob) {
 
   // Address search (Nominatim)
   try {
-    if (isMob && resEl) resEl.innerHTML = '<p class="empty">Searching…</p>';
+    if (isMob && resEl) resEl.innerHTML = `<p class="empty">${t('searching')}</p>`;
     const r    = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers:{'Accept-Language':'en'} });
     const rows = await r.json();
     if (!rows.length) {
-      if (isMob) resEl.innerHTML = `<p class="empty">Nothing found for "${esc(q)}"</p>`;
+      if (isMob) resEl.innerHTML = `<p class="empty">${t('nothingFoundFor', { q: esc(q) })}</p>`;
       else alert(`"${q}" not found.`);
       return;
     }
@@ -1204,7 +1420,7 @@ async function runSearch(isMob) {
     if (isMob) closePanel();
     L.popup().setLatLng([+lat,+lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${esc(display_name)}</div>`).openOn(map);
   } catch(e) {
-    const msg = 'Search error: ' + esc(e.message);
+    const msg = t('searchErrorPrefix') + esc(e.message);
     if (isMob) resEl.innerHTML = `<p class="empty">${msg}</p>`; else alert(msg);
   }
 }
@@ -1230,6 +1446,12 @@ function goTab(tab) {
   } else if (tab === 'stations') {
     rebuildList();
   }
+}
+
+function openTrust() { document.getElementById('trust-overlay')?.classList.add('on'); }
+function closeTrust() {
+  document.getElementById('trust-overlay')?.classList.remove('on');
+  try { localStorage.setItem('efp_seen_trust_intro', '1'); } catch (_) {}
 }
 
 function closePanel() {
@@ -1278,10 +1500,10 @@ function updStatus() {
 
   let txt, cls;
   if (act > 0) {
-    txt = `${n.toLocaleString()} stations\nLoading ${act} more…`; cls = 'loading';
+    txt = `${t('statsStations', { n: n.toLocaleString() })}\n${t('loadingMore', { n: act })}`; cls = 'loading';
   } else {
-    const t = metaAt ? new Date(metaAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-    txt = `${n.toLocaleString()} stations\n${ld}/${tot} countries${t?' · '+t:''}`;
+    const tm = metaAt ? new Date(metaAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    txt = `${t('statsStations', { n: n.toLocaleString() })}\n${t('countriesShort', { ld, tot })}${tm?' · '+tm:''}`;
     cls = ld > 0 ? 'ok' : 'loading';
   }
   badge.textContent = txt; badge.className = cls;
@@ -1301,7 +1523,7 @@ window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   const btn = document.createElement('button');
   btn.className = 'chip install-chip';
-  btn.textContent = '📲 Install app';
+  btn.textContent = t('installApp');
   btn.onclick = () => { e.prompt(); btn.remove(); };
   document.getElementById('chips').appendChild(btn);
 });
@@ -1310,11 +1532,16 @@ window.addEventListener('beforeinstallprompt', e => {
 // Boot
 // ════════════════════════════════════════════════════
 (async () => {
+  applyStaticI18n();
   try {
     const r = await fetch('meta.json');
     if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; }
   } catch(_) {}
   updStatus(); updPriceLbls();
+
+  try {
+    if (!localStorage.getItem('efp_seen_trust_intro')) openTrust();
+  } catch (_) {}
 
   // Always pre-load Sweden (home country priority)
   loadCC('SE');
