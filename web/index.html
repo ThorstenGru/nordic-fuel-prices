@@ -624,75 +624,6 @@ const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
 ));
 
 // ════════════════════════════════════════════════════
-// Map
-// ════════════════════════════════════════════════════
-// Default view: Sweden (slightly north of center, covers the whole country nicely)
-const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
-// Bottom-left (not bottom-right): the Near Me FAB lives bottom-right and a long attribution
-// string was wrapping to 2 lines and colliding with it on narrow phones.
-map.attributionControl.setPosition('bottomleft');
-map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
-map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
-// ESRI World Dark Gray Canvas — free, no API key required
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
-  maxZoom:16,
-}).addTo(map);
-// Reference layer (labels) on top
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-  attribution:'', maxZoom:16, pane:'overlayPane',
-}).addTo(map);
-
-// ════════════════════════════════════════════════════
-// State
-// ════════════════════════════════════════════════════
-const data    = {};           // cc → station[]
-const loaded  = new Set();
-const loading = new Set();
-const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
-let cluster   = null;
-const byId    = new Map();    // id → marker
-let   selId   = null;
-let   myLat   = null, myLon = null, myCountry = null;
-let   myMark  = null, myCirc = null;
-let   metaAt  = null;
-let   fCountry= '', fFuel = '';
-let   sortMode= 'default';    // 'default'|'price'|'distance'
-let   sMode   = 'addr';       // search mode
-let   vpOff   = 0;            // virtual scroll offset
-let   activeTab = 'map';
-
-// ════════════════════════════════════════════════════
-// Country select builder
-// ════════════════════════════════════════════════════
-(function buildSelects() {
-  const opts = `<option value="">${t('allCountries')}</option>` +
-    Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
-      .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
-  ['mobCountry'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = opts;
-  });
-})();
-
-// ════════════════════════════════════════════════════
-// Helpers
-// ════════════════════════════════════════════════════
-// Station name/brand/address/city/source come from third-party feeds (ANWB resold data, OSM
-// tags, government CSVs) we don't control, and search results come live from Nominatim — none of
-// it is trusted input. Every one of those fields gets HTML-escaped before it goes into innerHTML.
-const _escDiv = document.createElement('div');
-function esc(v) {
-  _escDiv.textContent = v ?? '';
-  return _escDiv.innerHTML;
-}
-// For an id interpolated inside onclick="fn('${id}')" (a single-quoted JS string literal that
-// itself sits inside a double-quoted HTML attribute) — needs escaping for BOTH contexts.
-function escId(v) {
-  return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-}
-
-// ════════════════════════════════════════════════════
 // i18n — English default, switchable to Swedish/German/French/Spanish.
 // This is a CLIENT-SIDE preference (localStorage), not separate crawlable URLs per language —
 // real per-language SEO would need that too (see docs/ROADMAP.md), this just serves the visitor.
@@ -856,6 +787,75 @@ function setLang(l) {
   if (activeTab === 'nearby' && myLat != null) showNearby();
 }
 
+
+// ════════════════════════════════════════════════════
+// Map
+// ════════════════════════════════════════════════════
+// Default view: Sweden (slightly north of center, covers the whole country nicely)
+const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
+// Bottom-left (not bottom-right): the Near Me FAB lives bottom-right and a long attribution
+// string was wrapping to 2 lines and colliding with it on narrow phones.
+map.attributionControl.setPosition('bottomleft');
+map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
+map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
+// ESRI World Dark Gray Canvas — free, no API key required
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
+  maxZoom:16,
+}).addTo(map);
+// Reference layer (labels) on top
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'', maxZoom:16, pane:'overlayPane',
+}).addTo(map);
+
+// ════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════
+const data    = {};           // cc → station[]
+const loaded  = new Set();
+const loading = new Set();
+const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
+let cluster   = null;
+const byId    = new Map();    // id → marker
+let   selId   = null;
+let   myLat   = null, myLon = null, myCountry = null;
+let   myMark  = null, myCirc = null;
+let   metaAt  = null;
+let   fCountry= '', fFuel = '';
+let   sortMode= 'default';    // 'default'|'price'|'distance'
+let   sMode   = 'addr';       // search mode
+let   vpOff   = 0;            // virtual scroll offset
+let   activeTab = 'map';
+
+// ════════════════════════════════════════════════════
+// Country select builder
+// ════════════════════════════════════════════════════
+(function buildSelects() {
+  const opts = `<option value="">${t('allCountries')}</option>` +
+    Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
+      .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
+  ['mobCountry'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+})();
+
+// ════════════════════════════════════════════════════
+// Helpers
+// ════════════════════════════════════════════════════
+// Station name/brand/address/city/source come from third-party feeds (ANWB resold data, OSM
+// tags, government CSVs) we don't control, and search results come live from Nominatim — none of
+// it is trusted input. Every one of those fields gets HTML-escaped before it goes into innerHTML.
+const _escDiv = document.createElement('div');
+function esc(v) {
+  _escDiv.textContent = v ?? '';
+  return _escDiv.innerHTML;
+}
+// For an id interpolated inside onclick="fn('${id}')" (a single-quoted JS string literal that
+// itself sits inside a double-quoted HTML attribute) — needs escaping for BOTH contexts.
+function escId(v) {
+  return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
 
 // Mainstream fuels only: 95 (E10/E5) and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
 // so they must never set the headline price (unless the user filters for them).
