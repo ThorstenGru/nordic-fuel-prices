@@ -831,7 +831,7 @@ let   activeTab = 'map';
 // Country select builder
 // ════════════════════════════════════════════════════
 (function buildSelects() {
-  const opts = `<option value="">${t('allCountries')}</option>` +
+  const opts = `<option value="" data-i18n="allCountries">${t('allCountries')}</option>` +
     Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
       .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
   ['mobCountry'].forEach(id => {
