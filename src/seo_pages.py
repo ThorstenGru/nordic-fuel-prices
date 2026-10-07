@@ -231,7 +231,7 @@ def fuel_match(p: Dict[str, Any], key: str) -> bool:
 def fresh_price(station: Dict[str, Any], fuel: str, now: datetime, cfg: Dict) -> Optional[Tuple[float, Optional[datetime]]]:
     best = None
     for p in station.get("prices") or []:
-        if not fuel_match(p, fuel) or p.get("currency") != cfg["currency"] or p.get("unit") != "L":
+        if not fuel_match(p, fuel) or p.get("currency") != cfg["currency"] or p.get("unit") != "L" or p.get("plausible") is False:
             continue
         try:
             price = float(p["price"])

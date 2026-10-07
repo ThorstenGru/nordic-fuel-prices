@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
+from plausibility import mark_implausible
 from scrapers import ALL_SCRAPERS
 from scrapers.geocoder import resolve_pages_base
 
@@ -145,7 +146,7 @@ def price_stats(stations: List[Dict[str, Any]], currency: str) -> Optional[Dict[
     for s in stations:
         best: Dict[str, float] = {}
         for p in s.get("prices") or []:
-            if p.get("basis") == "regulated_max" or not p.get("price"):
+            if p.get("basis") == "regulated_max" or not p.get("price") or p.get("plausible") is False:
                 continue
             ft = p.get("fuel_type")
             if ft in ("E10", "E5", "95", "98"):
@@ -239,6 +240,7 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
 
     clean, dropped = clean_stations(stations)
     summ = summarize(clean, scraper_cls.CURRENCY)
+    implausible = mark_implausible(clean, summ["currency"], FX)   # flagged, never deleted — the app shows "not plausible"
     prev = prev_meta.get(cc) or {}
     prev_count = int(prev.get("station_count") or 0)
     prev_priced = int(prev.get("priced_count") or 0)
@@ -272,6 +274,9 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
     if stats:
         meta["stats_eur"] = stats
     health: Dict[str, Any] = {"seconds": round(time.monotonic() - started, 1), "dropped": dropped, "error": error}
+    if implausible:
+        health["implausible"] = implausible
+        meta["implausible_count"] = sum(implausible.values())
     # Provenance from the merge engine (optional; scrapers not yet migrated simply have none).
     report = getattr(scraper, "merge_report", None)
     if isinstance(report, dict) and report:

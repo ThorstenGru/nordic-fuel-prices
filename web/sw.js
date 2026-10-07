@@ -10,7 +10,7 @@
 // Versioned CDN libraries (URL contains the version) and small static icons: cache-first — safe,
 // because a version bump changes the URL itself.
 
-const SHELL_CACHE = 'efp-shell-v5';
+const SHELL_CACHE = 'efp-shell-v6';
 const DATA_CACHE  = 'efp-data-v3';
 const SLOW_NET_MS = 3500;   // flaky/slow connection: serve the cached copy instead of waiting
 
@@ -28,9 +28,6 @@ const SHELL_ASSETS = [
 const CDN_ASSETS = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
-  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
-  'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
 ];
 
 self.addEventListener('install', event => {

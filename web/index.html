@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<script>try{var _t=localStorage.getItem("efp_theme");if(_t==="dark"||_t==="light")document.documentElement.dataset.theme=_t}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F4F5F7">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="EuroFuelPrices">
@@ -28,8 +30,8 @@
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
-  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://*.basemaps.cartocdn.com;
-  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com;
+  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://tile.openstreetmap.org;
+  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -44,10 +46,6 @@
 <title>EuroFuelPrices — Live European Fuel Prices</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
-      integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
-      integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+" crossorigin="anonymous"/>
 <style>
 :root {
   --bg:     #F4F5F7;
@@ -64,6 +62,16 @@
   --coral:  #E8542F;   /* brand primary — CTA / cluster markers */
   --sun:    #FFC72C;   /* brand gold — the stars in the mark */
   --cream:  #FFF8EF;   /* brand warm surface */
+  --page:   #E7E9EC;   /* colour outside the phone-sized column on wide screens */
+  --glass:  rgba(255,255,255,0.88);
+  --handle: #D5D8DD;
+  --rng:    rgba(22,24,29,0.13);
+  --halo:   rgba(255,255,255,0.85);
+  --on-blue:#FFFFFF;
+  --ok-text:#15803D; --bad-text:#B91C1C; --warn-text:#B45309;
+  --warn-bg:#FFFBEB; --warn-bd:#FCD34D;
+  --banner-bg:#FEF2F2; --banner-tx:#991B1B; --banner-bd:#FECACA;
+  --map-bg:#E9EAEC;
   --tab-h:  58px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -91,7 +99,7 @@ html, body {
 #chips::-webkit-scrollbar { display:none; }
 .chip {
   flex-shrink:0;
-  background:rgba(255,255,255,0.88); border:1px solid var(--border);
+  background:var(--glass); border:1px solid var(--border);
   border-radius:20px; padding:8px 14px;
   font-size:0.78rem; font-weight:500; color:var(--text2);
   cursor:pointer; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
@@ -112,7 +120,7 @@ html, body {
 /* ── Status badge (sits below the chip row so it never overlaps it) ── */
 #badge {
   position:absolute; top:48px; right:10px; z-index:500;
-  background:rgba(255,255,255,0.88); border:1px solid var(--border);
+  background:var(--glass); border:1px solid var(--border);
   border-radius:8px; padding:4px 10px;
   font-size:0.63rem; color:var(--text2); line-height:1.5;
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
@@ -136,18 +144,18 @@ html, body {
 /* ── Draggable bottom sheets (phones/tablets): full · half · peek ── */
 .panel.dragging { transition:none; }
 .drag-handle { position:relative; margin:0 auto; width:100%; height:30px; background:none; border-radius:0; cursor:grab; touch-action:none; flex-shrink:0; }
-.drag-handle::after { content:''; position:absolute; left:50%; top:12px; width:40px; height:5px; margin-left:-20px; border-radius:3px; background:#D5D8DD; }
+.drag-handle::after { content:''; position:absolute; left:50%; top:12px; width:40px; height:5px; margin-left:-20px; border-radius:3px; background:var(--handle); }
 .panel.dragging .drag-handle::after { background:var(--coral); }
 
 /* ── Pull-to-refresh, last-updated line ── */
 .panel-scroll { overscroll-behavior-y:contain; }
-.ptr { position:absolute; left:50%; top:34px; width:34px; height:34px; margin-left:-17px; border-radius:50%; background:#fff;
+.ptr { position:absolute; left:50%; top:34px; width:34px; height:34px; margin-left:-17px; border-radius:50%; background:var(--surf);
   box-shadow:0 2px 10px rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:center; font-size:1rem;
   opacity:0; pointer-events:none; z-index:5; transition:opacity .15s; }
 .ptr.spin-on { opacity:1; animation:spin .8s linear infinite; }
 .upd-row { padding:0 16px 6px; }
 .upd-line { background:none; border:none; font:inherit; font-size:0.7rem; color:var(--text3); cursor:pointer; padding:2px 0; }
-.upd-line.old { color:#B45309; }
+.upd-line.old { color:var(--warn-text); }
 .upd-line:active { opacity:.6; }
 
 /* ── Trip calculator ── */
@@ -163,15 +171,15 @@ html, body {
 .tstep button { width:44px; height:44px; border-radius:12px; border:1px solid var(--border); background:var(--surf); font-size:1.2rem; cursor:pointer; }
 .tstep b { flex:1; text-align:center; font-size:1.05rem; font-variant-numeric:tabular-nums; }
 .tverdict { margin-top:10px; border-radius:14px; padding:12px; font-size:0.9rem; font-weight:700; line-height:1.35; }
-.tverdict.good { background:rgba(22,163,74,0.12); color:#15803D; }
-.tverdict.bad  { background:rgba(239,68,68,0.10); color:#B91C1C; }
+.tverdict.good { background:rgba(22,163,74,0.12); color:var(--ok-text); }
+.tverdict.bad  { background:rgba(239,68,68,0.10); color:var(--bad-text); }
 .tverdict small { display:block; font-weight:500; color:var(--text2); margin-top:3px; font-size:0.74rem; }
 .tchips { display:flex; flex-wrap:wrap; gap:6px; }
 .tchips button { border:1px solid var(--border); background:var(--surf); border-radius:16px; padding:7px 11px; font:inherit; font-size:0.78rem; cursor:pointer; color:var(--text2); }
-.tchips button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.tchips button.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
 .trow { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--border); font-size:0.82rem; }
 .trow:first-child { border-top:none; }
-.trow.best { font-weight:700; color:#15803D; }
+.trow.best { font-weight:700; color:var(--ok-text); }
 .trow .d { color:var(--text3); font-size:0.7rem; min-width:56px; text-align:right; }
 
 /* ── Route planner (preview) ── */
@@ -187,7 +195,7 @@ html, body {
 .rt-stop .nm { font-weight:700; font-size:0.9rem; }
 .rt-stop .sub { font-size:0.7rem; color:var(--text2); line-height:1.45; margin-top:2px; }
 .rt-stop .pr { text-align:right; font-weight:800; font-size:1rem; font-variant-numeric:tabular-nums; }
-.rt-stop .pr small { display:block; font-weight:600; color:#15803D; font-size:0.66rem; }
+.rt-stop .pr small { display:block; font-weight:600; color:var(--ok-text); font-size:0.66rem; }
 .rt-stop .acts { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
 .rt-stop .acts button { border:1px solid var(--border); background:var(--surf); border-radius:10px; padding:6px 10px; font:inherit; font-size:0.72rem; cursor:pointer; color:var(--text); }
 .rt-pin { background:var(--coral); color:#fff; border:2px solid #fff; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.78rem; box-shadow:0 1px 5px rgba(0,0,0,.4); }
@@ -198,7 +206,7 @@ html, body {
 .worth .tverdict.same { background:var(--surf2); color:var(--text); }
 .worth .wk { display:flex; gap:5px; flex-wrap:wrap; }
 .worth .wk button { border:1px solid var(--border); background:var(--surf); border-radius:12px; padding:5px 10px; font:inherit; font-size:0.72rem; cursor:pointer; color:var(--text2); }
-.worth .wk button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.worth .wk button.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
 .worth .wnote { font-size:0.62rem; color:var(--text3); margin-top:4px; }
 
 /* ── Navigation chooser ── */
@@ -209,7 +217,7 @@ html, body {
 .nav-rem { display:flex; align-items:center; gap:10px; font-size:0.82rem; color:var(--text2); margin-top:12px; }
 .nav-rem input { width:20px; height:20px; accent-color:var(--coral); }
 .nav-sel { width:100%; background:var(--surf); color:var(--text); border:1px solid var(--border); border-radius:14px; padding:12px 14px; font-size:16px; font-family:inherit; }
-.install-row { width:100%; margin-top:10px; background:var(--cream); border:1px solid #F3E3CC; border-radius:14px; color:var(--text); font:inherit; font-size:0.88rem; font-weight:600; padding:13px; cursor:pointer; }
+.install-row { width:100%; margin-top:10px; background:var(--cream); border:1px solid #F3E3CC; border-radius:14px; color:#16181D; font:inherit; font-size:0.88rem; font-weight:600; padding:13px; cursor:pointer; }
 #cheap-btn.attn { animation:attn 1.1s ease-in-out 3; }
 @keyframes attn { 50% { transform:scale(1.08); box-shadow:0 0 0 10px rgba(255,199,44,0.25); } }
 
@@ -217,7 +225,7 @@ html, body {
 #cheap-btn {
   position:absolute; right:14px; z-index:1100;
   bottom:calc(var(--tab-h) + var(--safe-b) + 68px);
-  background:#fff; color:var(--text); border:2px solid var(--sun); border-radius:28px;
+  background:var(--surf); color:var(--text); border:2px solid var(--sun); border-radius:28px;
   padding:9px 15px; font:inherit; font-size:0.82rem; font-weight:700; cursor:pointer;
   display:flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(255,199,44,0.45);
   transition:transform .12s;
@@ -254,7 +262,7 @@ body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); 
 .pop-act + .pop-act { margin-left:0; }
 .tank-row { display:flex; gap:6px; }
 .tank-row button { flex:1; background:var(--surf2); border:1px solid var(--border); border-radius:12px; padding:10px 0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--text2); cursor:pointer; }
-.tank-row button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.tank-row button.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
 
 /* ── Location dot ── */
 .loc-dot {
@@ -275,22 +283,19 @@ body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); 
 
 /* ── Price tooltips ── */
 .leaflet-tooltip.ptip {
-  background:rgba(255,255,255,0.96); border:1px solid rgba(22,24,29,0.12);
+  background:var(--glass); border:1px solid var(--border);
   color:var(--text); font-size:0.63rem; font-weight:600; font-variant-numeric:tabular-nums;
   padding:1px 5px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.08);
 }
 .leaflet-tooltip.ptip::before { display:none; }
 #map.hide-prices .ptip { display:none; }
 
-/* ── Clusters ── */
-.marker-cluster { background:rgba(255,255,255,0.85) !important; }
-/* Bigger icon with two price lines needs a taller box than the default round bubble */
+/* ── Clusters (drawn by our own viewport renderer) ── */
+.marker-cluster { width:40px; height:40px; border-radius:50%; background:var(--halo); cursor:pointer; }
 .marker-cluster div {
-  background:rgba(232,84,47,0.92) !important;
-  color:#fff !important; font-weight:500 !important;
-  font-size:0.68rem !important; display:flex !important;
-  flex-direction:column; align-items:center; justify-content:center;
-  gap:1px; line-height:1.2 !important;
+  width:30px; height:30px; margin:5px; border-radius:50%;
+  background:rgba(232,84,47,0.92); color:#fff; font-weight:600; font-size:0.74rem;
+  display:flex; align-items:center; justify-content:center; line-height:1;
 }
 
 /* ══════════════════════════════════════════
@@ -298,8 +303,8 @@ body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); 
    On a wide screen the app stays a centred phone column (the transform makes
    position:fixed children relative to the column instead of the window).
 ══════════════════════════════════════════ */
-html { background:#E7E9EC; height:100%; }
-body { max-width:520px; margin:0 auto; height:100%; position:relative; overflow:hidden; overflow:clip;
+html { background:var(--page); height:100%; height:100dvh; }
+body { max-width:520px; margin:0 auto; height:100%; height:var(--app-h, 100dvh); position:relative; overflow:hidden; overflow:clip;
        transform:translateZ(0); box-shadow:0 0 30px rgba(0,0,0,0.08); }
 /* Tablets get a wider column (more map, roomier sheets); desktops keep the same centred app column */
 @media (min-width:700px) { body { max-width:680px; } .panel { max-height:72vh; } }
@@ -326,7 +331,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .scard.fu { border-left-color:var(--text3); }
 .gb { display:inline-block; padding:1px 6px; border-radius:8px; font-size:0.58rem; font-weight:500; letter-spacing:.2px; color:#16181D; vertical-align:middle; }
 .gb.gA { background:#86E8A8; } .gb.gB { background:#93C5FD; } .gb.gC { background:#FDD68B; } .gb.gD { background:#F2A6A6; } .gb.gL { background:#D7DADF; }
-.stale-note { margin-top:5px; padding:3px 6px; border-radius:10px; background:rgba(239,68,68,.10); color:#B91C1C; font-size:0.62rem; }
+.stale-note { margin-top:5px; padding:3px 6px; border-radius:10px; background:rgba(239,68,68,.10); color:var(--bad-text); font-size:0.62rem; }
 .age-line { font-size:0.68rem; color:var(--text3); margin-top:4px; line-height:1.35; }
 
 .scard-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:3px; }
@@ -348,10 +353,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 }
 .pc .t { color:var(--text2); }
 .pc .v { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; }
-.pc.best .v { color:#15803D; font-size:0.86rem; }
+.pc.best .v { color:var(--ok-text); font-size:0.86rem; }
 .pc .u { color:var(--text3); font-size:0.66rem; }
 .pc.best { border-color:var(--green); background:rgba(22,163,74,0.08); }
-.pc.best .t { color:#15803D; }
+.pc.best .t { color:var(--ok-text); }
 .scard-foot { margin-top:4px; font-size:0.61rem; color:var(--text3); }
 
 .empty { color:var(--text3); font-size:0.82rem; padding:24px 8px; text-align:center; line-height:1.6; }
@@ -375,7 +380,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .pop-tbl .pr { color:var(--text); font-weight:700; font-size:1.02rem; font-variant-numeric:tabular-nums; text-align:right; }
 .pop-tbl .pv { font-size:0.6rem; color:var(--text3); padding:0 0 3px; line-height:1.3; }
 .pop-tbl .pv details { margin-top:1px; } .pop-tbl .pv summary { cursor:pointer; }
-.pop-tbl .pv .reg { color:#B45309; }
+.pop-tbl .pv .reg { color:var(--warn-text); }
 .pop-tbl .un { color:var(--text3); font-size:0.68rem; }
 .pop-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
 .pop-date { color:var(--text3); font-size:0.61rem; }
@@ -511,7 +516,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     border-radius:12px; padding:9px 6px; font-size:0.8rem; font-weight:500; color:var(--text2);
     cursor:pointer; font-family:inherit; transition:all 0.12s;
   }
-  .lang-btn.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .lang-btn.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
   .trust-link {
     width:100%; margin-top:22px; background:none; border:1px solid var(--border);
     border-radius:14px; color:var(--blue); font-size:0.82rem; padding:12px; cursor:pointer; font-family:inherit;
@@ -553,7 +558,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 #legend {
   position:absolute; left:10px; z-index:600;
   bottom:calc(var(--tab-h) + var(--safe-b) + 38px);
-  background:rgba(255,255,255,0.92); border:1px solid var(--border); border-radius:12px;
+  background:var(--glass); border:1px solid var(--border); border-radius:12px;
   padding:6px 9px 7px; font-size:0.62rem; color:var(--text2); line-height:1.3;
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   box-shadow:0 1px 6px rgba(0,0,0,0.06); min-width:132px;
@@ -596,7 +601,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .cmp-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cmp-track { position:relative; height:18px; }
 .cmp-track .gl { position:absolute; top:0; bottom:0; width:1px; background:var(--border); }
-.cmp-track .rng { position:absolute; top:7px; height:4px; border-radius:2px; background:rgba(22,24,29,0.13); }
+.cmp-track .rng { position:absolute; top:7px; height:4px; border-radius:2px; background:var(--rng); }
 .cmp-track .dot { position:absolute; top:3px; width:12px; height:12px; margin-left:-6px; border-radius:50%;
   border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,0.15); }
 .cmp-row.few { opacity:0.55; }
@@ -604,7 +609,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .cmp-note { font-size:0.62rem; color:var(--text3); line-height:1.45; margin-top:12px; }
 .cmp-key { display:flex; gap:12px; font-size:0.62rem; color:var(--text2); margin:0 0 4px; align-items:center; flex-wrap:wrap; }
 .cmp-key .kd { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--text2); vertical-align:-1px; margin-right:3px; }
-.cmp-key .kr { display:inline-block; width:18px; height:4px; border-radius:2px; background:rgba(22,24,29,0.2); vertical-align:1px; margin-right:3px; }
+.cmp-key .kr { display:inline-block; width:18px; height:4px; border-radius:2px; background:var(--rng); vertical-align:1px; margin-right:3px; }
 
 /* ══════════════════════════════════════════
    DESKTOP PAGE (>= 1000 px) — additive: sidebar + full-width map.
@@ -650,7 +655,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   .panel.open { transform:translateX(0); }
   .scard:hover { border-color:var(--blue); background:rgba(15,118,110,0.04); }
   .cmp-row:hover { background:rgba(15,118,110,0.06); }
-  .chip:hover { background:#fff; border-color:var(--coral); color:var(--coral); }
+  .chip:hover { background:var(--surf); border-color:var(--coral); color:var(--coral); }
   .chip.on:hover { color:#fff; }
 
   #chips { top:14px; left:14px; right:230px; }
@@ -688,7 +693,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .nearby-summary .ns-label { color:var(--green); font-weight:500; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; }
 .nearby-summary .ns-price { font-size:1.4rem; font-weight:500; color:var(--text); line-height:1.1; }
 .nearby-summary .ns-detail { color:var(--text2); font-size:0.73rem; }
-.nearby-summary .ns-save { color:#15803D; font-size:0.78rem; font-weight:600; }
+.nearby-summary .ns-save { color:var(--ok-text); font-size:0.78rem; font-weight:600; }
 .nearby-summary .ns-save:empty { display:none; }
 .nearby-summary .ns-go {
   margin-top:8px; background:var(--coral); color:#fff; border:none; border-radius:14px;
@@ -729,15 +734,15 @@ button.gb { border:none; font-family:inherit; cursor:pointer; }
 .leaflet-tooltip.ptip.ptip-off { opacity:0 !important; pointer-events:none; }
 
 /* Clusters: tinted by the typical price level inside (green cheap … red dear) */
-.marker-cluster div { background:var(--cc, rgba(232,84,47,0.92)) !important; color:var(--ct, #fff) !important; font-weight:600 !important; font-size:0.74rem !important; }
+.marker-cluster div { background:var(--cc, rgba(232,84,47,0.92)); color:var(--ct, #fff); }
 
 /* Load-failure / offline banner */
 #net-banner { display:none; position:absolute; left:60px; right:10px; top:92px; z-index:1200;
-  background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:14px; padding:8px 10px 8px 14px;
+  background:var(--banner-bg); color:var(--banner-tx); border:1px solid var(--banner-bd); border-radius:14px; padding:8px 10px 8px 14px;
   font-size:0.8rem; line-height:1.3; align-items:center; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,0.12); }
 #net-banner.on { display:flex; }
 #net-banner span { flex:1; }
-#net-banner button { flex-shrink:0; background:#991B1B; color:#fff; border:none; border-radius:10px; padding:9px 14px; min-height:40px; font:inherit; font-weight:600; cursor:pointer; }
+#net-banner button { flex-shrink:0; background:var(--banner-tx); color:var(--banner-bg); border:none; border-radius:10px; padding:9px 14px; min-height:40px; font:inherit; font-weight:600; cursor:pointer; }
 @media (min-width:1000px) { #net-banner { left:64px; right:230px; top:62px; } }
 
 :focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
@@ -746,6 +751,47 @@ button.gb { border:none; font-family:inherit; cursor:pointer; }
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
   .spin, .ptr.spin-on { animation-duration:0.9s !important; animation-iteration-count:infinite !important; }
 }
+/* Not-plausible prices: visible but struck through, never ranked */
+.pop-tbl tr.np .pr, .pop-tbl tr.np .ft { text-decoration:line-through; color:var(--text3); }
+.pop-tbl tr.np .pr { text-decoration-thickness:2px; }
+.pop-tbl .npnote { color:var(--warn-text); font-size:0.66rem; }
+.pc.np { background:var(--warn-bg); border-color:var(--warn-bd); }
+.pc.np .t, .pc.np .v { color:var(--text3); text-decoration:line-through; font-weight:500; }
+.pc.np .npl { color:var(--warn-text); font-size:0.62rem; font-weight:700; margin-left:2px; }
+
+/* ══════════════════════════════════════════
+   v1.15 — dark mode (follows the phone; Filter → Appearance can force Light/Dark)
+══════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  --bg:#0E1115; --page:#07090B; --surf:#171B21; --surf2:#1F242C; --border:#2C333D;
+  --text:#ECEFF4; --text2:#A5ADBA; --text3:#7D8695; --blue:#2DD4BF; --on-blue:#04201D;
+  --glass:rgba(23,27,33,0.88); --handle:#3A424E; --rng:rgba(236,239,244,0.24); --halo:rgba(23,27,33,0.85);
+  --ok-text:#4ADE80; --bad-text:#FCA5A5; --warn-text:#FBBF24; --warn-bg:#3A2F12; --warn-bd:#8A6A12;
+  --banner-bg:#3B1517; --banner-tx:#FCA5A5; --banner-bd:#7F1D1D; --map-bg:#0F1216; color-scheme:dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+  --bg:#0E1115; --page:#07090B; --surf:#171B21; --surf2:#1F242C; --border:#2C333D;
+  --text:#ECEFF4; --text2:#A5ADBA; --text3:#7D8695; --blue:#2DD4BF; --on-blue:#04201D;
+  --glass:rgba(23,27,33,0.88); --handle:#3A424E; --rng:rgba(236,239,244,0.24); --halo:rgba(23,27,33,0.85);
+  --ok-text:#4ADE80; --bad-text:#FCA5A5; --warn-text:#FBBF24; --warn-bg:#3A2F12; --warn-bd:#8A6A12;
+  --banner-bg:#3B1517; --banner-tx:#FCA5A5; --banner-bd:#7F1D1D; --map-bg:#0F1216; color-scheme:dark;
+  }
+}
+.leaflet-container { background:var(--map-bg); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background:var(--surf); color:var(--text); }
+.leaflet-container a.leaflet-popup-close-button { color:var(--text2); }
+.leaflet-bar a, .leaflet-bar a:hover { background:var(--surf); color:var(--text); border-bottom-color:var(--border); }
+.leaflet-bar a.leaflet-disabled { background:var(--surf2); color:var(--text3); }
+.leaflet-container .leaflet-control-attribution { background:var(--glass); color:var(--text2); }
+.leaflet-container .leaflet-control-attribution a { color:var(--blue); }
+.leaflet-tooltip.ptip { color:var(--text); }
+.brand-card p { color:#4B5563; }
+.trust-logo { background:#FFF8EF; padding:6px 10px; border-radius:10px; box-sizing:content-box; }
+.theme-btn { flex:1; min-width:64px; background:var(--surf2); border:1px solid var(--border); border-radius:12px; padding:11px 6px; font-size:0.8rem; font-weight:500; color:var(--text2); cursor:pointer; font-family:inherit; }
+.theme-btn.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
+body.kb #tabbar { display:none; }
+body.kb .panel { bottom:0; max-height:none; }
 </style>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
 </head>
@@ -891,6 +937,13 @@ button.gb { border:none; font-family:inherit; cursor:pointer; }
       <button class="lang-btn" data-lang="es" onclick="setLang('es')"><img class="flg" src="flags/es.png" alt=""> ES</button>
     </div>
 
+    <label data-i18n="labelTheme">Appearance</label>
+    <div class="lang-row" id="theme-row">
+      <button class="theme-btn" data-theme="auto" onclick="setTheme('auto')" data-i18n="themeAuto">Auto</button>
+      <button class="theme-btn" data-theme="light" onclick="setTheme('light')" data-i18n="themeLight">Light</button>
+      <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')" data-i18n="themeDark">Dark</button>
+    </div>
+
     <button class="install-row" id="install-row" onclick="installApp()" style="display:none">📲 <span data-i18n="installApp2">Add to Home Screen</span></button>
     <button class="trust-link" onclick="openTrust()"><span data-i18n="trustLinkLabel">ℹ How we grade sources</span></button>
   </div>
@@ -958,8 +1011,6 @@ button.gb { border:none; font-family:inherit; cursor:pointer; }
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
-        integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr" crossorigin="anonymous"></script>
 <script>
 // ════════════════════════════════════════════════════
 // Constants
@@ -1181,6 +1232,18 @@ Object.assign(I18N.de, { retry:'Erneut versuchen', loadFail:'{c} konnte nicht ge
 Object.assign(I18N.fr, { retry:'Réessayer', loadFail:'Impossible de charger {c}', offlineNote:'Vous êtes hors ligne — données enregistrées affichées', mapBackup:'Carte de secours activée', mapDown:'La carte est indisponible — les prix restent dans la liste.', lgToggle:'Changer les couleurs : prix / note de source', gradeInfo:'Comment nous notons les sources' });
 Object.assign(I18N.es, { retry:'Reintentar', loadFail:'No se pudo cargar {c}', offlineNote:'Sin conexión — se muestran los datos guardados', mapBackup:'Mapa de respaldo activado', mapDown:'El mapa no está disponible ahora — los precios siguen en la lista.', lgToggle:'Cambiar colores: precio / calificación de fuente', gradeInfo:'Cómo calificamos las fuentes' });
 
+Object.assign(I18N.en, { notPlausible:'Not plausible', npExcluded:'Not used for rankings, colours or averages.', np_far_from_country:'far from typical prices in this country', np_outside_eur_band:'outside any realistic price range', np_inconsistent_fuels:"doesn't fit this station's other fuel prices" });
+Object.assign(I18N.sv, { notPlausible:'Inte rimligt', npExcluded:'Används inte i rankning, färger eller medelvärden.', np_far_from_country:'långt från typiska priser i landet', np_outside_eur_band:'utanför ett realistiskt prisintervall', np_inconsistent_fuels:'passar inte stationens övriga bränslepriser' });
+Object.assign(I18N.de, { notPlausible:'Nicht plausibel', npExcluded:'Wird nicht für Ranglisten, Farben oder Durchschnitte verwendet.', np_far_from_country:'weit entfernt von den üblichen Preisen im Land', np_outside_eur_band:'außerhalb jeder realistischen Preisspanne', np_inconsistent_fuels:'passt nicht zu den anderen Kraftstoffpreisen dieser Tankstelle' });
+Object.assign(I18N.fr, { notPlausible:'Non plausible', npExcluded:'Non utilisé pour les classements, couleurs ou moyennes.', np_far_from_country:'très éloigné des prix habituels du pays', np_outside_eur_band:'hors de toute fourchette de prix réaliste', np_inconsistent_fuels:"ne correspond pas aux autres carburants de cette station" });
+Object.assign(I18N.es, { notPlausible:'No plausible', npExcluded:'No se usa en clasificaciones, colores ni medias.', np_far_from_country:'muy lejos de los precios habituales del país', np_outside_eur_band:'fuera de cualquier rango de precios realista', np_inconsistent_fuels:'no encaja con los demás combustibles de esta estación' });
+
+Object.assign(I18N.en, { labelTheme:'Appearance', themeAuto:'Auto', themeLight:'Light', themeDark:'Dark' });
+Object.assign(I18N.sv, { labelTheme:'Utseende', themeAuto:'Auto', themeLight:'Ljust', themeDark:'Mörkt' });
+Object.assign(I18N.de, { labelTheme:'Darstellung', themeAuto:'Auto', themeLight:'Hell', themeDark:'Dunkel' });
+Object.assign(I18N.fr, { labelTheme:'Apparence', themeAuto:'Auto', themeLight:'Clair', themeDark:'Sombre' });
+Object.assign(I18N.es, { labelTheme:'Apariencia', themeAuto:'Auto', themeLight:'Claro', themeDark:'Oscuro' });
+
 let lang = (function () {
   try {
     const saved = localStorage.getItem('efp_lang');
@@ -1230,31 +1293,50 @@ const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
 map.attributionControl.setPosition('bottomleft');
 map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
 map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
-// Esri light-grey canvas (free, no key). If it keeps failing, switch to Carto's light basemap so the
-// map never stays blank; if both fail (offline) say so once instead of showing an unexplained grey void.
+// Light: Esri grey canvas (free, no key). Dark: Esri dark-grey canvas. If the primary keeps failing we fall back
+// (Esri → OpenStreetMap, Esri dark → Esri light) so the map never stays blank; if everything fails (offline) say so once.
 const baseEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors', maxZoom:16,
-}).addTo(map);
+});
 const refEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
   attribution:'', maxZoom:16, pane:'overlayPane',
-}).addTo(map);
-const baseBackup = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy; OpenStreetMap contributors &copy; CARTO', subdomains:'abcd', maxZoom:19,
 });
+// Emergency fallback only (OSM's tile policy forbids heavy use): plain OpenStreetMap tiles.
+// (Carto's free basemaps were tried and removed: they now serve "API KEY REQUIRED" watermark tiles without erroring.)
+const baseBackup = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom:19,
+});
+const baseDark = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors', maxZoom:16,
+});
+const refDark = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'', maxZoom:16, pane:'overlayPane',
+});
+const _darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+function isDark() { const t = document.documentElement.dataset.theme; return t === 'dark' || (t !== 'light' && _darkMQ.matches); }
+let _usingBackup = false, _darkFailed = false;
+function applyBasemap() {
+  [baseEsri, refEsri, baseBackup, baseDark, refDark].forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+  if (isDark() && !_darkFailed) { baseDark.addTo(map); refDark.addTo(map); }
+  else if (_usingBackup) baseBackup.addTo(map);
+  else { baseEsri.addTo(map); refEsri.addTo(map); }
+}
 (function tileFailover() {
-  let bad = 0, onBackup = false, bad2 = 0, down = false;
+  let bad = 0, bad2 = 0, bad3 = 0, down = false;
   baseEsri.on('tileload', () => { bad = 0; });
   baseEsri.on('tileerror', () => {
-    if (onBackup || ++bad < 4) return;
-    onBackup = true;
-    map.removeLayer(baseEsri); map.removeLayer(refEsri); baseBackup.addTo(map);
+    if (_usingBackup || ++bad < 4) return;
+    _usingBackup = true; applyBasemap();
     if (typeof toast === 'function') toast(t('mapBackup'));
   });
-  baseBackup.on('tileload', () => { bad2 = 0; down = false; });
-  baseBackup.on('tileerror', () => {
-    if (++bad2 >= 6 && !down) { down = true; if (typeof toast === 'function') toast(t('mapDown'), 6000); }
-  });
+  baseDark.on('tileload', () => { bad3 = 0; });
+  baseDark.on('tileerror', () => { if (!_darkFailed && ++bad3 >= 4) { _darkFailed = true; applyBasemap(); if (typeof toast === 'function') toast(t('mapBackup')); } });
+  const ok = () => { bad2 = 0; down = false; };
+  const err = () => { if (++bad2 >= 6 && !down) { down = true; if (typeof toast === 'function') toast(t('mapDown'), 6000); } };
+  baseBackup.on('tileload', ok); baseBackup.on('tileerror', err);
+  baseEsri.on('tileload', ok);
 })();
+applyBasemap();
 
 // ════════════════════════════════════════════════════
 // State
@@ -1263,8 +1345,6 @@ const data    = {};           // cc → station[]
 const loaded  = new Set();
 const loading = new Set();
 const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
-let cluster   = null;
-const byId    = new Map();    // id → marker
 let   selId   = null;
 let   myLat   = null, myLon = null, myCountry = null;
 let   myMark  = null, myCirc = null;
@@ -1339,7 +1419,7 @@ function fuelLabel(p) {
 const F95 = 'P95', FDIE = 'DIESEL';
 function minOf(s, f) {
   let best = null;
-  for (const p of (s.prices||[])) if (inFuel(p, f) && p.price > 0 && p.basis !== 'regulated_max' && (!best || p.price < best.price)) best = p;
+  for (const p of (s.prices||[])) if (inFuel(p, f) && p.price > 0 && p.basis !== 'regulated_max' && p.plausible !== false && (!best || p.price < best.price)) best = p;
   return best;
 }
 function cheapest(s) {
@@ -1438,8 +1518,9 @@ function ageHtml(s) {
   if (!s.prices?.length) return '';
   const g = gradeOf(s), m = metaOf[s.country] || {};
   const h = priceAgeH(s);
+  // grade C already says "price time unknown" — don't repeat it, just say when we last checked
   const when = h === null
-    ? t('priceTimeUnknown') + (m.fetched_at ? t('checkedAt', { t: fmtAgo(m.fetched_at) }) : '')
+    ? (g === 'C' && m.fetched_at ? t('checkedAt', { t: fmtAgo(m.fetched_at) }).replace(/^\s*[·•-]\s*/, '') : t('priceTimeUnknown') + (m.fetched_at ? t('checkedAt', { t: fmtAgo(m.fetched_at) }) : ''))
     : t('priceSetAt', { t: fmtAgo(new Date(Date.now() - h*3600000).toISOString()) });
   const stale = m.status === 'stale'
     ? `<div class="stale-note">${t('staleNote', { t: fmtAgo(m.fetched_at) })}</div>` : '';
@@ -1519,47 +1600,12 @@ function fillNavPref() {
 }
 
 // ════════════════════════════════════════════════════
-// Cluster
+// Markers — viewport renderer
 // ════════════════════════════════════════════════════
-function mkCluster() {
-  if (cluster) map.removeLayer(cluster);
-  cluster = L.markerClusterGroup({
-    maxClusterRadius:40, disableClusteringAtZoom:CLUSTER_ZOOM,
-    spiderfyOnMaxZoom:true, showCoverageOnHover:false, chunkedLoading:true,
-    iconCreateFunction: c => {
-      // Clusters show a plain count only. A per-cluster price line was tried and dropped: on a
-      // real phone, densely packed clusters (common in cities) made the extra text bleed across
-      // neighbouring bubbles and become unreadable, whatever the zoom gate. Prices belong on the
-      // individual station marker/tooltip once you're zoomed in far enough to see one (see
-      // mkMarker / PRICE_ZOOM) — that is the one place they render without overlap.
-      const n  = c.getChildCount();
-      const sz = n<50?'small':n<200?'medium':'large';
-      // tint = median price level (0 cheap … 4 dear, per-country quintiles) of the priced stations inside; untinted when too few are priced
-      let tint = '';
-      if (colorBy === 'price') {
-        const qs = [];
-        for (const m of c.getAllChildMarkers()) { const q = m.options._qi; if (q != null) qs.push(q); }
-        if (qs.length >= 3 && qs.length >= n * 0.3) {
-          qs.sort((a, b) => a - b);
-          const i = qs[qs.length >> 1];
-          tint = ` style="--cc:${RAMP[i]};--ct:${i === 1 || i === 2 ? '#16181D' : '#fff'}"`;
-        }
-      }
-      return L.divIcon({
-        html:`<div${tint}>${n}</div>`,
-        className:`marker-cluster marker-cluster-${sz}`,
-        iconSize:[40,40],
-      });
-    },
-  });
-  cluster.on('animationend', () => schedDeclutter());
-  map.addLayer(cluster);
-}
-mkCluster();
-
-// ════════════════════════════════════════════════════
-// Markers
-// ════════════════════════════════════════════════════
+// Only what is on screen is ever a Leaflet object. The ~120 000 stations stay plain data; on every
+// pan/zoom we grid-cluster the stations inside the (padded) viewport and draw a few hundred markers.
+// (The old approach kept one marker per station — 120k DOM-less-but-heavy objects, ~360 MB, and every
+// filter change rebuilt all of them. That is what froze iPhones.)
 // Price colour: where this station's headline price falls within ITS OWN country's distribution
 // (quintiles of per-station cheapest price for the same fuel). Countries differ too much in level
 // and currency for a global scale, so this answers "is this cheap for here?".
@@ -1589,29 +1635,124 @@ function markerCol(s, cp) {
   return GRADE_COL[gradeOf(s)] || '#f59e0b';
 }
 
+// Station → normalised web-mercator (0..1), once, when its country loads
+function prepStations(arr) {
+  for (const s of arr) {
+    if (!s.lat || !s.lon) continue;
+    s._x = (s.lon + 180) / 360;
+    const sn = Math.sin(s.lat * Math.PI / 180);
+    s._y = 0.5 - Math.log((1 + sn) / (1 - sn)) / (4 * Math.PI);
+  }
+}
+let _qVer = 0, _sig = '';
+// headline price / colour / price-level of a station, cached until the filter, colour mode or data changes
+function lvl(s) {
+  if (s._ck !== _sig) {
+    const cp = cheapest(s);
+    s._cp = cp;
+    s._qi = cp && colorBy === 'price' ? qIndex(s, cp) : null;
+    s._col = markerCol(s, cp);
+    s._ck = _sig;
+  }
+  return s;
+}
+
+const viewLayer = L.layerGroup().addTo(map);
+let shown = new Map();                       // key → L.marker currently on the map
+const CELL_PX = 56, CELL_PX_NEAR = 26, NOCLUSTER_ZOOM = 16, MAX_SHOWN = 700;
+
 function mkMarker(s) {
-  const cp   = cheapest(s);
-  const col  = markerCol(s, cp);
-  const sz   = cp ? 12 : 7;
-  const op   = cp ? 1 : 0.45;
+  const cp = s._cp, col = s._col;
+  const sz = cp ? 12 : 7, op = cp ? 1 : 0.45;
   // 30 px transparent hit box around the (7–12 px) dot so it can be tapped with a thumb; the dot stays centred on the anchor
   const icon = L.divIcon({
     className:'',
     html:`<div class="mk"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2px solid #fff;opacity:${op};box-shadow:0 0 0 1px rgba(0,0,0,0.25),0 1px 4px rgba(0,0,0,0.35)"></div></div>`,
     iconSize:[30,30], iconAnchor:[15,15],
   });
-  const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE), _qi:(colorBy === 'price' ? qIndex(s, cp) : null) });
-  if (cp) {
+  const m = L.marker([s.lat, s.lon], { icon, riseOnHover:false });
+  if (cp && map.getZoom() >= PRICE_ZOOM) {
     const a95 = minOf(s,F95), dd = minOf(s,FDIE), sy = SYM[cp.currency]||cp.currency;
     const tip = fFuel ? `${fuelLabel(cp)} ${cp.price.toFixed(2)}${sy}`
       : [a95 && `95 ${a95.price.toFixed(2)}${sy}`, dd && `D ${dd.price.toFixed(2)}${sy}`].filter(Boolean).join(' · ');
-    m.bindTooltip(tip,
-      { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
+    m.bindTooltip(tip, { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
   }
-  m.bindPopup(() => mkPopup(s), { maxWidth:290 });
-  m.on('click', () => selectStation(s.id));
+  m.on('click', () => selectStation(s.id, true));
   return m;
 }
+
+function mkClusterMarker(c) {
+  const n = c.n;
+  const sz = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
+  // tint = median price level (0 cheap … 4 dear, per-country quintiles) of the priced stations inside; untinted when too few are priced
+  let tint = '';
+  const tot = c.h[0] + c.h[1] + c.h[2] + c.h[3] + c.h[4];
+  if (colorBy === 'price' && tot >= 3 && tot >= n * 0.3) {
+    let acc = 0, i = 0;
+    for (; i < 5; i++) { acc += c.h[i]; if (acc >= tot / 2) break; }
+    tint = ` style="--cc:${RAMP[i]};--ct:${i === 1 || i === 2 ? '#16181D' : '#fff'}"`;
+  }
+  const m = L.marker([c.lat / n, c.lon / n], {
+    icon: L.divIcon({ html:`<div${tint}>${n}</div>`, className:`marker-cluster marker-cluster-${sz}`, iconSize:[40,40] }),
+    keyboard:false,
+  });
+  const lat0 = c.minLat, lat1 = c.maxLat, lon0 = c.minLon, lon1 = c.maxLon;
+  m.on('click', () => {
+    if (lat1 - lat0 < 1e-5 && lon1 - lon0 < 1e-5) map.setView(m.getLatLng(), Math.min(map.getZoom() + 3, 17));
+    else map.fitBounds([[lat0, lon0], [lat1, lon1]], { padding:[48, 48], maxZoom:17 });
+  });
+  return { m, tint };
+}
+
+function renderMarkers() {
+  _sig = fFuel + '|' + colorBy + '|' + _qVer;
+  const z = map.getZoom();
+  const bd = map.getBounds().pad(0.3);
+  const n = bd.getNorth(), so = bd.getSouth(), w = bd.getWest(), e = bd.getEast();
+  const cell = z >= NOCLUSTER_ZOOM ? 0 : z >= CLUSTER_ZOOM ? CELL_PX_NEAR : CELL_PX;
+  const world = 256 * Math.pow(2, z);
+  const cells = new Map(), singles = [];
+  for (const cc in data) {
+    if (fCountry && cc !== fCountry) continue;
+    const bb = CB[cc]; if (bb && !bd.intersects(bb)) continue;
+    for (const s of data[cc]) {
+      const la = s.lat, lo = s.lon;
+      if (!la || !lo || la > n || la < so || lo < w || lo > e) continue;
+      if (fFuel && !matches(s)) continue;
+      lvl(s);
+      if (!cell) { singles.push(s); continue; }
+      const key = Math.floor(s._x * world / cell) * 10000000 + Math.floor(s._y * world / cell);
+      let c = cells.get(key);
+      if (!c) { c = { n:0, lat:0, lon:0, minLat:90, maxLat:-90, minLon:180, maxLon:-180, h:[0,0,0,0,0], first:s, key }; cells.set(key, c); }
+      c.n++; c.lat += la; c.lon += lo;
+      if (la < c.minLat) c.minLat = la; if (la > c.maxLat) c.maxLat = la;
+      if (lo < c.minLon) c.minLon = lo; if (lo > c.maxLon) c.maxLon = lo;
+      if (s._qi != null) c.h[s._qi]++;
+    }
+  }
+  const want = new Map();
+  const add = (key, make) => { const old = shown.get(key); want.set(key, old || make()); };
+  if (cell) {
+    for (const c of cells.values()) {
+      if (c.n === 1) add('s|' + c.first.id + '|' + _sig, () => mkMarker(c.first));
+      else { const r = mkClusterMarker(c); add('c|' + c.key + '|' + c.n + '|' + r.tint, () => r.m); }
+    }
+  } else {
+    let list = singles;
+    if (list.length > MAX_SHOWN) {                     // a stack of thousands only happens at absurd zoom-outs of dense areas; keep the nearest
+      const c = map.getCenter();
+      list = list.map(s => [(s.lat - c.lat) ** 2 + (s.lon - c.lng) ** 2, s]).sort((a, b) => a[0] - b[0]).slice(0, MAX_SHOWN).map(x => x[1]);
+    }
+    for (const s of list) add('s|' + s.id + '|' + _sig, () => mkMarker(s));
+  }
+  for (const [k, m] of shown) if (!want.has(k)) viewLayer.removeLayer(m);
+  for (const [k, m] of want) if (!shown.has(k)) viewLayer.addLayer(m);
+  shown = want;
+  schedDeclutter();
+}
+let _rdT = null;
+function schedRender(ms = 60) { clearTimeout(_rdT); _rdT = setTimeout(renderMarkers, ms); }
+map.on('moveend zoomend', () => schedRender(30));
 
 // Hide price labels that would overlap a label already shown (greedy, DOM order), so dense cities stay readable.
 let _dcT = null;
@@ -1629,16 +1770,13 @@ function declutter() {
     kept.push(r);
   });
 }
-map.on('moveend zoomend', schedDeclutter);
-function addToMap(cc, stations) {
-  const toAdd = [];
-  for (const s of stations) {
-    if (!s.lat || !s.lon || !matches(s) || byId.has(s.id)) continue;
-    const m = mkMarker(s);
-    byId.set(s.id, m);
-    toAdd.push(m);
-  }
-  if (toAdd.length) { cluster.addLayers(toAdd); schedDeclutter(); }
+
+// Open a station's popup at its position (independent of whether its marker is currently drawn)
+function openStation(s, zoomTo) {
+  if (!s || !s.lat) return;
+  const ll = [s.lat, s.lon];
+  if (zoomTo && map.getZoom() < 14) map.setView(ll, 14);
+  L.popup({ maxWidth:290, offset:[0, -6], autoPanPadding:[12, 70] }).setLatLng(ll).setContent(mkPopup(s)).openOn(map);
 }
 
 // ════════════════════════════════════════════════════
@@ -1650,8 +1788,10 @@ function mkPopup(s) {
     const sym = SYM[p.currency] || p.currency || '';
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
     const pv = provHtml(p);
-    return `<tr><td class="ft">${fuelLabel(p)}${e10}</td><td class="pr">${pfmt(p.price, p.currency)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
-      + (pv ? `<tr><td class="pv" colspan="3">${pv}</td></tr>` : '');
+    const np = p.plausible === false;
+    return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? '⚠ ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${pfmt(p.price, p.currency)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
+      + (np ? `<tr class="np"><td class="pv npnote" colspan="3"><b>${t('notPlausible')}</b> — ${t('np_' + (p.implausible_reason || 'far_from_country'))}. ${t('npExcluded')}</td></tr>`
+            : (pv ? `<tr><td class="pv" colspan="3">${pv}</td></tr>` : ''));
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
   const goUrl = (s.lat && s.lon) ? true : null;
@@ -1685,6 +1825,7 @@ function mkCard(s, km) {
     const sym = SYM[p.currency] || p.currency || '';
     const best = cp && p === cp;
     const tip = [p.source && srcName(p.source), p.basis === 'regulated_max' ? t('regulatedMax') : '', (p.source || p.basis === 'regulated_max') ? ageTxt(p.updated_at) : ''].filter(Boolean).join(' · ');
+    if (p.plausible === false) return `<span class="pc np" title="${esc(t('notPlausible') + ' — ' + t('np_' + (p.implausible_reason || 'far_from_country')))}"><span class="t">⚠ ${fuelLabel(p)}</span><span class="v">${p.price.toFixed(2)}</span><span class="u">${sym}</span><span class="npl">${t('notPlausible')}</span></span>`;
     return `<span class="pc${best?' best':''}"${tip ? ` title="${esc(tip)}"` : ''}>
       <span class="t">${fuelLabel(p)}</span>
       <span class="v">${p.price.toFixed(2)}</span>
@@ -1784,9 +1925,11 @@ async function loadCC(cc, opts) {
     data[cc] = j.stations || [];
     metaOf[cc] = j.meta || {};
     loaded.add(cc);
+    prepStations(data[cc]);
     for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
     delete _cs[cc];
-    if (!force) { addToMap(cc, data[cc]); onNewData(); }
+    _qVer++;
+    if (!force) { schedRender(); onNewData(); }
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
     failedCC.add(cc);
@@ -1896,8 +2039,7 @@ function setFuel(chipEl, val) {
 }
 
 function applyFilters() {
-  cluster.clearLayers(); byId.clear();
-  for (const [cc, arr] of Object.entries(data)) addToMap(cc, arr);
+  renderMarkers();
   rebuildList();
   updPriceLbls();
   schedVP();
@@ -1926,16 +2068,35 @@ function splitPricedFirst(arr, pricedCmp, unpricedCmp) {
   return priced.concat(unpriced);
 }
 
+// Same filter as the list, but only counts (the tab label and header update on every pan — they must not build and sort arrays)
+function countAll() {
+  const view = sortMode === 'view' && map.getZoom() >= 8;
+  const b = view ? map.getBounds().pad(0.1) : null;
+  const n = view ? b.getNorth() : 0, so = view ? b.getSouth() : 0, w = view ? b.getWest() : 0, e = view ? b.getEast() : 0;
+  let c = 0;
+  for (const arr of Object.values(data))
+    for (const s of arr) {
+      if (favOnly ? !favs[s.id] : !matches(s)) continue;
+      if (view && !(s.lat && s.lon && s.lat <= n && s.lat >= so && s.lon >= w && s.lon <= e)) continue;
+      c++;
+    }
+  return c;
+}
 function getAll() {
   const all = [];
+  const view = sortMode === 'view' && map.getZoom() >= 8;
+  const b = view ? map.getBounds().pad(0.1) : null;
+  const n = view ? b.getNorth() : 0, so = view ? b.getSouth() : 0, w = view ? b.getWest() : 0, e = view ? b.getEast() : 0;
   for (const arr of Object.values(data))
-    for (const s of arr) { if (favOnly ? favs[s.id] : matches(s)) all.push(s); }
+    for (const s of arr) {
+      if (favOnly ? !favs[s.id] : !matches(s)) continue;
+      if (view && !(s.lat && s.lon && s.lat <= n && s.lat >= so && s.lon >= w && s.lon <= e)) continue;
+      all.push(s);
+    }
   let pricedCmp = null, unpricedCmp = null;
-  if (sortMode === 'view' && map.getZoom() >= 8) {
+  if (view) {
     // What the map shows, cheapest first — own country before neighbours so currencies never get compared
-    const b = map.getBounds().pad(0.1), cc = centerCountry();
-    const inView = all.filter(s => s.lat && s.lon && b.contains([s.lat, s.lon]));
-    all.length = 0; all.push(...inView);
+    const cc = centerCountry();
     pricedCmp = (a, c) => ((a.country === cc ? 0 : 1) - (c.country === cc ? 0 : 1)) || (cheapest(a).price - cheapest(c).price);
   } else if (sortMode === 'distance' && myLat != null) {
     const byDist = (a,b) => {
@@ -1952,7 +2113,7 @@ function getAll() {
 }
 
 function updCounts() {
-  const n = getAll().length;
+  const n = countAll();
   document.getElementById('mobCount').textContent   = n.toLocaleString();
   document.getElementById('tb-list-lbl').textContent = n > 0 ? t('tabListCount', { n: n.toLocaleString() }) : t('tabList');
 }
@@ -2012,7 +2173,7 @@ function cycleSort() {
 // ════════════════════════════════════════════════════
 // Station select
 // ════════════════════════════════════════════════════
-function selectStation(id) {
+function selectStation(id, fromMap) {
   document.getElementById(`c-${selId}`)?.classList.remove('sel');
   selId = id;
   const card = document.getElementById(`c-${id}`);
@@ -2023,8 +2184,8 @@ function selectStation(id) {
     const sc = card.closest('.panel.open .panel-scroll');
     if (sc) sc.scrollTo({ top: Math.max(0, card.offsetTop - sc.clientHeight / 3), behavior:'smooth' });
   }
-  const m = byId.get(id);
-  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); autoClose(); }
+  const st = findStation(id);
+  if (st) { openStation(st, !fromMap); autoClose(); }
 }
 
 // ════════════════════════════════════════════════════
@@ -2248,7 +2409,9 @@ function closePanel() {
   activeTab = 'map';
 }
 
-map.on('click movestart', () => { if (!DESK.matches && curPanel && sheetState === 'full') setSheet('half'); });
+// Only a deliberate gesture (tap or drag on the map) shrinks a full sheet — popup auto-pan or a flyTo finishing
+// right after a tab tap used to collapse the Prices sheet to half height.
+map.on('click dragstart', () => { if (!DESK.matches && curPanel && sheetState === 'full') setSheet('half'); });
 
 // ── Draggable sheets: full / half / peek (phones & tablets). Drag the handle; swipe past peek to close. ──
 let sheetState = 'full', curPanel = null;
@@ -2351,7 +2514,7 @@ function setListMode(m) {
 }
 async function shareStation(id) {
   const s = findStation(id); if (!s) return;
-  const cp = cheapest(s) || s.prices?.[0];
+  const cp = cheapest(s);
   const name = s.name || s.brand || 'Fuel station';
   const url = `${location.origin}${location.pathname}?s=${encodeURIComponent(id)}`;
   const text = cp ? `${fuelLabel(cp)} ${cp.price.toFixed(2)} ${SYM[cp.currency] || cp.currency} — ${name}${s.city ? ', ' + s.city : ''}` : name;
@@ -2360,7 +2523,14 @@ async function shareStation(id) {
 }
 
 // Country under the map centre (smallest containing bbox wins, so LU beats BE, MC beats FR…)
+let _ccKey = '', _ccVal = null;
 function centerCountry() {
+  const c0 = map.getCenter(), key = c0.lat.toFixed(2) + ',' + c0.lng.toFixed(2) + ',' + _qVer;
+  if (key === _ccKey) return _ccVal;
+  _ccVal = centerCountry0(); _ccKey = key;
+  return _ccVal;
+}
+function centerCountry0() {
   const c = map.getCenter(); const cands = [];
   for (const [cc, b] of Object.entries(CB)) if (b.contains(c)) cands.push([cc, (b.getNorth() - b.getSouth()) * (b.getEast() - b.getWest())]);
   if (!cands.length) return null;
@@ -2391,7 +2561,7 @@ const ROAD_FACTOR = 1.3;                       // straight line -> typical road 
 function fuelKeysOf(s) {
   const ks = [];
   for (const p of (s.prices || [])) {
-    if (p.basis === 'regulated_max' || !(p.price > 0)) continue;
+    if (p.basis === 'regulated_max' || !(p.price > 0) || p.plausible === false) continue;
     const k = fuelKeyOf(p); if (!ks.includes(k)) ks.push(k);
   }
   const order = ['P95', 'P98', 'DIESEL'];
@@ -2462,7 +2632,7 @@ function cheapestInView() {
   if (_pulse) map.removeLayer(_pulse);
   _pulse = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', html:'<div class="pulse-ring"><i></i><i></i><i></i></div>', iconSize:[0,0] }), interactive:false, zIndexOffset:900 }).addTo(map);
   setTimeout(() => { if (_pulse) { map.removeLayer(_pulse); _pulse = null; } }, 6000);
-  map.once('moveend', () => { setTimeout(() => { const m = byId.get(s.id); if (m) m.openPopup(); buzz([30, 40, 30]); }, 150); });
+  map.once('moveend', () => { setTimeout(() => { openStation(s); buzz([30, 40, 30]); }, 150); });
   toast(t('cheapResult', { p: `${p.price.toFixed(2)} ${SYM[p.currency] || p.currency}`, n: s.name || s.brand || '—', c: n.toLocaleString() }), 5200);
 }
 
@@ -2694,7 +2864,7 @@ function rtDraw(fit) {
 function rtFocus(i) {
   const r = rt.res?.rows?.[i]; if (!r) return;
   map.setView([r.s.lat, r.s.lon], Math.max(map.getZoom(), 14));
-  setTimeout(() => { const m = byId.get(r.s.id); if (m) m.openPopup(); }, 400);
+  setTimeout(() => openStation(r.s), 400);
   setSheet('peek');
 }
 function rtVia(i) {
@@ -2923,10 +3093,45 @@ async function installApp() {
 window.addEventListener('appinstalled', () => { const r = document.getElementById('install-row'); if (r) r.style.display = 'none'; });
 
 // ════════════════════════════════════════════════════
+// Theme
+// ════════════════════════════════════════════════════
+function curTheme() { try { return localStorage.getItem('efp_theme') || 'auto'; } catch (_) { return 'auto'; } }
+function applyTheme() {
+  const v = curTheme();
+  if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('on', b.dataset.theme === v));
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = isDark() ? '#0E1115' : '#F4F5F7';
+  applyBasemap();
+}
+function setTheme(v) { try { if (v === 'auto') localStorage.removeItem('efp_theme'); else localStorage.setItem('efp_theme', v); } catch (_) {} applyTheme(); }
+(_darkMQ.addEventListener ? _darkMQ.addEventListener('change', applyTheme) : _darkMQ.addListener(applyTheme));
+
+// ════════════════════════════════════════════════════
+// iPhone Safari: keep the app exactly the visible height (address bar / toolbar / keyboard)
+// ════════════════════════════════════════════════════
+// 100dvh handles current iOS; this covers iOS < 15.4 and, above all, the on-screen keyboard, which iOS does not
+// resize the layout for — the search sheet would sit behind it. visualViewport tells us the real visible height.
+(function fitViewport() {
+  const vv = window.visualViewport, root = document.documentElement;
+  const dvh = window.CSS && CSS.supports && CSS.supports('height', '100dvh');
+  if (!vv || (dvh && !IS_IOS)) return;
+  const sync = () => {
+    root.style.setProperty('--app-h', Math.round(vv.height) + 'px');
+    const kb = window.innerHeight - vv.height > 140;           // keyboard open
+    document.body.classList.toggle('kb', kb);
+    if (!kb && window.scrollY) window.scrollTo(0, 0);            // iOS leaves the page shifted after the keyboard closes
+    if (map) map.invalidateSize({ pan:false });
+  };
+  vv.addEventListener('resize', sync); vv.addEventListener('scroll', () => { if (window.scrollY || vv.offsetTop) window.scrollTo(0, 0); });
+  window.addEventListener('orientationchange', () => setTimeout(sync, 250));
+  sync();
+})();
+
+// ════════════════════════════════════════════════════
 // Boot
 // ════════════════════════════════════════════════════
 (async () => {
-  applyStaticI18n();
+  applyStaticI18n(); applyTheme();
   metaReady = fetchMeta();
   await Promise.race([metaReady, _sleep(2500)]);
   updStatus(); updPriceLbls(); renderLegend(); renderCompare(); updLabel();
