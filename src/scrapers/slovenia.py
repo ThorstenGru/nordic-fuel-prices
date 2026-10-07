@@ -41,6 +41,13 @@ _HEADERS = {
     "Referer": "https://goriva.si/",
 }
 
+# goriva.si occasionally publishes placeholder/typo prices (e.g. 0.001). Anything outside these
+# EUR bands is dropped instead of being shown as a real price (never "corrected").
+_PRICE_BANDS = {
+    "E5": (0.80, 3.00), "DIESEL": (0.80, 3.00), "LPG": (0.30, 2.00),
+    "HVO100": (0.80, 3.50), "CNG": (0.50, 3.50),
+}
+
 # Slovenia geographic bounds
 _LAT_MIN, _LAT_MAX = 45.4, 46.9
 _LON_MIN, _LON_MAX = 13.3, 16.7
@@ -83,6 +90,7 @@ class SloveniaScraper(BaseScraper):
                 await asyncio.sleep(0.3)
 
         stations = []
+        dropped = 0
         for item in all_items:
             if not isinstance(item, dict):
                 continue
@@ -100,9 +108,12 @@ class SloveniaScraper(BaseScraper):
                     price = float(val)
                 except (TypeError, ValueError):
                     continue
-                if price > 0:
-                    prices.append(self.price_entry(ft, price, unit))
-                    seen.add(ft)
+                lo, hi = _PRICE_BANDS.get(ft, (0.0, 1e9))
+                if not (lo <= price <= hi):
+                    dropped += 1
+                    continue
+                prices.append(self.price_entry(ft, price, unit))
+                seen.add(ft)
 
             if not prices:
                 continue
@@ -132,5 +143,7 @@ class SloveniaScraper(BaseScraper):
                 "prices":     prices,
             })
 
-        print(f"[SI] {len(stations)} stations from goriva.si")
+        print(f"[SI] {len(stations)} stations from goriva.si ({dropped} implausible prices dropped)")
+        if not stations:
+            raise RuntimeError("goriva.si returned no usable stations")
         return stations

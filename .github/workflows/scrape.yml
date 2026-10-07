@@ -46,6 +46,7 @@ jobs:
       - name: Run scrapers
         env:
           TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}
+          GOON_API_KEY: ${{ secrets.GOON_API_KEY }}
           FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
         run: python src/main.py
 
