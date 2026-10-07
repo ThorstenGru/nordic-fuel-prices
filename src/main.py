@@ -34,6 +34,9 @@ try:
 except OSError:
     APP_VERSION = "unknown"
 FORCE_REFRESH = os.environ.get("FORCE_REFRESH", "0") == "1"
+# Country codes (comma-separated) whose result may shrink once past the regression guards, e.g. after
+# deliberately dropping a source. Set for a single workflow_dispatch run only.
+ALLOW_SHRINK = {c.strip().upper() for c in os.environ.get("ALLOW_SHRINK", "").split(",") if c.strip()}
 
 # Sanity band per currency (min, max) for ONE unit (litre / kg). Anything outside is a
 # currency/unit error or a parsing glitch and is dropped (and counted in health.json).
@@ -245,6 +248,8 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         reason = error
     elif not clean:
         reason = "scraper returned 0 usable stations"
+    elif cc in ALLOW_SHRINK:
+        pass
     elif prev_count >= 20 and summ["station_count"] < prev_count * MIN_KEEP_RATIO:
         reason = f"station count regressed {prev_count} -> {summ['station_count']}"
     elif prev_priced >= 50 and summ["priced_count"] < prev_priced * 0.5:

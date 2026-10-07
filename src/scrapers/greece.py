@@ -39,6 +39,9 @@ from merge_engine import MergeConfig, SourceResult, merge_sources
 GR_TZ = "Europe/Athens"
 UA = "EuroFuelPrices/1.0 (+https://eurofuelprices.com)"
 
+# DISABLED 2026-10-07: the fuelGR-scraper dataset has no licence and re-scrapes the fuelGR app backend,
+# whose owner states it is closed to third parties. Re-enable only with written permission from fuelGR.
+USE_FUELGR = False
 FUELGR_RELEASES_API = "https://api.github.com/repos/athanasso/fuelGR-scraper/releases?per_page=5"
 FUELGR_URL = "https://github.com/athanasso/fuelGR-scraper/releases/download/{tag}/stations_latest.min.json"
 FUELGR_PREF_URL = "https://github.com/athanasso/fuelGR-scraper/releases/download/{tag}/prefectures_latest.min.json"
@@ -64,9 +67,8 @@ FUELGR_MAP = {"u95": ("E5", "L"), "d": ("DIESEL", "L"), "lpg": ("LPG", "L"), "cn
 FPEU_MAP = {"sp95": ("E5", "L"), "diesel": ("DIESEL", "L"), "gpl": ("LPG", "L"), "lpg": ("LPG", "L"),
             "cng": ("CNG", "kg")}
 
-SOURCE_STRING = ("fuelGR-scraper (github.com/athanasso/fuelGR-scraper, Greek Ministry of Development "
-                 "fuelprices.gr data) + fuel-prices.eu (CC BY 4.0, https://www.fuel-prices.eu/) "
-                 "+ anwb.nl gap filler")
+SOURCE_STRING = ("anwb.nl (ANWB POI API) prices + fuel-prices.eu station locations "
+                 "(CC BY 4.0, https://www.fuel-prices.eu/)")
 
 # last-resort planning centres if no source delivered coordinates (Athens, Thessaloniki, Patras, ...)
 FALLBACK_CENTRES = [(37.98, 23.73), (40.64, 22.94), (38.25, 21.73), (35.34, 25.14), (39.66, 20.85),
@@ -125,7 +127,10 @@ class GreeceScraper(BaseScraper):
         errors: Dict[str, str] = {}
 
         # fuelgr and anwb are independent; anwb is also the planning pool when fuelgr is down
-        res = await asyncio.gather(self._fetch_fuelgr(), self._fetch_anwb(), return_exceptions=True)
+        async def _no_fuelgr():
+            raise RuntimeError("fuelGR source disabled (no licence)")
+        res = await asyncio.gather(self._fetch_fuelgr() if USE_FUELGR else _no_fuelgr(), self._fetch_anwb(),
+                                   return_exceptions=True)
         for name, r in zip(("fuelgr", "anwb"), res):
             if isinstance(r, BaseException):
                 errors[name] = f"{type(r).__name__}: {r}"

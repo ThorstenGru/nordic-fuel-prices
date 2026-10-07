@@ -16,6 +16,10 @@ on:
         description: "Refresh every source now (ignore per-source cadence)"
         type: boolean
         default: false
+      allow_shrink:
+        description: "Country codes (comma-separated) allowed to shrink past the regression guards, one run only"
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -48,6 +52,7 @@ jobs:
           TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}
           GOON_API_KEY: ${{ secrets.GOON_API_KEY }}
           FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
+          ALLOW_SHRINK: ${{ inputs.allow_shrink }}
         run: python src/main.py
 
       - name: Copy web files to data dir
