@@ -47,3 +47,13 @@ class IsraelCapGuard(unittest.TestCase):
         self.assertIn("refinery", cap_is_valid(self.CAP, 2809.06, 3200.0, d))
         self.assertIn("unavailable", cap_is_valid(self.CAP, None, 3110.44, d))
         self.assertIn("days old", cap_is_valid(self.CAP, 2809.06, 3110.44, date(2026, 12, 1)))
+
+
+class AlbaniaCap(unittest.TestCase):
+    CAP = {"decision_date": "2026-10-07", "retail_max_lek": {"DIESEL": 210, "95": 190}}
+
+    def test_age_and_convert(self):
+        from scrapers.albania import cap_age_ok, to_eur_cap
+        self.assertIsNone(cap_age_ok(self.CAP, date(2026, 10, 20)))
+        self.assertIn("days old", cap_age_ok(self.CAP, date(2026, 10, 25)))
+        self.assertEqual(to_eur_cap(self.CAP, 100.0)["prices"], {"DIESEL": 2.1, "95": 1.9})
