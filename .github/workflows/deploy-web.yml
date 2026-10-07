@@ -40,7 +40,7 @@ jobs:
           for i in 1 2 3 4 5; do
             git -C gh-pages-dir fetch --depth 1 origin gh-pages
             git -C gh-pages-dir reset --hard origin/gh-pages
-            rsync -a --delete --exclude='.git' --exclude='se/' --exclude='at/' --exclude='de/' --exclude='ch/' --exclude='fr/' --exclude='sitemap-*.xml' web/. gh-pages-dir/
+            rsync -a --delete --filter='P /*.json' --exclude='.git' --exclude='se/' --exclude='at/' --exclude='de/' --exclude='ch/' --exclude='fr/' --exclude='sitemap-*.xml' web/. gh-pages-dir/
             git -C gh-pages-dir add -A
             git -C gh-pages-dir diff-index --quiet HEAD || git -C gh-pages-dir commit -m "Deploy web files from main [skip ci]"
             if git -C gh-pages-dir push origin HEAD:gh-pages; then exit 0; fi
