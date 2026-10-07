@@ -36,7 +36,7 @@
   frame-ancestors 'none';
 ">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>EuroFuelPrices — Live European Fuel Prices</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -58,7 +58,9 @@
   --green:  #16A34A;   /* fresh green — official / best-price semantic */
   --amber:  #F59E0B;
   --red:    #EF4444;
-  --coral:  #E8542F;   /* primary CTA / cluster markers */
+  --coral:  #E8542F;   /* brand primary — CTA / cluster markers */
+  --sun:    #FFB703;   /* brand accent */
+  --cream:  #FFF8EF;   /* brand warm surface */
   --tab-h:  58px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -377,6 +379,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   }
 }
 
+.brand-card { background:var(--cream); border:1px solid #F3E3CC; border-radius:18px; padding:14px 16px; margin:2px 0 6px; }
+.brand-card img { display:block; height:40px; width:auto; max-width:100%; }
+.brand-card p { margin-top:8px; font-size:0.74rem; color:var(--text2); line-height:1.45; }
+
 /* ── Trust / source-grade explainer overlay ── */
 .trust-overlay {
   display:none; position:fixed; inset:0; z-index:2500;
@@ -578,6 +584,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <div class="panel" id="p-filter">
   <div class="drag-handle"></div>
   <div class="panel-scroll">
+    <div class="brand-card"><img src="logo.svg" alt="EuroFuelPrices" width="220" height="40"><p data-i18n="brandTag">Live fuel prices at every station across Europe.</p></div>
     <label data-i18n="labelCountry">Country</label>
     <select id="mobCountry" onchange="setCountry(this.value)"></select>
     <label data-i18n="labelFuelType">Fuel Type</label>
@@ -841,23 +848,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });

@@ -16,6 +16,7 @@ const SHELL_ASSETS = [
   './admin.html',
   './manifest.json',
   './icon.svg',
+  './logo.svg',
 ];
 
 // CDN assets — versioned URLs, safe to cache indefinitely
