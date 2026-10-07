@@ -19,8 +19,33 @@ Why per-station prices are unavailable:
 
 import aiohttp
 import asyncio
+import math
 from typing import List, Dict, Any
 from .base import BaseScraper
+from ._anwb import ANWBScraper
+
+
+class _NOAnwb(ANWBScraper):
+    """ANWB now serves Norwegian stations with diesel/95 prices (0 in June 2026, ~1k by Oct 2026)."""
+    COUNTRY    = "NO"
+    ISO3       = "NOR"
+    CURRENCY   = "NOK"
+    BBOX       = (57.9, 4.3, 71.3, 31.3)
+    SOURCE     = "anwb.nl (ANWB POI API)"
+    CONFIDENCE = 0.80
+
+
+def _near(lat: float, lon: float, grid: Dict, radius_m: float = 100.0) -> bool:
+    """True if any point in ``grid`` (cell -> [(lat, lon)]) is within radius_m."""
+    ci, cj = int(lat * 100), int(lon * 50)
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            for (la, lo) in grid.get((ci + di, cj + dj), ()):
+                dy = (la - lat) * 111_320
+                dx = (lo - lon) * 111_320 * math.cos(math.radians(lat))
+                if dx * dx + dy * dy <= radius_m * radius_m:
+                    return True
+    return False
 
 
 # ── OpenStreetMap (Overpass API) ───────────────────────────────────────────────
@@ -54,31 +79,43 @@ SSB_BODY = {
 class NorwayScraper(BaseScraper):
     COUNTRY    = "NO"
     CURRENCY   = "NOK"
-    SOURCE     = "openstreetmap.org (locations) + ssb.no (national avg)"
-    CONFIDENCE = 0.75  # Locations from OSM, no per-station prices available
-    GRADE = "L"
+    SOURCE     = "anwb.nl (ANWB POI API) + openstreetmap.org (locations)"
+    CONFIDENCE = 0.80
+    GRADE = "C"
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        osm_task, ssb_task = self._fetch_osm(), self._fetch_ssb()
-        osm_els, ssb_avg = await asyncio.gather(osm_task, ssb_task, return_exceptions=True)
+        anwb_res, osm_els, ssb_avg = await asyncio.gather(
+            _NOAnwb(self.session).fetch_stations(), self._fetch_osm(), self._fetch_ssb(),
+            return_exceptions=True)
 
+        if isinstance(anwb_res, Exception):
+            print(f"[NO/ANWB] failed: {anwb_res}")
+            anwb_res = []
         if isinstance(osm_els, Exception):
             print(f"[NO/OSM] failed: {osm_els}")
             osm_els = []
         if isinstance(ssb_avg, Exception) or not ssb_avg:
-            print("[NO/SSB] failed or no data")
             ssb_avg = []
 
-        stations = self._parse_osm(osm_els)
+        stations: List[Dict[str, Any]] = list(anwb_res)
+        grid: Dict = {}
+        for st in stations:
+            grid.setdefault((int(st["lat"] * 100), int(st["lon"] * 50)), []).append((st["lat"], st["lon"]))
 
-        # SSB price is a national average — store it only if no OSM data came back,
-        # so the map isn't completely empty.
+        # OSM adds only stations ANWB does not know (shown without prices, never invented ones)
+        extra = [o for o in self._parse_osm(osm_els) if not _near(o["lat"], o["lon"], grid)]
+        stations.extend(extra)
+
         if not stations and ssb_avg:
             stations = self._fallback_ssb_markers(ssb_avg)
+        if not stations:
+            raise RuntimeError("Norway: no station source returned data")
 
         if ssb_avg:
-            print(f"[NO] SSB national avg: {ssb_avg}")
-        print(f"[NO] {len(stations)} stations from OSM (no per-station prices available)")
+            print(f"[NO] SSB national avg (reference only, not attached to stations): {ssb_avg}")
+        priced = sum(1 for st in stations if st.get("prices"))
+        print(f"[NO] {len(stations)} stations: {len(anwb_res)} from ANWB, {len(extra)} OSM-only "
+              f"({priced} priced)")
         return stations
 
     # ── OSM ────────────────────────────────────────────────────────────────────

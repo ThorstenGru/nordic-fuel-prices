@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
 from .base import BaseScraper, iso_utc
+from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
 
@@ -144,10 +145,69 @@ def _parse_station_id(station_id: str) -> Dict[str, str]:
 
 # ── Scraper ────────────────────────────────────────────────────────────────────
 
+class _SEAnwb(ANWBScraper):
+    """ANWB's Swedish feed (~1.5k stations with diesel/95 in EUR, converted to SEK, no timestamps)."""
+    COUNTRY    = "SE"
+    ISO3       = "SWE"
+    CURRENCY   = "SEK"
+    BBOX       = (55.0, 10.9, 69.1, 24.2)
+    SOURCE     = "anwb.nl (ANWB POI API)"
+    CONFIDENCE = 0.80
+
+
+def _merge_anwb(stations: List[Dict], anwb: List[Dict]) -> Tuple[int, int, int]:
+    """Fold ANWB stations into ``stations`` conservatively (never averages, never invents timestamps).
+
+    nearest station within MATCH_RADIUS_M that has not been claimed by another ANWB record:
+      - no prices yet   -> take the ANWB prices
+      - has prices      -> only fill fuel types it lacks
+    no such station     -> ANWB station is added as its own pin.
+    Returns (filled, topped_up, added).
+    """
+    cells: Dict[Tuple[int, int], List[Dict]] = defaultdict(list)
+    for st in stations:
+        cells[(round(st["lat"] / 0.002), round(st["lon"] / 0.002))].append(st)
+    claimed: set = set()
+    filled = topped = 0
+    added: List[Dict] = []
+    for a in anwb:
+        if not a.get("prices"):
+            continue
+        cx, cy = round(a["lat"] / 0.002), round(a["lon"] / 0.002)
+        best, best_d = None, 1e9
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for st in cells.get((cx + dx, cy + dy), []):
+                    if id(st) in claimed:
+                        continue
+                    d = _dist_m(a["lat"], a["lon"], st["lat"], st["lon"])
+                    if d < best_d:
+                        best, best_d = st, d
+        for pr in a["prices"]:
+            pr["source"] = "anwb"
+        if best is not None and best_d <= MATCH_RADIUS_M:
+            claimed.add(id(best))
+            have = {p["fuel_type"] for p in best["prices"]}
+            if not have:
+                best["prices"] = a["prices"]
+                best["source"] = a["source"]
+                best["confidence"] = a["confidence"]
+                filled += 1
+            else:
+                extra = [p for p in a["prices"] if p["fuel_type"] not in have]
+                if extra:
+                    best["prices"] = best["prices"] + extra
+                    topped += 1
+        else:
+            added.append(a)
+    stations.extend(added)
+    return filled, topped, len(added)
+
+
 class SwedenScraper(BaseScraper):
     COUNTRY    = "SE"
     CURRENCY   = "SEK"
-    SOURCE     = "openstreetmap.org + bensinpriser.nu"
+    SOURCE     = "openstreetmap.org + bensinpriser.nu + anwb.nl"
     CONFIDENCE = 0.70
     GRADE      = "D"
     REFRESH_MINUTES = 55   # upstream (bensinpriser.nu) itself only refreshes about every 3 h
@@ -246,6 +306,12 @@ class SwedenScraper(BaseScraper):
                 extra.append(p)
 
         all_stations = osm_stations + extra
+        try:
+            anwb = await _SEAnwb(self.session).fetch_stations()
+            filled, topped, added = _merge_anwb(all_stations, anwb)
+            print(f"[SE] ANWB: {len(anwb)} stations -> {filled} filled, {topped} topped up, {added} added")
+        except Exception as e:   # noqa: BLE001 — ANWB is a supplement here, never fatal
+            print(f"[SE/ANWB] failed: {e}")
         with_prices = sum(1 for s in all_stations if s["prices"])
         print(f"[SE] {len(all_stations)} stations total, {with_prices} with prices "
               f"(OSM match {matched_n}, geocode-snap {snapped}, own pin {len(extra)}, "

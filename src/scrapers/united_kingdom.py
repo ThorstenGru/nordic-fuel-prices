@@ -138,7 +138,16 @@ class UnitedKingdomScraper(ANWBScraper):
                     continue
                 p["source"] = "anwb"
                 p["updated_at"] = None
+                # Benchmark 2026-10-07: ANWB's UK "Euro 95 (E10)" price is really the E5 super-unleaded
+                # price (85% within 1 p of the retailer E5, 8% of E10; ~17 p above true E10). Label it E5.
+                if p["fuel_type"] == "E10":
+                    p["fuel_type"] = "E5"
                 ps.append(p)
+            best: Dict[str, Dict[str, Any]] = {}
+            for p in ps:                       # E5 can now appear twice (95-super and 98): keep the lower
+                if p["fuel_type"] not in best or p["price"] < best[p["fuel_type"]]["price"]:
+                    best[p["fuel_type"]] = p
+            ps = list(best.values())
             s["prices"] = ps
             s["source"] = "anwb.nl (ANWB POI API)"
             s["confidence"] = 0.70

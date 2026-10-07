@@ -85,7 +85,7 @@ _FUEL_MAP = {
     "EURO98":         ("E5",     "L"),
     "SUPER_E5":       ("E5",     "L"),
     "DIESEL":         ("DIESEL", "L"),
-    "DIESEL_SPECIAL": ("DIESEL", "L"),
+    "DIESEL_SPECIAL": ("DIESEL_SPECIAL", "L"),   # resolved per station below
     "LPG":            ("LPG",    "L"),
     "AUTOGAS":        ("LPG",    "L"),
     "CNG":            ("CNG",    "kg"),
@@ -206,6 +206,16 @@ class ANWBScraper(BaseScraper):
                 # EUR as delivered; converted to local currency below when a rate exists
                 prices.append({"fuel_type": fuel_type, "price": float(val), "currency": "EUR",
                                "unit": unit, "updated_at": None})
+
+            # Regular vs premium diesel: a station must never carry two DIESEL prices (benchmark
+            # 2026-10-07: they differ by 7-24 ct). Prefer the regular one; use "special" only when
+            # it is the only diesel the station reports (ANWB tags regular diesel as premium in HR).
+            if any(p["fuel_type"] == "DIESEL" for p in prices):
+                prices = [p for p in prices if p["fuel_type"] != "DIESEL_SPECIAL"]
+            else:
+                for p in prices:
+                    if p["fuel_type"] == "DIESEL_SPECIAL":
+                        p["fuel_type"] = "DIESEL"
 
             safe_id = str(sid).replace("|", "_").replace(" ", "_")
             stations.append({
