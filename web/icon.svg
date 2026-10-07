@@ -1,7 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <rect width="512" height="512" rx="112" fill="#E8542F"/>
-<path d="M256 92 L165.1 255.5 A104 104 0 1 0 346.9 255.5 Z" fill="#fff"/>
-<g transform="translate(256 314) scale(1.22) translate(-265 -319)">
-<g fill="#0F766E"><path fill-rule="evenodd" d="M222 276a10 10 0 0 1 10-10h40a10 10 0 0 1 10 10v86h-60zM234 278h36v26h-36z"/><rect x="212" y="362" width="80" height="10" rx="5"/></g>
+<circle cx="256.0" cy="92.0" r="10" fill="#FFE3DA"/>
+<circle cx="354.0" cy="118.3" r="10" fill="#FFE3DA"/>
+<circle cx="425.7" cy="190.0" r="10" fill="#FFE3DA"/>
+<circle cx="452.0" cy="288.0" r="10" fill="#FFE3DA"/>
+<circle cx="425.7" cy="386.0" r="10" fill="#FFE3DA"/>
+<circle cx="354.0" cy="457.7" r="10" fill="#FFE3DA"/>
+<circle cx="256.0" cy="484.0" r="10" fill="#FFE3DA"/>
+<circle cx="158.0" cy="457.7" r="10" fill="#FFE3DA"/>
+<circle cx="86.3" cy="386.0" r="10" fill="#FFE3DA"/>
+<circle cx="60.0" cy="288.0" r="10" fill="#FFE3DA"/>
+<circle cx="86.3" cy="190.0" r="10" fill="#FFE3DA"/>
+<circle cx="158.0" cy="118.3" r="10" fill="#FFE3DA"/>
+<path d="M256 138 L180.8 252.6 A90 90 0 1 0 331.2 252.6 Z" fill="#fff"/>
+<g transform="translate(256 298) scale(1) translate(-265 -319)">
+<g fill="#0F766E"><path fill-rule="evenodd" d="M222 276a10 10 0 0 1 10-10h40a10 10 0 0 1 10 10v86h-60zM232 276h40v30h-40z"/><rect x="212" y="362" width="80" height="10" rx="5"/></g>
+<rect x="234.0" y="278" width="7.4" height="26" fill="#16A34A"/>
+<rect x="241.2" y="278" width="7.4" height="26" fill="#84CC16"/>
+<rect x="248.4" y="278" width="7.4" height="26" fill="#F4B000"/>
+<rect x="255.6" y="278" width="7.4" height="26" fill="#F97316"/>
+<rect x="262.8" y="278" width="7.4" height="26" fill="#DC2626"/>
 <path d="M282 296h14a8 8 0 0 1 8 8v36a7 7 0 0 0 14 0v-34l-14-16" fill="none" stroke="#0F766E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></g>
 </svg>
