@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 160">
 <g transform="scale(0.3125)"><rect width="512" height="512" rx="112" fill="#E8542F"/><rect width="512" height="512" rx="112" fill="#E8542F"/>
 <path d="M256 92 L165.1 255.5 A104 104 0 1 0 346.9 255.5 Z" fill="#fff"/>
-<text x="256" y="362" font-family="Segoe UI,system-ui,sans-serif" font-size="170" font-weight="700" fill="#0F766E" text-anchor="middle">€</text>
-<circle cx="388" cy="132" r="30" fill="#FFB703"/></g>
+<g transform="translate(256 314) scale(1.22) translate(-265 -319)">
+<g fill="#0F766E"><path fill-rule="evenodd" d="M222 276a10 10 0 0 1 10-10h40a10 10 0 0 1 10 10v86h-60zM234 278h36v26h-36z"/><rect x="212" y="362" width="80" height="10" rx="5"/></g>
+<path d="M282 296h14a8 8 0 0 1 8 8v36a7 7 0 0 0 14 0v-34l-14-16" fill="none" stroke="#0F766E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></g></g>
 <text x="184" y="104" font-family="Segoe UI,system-ui,sans-serif" font-size="78" font-weight="700" fill="#16181D">Euro<tspan fill="#E8542F">Fuel</tspan><tspan fill="#0F766E" font-weight="600">Prices</tspan></text>
 </svg>
