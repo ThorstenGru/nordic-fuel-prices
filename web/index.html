@@ -931,7 +931,7 @@ const CNAMES = {
 const SYM = {
   EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',
   PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',
-  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪',
+  BGN:'лв',RSD:'din',MKD:'ден',ALL:'lek',BAM:'BAM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪',
 };
 const UNIT = { L:'/L', kWh:'/kWh', kg:'/kg' };
 const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40;
@@ -1952,7 +1952,7 @@ function showNearby() {
     return;
   }
 
-  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£' };
+  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'lek',BAM:'BAM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪' };
   let bestGlobal = null, bestGlobalKm = null, bestSt = null;
   const seen = [];
   for (const {s,km} of cands) {
