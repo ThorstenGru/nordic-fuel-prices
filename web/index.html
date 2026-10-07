@@ -130,6 +130,24 @@ html, body {
 #fab:active { transform:scale(0.95); box-shadow:0 2px 8px rgba(232,84,47,0.25); }
 #fab.busy   { background:var(--surf2); color:var(--text2); box-shadow:none; }
 
+/* ── Draggable bottom sheets (phones/tablets): full · half · peek ── */
+.panel.dragging { transition:none; }
+.drag-handle { position:relative; margin:0 auto; width:100%; height:30px; background:none; border-radius:0; cursor:grab; touch-action:none; flex-shrink:0; }
+.drag-handle::after { content:''; position:absolute; left:50%; top:12px; width:40px; height:5px; margin-left:-20px; border-radius:3px; background:#D5D8DD; }
+.panel.dragging .drag-handle::after { background:var(--coral); }
+
+/* ── Navigation chooser ── */
+.nav-row { display:flex; align-items:center; gap:14px; padding:11px 2px; border-top:1px solid var(--border); min-height:56px; cursor:pointer; font-size:0.98rem; font-weight:600; background:none; border-left:0; border-right:0; border-bottom:0; width:100%; font-family:inherit; color:var(--text); text-align:left; }
+.nav-row:active { background:var(--surf2); }
+.nav-ico { width:40px; height:40px; border-radius:12px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0; }
+.nav-sub { font-size:0.78rem; color:var(--text2); margin:-4px 0 10px; line-height:1.4; }
+.nav-rem { display:flex; align-items:center; gap:10px; font-size:0.82rem; color:var(--text2); margin-top:12px; }
+.nav-rem input { width:20px; height:20px; accent-color:var(--coral); }
+.nav-sel { width:100%; background:var(--surf); color:var(--text); border:1px solid var(--border); border-radius:14px; padding:12px 14px; font-size:16px; font-family:inherit; }
+.install-row { width:100%; margin-top:10px; background:var(--cream); border:1px solid #F3E3CC; border-radius:14px; color:var(--text); font:inherit; font-size:0.88rem; font-weight:600; padding:13px; cursor:pointer; }
+#cheap-btn.attn { animation:attn 1.1s ease-in-out 3; }
+@keyframes attn { 50% { transform:scale(1.08); box-shadow:0 0 0 10px rgba(255,199,44,0.25); } }
+
 /* ── Cheapest-in-view button, toast, pulse ── */
 #cheap-btn {
   position:absolute; right:14px; z-index:1100;
@@ -141,6 +159,7 @@ html, body {
 }
 #cheap-btn:active { transform:scale(0.95); }
 body.sheet #fab, body.sheet #cheap-btn, body.sheet #legend { display:none; }
+body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); display:flex; }
 #toast {
   position:fixed; left:12px; right:12px; z-index:3000; text-align:center;
   bottom:calc(var(--tab-h) + var(--safe-b) + 128px);
@@ -348,7 +367,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
     overflow:hidden;
   }
-  .panel.open { transform:translateY(0); }
+  .panel.open { transform:translateY(var(--sy, 0px)); }
   .drag-handle {
     width:36px; height:4px; background:var(--border); border-radius:2px;
     margin:10px auto 6px; flex-shrink:0; cursor:grab;
@@ -690,7 +709,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   <div class="drag-handle"></div>
   <div class="phead">
     <h2><span data-i18n="stationsHeader">Stations</span> <span id="mobCount">—</span></h2>
-    <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortDefault">Default</span></button>
+    <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortView">In view</span></button>
   </div>
   <div class="seg" id="list-seg">
     <button class="on" data-m="all" onclick="setListMode('all')"><span data-i18n="allSt">All</span></button>
@@ -728,6 +747,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
       <option value="LPG" data-i18n="fuelOptLPG">LPG</option>
       <option value="CNG" data-i18n="fuelOptCNG">CNG</option>
     </select>
+    <label data-i18n="navPrefLabel">Navigation app</label>
+    <select id="navPref" class="nav-sel" onchange="setNavPref(this.value)"></select>
     <label data-i18n="tankLabel">Tank size</label>
     <div class="tank-row" id="tank-row">
       <button data-l="20" onclick="setTank(20)">20 L</button><button data-l="30" onclick="setTank(30)">30 L</button><button data-l="40" onclick="setTank(40)">40 L</button><button data-l="50" onclick="setTank(50)">50 L</button><button data-l="70" onclick="setTank(70)">70 L</button>
@@ -743,6 +764,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
       <button class="lang-btn" data-lang="es" onclick="setLang('es')">🇪🇸 ES</button>
     </div>
 
+    <button class="install-row" id="install-row" onclick="installApp()" style="display:none">📲 <span data-i18n="installApp2">Add to Home Screen</span></button>
     <button class="trust-link" onclick="openTrust()"><span data-i18n="trustLinkLabel">ℹ How we grade sources</span></button>
   </div>
 </div>
@@ -792,6 +814,17 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <div id="toast"></div>
+
+<!-- Navigation app chooser -->
+<div id="nav-overlay" class="trust-overlay" onclick="if(event.target===this)closeNav()">
+  <div class="trust-card">
+    <div class="trust-title" data-i18n="navTitle">Navigate with</div>
+    <div class="nav-sub" id="nav-sub"></div>
+    <div id="nav-list"></div>
+    <label class="nav-rem"><input type="checkbox" id="nav-rem"> <span data-i18n="navRemember">Use this app next time</span></label>
+    <button class="trust-dismiss" style="background:var(--surf2);color:var(--text);margin-top:14px" onclick="closeNav()"><span data-i18n="cancel">Cancel</span></button>
+  </div>
+</div>
 
 <!-- Backdrop -->
 <div id="bd" onclick="closePanel()"></div>
@@ -991,23 +1024,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { cheapHere:'Cheapest here', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'🏆 {p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap ♥ on a station to save it here.', share:'Share', copied:'Link copied', tankLabel:'Tank size', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { sortView:'In view', navTitle:'Navigate with', navRemember:'Use this app next time', cancel:'Cancel', navCopy:'Copy address', navCopied:'Address copied', navOther:'Other app…', navPrefLabel:'Navigation app', navAsk:'Ask every time', installApp2:'Add to Home Screen', iosInstall:'Tap the Share button, then “Add to Home Screen”.', cheapTip:'Tip: tap 🏆 to jump to the cheapest station in view.', cheapHere:'Cheapest here', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'🏆 {p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap ♥ on a station to save it here.', share:'Share', copied:'Link copied', tankLabel:'Tank size', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { cheapHere:'Billigast här', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'🏆 {p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på ♥ vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', tankLabel:'Tankstorlek', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { sortView:'I vyn', navTitle:'Navigera med', navRemember:'Använd den här appen nästa gång', cancel:'Avbryt', navCopy:'Kopiera adress', navCopied:'Adress kopierad', navOther:'Annan app…', navPrefLabel:'Navigeringsapp', navAsk:'Fråga varje gång', installApp2:'Lägg till på hemskärmen', iosInstall:'Tryck på Dela-knappen och sedan ”Lägg till på hemskärmen”.', cheapTip:'Tips: tryck på 🏆 för att hoppa till billigaste stationen i vyn.', cheapHere:'Billigast här', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'🏆 {p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på ♥ vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', tankLabel:'Tankstorlek', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { cheapHere:'Günstigste hier', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'🏆 {p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf ♥, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', tankLabel:'Tankgröße', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { sortView:'Im Ausschnitt', navTitle:'Navigieren mit', navRemember:'Diese App nächstes Mal verwenden', cancel:'Abbrechen', navCopy:'Adresse kopieren', navCopied:'Adresse kopiert', navOther:'Andere App…', navPrefLabel:'Navigations-App', navAsk:'Jedes Mal fragen', installApp2:'Zum Home-Bildschirm', iosInstall:'Tippe auf „Teilen“ und dann auf „Zum Home-Bildschirm“.', cheapTip:'Tipp: Tippe auf 🏆, um zur günstigsten Tankstelle im Ausschnitt zu springen.', cheapHere:'Günstigste hier', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'🏆 {p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf ♥, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', tankLabel:'Tankgröße', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { cheapHere:'Le moins cher ici', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'🏆 {p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez ♥ sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', tankLabel:'Taille du réservoir', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { sortView:'Dans la vue', navTitle:'Naviguer avec', navRemember:'Utiliser cette app la prochaine fois', cancel:'Annuler', navCopy:'Copier l’adresse', navCopied:'Adresse copiée', navOther:'Autre app…', navPrefLabel:'Application de navigation', navAsk:'Toujours demander', installApp2:'Ajouter à l’écran d’accueil', iosInstall:'Touchez Partager, puis « Sur l’écran d’accueil ».', cheapTip:'Astuce : touchez 🏆 pour aller à la station la moins chère en vue.', cheapHere:'Le moins cher ici', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'🏆 {p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez ♥ sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', tankLabel:'Taille du réservoir', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { cheapHere:'Más barata aquí', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'🏆 {p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca ♥ en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', tankLabel:'Tamaño del depósito', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { sortView:'En vista', navTitle:'Navegar con', navRemember:'Usar esta app la próxima vez', cancel:'Cancelar', navCopy:'Copiar dirección', navCopied:'Dirección copiada', navOther:'Otra app…', navPrefLabel:'App de navegación', navAsk:'Preguntar siempre', installApp2:'Añadir a la pantalla de inicio', iosInstall:'Toca Compartir y luego «Añadir a pantalla de inicio».', cheapTip:'Consejo: toca 🏆 para ir a la estación más barata a la vista.', cheapHere:'Más barata aquí', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'🏆 {p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca ♥ en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', tankLabel:'Tamaño del depósito', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
@@ -1035,7 +1068,7 @@ function applyStaticI18n() {
   const fab = document.getElementById('fab');
   if (fab && !fab.classList.contains('busy')) fab.textContent = '📍 ' + t('tabNearby');
   const sortLbl = document.getElementById('mob-sort-lbl');
-  if (sortLbl) sortLbl.textContent = { default: t('sortDefault'), price: t('sortPrice'), distance: t('sortDistance') }[sortMode];
+  if (sortLbl) sortLbl.textContent = { view: t('sortView'), default: t('sortDefault'), price: t('sortPrice'), distance: t('sortDistance') }[sortMode];
 }
 
 function setLang(l) {
@@ -1044,7 +1077,7 @@ function setLang(l) {
   try { localStorage.setItem('efp_lang', l); } catch (_) {}
   applyStaticI18n();
   updStatus();
-  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); }
+  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); }
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'nearby' && myLat != null) showNearby();
 }
@@ -1094,7 +1127,7 @@ const store = {
 let   tank    = store.get('efp_tank', 40);     // litres, used for "fill-up cost"
 let   favs    = store.get('efp_favs', {});     // station id -> { cc, name }
 let   favOnly = false;
-let   sortMode= 'default';    // 'default'|'price'|'distance'
+let   sortMode= 'view';       // 'view'|'default'|'price'|'distance'
 let   sMode   = 'addr';       // search mode
 let   vpOff   = 0;            // virtual scroll offset
 let   activeTab = 'map';
@@ -1262,11 +1295,61 @@ function matches(s) {
   return true;
 }
 
-function navUrl(lat, lon, name) {
-  const lbl = encodeURIComponent(name || 'Fuel Station');
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent))
-    return `maps:?daddr=${lat},${lon}&dirflg=d`;
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`;
+// ── Navigation: pick Google Maps / Waze / Apple Maps / HERE / any Android app ──
+const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+const NAV_APPS = [
+  { id:'google', name:'Google Maps', col:'#4285F4', ltr:'G', show:() => true,
+    url:(la, lo) => `https://www.google.com/maps/dir/?api=1&destination=${la},${lo}&travelmode=driving` },
+  { id:'waze',   name:'Waze',        col:'#05C8F7', ltr:'W', show:() => true,
+    url:(la, lo) => `https://waze.com/ul?ll=${la},${lo}&navigate=yes` },
+  { id:'apple',  name:'Apple Maps',  col:'#1C1C1E', ltr:'', show:() => IS_IOS || /Macintosh/i.test(navigator.userAgent),
+    url:(la, lo) => `https://maps.apple.com/?daddr=${la},${lo}&dirflg=d` },
+  { id:'here',   name:'HERE WeGo',   col:'#00AFAA', ltr:'H', show:() => true,
+    url:(la, lo) => `https://share.here.com/r/mylocation/${la},${lo}?m=d` },
+  { id:'geo',    name:'', col:'#6B7280', ltr:'⋯', show:() => IS_ANDROID,
+    url:(la, lo, nm) => `geo:${la},${lo}?q=${la},${lo}(${encodeURIComponent(nm || 'Fuel station')})` },
+];
+const navName = a => a.id === 'geo' ? t('navOther') : a.name;
+let navPref = store.get('efp_nav', 'ask');
+let _navSt = null;
+function openNavApp(a, st) {
+  const url = a.url(st.lat, st.lon, st.name || st.brand);
+  if (a.id === 'geo') location.href = url; else window.open(url, '_blank', 'noopener');
+}
+function doNav(id) {
+  const st = findStation(id);
+  if (!st || !st.lat || !st.lon) return;
+  const pref = NAV_APPS.find(x => x.id === navPref && x.show());
+  if (pref) { openNavApp(pref, st); return; }
+  _navSt = st;
+  document.getElementById('nav-sub').textContent = [st.name || st.brand, st.address, st.city].filter(Boolean).join(' · ');
+  const apps = NAV_APPS.filter(x => x.show());
+  document.getElementById('nav-list').innerHTML = apps.map(a =>
+    `<button class="nav-row" onclick="pickNav('${a.id}')"><span class="nav-ico" style="background:${a.col}">${a.id === 'apple' ? '' : a.ltr}</span>${esc(navName(a))}</button>`).join('') +
+    `<button class="nav-row" onclick="copyAddr()"><span class="nav-ico" style="background:#9AA1AC">⧉</span>${t('navCopy')}</button>`;
+  document.getElementById('nav-rem').checked = false;
+  document.getElementById('nav-overlay').classList.add('on');
+  buzz(8);
+}
+function closeNav() { document.getElementById('nav-overlay').classList.remove('on'); }
+function pickNav(id) {
+  const a = NAV_APPS.find(x => x.id === id);
+  if (document.getElementById('nav-rem').checked) setNavPref(id);
+  closeNav();
+  if (a && _navSt) openNavApp(a, _navSt);
+}
+async function copyAddr() {
+  const st = _navSt; if (!st) return;
+  const txt = [st.name || st.brand, st.address, st.city].filter(Boolean).join(', ') + `\n${st.lat},${st.lon}`;
+  closeNav();
+  try { await navigator.clipboard.writeText(txt); toast(t('navCopied')); } catch (_) { toast(txt); }
+}
+function setNavPref(v) { navPref = v; store.set('efp_nav', v); fillNavPref(); }
+function fillNavPref() {
+  const sel = document.getElementById('navPref'); if (!sel) return;
+  sel.innerHTML = `<option value="ask">${t('navAsk')}</option>` + NAV_APPS.filter(a => a.show() && a.id !== 'geo').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+  sel.value = NAV_APPS.some(a => a.id === navPref && a.show() && a.id !== 'geo') ? navPref : 'ask';
 }
 
 // ════════════════════════════════════════════════════
@@ -1370,7 +1453,7 @@ function mkPopup(s) {
       + (pv ? `<tr><td class="pv" colspan="3">${pv}</td></tr>` : '');
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
-  const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
+  const goUrl = (s.lat && s.lon) ? true : null;
   return `<div class="pop">
     <div class="pop-name">${flag} ${esc(s.name||s.brand||'—')}</div>
     ${s.address ? `<div class="pop-addr">${esc(s.address)}</div>` : ''}
@@ -1383,7 +1466,7 @@ function mkPopup(s) {
         <button class="pop-act fav-btn${favs[s.id] ? ' on' : ''}" data-fav="${esc(s.id)}" aria-label="${t('saved')}" onclick="toggleFav('${escId(s.id)}')">♥</button>
         <button class="pop-act" aria-label="${t('share')}" onclick="shareStation('${escId(s.id)}')">⤴</button>
       </span>
-      ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 ${t('go')}</a>` : ''}
+      ${goUrl ? `<button class="pop-go" style="border:none;font-family:inherit;cursor:pointer" onclick="doNav('${escId(s.id)}')">🧭 ${t('go')}</button>` : ''}
     </div>
   </div>`;
 }
@@ -1422,13 +1505,6 @@ function mkCard(s, km) {
     ${fillHtml(cp)}
     ${ageHtml(s)}
   </div>`;
-}
-
-function doNav(id) {
-  for (const arr of Object.values(data)) {
-    const s = arr.find(x => x.id === id);
-    if (s?.lat && s?.lon) { window.open(navUrl(s.lat, s.lon, s.name||s.brand), '_blank', 'noopener'); return; }
-  }
 }
 
 // ════════════════════════════════════════════════════
@@ -1535,7 +1611,13 @@ function getAll() {
   for (const arr of Object.values(data))
     for (const s of arr) { if (favOnly ? favs[s.id] : matches(s)) all.push(s); }
   let pricedCmp = null, unpricedCmp = null;
-  if (sortMode === 'distance' && myLat != null) {
+  if (sortMode === 'view' && map.getZoom() >= 8) {
+    // What the map shows, cheapest first — own country before neighbours so currencies never get compared
+    const b = map.getBounds().pad(0.1), cc = centerCountry();
+    const inView = all.filter(s => s.lat && s.lon && b.contains([s.lat, s.lon]));
+    all.length = 0; all.push(...inView);
+    pricedCmp = (a, c) => ((a.country === cc ? 0 : 1) - (c.country === cc ? 0 : 1)) || (cheapest(a).price - cheapest(c).price);
+  } else if (sortMode === 'distance' && myLat != null) {
     const byDist = (a,b) => {
       const da = (a.lat&&a.lon) ? dist(myLat,myLon,a.lat,a.lon) : 99999;
       const db = (b.lat&&b.lon) ? dist(myLat,myLon,b.lat,b.lon) : 99999;
@@ -1600,10 +1682,10 @@ function loadMore() {
 }
 
 function cycleSort() {
-  const modes = ['default','price','distance'];
+  const modes = ['view','price','distance','default'];
   sortMode = modes[(modes.indexOf(sortMode)+1) % modes.length];
   document.getElementById('mob-sort-lbl').textContent =
-    { default: t('sortDefault'), price: t('sortPrice'), distance: t('sortDistance') }[sortMode];
+    { view: t('sortView'), default: t('sortDefault'), price: t('sortPrice'), distance: t('sortDistance') }[sortMode];
   rebuildList();
 }
 
@@ -1814,7 +1896,7 @@ function goTab(tab) {
 
   Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
   const pid = PANEL_MAP[tab];
-  if (pid) { document.getElementById(pid)?.classList.add('open'); document.getElementById('bd').classList.add('on'); document.body.classList.add('sheet'); }
+  if (pid) { document.getElementById(pid)?.classList.add('open'); document.body.classList.add('sheet'); curPanel = document.getElementById(pid); setSheet(SHEET_DEFAULT[tab] || 'full'); }
 
   if (tab === 'nearby') {
     if (myLat == null) goNearby(); else showNearby();
@@ -1831,10 +1913,11 @@ function closeTrust() {
 
 const DESK = window.matchMedia('(min-width:1000px)');
 // Phones/tablets: a sheet covers the map, so selecting something closes it. Desktop: the sidebar stays.
-function autoClose() { if (!DESK.matches) closePanel(); }
+function autoClose() { if (!DESK.matches && curPanel) setSheet('peek'); }
 
 function closePanel() {
-  document.body.classList.remove('sheet');
+  document.body.classList.remove('sheet', 'sheet-peek');
+  curPanel = null;
   Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
   document.getElementById('bd').classList.remove('on');
   document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
@@ -1842,14 +1925,58 @@ function closePanel() {
   activeTab = 'map';
 }
 
-map.on('click movestart', autoClose);
+map.on('click movestart', () => { if (!DESK.matches && curPanel && sheetState === 'full') setSheet('half'); });
 
-// Swipe down to close
+// ── Draggable sheets: full / half / peek (phones & tablets). Drag the handle; swipe past peek to close. ──
+let sheetState = 'full', curPanel = null;
+const SHEET_DEFAULT = { nearby:'half', stations:'half', search:'full', compare:'full', filter:'full' };
+function sheetOffset(p, st) {
+  const h = p.offsetHeight;
+  if (st === 'full') return 0;
+  if (st === 'half') return Math.max(0, h - Math.round(innerHeight * 0.46));
+  return Math.max(0, h - 124);
+}
+function setSheet(st) {
+  const p = curPanel; if (!p) return;
+  sheetState = st;
+  document.body.classList.toggle('sheet-peek', st === 'peek');
+  p.style.setProperty('--sy', DESK.matches ? '0px' : sheetOffset(p, st) + 'px');
+  document.getElementById('bd').classList.toggle('on', st === 'full' && !DESK.matches);
+}
 document.querySelectorAll('.panel').forEach(p => {
-  let sy=0, st=0;
-  p.addEventListener('touchstart', e => { sy=e.touches[0].clientY; st=Date.now(); }, { passive:true });
-  p.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY-sy > 70 && Date.now()-st < 500) closePanel(); }, { passive:true });
+  const h = p.querySelector('.drag-handle');
+  if (!h) return;
+  let y0 = 0, off0 = 0, t0 = 0, moved = false, cur = 0;
+  h.addEventListener('pointerdown', e => {
+    if (DESK.matches) return;
+    curPanel = p; y0 = e.clientY; t0 = Date.now(); moved = false;
+    off0 = sheetOffset(p, sheetState); cur = off0;
+    p.classList.add('dragging'); h.setPointerCapture(e.pointerId);
+  });
+  h.addEventListener('pointermove', e => {
+    if (!p.classList.contains('dragging')) return;
+    const dy = e.clientY - y0; if (Math.abs(dy) > 4) moved = true;
+    cur = Math.min(p.offsetHeight, Math.max(0, off0 + dy));
+    p.style.setProperty('--sy', cur + 'px');
+  });
+  const end = e => {
+    if (!p.classList.contains('dragging')) return;
+    p.classList.remove('dragging');
+    if (!moved) { setSheet(sheetState === 'full' ? 'half' : 'full'); return; }   // tap on the handle toggles
+    const v = (e.clientY - y0) / Math.max(1, Date.now() - t0);                     // px/ms, + = down
+    const proj = cur + v * 180;                                                   // a flick carries further
+    const cand = { full: 0, half: sheetOffset(p, 'half'), peek: sheetOffset(p, 'peek'), close: p.offsetHeight };
+    let best = 'full', bd = 1e9;
+    for (const [k, o] of Object.entries(cand)) { const d = Math.abs(proj - o); if (d < bd) { bd = d; best = k; } }
+    if (best === 'close') closePanel(); else setSheet(best);
+  };
+  h.addEventListener('pointerup', end);
+  h.addEventListener('pointercancel', end);
 });
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => { if (curPanel && curPanel.classList.contains('open')) setSheet(sheetState); });
+  document.querySelectorAll('.panel').forEach(p => ro.observe(p));
+}
 
 // ════════════════════════════════════════════════════
 // Fun + useful: toast, vibration, fill-up cost, favourites, share, cheapest-in-view
@@ -2077,6 +2204,11 @@ function updStatus() {
   updProgress();
 }
 map.on('moveend', updStatus);
+let _vt = null;
+map.on('moveend', () => {
+  clearTimeout(_vt);
+  _vt = setTimeout(() => { if (sortMode === 'view' && curPanel && curPanel.id === 'p-stations') rebuildList(); }, 350);
+});
 
 // ════════════════════════════════════════════════════
 // PWA
@@ -2086,14 +2218,15 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e))
   );
 }
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  const btn = document.createElement('button');
-  btn.className = 'chip install-chip';
-  btn.textContent = t('installApp');
-  btn.onclick = () => { e.prompt(); btn.remove(); };
-  document.getElementById('chips').appendChild(btn);
-});
+let _installEvt = null;
+const IS_STANDALONE = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); _installEvt = e; showInstallRow(); });
+function showInstallRow() { const r = document.getElementById('install-row'); if (r && !IS_STANDALONE) r.style.display = 'block'; }
+async function installApp() {
+  if (_installEvt) { _installEvt.prompt(); try { await _installEvt.userChoice; } catch (_) {} _installEvt = null; return; }
+  toast(t('iosInstall'), 6500);
+}
+window.addEventListener('appinstalled', () => { const r = document.getElementById('install-row'); if (r) r.style.display = 'none'; });
 
 // ════════════════════════════════════════════════════
 // Boot
@@ -2113,7 +2246,20 @@ window.addEventListener('beforeinstallprompt', e => {
   if (DESK.matches) goTab('stations');
   DESK.addEventListener?.('change', e => { if (e.matches) goTab('stations'); else closePanel(); setTimeout(() => map.invalidateSize(), 50); });
 
-  syncTankUi(); updFavCount();
+  syncTankUi(); updFavCount(); fillNavPref();
+  if (IS_IOS && !IS_STANDALONE) showInstallRow();
+  // First-use tip for the 🏆 button, shown once after the intro card is out of the way
+  try {
+    if (!localStorage.getItem('efp_tip_cheap')) {
+      setTimeout(() => {
+        if (document.querySelector('.trust-overlay.on') || document.body.classList.contains('sheet')) return;
+        toast(t('cheapTip'), 6000);
+        const b = document.getElementById('cheap-btn'); b?.classList.add('attn');
+        b?.addEventListener('click', () => b.classList.remove('attn'), { once:true });
+        localStorage.setItem('efp_tip_cheap', '1');
+      }, 4500);
+    }
+  } catch (_) {}
   // Always pre-load Sweden (home country priority)
   loadCC('SE');
   schedVP();
