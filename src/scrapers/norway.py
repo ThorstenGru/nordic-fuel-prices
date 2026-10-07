@@ -19,8 +19,8 @@ Why per-station prices are unavailable:
 
 import aiohttp
 import asyncio
-import math
 from typing import List, Dict, Any
+from merge_engine import MergeConfig, SourceResult, merge_sources
 from .base import BaseScraper
 from ._anwb import ANWBScraper
 
@@ -33,19 +33,6 @@ class _NOAnwb(ANWBScraper):
     BBOX       = (57.9, 4.3, 71.3, 31.3)
     SOURCE     = "anwb.nl (ANWB POI API)"
     CONFIDENCE = 0.80
-
-
-def _near(lat: float, lon: float, grid: Dict, radius_m: float = 100.0) -> bool:
-    """True if any point in ``grid`` (cell -> [(lat, lon)]) is within radius_m."""
-    ci, cj = int(lat * 100), int(lon * 50)
-    for di in (-1, 0, 1):
-        for dj in (-1, 0, 1):
-            for (la, lo) in grid.get((ci + di, cj + dj), ()):
-                dy = (la - lat) * 111_320
-                dx = (lo - lon) * 111_320 * math.cos(math.radians(lat))
-                if dx * dx + dy * dy <= radius_m * radius_m:
-                    return True
-    return False
 
 
 # ── OpenStreetMap (Overpass API) ───────────────────────────────────────────────
@@ -88,23 +75,26 @@ class NorwayScraper(BaseScraper):
             _NOAnwb(self.session).fetch_stations(), self._fetch_osm(), self._fetch_ssb(),
             return_exceptions=True)
 
+        anwb_err = osm_err = None
         if isinstance(anwb_res, Exception):
+            anwb_err = str(anwb_res)
             print(f"[NO/ANWB] failed: {anwb_res}")
             anwb_res = []
         if isinstance(osm_els, Exception):
+            osm_err = str(osm_els)
             print(f"[NO/OSM] failed: {osm_els}")
             osm_els = []
+        elif not osm_els:
+            osm_err = "empty"
         if isinstance(ssb_avg, Exception) or not ssb_avg:
             ssb_avg = []
 
-        stations: List[Dict[str, Any]] = list(anwb_res)
-        grid: Dict = {}
-        for st in stations:
-            grid.setdefault((int(st["lat"] * 100), int(st["lon"] * 50)), []).append((st["lat"], st["lon"]))
-
-        # OSM adds only stations ANWB does not know (shown without prices, never invented ones)
-        extra = [o for o in self._parse_osm(osm_els) if not _near(o["lat"], o["lon"], grid)]
-        stations.extend(extra)
+        results = [
+            SourceResult("anwb", "ANWB", anwb_res, 9, "aggregator", "NOK", ok=anwb_err is None, error=anwb_err),
+            SourceResult("osm", "OpenStreetMap", self._parse_osm(osm_els), 99, "geometry", "NOK",
+                         ok=osm_err is None, error=osm_err),
+        ]
+        stations, self.merge_report = merge_sources(results, MergeConfig(country="NO"))
 
         if not stations and ssb_avg:
             stations = self._fallback_ssb_markers(ssb_avg)
@@ -113,9 +103,9 @@ class NorwayScraper(BaseScraper):
 
         if ssb_avg:
             print(f"[NO] SSB national avg (reference only, not attached to stations): {ssb_avg}")
-        priced = sum(1 for st in stations if st.get("prices"))
-        print(f"[NO] {len(stations)} stations: {len(anwb_res)} from ANWB, {len(extra)} OSM-only "
-              f"({priced} priced)")
+        rp = self.merge_report
+        print(f"[NO] {len(stations)} stations ({rp['priced_station_count']} priced; "
+              f"conflicts {rp['conflicts']}, outliers {rp['outliers_dropped']}, failed {rp['failed_sources']})")
         return stations
 
     # ── OSM ────────────────────────────────────────────────────────────────────

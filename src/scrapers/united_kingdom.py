@@ -13,12 +13,14 @@ location{latitude,longitude}, prices{E10,E5,B7,SDV} in pence per litre). Feeds w
 older than _MAX_AGE_DAYS are skipped (Rontec, Shell, Applegreen are stale / frozen; Morrisons only lists
 Gibraltar; Tesco/BP/Co-op/Jet block bots). Timestamps are per feed ("last_updated", UK local time).
 
-ANWB (src/scrapers/_anwb.py, ~8.6k UK stations, no timestamps) runs independently; one source failing is
-logged, only both failing raises. Merge (see _merge): a retailer and an ANWB station are the same only if
-within 100 m, with recognised compatible brands, and mutually unique. Retailer prices win; ANWB only fills
-fuel types the retailer record lacks. ANWB-only stations are added with source "anwb" and updated_at null.
-Currency: ANWB delivers EUR; _anwb.py converts to GBP with the ECB rate (CURRENCY = "GBP"), each price keeps
-its own currency field. ANWB prices still in EUR (no rate) are dropped so GBP and EUR are never mixed.
+ANWB (src/scrapers/_anwb.py, ~8.6k UK stations, no timestamps) runs independently. Merging is done by the
+shared engine (src/merge_engine.py): every retailer feed is its own SourceResult (priority 1, kind
+"company"), ANWB is priority 9 ("aggregator", GBP). One feed failing is logged and listed in
+merge_report["failed_sources"]; only all sources failing raises. Retailer prices win, ANWB fills the fuel
+buckets a retailer record lacks, ANWB-only stations are added, disagreements are exposed as
+price["alt"] / price["disagree"]. ANWB's "95" is really super-unleaded: relabelled E5@97 (98 stays 98).
+Currency: ANWB delivers EUR; _anwb.py converts to GBP with the ECB rate (CURRENCY = "GBP"). ANWB prices
+still in EUR (no rate) are dropped so GBP and EUR are never mixed.
 
 Licence: retailer data published under the CMA/DESNZ open-data scheme; ANWB is unofficial/undocumented.
 SDV (premium diesel) is not published: the site only has one DIESEL class (B7).
@@ -26,10 +28,10 @@ SDV (premium diesel) is not published: the site only has one DIESEL class (B7).
 
 import asyncio
 import json
-import math
-import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+
+from merge_engine import MergeConfig, SourceResult, merge_sources
 
 from ._anwb import ANWBScraper
 from .base import iso_utc, octane_of
@@ -42,7 +44,6 @@ _FEEDS = {
     "SGN":    "https://www.sgnretail.uk/files/data/SGN_daily_fuel_prices.json",
 }
 _MAX_AGE_DAYS = 7
-_MERGE_RADIUS_M = 100.0
 _FUEL_MAP = {"E10": "E10", "E5": "E5", "B7": "DIESEL"}   # SDV (premium diesel) intentionally dropped
 _FUEL_OCTANE = {"E10": 95, "E5": 97}   # UK retailer E5 = super unleaded (97+ RON); E10 = standard 95
 _HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -74,61 +75,60 @@ class UnitedKingdomScraper(ANWBScraper):
             print(f"[GB] {name}: {type(e).__name__}: {e}")
             return None
 
-    async def _fetch_retailers(self) -> List[Dict[str, Any]]:
+    def _retailer_result(self, name: str, data: Optional[Dict[str, Any]], cutoff: datetime) -> SourceResult:
+        sid = name.lower()
+
+        def res(stations, ok=True, err=None):
+            return SourceResult(source_id=sid, name=f"{name} open price feed", stations=stations,
+                                priority=1, kind="company", currency=self.CURRENCY, ok=ok, error=err)
+
+        if not isinstance(data, dict):
+            return res([], False, "fetch failed")
+        ts = iso_utc(data.get("last_updated"), "Europe/London")
+        if not ts or datetime.fromisoformat(ts) < cutoff:
+            print(f"[GB] {name}: stale/undated feed ({data.get('last_updated')}) skipped")
+            return res([], False, f"stale/undated feed ({data.get('last_updated')})")
+        by_id: Dict[str, Dict[str, Any]] = {}
+        for s in data.get("stations") or []:
+            try:
+                loc = s.get("location") or {}
+                lat, lon = float(loc["latitude"]), float(loc["longitude"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if not (_LAT[0] <= lat <= _LAT[1] and _LON[0] <= lon <= _LON[1]):
+                continue
+            prices = []
+            for k, ft in _FUEL_MAP.items():
+                try:
+                    pence = float((s.get("prices") or {}).get(k))
+                except (TypeError, ValueError):
+                    continue
+                if pence <= 0:
+                    continue
+                prices.append(self.price_entry(ft, round(pence / 100.0, 3), "L", ts,
+                                               octane=_FUEL_OCTANE.get(ft)))
+            site = str(s.get("site_id") or f"{lat:.5f}_{lon:.5f}")
+            by_id[f"gb_{sid}_{site}"] = {
+                "id": f"gb_{sid}_{site}",
+                "country": self.COUNTRY,
+                "name": s.get("brand") or "",
+                "brand": s.get("brand") or "",
+                "address": (s.get("address") or "").strip(),
+                "city": "",
+                "postcode": s.get("postcode") or "",
+                "lat": lat,
+                "lon": lon,
+                "source": f"retailer feed [{name}]",
+                "confidence": 0.90,
+                "prices": prices,
+            }
+        print(f"[GB] {name}: {len(by_id)} stations, last_updated {data.get('last_updated')}")
+        return res(list(by_id.values()))
+
+    async def _fetch_retailers(self) -> List[SourceResult]:
         feeds = await asyncio.gather(*[self._get_feed(n, u) for n, u in _FEEDS.items()])
         cutoff = datetime.now(timezone.utc) - timedelta(days=_MAX_AGE_DAYS)
-        by_id: Dict[str, Dict[str, Any]] = {}
-
-        for (name, _), data in zip(_FEEDS.items(), feeds):
-            if not isinstance(data, dict):
-                continue
-            ts = iso_utc(data.get("last_updated"), "Europe/London")
-            if not ts or datetime.fromisoformat(ts) < cutoff:
-                print(f"[GB] {name}: stale/undated feed ({data.get('last_updated')}) skipped")
-                continue
-            n = 0
-            for s in data.get("stations") or []:
-                try:
-                    loc = s.get("location") or {}
-                    lat, lon = float(loc["latitude"]), float(loc["longitude"])
-                except (KeyError, TypeError, ValueError):
-                    continue
-                if not (_LAT[0] <= lat <= _LAT[1] and _LON[0] <= lon <= _LON[1]):
-                    continue
-                prices = []
-                for k, ft in _FUEL_MAP.items():
-                    try:
-                        pence = float((s.get("prices") or {}).get(k))
-                    except (TypeError, ValueError):
-                        continue
-                    if pence <= 0:
-                        continue
-                    e = self.price_entry(ft, round(pence / 100.0, 3), "L", ts, octane=_FUEL_OCTANE.get(ft))
-                    e["source"] = "retailer"
-                    prices.append(e)
-                sid = str(s.get("site_id") or f"{lat:.5f}_{lon:.5f}")
-                st = {
-                    "id": f"gb_{sid}",
-                    "country": self.COUNTRY,
-                    "name": s.get("brand") or "",
-                    "brand": s.get("brand") or "",
-                    "address": (s.get("address") or "").strip(),
-                    "city": "",
-                    "postcode": s.get("postcode") or "",
-                    "lat": lat,
-                    "lon": lon,
-                    "source": f"retailer feed [{name}]",
-                    "confidence": 0.90,
-                    "prices": prices,
-                    "sources": ["retailer"],
-                }
-                prev = by_id.get(st["id"])
-                if prev is None or (prices and (not prev["prices"] or
-                                    prices[0]["updated_at"] > prev["prices"][0]["updated_at"])):
-                    by_id[st["id"]] = st
-                n += 1
-            print(f"[GB] {name}: {n} stations, last_updated {data.get('last_updated')}")
-        return list(by_id.values())
+        return [self._retailer_result(n, d, cutoff) for n, d in zip(_FEEDS, feeds)]
 
     async def _fetch_anwb(self) -> List[Dict[str, Any]]:
         out = []
@@ -137,7 +137,6 @@ class UnitedKingdomScraper(ANWBScraper):
             for p in s.get("prices", []):
                 if p.get("currency") != self.CURRENCY:      # unconverted EUR: never mix currencies
                     continue
-                p["source"] = "anwb"
                 p["updated_at"] = None
                 # Benchmark 2026-10-07: ANWB's UK "Euro 95 (E10)" price is really the E5 super-unleaded
                 # price (85% within 1 p of the retailer E5, 8% of E10; ~17 p above true E10). Label it E5.
@@ -152,122 +151,35 @@ class UnitedKingdomScraper(ANWBScraper):
             for p in ps:                       # E5 can appear twice (super + 98): keep the lower
                 if p["fuel_type"] not in best or p["price"] < best[p["fuel_type"]]["price"]:
                     best[p["fuel_type"]] = p
-            ps = list(best.values())
-            s["prices"] = ps
+            s["prices"] = list(best.values())
             s["source"] = "anwb.nl (ANWB POI API)"
             s["confidence"] = 0.70
-            s["sources"] = ["anwb"]
+            s.pop("sources", None)
             out.append(s)
         return out
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         retail, anwb = await asyncio.gather(self._fetch_retailers(), self._fetch_anwb(),
                                             return_exceptions=True)
+        results: List[SourceResult] = []
         if isinstance(retail, BaseException):
             print(f"[GB] retailer feeds FAILED: {type(retail).__name__}: {retail}")
-            retail = []
+            results.append(SourceResult("retailers", "UK retailer feeds", [], 1, "company", self.CURRENCY,
+                                        ok=False, error=f"{type(retail).__name__}: {retail}"))
+        else:
+            results.extend(retail)
         if isinstance(anwb, BaseException):
             print(f"[GB] ANWB FAILED: {type(anwb).__name__}: {anwb}")
-            anwb = []
-        if not retail and not anwb:
-            raise RuntimeError("GB: retailer feeds and ANWB both returned no data")
-        n_r, n_a = len(retail), len(anwb)
-        merged, pairs = _merge(retail, anwb)
-        self.merge_stats = {"retailer": n_r, "anwb": n_a, "pairs": pairs, "final": len(merged)}
-        print(f"[GB] retailer={n_r} anwb={n_a} merged_pairs={pairs} final={len(merged)}")
-        return merged
-
-
-_BRAND_PATTERNS = [
-    (re.compile(r"\bbp\b"), "bp"), (re.compile(r"\besso\b"), "esso"),
-    (re.compile(r"\bshell\b"), "shell"), (re.compile(r"\basda\b"), "asda"),
-    (re.compile(r"\btesco\b"), "tesco"), (re.compile(r"sainsbury"), "sainsburys"),
-    (re.compile(r"morrisons?"), "morrisons"), (re.compile(r"\bmoto\b"), "moto"),
-    (re.compile(r"\btexaco\b"), "texaco"), (re.compile(r"\bjet\b"), "jet"),
-    (re.compile(r"\bgulf\b"), "gulf"), (re.compile(r"\bmurco\b"), "murco"),
-    (re.compile(r"\bapplegreen\b"), "applegreen"), (re.compile(r"\brontec\b"), "rontec"),
-    (re.compile(r"\bco-?op\b"), "coop"), (re.compile(r"\bharvest\b"), "harvest"),
-    (re.compile(r"\bcostco\b"), "costco"), (re.compile(r"\bwaitrose\b"), "waitrose"),
-    (re.compile(r"\bsgn\b"), "sgn"), (re.compile(r"\bmfg\b|motor fuel group"), "mfg"),
-]
-# Operator names that run forecourts under third-party fuel brands.
-_OPERATORS = {"mfg", "sgn"}
-_OPERATED = {"bp", "esso", "shell", "texaco", "gulf", "jet", "murco"}
-
-
-def _brands(*names: Any) -> frozenset:
-    out = set()
-    for n in names:
-        low = str(n or "").lower()
-        for rx, b in _BRAND_PATTERNS:
-            if rx.search(low):
-                out.add(b)
-    return frozenset(out)
-
-
-def _compatible(a: frozenset, b: frozenset) -> bool:
-    if not a or not b:
-        return False          # unknown brand => never merge
-    if a & b:
-        return True
-    return any((x in _OPERATORS and y in _OPERATED) or (y in _OPERATORS and x in _OPERATED)
-               for x in a for y in b)
-
-
-def _dist_m(a_lat, a_lon, b_lat, b_lon) -> float:
-    dlat = (b_lat - a_lat) * 111_320.0
-    dlon = (b_lon - a_lon) * 111_320.0 * math.cos(math.radians((a_lat + b_lat) / 2))
-    return math.hypot(dlat, dlon)
-
-
-def _slot(p: Dict) -> str:
-    """Merge slot: petrol bucketed by octane (95 / 97+), other fuels by fuel_type."""
-    o = octane_of(p)
-    if o is None:
-        return p["fuel_type"]
-    return "P97" if o >= 97 else "P95"
-
-
-def _merge(retail: List[Dict], anwb: List[Dict]):
-    """Mutually-unique <=100 m + compatible-brand match; retailer prices win, ANWB fills missing fuels."""
-    for s in retail + anwb:
-        s["_b"] = _brands(s.get("brand"), s.get("name"))
-    grid: Dict[tuple, List[int]] = {}
-    for j, r in enumerate(retail):
-        grid.setdefault((int(r["lat"] * 100), int(r["lon"] * 100)), []).append(j)
-    fwd: Dict[int, List[int]] = {}
-    rev: Dict[int, List[int]] = {}
-    for i, a in enumerate(anwb):
-        if not a["_b"]:
-            continue
-        ci, cj = int(a["lat"] * 100), int(a["lon"] * 100)
-        for di in (-1, 0, 1):
-            for dj in (-1, 0, 1):
-                for j in grid.get((ci + di, cj + dj), []):
-                    r = retail[j]
-                    if _compatible(a["_b"], r["_b"]) and \
-                            _dist_m(a["lat"], a["lon"], r["lat"], r["lon"]) <= _MERGE_RADIUS_M:
-                        fwd.setdefault(i, []).append(j)
-                        rev.setdefault(j, []).append(i)
-    pairs = 0
-    extra = []
-    for i, a in enumerate(anwb):
-        c = fwd.get(i, [])
-        if len(c) == 1 and len(rev.get(c[0], [])) == 1:
-            r = retail[c[0]]
-            have = {_slot(p) for p in r["prices"]}
-            filled = False
-            for p in a["prices"]:
-                if _slot(p) not in have:
-                    r["prices"].append(p)
-                    have.add(_slot(p))
-                    filled = True
-            if filled:
-                r["sources"].append("anwb")
-            pairs += 1
+            results.append(SourceResult("anwb", "ANWB POI API", [], 9, "aggregator", self.CURRENCY,
+                                        ok=False, error=f"{type(anwb).__name__}: {anwb}"))
         else:
-            extra.append(a)
-    out = retail + extra
-    for s in out:
-        s.pop("_b", None)
-    return out, pairs
+            results.append(SourceResult("anwb", "ANWB POI API (anwb.nl)", anwb, 9, "aggregator",
+                                        self.CURRENCY))
+        if not any(r.ok and r.stations for r in results):
+            raise RuntimeError("GB: retailer feeds and ANWB all returned no data")
+        merged, self.merge_report = merge_sources(results, MergeConfig(country="GB"))
+        rep = self.merge_report
+        print(f"[GB] merged {rep['final_station_count']} stations ({rep['priced_station_count']} priced) "
+              f"pairs={rep['matched_pairs']} conflicts={rep['conflicts']} alt={rep['alt_values']} "
+              f"outliers={rep['outliers_dropped']} failed={[f['source_id'] for f in rep['failed_sources']]}")
+        return merged

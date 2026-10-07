@@ -201,6 +201,8 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         "country": cc,
         "currency": summ["currency"],
         "source": scraper.SOURCE,
+        # DEPRECATED (D5): grade/confidence stay for one more release, then are replaced by the
+        # descriptive provenance in meta.sources / health.merge and per-price source/alt/basis.
         "grade": getattr(scraper, "GRADE", "C"),
         "confidence": scraper.CONFIDENCE,
         "fetched_at": scraper.fetched_at,
@@ -209,6 +211,25 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
                                 "with_timestamp_pct", "newest_price_at", "oldest_price_at")},
     }
     health: Dict[str, Any] = {"seconds": round(time.monotonic() - started, 1), "dropped": dropped, "error": error}
+    # Provenance from the merge engine (optional; scrapers not yet migrated simply have none).
+    report = getattr(scraper, "merge_report", None)
+    if isinstance(report, dict) and report:
+        srcs = report.get("sources")
+        compact = []
+        if isinstance(srcs, dict):
+            for sid, v in srcs.items():
+                v = v if isinstance(v, dict) else {}
+                e: Dict[str, Any] = {"id": sid, "stations_used": v.get("stations_used", 0),
+                                     "prices_won": v.get("prices_won", 0)}
+                if v.get("name"):
+                    e["name"] = v["name"]
+                compact.append(e)
+        elif isinstance(srcs, list):
+            compact = [{k: v.get(k) for k in ("id", "name", "stations_used", "prices_won") if k in v}
+                       for v in srcs if isinstance(v, dict)]
+        if compact:
+            meta["sources"] = compact
+        health["merge"] = report
 
     if reason:
         base = await resolve_pages_base(session)
@@ -257,6 +278,7 @@ async def run_all() -> None:
     total = sum(m["station_count"] for m in metas)
     priced = sum(m.get("priced_count", 0) for m in metas)
     status_counts = Counter(m["status"] for m in metas)
+    failed_src_countries = sum(1 for r in results if (r["health"].get("merge") or {}).get("failed_sources"))
 
     write_json(OUTPUT_DIR / "meta.json", {
         "schema": SCHEMA_VERSION,
@@ -271,7 +293,8 @@ async def run_all() -> None:
         "version": APP_VERSION,
         "generated_at": generated,
         "run_seconds": round(time.monotonic() - t0, 1),
-        "totals": {"stations": total, "priced": priced, "countries": len(metas), **dict(status_counts)},
+        "totals": {"stations": total, "priced": priced, "countries": len(metas),
+                   "countries_with_failed_sources": failed_src_countries, **dict(status_counts)},
         "countries": {r["cc"]: r["health"] for r in results},
     })
 

@@ -16,17 +16,17 @@ Greece - merge of two open datasets, ANWB only as gap filler / full fallback.
   anwb    : unofficial ANWB aggregator, no timestamps - only adds priced stations absent from both
             sources above, or is the full fallback when both fail.
 
-Merge: one record per physical station (same canonical brand, <= 100 m, mutually unique match; ambiguous
-=> kept separate). Per fuel type the price with the newer source timestamp wins, ties go to SOURCE_PRIORITY;
-nothing is averaged. Every price carries 'source', every station a 'sources' list.
+Merge: delegated to merge_engine.merge_sources (one tested engine for all countries). SourceResults:
+fuelgr priority 1 'community' (real prices), fpeu priority 5 'geometry' (locations only, its prices are
+prefecture averages and are stripped), anwb priority 9 'aggregator' (priced stations only). The engine
+does matching, 'newer timestamp wins by >= 30 min else priority', conflict flags and outlier filtering.
+A failing source is marked ok=False; the scraper raises only when every source failed.
 """
 
 import asyncio
 import collections
 import heapq
 import math
-import re
-import unicodedata
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -34,6 +34,7 @@ import aiohttp
 
 from .base import BaseScraper, iso_utc, octane_of
 from ._anwb import ANWBScraper
+from merge_engine import MergeConfig, SourceResult, merge_sources
 
 GR_TZ = "Europe/Athens"
 UA = "EuroFuelPrices/1.0 (+https://eurofuelprices.com)"
@@ -51,9 +52,6 @@ FPEU_SLEEP_S = 1.2
 FPEU_MAX_RADIUS_KM = 50.0       # server-side cap
 FPEU_PAGE_LIMIT = 100           # server-side cap per call
 
-MERGE_RADIUS_M = 100.0
-LOOSE_MERGE_RADIUS_M = 40.0     # used when one side has an unknown / independent brand
-SOURCE_PRIORITY = ["fuelgr", "fpeu", "anwb"]   # tie-break when per-price timestamps are equal / absent
 SOURCE_LABEL = {"fuelgr": "fuelGR-scraper", "fpeu": "fuel-prices.eu", "anwb": "anwb.nl"}
 
 # plausible EUR bands per fuel type (litre; CNG per kg)
@@ -73,59 +71,6 @@ SOURCE_STRING = ("fuelGR-scraper (github.com/athanasso/fuelGR-scraper, Greek Min
 # last-resort planning centres if no source delivered coordinates (Athens, Thessaloniki, Patras, ...)
 FALLBACK_CENTRES = [(37.98, 23.73), (40.64, 22.94), (38.25, 21.73), (35.34, 25.14), (39.66, 20.85),
                     (39.64, 22.42), (35.51, 24.02), (36.43, 28.22), (39.62, 19.92), (37.08, 22.42)]
-
-# ── brand handling ───────────────────────────────────────────────────────────
-
-_GR2LAT = str.maketrans({
-    "Α": "A", "Β": "V", "Γ": "G", "Δ": "D", "Ε": "E", "Ζ": "Z", "Η": "I", "Θ": "TH", "Ι": "I", "Κ": "K",
-    "Λ": "L", "Μ": "M", "Ν": "N", "Ξ": "X", "Ο": "O", "Π": "P", "Ρ": "R", "Σ": "S", "Τ": "T", "Υ": "Y",
-    "Φ": "F", "Χ": "CH", "Ψ": "PS", "Ω": "O", "Σ": "S",
-})
-_BRAND_ALIASES = [
-    (re.compile(r"\bSHELL\b"), "shell"),
-    (re.compile(r"\bEKO\b"), "eko"),
-    (re.compile(r"\bBP\b"), "bp"),
-    (re.compile(r"\bAVIN\b"), "avin"),
-    (re.compile(r"\bELIN(OIL)?\b"), "elin"),
-    (re.compile(r"\bREVOIL\b"), "revoil"),
-    (re.compile(r"\bAEGEAN\b|\bAIGAIO\b|\bAIGEAN\b"), "aegean"),
-    (re.compile(r"\bSILKOIL\b"), "silkoil"),
-    (re.compile(r"\bETEKA\b"), "eteka"),
-    (re.compile(r"\bKAOIL\b"), "kaoil"),
-    (re.compile(r"\bARGO\b"), "argo"),
-    (re.compile(r"\bCYCLON\b"), "cyclon"),
-    (re.compile(r"\bJETOIL\b"), "jetoil"),
-    (re.compile(r"\bKMOIL\b"), "kmoil"),
-    (re.compile(r"\bMEDOIL\b"), "medoil"),
-    (re.compile(r"\bDRIVE\b"), "drive"),
-    (re.compile(r"\bVALIN\b"), "valin"),
-    (re.compile(r"\bMAMIDOIL\b"), "mamidoil"),
-    (re.compile(r"\bLUKOIL\b|\bLUKOYL\b"), "lukoil"),
-]
-_GENERIC = re.compile(r"ANEXARTIT|INDEPENDENT|\bOTHER\b|\bALLO\b|PRATIRIO|\bSTATION\b|^$")
-
-
-def _latin(s: str) -> str:
-    s = unicodedata.normalize("NFD", (s or "").upper())
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    return s.translate(_GR2LAT)
-
-
-def canonical_brand(*names: str) -> Optional[str]:
-    """Chain id, or None when unknown. Independent/generic stations give None (never merged strictly)."""
-    for n in names:
-        lat = _latin(n or "").strip()
-        if not lat:
-            continue
-        for rx, brand in _BRAND_ALIASES:
-            if rx.search(lat):
-                return brand
-    return None
-
-
-def _is_independent(*names: str) -> bool:
-    return any(_GENERIC.search(_latin(n or "").strip()) for n in names if n is not None) and not canonical_brand(*names)
-
 
 def _dist_m(a_lat, a_lon, b_lat, b_lon) -> float:
     dlat = (b_lat - a_lat) * 111_320.0
@@ -170,6 +115,7 @@ class GreeceScraper(BaseScraper):
         super().__init__(session)
         self.requests_made = 0          # fuel-prices.eu station requests of the last run
         self.stats: Dict[str, Any] = {}
+        self.merge_report: Dict[str, Any] = {}
         self._pref_avgs: set = set()    # {(fuel_type, price)} of ministry prefecture averages
 
     # ── orchestration ────────────────────────────────────────────────────────
@@ -202,27 +148,31 @@ class GreeceScraper(BaseScraper):
             errors["fpeu"] = f"{type(e).__name__}: {e}"
             print(f"[GR/fpeu] FAILED: {errors['fpeu']}")
 
-        primaries = [k for k in ("fuelgr", "fpeu") if k in by_source]
-        if not primaries:
-            if "anwb" not in by_source:
-                raise RuntimeError(f"GR: all sources failed ({errors})")
-            print("[GR] both open sources failed - falling back to ANWB only")
-            only = by_source["anwb"]
-            for st in only:
-                st["sources"] = ["anwb"]
-                for p in st["prices"]:
-                    p["source"] = "anwb"
-            return only
-
-        if "anwb" in by_source:
-            # gap filler: only priced ANWB stations (location-only ANWB rows are mostly stale/closed)
-            by_source["anwb"] = [s for s in by_source["anwb"] if s["prices"]]
-        raw_total = sum(len(v) for v in by_source.values())
-        merged = self._merge(by_source)
+        # fpeu contributes LOCATIONS only: its Greek "station prices" are prefecture averages.
+        fp_stations = by_source.get("fpeu", [])
+        for st in fp_stations:
+            st["prices"] = []
+        priced_anwb = [s for s in by_source.get("anwb", []) if s["prices"]]   # location-only ANWB rows are mostly stale/closed
+        results = [
+            SourceResult("fuelgr", SOURCE_LABEL["fuelgr"], by_source.get("fuelgr", []), 1, "community", "EUR",
+                         "fuelgr" in by_source, errors.get("fuelgr")),
+            SourceResult("fpeu", SOURCE_LABEL["fpeu"], fp_stations, 5, "geometry", "EUR",
+                         "fpeu" in by_source, errors.get("fpeu")),
+            SourceResult("anwb", SOURCE_LABEL["anwb"], priced_anwb, 9, "aggregator", "EUR",
+                         "anwb" in by_source, errors.get("anwb")),
+        ]
+        if not any(r.ok for r in results):
+            raise RuntimeError(f"GR: all sources failed ({errors})")
+        merged, self.merge_report = merge_sources(results, MergeConfig(country="GR"))
+        for st in merged:
+            st["source"] = "+".join(SOURCE_LABEL.get(s, s) for s in st.get("sources", []))
+            st.setdefault("confidence", self.CONFIDENCE)
         self.stats = {"raw": {k: len(v) for k, v in by_source.items()}, "merged": len(merged),
                       "fpeu_requests": self.requests_made, "errors": errors}
+        rp = self.merge_report
         print("[GR] sources: " + ", ".join(f"{k}={len(v)}" for k, v in by_source.items())
-              + f" | before dedupe={raw_total} after={len(merged)} | fpeu requests={self.requests_made}"
+              + f" | after merge={len(merged)} priced={rp['priced_station_count']} conflicts={rp['conflicts']}"
+              + f" outliers={rp['outliers_dropped']} | fpeu requests={self.requests_made}"
               + (f" | errors={errors}" if errors else ""))
         return merged
 
@@ -357,6 +307,14 @@ class GreeceScraper(BaseScraper):
               f"{len(uncovered)} pool stations left outside plan (budget {FPEU_MAX_REQUESTS})")
         return plan
 
+    async def _fpeu_request(self, params: Dict[str, str]) -> Tuple[int, Any]:
+        """One fuel-prices.eu station request -> (http status, json payload). Overridable (tests replay a cache)."""
+        async with self.session.get(FPEU_URL, params=params, timeout=aiohttp.ClientTimeout(total=30),
+                                    headers={"User-Agent": UA, "Accept": "application/json"}) as resp:
+            if resp.status != 200:
+                return resp.status, None
+            return 200, await resp.json(content_type=None)
+
     async def _fetch_fpeu(self, pool: List[Tuple[float, float]]) -> List[Dict]:
         plan = self._plan_circles(pool)
         seen: Dict[Any, Dict] = {}
@@ -368,17 +326,14 @@ class GreeceScraper(BaseScraper):
                       "radius": f"{max(r, 1.0):g}", "limit": str(FPEU_PAGE_LIMIT)}
             self.requests_made += 1
             try:
-                async with self.session.get(FPEU_URL, params=params,
-                                            timeout=aiohttp.ClientTimeout(total=30),
-                                            headers={"User-Agent": UA, "Accept": "application/json"}) as resp:
-                    if resp.status in (429, 403, 410):
-                        print(f"[GR/fpeu] HTTP {resp.status} - stopping to respect the rate limit "
-                              f"after {self.requests_made} requests")
-                        break
-                    if resp.status != 200:
-                        print(f"[GR/fpeu] HTTP {resp.status} on circle {k} - skipped")
-                        continue
-                    payload = await resp.json(content_type=None)
+                status, payload = await self._fpeu_request(params)
+                if status in (429, 403, 410):
+                    print(f"[GR/fpeu] HTTP {status} - stopping to respect the rate limit "
+                          f"after {self.requests_made} requests")
+                    break
+                if status != 200:
+                    print(f"[GR/fpeu] HTTP {status} on circle {k} - skipped")
+                    continue
             except Exception as e:  # noqa: BLE001
                 print(f"[GR/fpeu] circle {k} error: {e}")
                 continue
@@ -467,78 +422,3 @@ class GreeceScraper(BaseScraper):
             return None
         lo, hi = BANDS.get(fuel_type, (0.4, 4.5))
         return v if lo <= v <= hi else None
-
-    @staticmethod
-    def _compatible(a: Dict, b: Dict, dist: float) -> bool:
-        if dist > MERGE_RADIUS_M:
-            return False
-        ba, bb = a["_brand"], b["_brand"]
-        if ba and bb:
-            return ba == bb
-        if (ba is None and bb is None) or (ba and not bb) or (bb and not ba):
-            # one side independent/unknown: only when really on top of each other
-            return dist <= LOOSE_MERGE_RADIUS_M and (a["_indep"] or b["_indep"])
-        return False
-
-    def _merge(self, by_source: Dict[str, List[Dict]]) -> List[Dict]:
-        kept: List[Dict] = []
-        for src in SOURCE_PRIORITY:
-            batch = by_source.get(src)
-            if not batch:
-                continue
-            for st in batch:
-                st["_brand"] = canonical_brand(st.get("brand"), st.get("name"))
-                st["_indep"] = _is_independent(st.get("brand"), st.get("name")) or not (st.get("brand") or "").strip()
-                for p in st["prices"]:
-                    p["source"] = src
-                st["sources"] = [src]
-
-            fwd: Dict[int, List[int]] = {}
-            rev: Dict[int, List[int]] = {}
-            idx: Dict[Tuple[int, int], List[int]] = defaultdict(list)
-            for j, k in enumerate(kept):
-                idx[(int(k["lat"] * 100), int(k["lon"] * 100))].append(j)
-            for i, st in enumerate(batch):
-                ci, cj = int(st["lat"] * 100), int(st["lon"] * 100)
-                for di in (-1, 0, 1):
-                    for dj in (-1, 0, 1):
-                        for j in idx.get((ci + di, cj + dj), ()):
-                            k = kept[j]
-                            d = _dist_m(k["lat"], k["lon"], st["lat"], st["lon"])
-                            if self._compatible(k, st, d):
-                                fwd.setdefault(i, []).append(j)
-                                rev.setdefault(j, []).append(i)
-
-            add: List[Dict] = []
-            for i, st in enumerate(batch):
-                cands = fwd.get(i, [])
-                if len(cands) == 1 and len(rev.get(cands[0], [])) == 1:
-                    self._absorb(kept[cands[0]], st, src)
-                else:
-                    add.append(st)
-            kept.extend(add)
-
-        for k in kept:
-            k.pop("_brand", None)
-            k.pop("_indep", None)
-            k["source"] = "+".join(SOURCE_LABEL[s] for s in k["sources"])
-            k["prices"].sort(key=lambda p: p["fuel_type"])
-        return kept
-
-    @staticmethod
-    def _absorb(base: Dict, other: Dict, src: str) -> None:
-        """Merge other's prices into base per fuel: newer timestamp wins, ties keep the earlier source."""
-        by_ft = {_slot(p): p for p in base["prices"]}
-        for p in other["prices"]:
-            cur = by_ft.get(_slot(p))
-            if cur is None:
-                by_ft[_slot(p)] = p
-            else:
-                tn, tc = p.get("updated_at"), cur.get("updated_at")
-                if tn and (not tc or tn > tc):      # ISO UTC strings compare chronologically
-                    by_ft[_slot(p)] = p
-        base["prices"] = list(by_ft.values())
-        base["sources"].append(src)
-        for f in ("city", "address", "postal_code"):
-            if not base.get(f) and other.get(f):
-                base[f] = other[f]

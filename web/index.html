@@ -229,6 +229,9 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .pop-tbl td { padding:2px 5px 2px 0; }
 .pop-tbl .ft { color:var(--text2); }
 .pop-tbl .pr { color:var(--green); font-weight:500; }
+.pop-tbl .pv { font-size:0.6rem; color:var(--text3); padding:0 0 3px; line-height:1.3; }
+.pop-tbl .pv details { margin-top:1px; } .pop-tbl .pv summary { cursor:pointer; }
+.pop-tbl .pv .reg { color:#B45309; }
 .pop-tbl .un { color:var(--text3); font-size:0.68rem; }
 .pop-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
 .pop-date { color:var(--text3); font-size:0.61rem; }
@@ -653,7 +656,8 @@ en: { fuelAll:'All fuels', tabMap:'Map', tabNearby:'Near Me', tabSearch:'Search'
   statsStations:'{n} stations', loadingMore:'Loading {n} more…', countriesShort:'{ld}/{tot} countries',
   installApp:'📲 Install app',
   trustTitle:'How we grade sources', trustIntro:'Every price shows where it came from and how old it is. We grade each country’s data source so you know how much to trust it:',
-  trustLinkLabel:'ℹ How we grade sources', trustDismiss:'Got it' },
+  trustLinkLabel:'ℹ How we grade sources', trustDismiss:'Got it',
+  reportedAgo:'reported {t}', ageUnknown:'age unknown', srcLabel:'Source: {s}', otherSources:'other sources ({n})', sourcesDiffer:'sources differ', regulatedMax:'regulated maximum — not a station price', convertedEur:'converted from EUR' },
 sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabNearby:'Nära mig', tabSearch:'Sök', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filter',
   nearbyTitle:'Billigast nära dig', bestPriceNearby:'Bästa pris i närheten', tapToLocate:'Tryck på knappen för att hitta din plats…',
   noStationsNearby:'Inga stationer inom {r} km i {c} än.', panMore:'Panorera kartan, eller försök igen när mer data har laddats.',
@@ -677,7 +681,8 @@ sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabNearby:'Nära mig', tabSearch
   statsStations:'{n} stationer', loadingMore:'Laddar {n} till…', countriesShort:'{ld}/{tot} länder',
   installApp:'📲 Installera app',
   trustTitle:'Så betygsätter vi källor', trustIntro:'Varje pris visar varifrån den kommer och hur gammal den är. Vi betygsätter varje lands datakälla så att du vet hur mycket du kan lita på den:',
-  trustLinkLabel:'ℹ Så betygsätter vi källor', trustDismiss:'Jag förstår' },
+  trustLinkLabel:'ℹ Så betygsätter vi källor', trustDismiss:'Jag förstår',
+  reportedAgo:'rapporterat {t}', ageUnknown:'ålder okänd', srcLabel:'Källa: {s}', otherSources:'andra källor ({n})', sourcesDiffer:'källorna skiljer sig', regulatedMax:'reglerat maxpris — inte ett stationspris', convertedEur:'omräknat från EUR' },
 de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabNearby:'In der Nähe', tabSearch:'Suche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filter',
   nearbyTitle:'Günstigste in der Nähe', bestPriceNearby:'Bester Preis in der Nähe', tapToLocate:'Tippe auf die Schaltfläche, um deinen Standort zu ermitteln…',
   noStationsNearby:'Noch keine Tankstellen innerhalb von {r} km in {c}.', panMore:'Verschiebe die Karte oder versuche es erneut, sobald mehr Daten geladen sind.',
@@ -701,7 +706,8 @@ de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabNearby:'In der Nähe', tabS
   statsStations:'{n} Tankstellen', loadingMore:'Lade {n} weitere…', countriesShort:'{ld}/{tot} Länder',
   installApp:'📲 App installieren',
   trustTitle:'So bewerten wir Quellen', trustIntro:'Jeder Preis zeigt, woher er stammt und wie alt er ist. Wir bewerten die Datenquelle jedes Landes, damit du weißt, wie sehr du ihr vertrauen kannst:',
-  trustLinkLabel:'ℹ So bewerten wir Quellen', trustDismiss:'Verstanden' },
+  trustLinkLabel:'ℹ So bewerten wir Quellen', trustDismiss:'Verstanden',
+  reportedAgo:'gemeldet {t}', ageUnknown:'Alter unbekannt', srcLabel:'Quelle: {s}', otherSources:'andere Quellen ({n})', sourcesDiffer:'Quellen weichen ab', regulatedMax:'regulierter Höchstpreis — kein Stationspreis', convertedEur:'aus EUR umgerechnet' },
 fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabNearby:'Près de moi', tabSearch:'Recherche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filtre',
   nearbyTitle:'Le moins cher près de vous', bestPriceNearby:'Meilleur prix à proximité', tapToLocate:'Appuyez sur le bouton pour localiser votre position…',
   noStationsNearby:'Aucune station à moins de {r} km en {c} pour le moment.', panMore:'Déplacez la carte, ou réessayez une fois que plus de données seront chargées.',
@@ -725,7 +731,8 @@ fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabNearby:'Près de moi', t
   statsStations:'{n} stations', loadingMore:'Chargement de {n} de plus…', countriesShort:'{ld}/{tot} pays',
   installApp:'📲 Installer l’application',
   trustTitle:'Comment nous évaluons les sources', trustIntro:'Chaque prix indique d’où il vient et son âge. Nous évaluons la source de données de chaque pays pour que vous sachiez à quel point lui faire confiance :',
-  trustLinkLabel:'ℹ Comment nous évaluons les sources', trustDismiss:'Compris' },
+  trustLinkLabel:'ℹ Comment nous évaluons les sources', trustDismiss:'Compris',
+  reportedAgo:'signalé {t}', ageUnknown:'ancienneté inconnue', srcLabel:'Source : {s}', otherSources:'autres sources ({n})', sourcesDiffer:'les sources diffèrent', regulatedMax:'prix maximum réglementé — pas un prix de station', convertedEur:'converti depuis EUR' },
 es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí', tabSearch:'Buscar', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filtro',
   nearbyTitle:'Más barato cerca de ti', bestPriceNearby:'Mejor precio cerca', tapToLocate:'Toca el botón para encontrar tu ubicación…',
   noStationsNearby:'Aún no hay estaciones a {r} km en {c}.', panMore:'Mueve el mapa o inténtalo de nuevo cuando se hayan cargado más datos.',
@@ -749,7 +756,8 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
   statsStations:'{n} estaciones', loadingMore:'Cargando {n} más…', countriesShort:'{ld}/{tot} países',
   installApp:'📲 Instalar app',
   trustTitle:'Cómo calificamos las fuentes', trustIntro:'Cada precio muestra de dónde viene y qué antigüedad tiene. Calificamos la fuente de datos de cada país para que sepas cuánto confiar en ella:',
-  trustLinkLabel:'ℹ Cómo calificamos las fuentes', trustDismiss:'Entendido' },
+  trustLinkLabel:'ℹ Cómo calificamos las fuentes', trustDismiss:'Entendido',
+  reportedAgo:'notificado {t}', ageUnknown:'antigüedad desconocida', srcLabel:'Fuente: {s}', otherSources:'otras fuentes ({n})', sourcesDiffer:'las fuentes difieren', regulatedMax:'precio máximo regulado — no es un precio de estación', convertedEur:'convertido desde EUR' },
 };
 
 let lang = (function () {
@@ -881,7 +889,7 @@ function fuelLabel(p) {
 const F95 = 'P95', FDIE = 'DIESEL';
 function minOf(s, f) {
   let best = null;
-  for (const p of (s.prices||[])) if (inFuel(p, f) && p.price > 0 && (!best || p.price < best.price)) best = p;
+  for (const p of (s.prices||[])) if (inFuel(p, f) && p.price > 0 && p.basis !== 'regulated_max' && (!best || p.price < best.price)) best = p;
   return best;
 }
 function cheapest(s) {
@@ -915,6 +923,34 @@ function fmtAgo(iso) {
   const h = Math.round(m / 60);
   if (h < 36)   return t('hAgo', { h });
   return t('daysAgo', { d: Math.round(h / 24) });
+}
+
+// ── Provenance (D5/D6/D9): per-price source, age, alternatives. Never implies freshness. ──
+const SRC_NAMES = { anwb:'ANWB', ok:'OK', goon:"Go'on", shell:'Shell', q8:'Q8', bensinpriser:'Bensinpriser.nu',
+  fuelgr:'fuelGR', benzinmapa:'BenzinMapa.cz', anre:'ANRE', 'fuel-prices-eu':'fuel-prices.eu', fuel_prices_eu:'fuel-prices.eu',
+  peco_online:'peco-online', mtsk:'MTS-K', tankerkoenig:'Tankerkönig', econtrol:'E-Control', osm:'OpenStreetMap' };
+function srcName(id) {
+  if (!id) return '';
+  const k = String(id).toLowerCase();
+  return SRC_NAMES[k] || SRC_NAMES[k.replace(/[_\s]+/g, '-')] || String(id);
+}
+function ageTxt(iso) { return iso ? t('reportedAgo', { t: fmtAgo(iso) }) : t('ageUnknown'); }
+// HTML (inside a table cell) describing where one price came from. Returns '' when there is nothing to say.
+function provHtml(p) {
+  const bits = [];
+  const reg = p.basis === 'regulated_max';
+  if (p.source) bits.push(esc(t('srcLabel', { s: srcName(p.source) })));
+  if (reg) bits.push(`<span class="reg">${t('regulatedMax')}</span>`);
+  // ANWB delivers EUR; for non-euro countries we convert with the ECB rate (decision D13: say so)
+  if (p.basis === 'converted_eur' || (p.source === 'anwb' && p.currency && p.currency !== 'EUR')) bits.push(t('convertedEur'));
+  if (p.source || reg || p.alt?.length) bits.push(ageTxt(p.updated_at));
+  let h = bits.join(' · ');
+  if (p.disagree) h += (h ? ' · ' : '') + t('sourcesDiffer');
+  if (p.alt?.length) {
+    const li = p.alt.map(a => `${Number(a.price).toFixed(3)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
+    h += `<details><summary>${t('otherSources', { n: p.alt.length })}</summary>${li}</details>`;
+  }
+  return h;
 }
 
 // Age of the NEWEST price on the station (hours) or null when the source gives no timestamp
@@ -1042,7 +1078,9 @@ function mkPopup(s) {
   const rows = (s.prices||[]).map(p => {
     const sym = SYM[p.currency] || p.currency || '';
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
-    return `<tr><td class="ft">${fuelLabel(p)}${e10}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
+    const pv = provHtml(p);
+    return `<tr><td class="ft">${fuelLabel(p)}${e10}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
+      + (pv ? `<tr><td class="pv" colspan="3">${pv}</td></tr>` : '');
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
   const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
@@ -1070,7 +1108,8 @@ function mkCard(s, km) {
   const chips = (s.prices||[]).map(p => {
     const sym = SYM[p.currency] || p.currency || '';
     const best = cp && p === cp;
-    return `<span class="pc${best?' best':''}">
+    const tip = [p.source && srcName(p.source), p.basis === 'regulated_max' ? t('regulatedMax') : '', (p.source || p.basis === 'regulated_max') ? ageTxt(p.updated_at) : ''].filter(Boolean).join(' · ');
+    return `<span class="pc${best?' best':''}"${tip ? ` title="${esc(tip)}"` : ''}>
       <span class="t">${fuelLabel(p)}</span>
       <span class="v">${p.price.toFixed(2)}</span>
       <span class="u">${sym}</span>

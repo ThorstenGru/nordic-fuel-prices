@@ -1,9 +1,12 @@
 import aiohttp
 import asyncio
+import importlib
 import re
 import urllib.parse
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
-from .base import BaseScraper
+from merge_engine import MergeConfig, SourceResult, merge_sources
+from .base import BaseScraper, iso_utc
 from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
@@ -67,7 +70,30 @@ NAME_RE = re.compile(r'</a>([^<]+)')
 # Price cells have class containing "Hinnat"
 HINNAT_RE = re.compile(r'<td[^>]*class="Hinnat[^"]*"[^>]*>([^<]+)</td>')
 # Embedded Re85/E85 price in station name, e.g. "(Re85 1.649)"
-RE85_RE = re.compile(r'\(Re85\s+([\d.]+)\)')
+RE85_RE = re.compile(r'\((?:Re|E)85\s+([\d.]+)\)')
+# Date column of a station row, e.g. <td class="PvmTD">06.10.</td> (class case varies: PvmTD / PvmTd)
+PVM_RE = re.compile(r'<td[^>]*class="PvmT[dD][^"]*"[^>]*>\s*(\d{1,2})\.(\d{1,2})\.')
+
+# Optional extra FI price sources (src/sources/fi_*.py exposing `async def fetch(session)`):
+# (module, source_id, display name, priority, kind).  Adding one = one line.
+OPTIONAL_SOURCES = [
+    ("fi_hintatutka", "hintatutka", "hintatutka.net (community)", 5, "crowd"),
+]
+
+
+def _pvm_to_iso(m: "re.Match") -> Optional[str]:
+    """'06.10.' -> ISO UTC (Europe/Helsinki midnight; current year, previous year if in the future)."""
+    day, month = int(m.group(1)), int(m.group(2))
+    now = datetime.now(timezone.utc)
+    for year in (now.year, now.year - 1):
+        try:
+            datetime(year, month, day)
+        except ValueError:
+            continue
+        iso = iso_utc(f"{year:04d}-{month:02d}-{day:02d}", tz="Europe/Helsinki")
+        if iso and datetime.fromisoformat(iso) <= now:
+            return iso
+    return None
 
 
 def _fi_query(s: Dict) -> tuple:
@@ -94,16 +120,19 @@ class FinlandScraper(BaseScraper):
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         sem = asyncio.Semaphore(CONCURRENCY)
         poltto_tasks = [self._fetch_slug(slug, sem) for slug in SLUGS]
-        anwb_task = _FIAnwb(self.session).fetch_stations()
 
-        poltto_results, anwb_stations = await asyncio.gather(
+        poltto_results, anwb_stations, *extra_res = await asyncio.gather(
             asyncio.gather(*poltto_tasks, return_exceptions=True),
-            anwb_task,
+            _FIAnwb(self.session).fetch_stations(),
+            *[self._fetch_optional(m) for m, *_ in OPTIONAL_SOURCES],
             return_exceptions=True,
         )
 
+        poltto_err = None
         seen: Dict[str, Dict] = {}
-        if not isinstance(poltto_results, Exception):
+        if isinstance(poltto_results, Exception):
+            poltto_err = str(poltto_results)
+        else:
             for result in poltto_results:
                 if isinstance(result, Exception) or not result:
                     continue
@@ -115,16 +144,37 @@ class FinlandScraper(BaseScraper):
         stations = list(seen.values())
         print(f"[FI] {len(stations)} stations from polttoaine.net")
 
-        await _geo.apply_geocoding(
-            stations, "FI", self.session,
-            key_fn=lambda s: s["id"],
-            query_fn=_fi_query,
-        )
+        try:
+            await _geo.apply_geocoding(
+                stations, "FI", self.session,
+                key_fn=lambda s: s["id"],
+                query_fn=_fi_query,
+            )
+        except Exception as e:  # noqa: BLE001 — ungeocoded stations are simply dropped by the engine
+            print(f"[FI] geocoding failed: {e}")
 
-        if not isinstance(anwb_stations, Exception) and anwb_stations:
-            stations.extend(anwb_stations)
+        anwb_err = str(anwb_stations) if isinstance(anwb_stations, Exception) else None
+        results = [
+            SourceResult("polttoaine", "polttoaine.net (crowd)", stations, 2, "crowd", "EUR",
+                         ok=poltto_err is None, error=poltto_err),
+            SourceResult("anwb", "ANWB", [] if anwb_err else anwb_stations, 9, "aggregator", "EUR",
+                         ok=anwb_err is None, error=anwb_err),
+        ]
+        for (mod, sid, name, prio, kind), r in zip(OPTIONAL_SOURCES, extra_res):
+            bad = isinstance(r, Exception)
+            if bad:
+                print(f"[FI/{sid}] failed: {r}")
+            results.append(SourceResult(sid, name, [] if bad else r, prio, kind, "EUR",
+                                        ok=not bad, error=str(r) if bad else None))
+        merged, self.merge_report = merge_sources(results, MergeConfig(country="FI"))
+        rp = self.merge_report
+        print(f"[FI] {len(merged)} stations, {rp['priced_station_count']} priced, conflicts {rp['conflicts']}, "
+              f"outliers {rp['outliers_dropped']}, failed {rp['failed_sources']}")
+        return merged
 
-        return stations
+    async def _fetch_optional(self, module: str) -> List[Dict]:
+        mod = importlib.import_module(f"sources.{module}")
+        return await mod.fetch(self.session)
 
     async def _fetch_slug(self, slug: str, sem: asyncio.Semaphore) -> List[Dict]:
         url = f"{BASE_URL}/{urllib.parse.quote(slug, safe='_-()~')}"
@@ -179,6 +229,8 @@ class FinlandScraper(BaseScraper):
             if len(cells) < 3:
                 continue
 
+            pvm = PVM_RE.search(row)
+            upd = _pvm_to_iso(pvm) if pvm else None
             fuel_defs = [("E10", "L", 95), ("E5", "L", 98), ("DIESEL", "L", None)]   # 95E10 / 98E5 / Di
             prices = []
             for val, (ft, unit, oct_) in zip(cells[-3:], fuel_defs):
@@ -188,12 +240,12 @@ class FinlandScraper(BaseScraper):
                 try:
                     p = float(val.replace(",", "."))
                     if p > 0:
-                        prices.append(self.price_entry(ft, p, unit, octane=oct_))
+                        prices.append(self.price_entry(ft, p, unit, updated_at=upd, octane=oct_))
                 except ValueError:
                     pass
 
             if re85_price and re85_price > 0:
-                prices.append(self.price_entry("E85", re85_price, "L"))
+                prices.append(self.price_entry("E85", re85_price, "L", updated_at=upd))
 
             if not prices:
                 continue

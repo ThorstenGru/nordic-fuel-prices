@@ -1,10 +1,13 @@
 import aiohttp
 import asyncio
-import math
 import os
 import re
 from typing import List, Dict, Any, Tuple
-from .base import BaseScraper, octane_of
+from .base import BaseScraper
+try:
+    from merge_engine import SourceResult, MergeConfig, merge_sources
+except ImportError:   # package-style import (src not on sys.path)
+    from ..merge_engine import SourceResult, MergeConfig, merge_sources
 from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
@@ -15,44 +18,8 @@ OK_URL = "https://mobility-prices.ok.dk/api/v1/fuel-prices"
 GOON_URL = "https://goon.nu/wp-json/goon/v1/pump-prices"   # Bearer key from env GOON_API_KEY (never hardcode)
 DK_TZ = "Europe/Copenhagen"   # Shell/Q8/OK/Go'on deliver naive or local timestamps
 
-# Duplicate suppression: same canonical brand AND within this distance => same station
-MERGE_RADIUS_M = 100.0
-# Source priority for filling prices (official / brand-direct first, ANWB aggregator last)
-SOURCE_PRIORITY = ["ok", "shell", "q8", "goon", "anwb"]
-
-# Canonical brand detection: (regex on lower-cased name/brand, canonical brand)
-BRAND_PATTERNS = [
-    (re.compile(r"\bshell\b"), "shell"),
-    (re.compile(r"\bq8\b"), "q8"),
-    (re.compile(r"\bf24\b"), "f24"),
-    (re.compile(r"^ok\b|\bok\s*(benzin|tank|plus)\b"), "ok"),
-    (re.compile(r"circle\s*k"), "circlek"),
-    (re.compile(r"\buno[\s-]*x\b"), "unox"),
-    (re.compile(r"go['\u2019` ]?on\b"), "goon"),
-    (re.compile(r"^oil!?(\s|$)|\boil!"), "oil"),
-    (re.compile(r"\bingo\b"), "ingo"),
-]
-
 # OK: product_name (lower-case) -> fuel_type. 'Oktan 100' is a premium grade without a site fuel type.
 OK_FUEL_MAP = {"blyfri 95": "E10", "svovlfri diesel": "DIESEL"}
-
-
-def canonical_brand(*names: str):
-    """Return canonical chain id, or None when unknown (unknown brands are never merged)."""
-    for n in names:
-        low = (n or "").lower().strip()
-        if not low:
-            continue
-        for rx, brand in BRAND_PATTERNS:
-            if rx.search(low):
-                return brand
-    return None
-
-
-def _dist_m(a_lat, a_lon, b_lat, b_lon) -> float:
-    dlat = (b_lat - a_lat) * 111_320.0
-    dlon = (b_lon - a_lon) * 111_320.0 * math.cos(math.radians((a_lat + b_lat) / 2))
-    return math.hypot(dlat, dlon)
 
 
 class _DKAnwb(ANWBScraper):
@@ -63,14 +30,6 @@ class _DKAnwb(ANWBScraper):
     BBOX       = (54.80, 8.00, 57.80, 15.20)
     SOURCE     = "anwb.nl (ANWB POI API)"
     CONFIDENCE = 0.90
-
-def _slot(p: Dict) -> str:
-    """Merge slot of a price: petrol is bucketed by OCTANE (95 / 98+), everything else by fuel_type."""
-    o = octane_of(p)
-    if o is None:
-        return p["fuel_type"]
-    return "P98" if o >= 97 else "P95"
-
 
 # Shell: (fuelType, octane) → fuel_type
 SHELL_FUEL_MAP = {
@@ -97,84 +56,43 @@ class DenmarkScraper(BaseScraper):
     CURRENCY = "DKK"
     SOURCE = "ok+shell+q8+goon+anwb.nl open APIs"
     CONFIDENCE = 1.0  # Mandatory government reporting
+    merge_report: Dict[str, Any] = {}
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        names = ["ok", "shell", "q8", "goon", "anwb"]
-        tasks = [self._fetch_ok(), self._fetch_shell(), self._fetch_q8(),
-                 self._fetch_goon(), _DKAnwb(self.session).fetch_stations()]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # (id, display name, priority, kind, coroutine); a failing/skipped source never blanks the country
+        specs = [
+            ("ok",    "OK",     1, "company",    self._fetch_ok()),
+            ("shell", "Shell",  2, "company",    self._fetch_shell()),
+            ("q8",    "Q8",     3, "company",    self._fetch_q8()),
+            ("goon",  "Go'on",  4, "company",    self._fetch_goon()),
+            ("anwb",  "ANWB",   9, "aggregator", _DKAnwb(self.session).fetch_stations()),
+        ]
+        fetched = await asyncio.gather(*(s[4] for s in specs), return_exceptions=True)
 
-        by_source: Dict[str, List[Dict]] = {}
-        for name, res in zip(names, results):
+        results: List[SourceResult] = []
+        for (sid, name, prio, kind, _), res in zip(specs, fetched):
             if isinstance(res, BaseException):
-                print(f"[DK/{name}] FAILED: {type(res).__name__}: {res}")
-                continue
-            if not res:
-                print(f"[DK/{name}] returned 0 stations")
-                continue
-            by_source[name] = res
-        if not by_source:
+                err = f"{type(res).__name__}: {res}"
+                print(f"[DK/{sid}] FAILED: {err}")
+                results.append(SourceResult(sid, name, [], prio, kind, self.CURRENCY, ok=False, error=err))
+            elif not res:
+                err = ("GOON_API_KEY not set" if sid == "goon" and not os.environ.get("GOON_API_KEY", "").strip()
+                       else "returned 0 stations")
+                print(f"[DK/{sid}] {err}")
+                results.append(SourceResult(sid, name, [], prio, kind, self.CURRENCY, ok=False, error=err))
+            else:
+                results.append(SourceResult(sid, name, res, prio, kind, self.CURRENCY))
+
+        if not any(r.ok for r in results):
             raise RuntimeError("DK: all sub-sources failed or returned nothing")
 
-        raw_total = sum(len(v) for v in by_source.values())
-        merged = self._merge(by_source)
-        print("[DK] sources: " + ", ".join(f"{k}={len(v)}" for k, v in by_source.items())
-              + f" | before dedupe={raw_total} after={len(merged)} (merged {raw_total - len(merged)})")
+        merged, report = merge_sources(results, MergeConfig(country="DK"))
+        self.merge_report = report
+        print("[DK] merged: " + ", ".join(f"{k}={v['stations_in']}" for k, v in report["sources"].items())
+              + f" | final={report['final_station_count']} priced={report['priced_station_count']}"
+              + f" matched={report['matched_pairs']} conflicts={report['conflicts']}"
+              + f" outliers={report['outliers_dropped']}")
         return merged
-
-    # -- merge / dedupe ------------------------------------------------------
-    def _merge(self, by_source: Dict[str, List[Dict]]) -> List[Dict]:
-        """Conservative cross-source dedupe.
-
-        Two stations from different sources are the same only when the brand is known and equal,
-        both have coordinates within MERGE_RADIUS_M, and the match is mutually unique (each is the
-        only candidate of the other). Anything ambiguous stays separate. Prices are filled per fuel
-        type by SOURCE_PRIORITY; nothing is averaged. Each price carries 'source'; each station
-        carries a 'sources' list.
-        """
-        kept: List[Dict] = []
-        for src in SOURCE_PRIORITY:
-            batch = by_source.get(src)
-            if not batch:
-                continue
-            for st in batch:
-                st["_brand"] = canonical_brand(st.get("brand"), st.get("name"))
-                for p in st.get("prices", []):
-                    p["source"] = src
-                st["sources"] = [src]
-
-            fwd: Dict[int, List[int]] = {}
-            rev: Dict[int, List[int]] = {}
-            for i, st in enumerate(batch):
-                if not st["_brand"] or st.get("lat") is None or st.get("lon") is None:
-                    continue
-                for j, k in enumerate(kept):
-                    if k["_brand"] != st["_brand"] or k.get("lat") is None or k.get("lon") is None:
-                        continue
-                    if abs(k["lat"] - st["lat"]) > 0.002 or abs(k["lon"] - st["lon"]) > 0.004:
-                        continue
-                    if _dist_m(k["lat"], k["lon"], st["lat"], st["lon"]) <= MERGE_RADIUS_M:
-                        fwd.setdefault(i, []).append(j)
-                        rev.setdefault(j, []).append(i)
-
-            add: List[Dict] = []
-            for i, st in enumerate(batch):
-                cands = fwd.get(i, [])
-                if len(cands) == 1 and len(rev.get(cands[0], [])) == 1:
-                    k = kept[cands[0]]
-                    have = {_slot(p) for p in k["prices"]}
-                    for p in st.get("prices", []):
-                        if _slot(p) not in have:
-                            k["prices"].append(p)
-                            have.add(_slot(p))
-                    k["sources"].append(src)
-                else:
-                    add.append(st)
-            kept.extend(add)
-
-        for k in kept:
-            k.pop("_brand", None)
-        return kept
 
     # -- OK (open JSON, GPS, per-station timestamp) ---------------------------
     async def _fetch_ok(self) -> List[Dict]:
