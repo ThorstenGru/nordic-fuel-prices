@@ -28,8 +28,8 @@
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
-  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com;
-  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com;
+  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://*.basemaps.cartocdn.com;
+  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -696,6 +696,56 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 }
 .nearby-summary .ns-go:active { transform:scale(0.98); }
 
+
+/* ══════════════════════════════════════════
+   v1.14 — flags, touch targets, resilience, accessibility
+══════════════════════════════════════════ */
+/* Flags are images (Windows has no flag emoji — it showed bare letters like "SE") */
+.flg { display:inline-block; height:15px; width:auto; max-width:22px; border-radius:2px; vertical-align:-2px;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.16); object-fit:cover; }
+.pl-row1 .flg { height:14px; }
+.lang-btn .flg { vertical-align:-3px; margin-right:3px; }
+.sr-only { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+/* Touch targets: ≥ 40 px, or an invisible hit-area extension where a bigger button would crowd the map */
+.chip { min-height:40px; display:inline-flex; align-items:center; padding:8px 15px; }
+.leaflet-touch .leaflet-bar a { width:40px; height:40px; line-height:40px; font-size:20px; }
+.leaflet-container a.leaflet-popup-close-button { width:36px; height:36px; line-height:36px; font-size:22px; }
+.go-btn { min-height:40px; }
+.fav-btn { min-width:40px; min-height:40px; }
+.stab { padding:11px 4px; }
+.seg button { padding:11px 6px; }
+.view-seg button { padding:11px 4px; }
+#p-search .sbtn { min-width:48px; }
+.mk { width:30px; height:30px; display:flex; align-items:center; justify-content:center; }
+#legend .lg-mode, .leaflet-control-attribution a[href="admin.html"], .gb-btn { position:relative; }
+#legend .lg-mode::after, .leaflet-control-attribution a[href="admin.html"]::after { content:''; position:absolute; inset:-14px -10px; }
+#legend .lg-mode { font-size:0.7rem; padding:2px 8px; }
+button.gb { border:none; font-family:inherit; cursor:pointer; }
+.age-line button.gb { padding:2px 7px; }
+
+/* Legend ⓘ + station-name labels that must not collide */
+.leaflet-tooltip.ptip { font-size:0.68rem; transition:opacity .15s; }
+.leaflet-tooltip.ptip.ptip-off { opacity:0 !important; pointer-events:none; }
+
+/* Clusters: tinted by the typical price level inside (green cheap … red dear) */
+.marker-cluster div { background:var(--cc, rgba(232,84,47,0.92)) !important; color:var(--ct, #fff) !important; font-weight:600 !important; font-size:0.74rem !important; }
+
+/* Load-failure / offline banner */
+#net-banner { display:none; position:absolute; left:60px; right:10px; top:92px; z-index:1200;
+  background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:14px; padding:8px 10px 8px 14px;
+  font-size:0.8rem; line-height:1.3; align-items:center; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+#net-banner.on { display:flex; }
+#net-banner span { flex:1; }
+#net-banner button { flex-shrink:0; background:#991B1B; color:#fff; border:none; border-radius:10px; padding:9px 14px; min-height:40px; font:inherit; font-weight:600; cursor:pointer; }
+@media (min-width:1000px) { #net-banner { left:64px; right:230px; top:62px; } }
+
+:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+
+@media (prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+  .spin, .ptr.spin-on { animation-duration:0.9s !important; animation-iteration-count:infinite !important; }
+}
 </style>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
 </head>
@@ -705,7 +755,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <div id="progress"><div id="progress-fill"></div></div>
 
 <!-- ══ MAP ══ -->
-<div id="map-wrap">
+<main id="map-wrap">
+  <h1 class="sr-only">EuroFuelPrices — live fuel prices at stations across Europe</h1>
   <div id="map"></div>
 
   <!-- Fuel type chips -->
@@ -731,12 +782,15 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
   <!-- FAB -->
   <button id="fab" onclick="goNearby()">📍 Near Me</button>
-</div>
+
+  <!-- Load failure / offline -->
+  <div id="net-banner" role="status" aria-live="polite"><span></span><button type="button" onclick="retryFailed()" data-i18n="retry">Retry</button></div>
+</main>
 
 <!-- ══ MOBILE PANELS ══ -->
 
 <!-- Near Me -->
-<div class="panel" id="p-nearby">
+<div class="panel" id="p-nearby" role="region" data-i18n-aria="nearbyTitle">
   <div class="drag-handle"></div>
   <div class="ptr">⟳</div>
   <div class="panel-title">📍 <span data-i18n="nearbyTitle">Cheapest Near You</span></div>
@@ -753,13 +807,13 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <!-- Search -->
-<div class="panel" id="p-search">
+<div class="panel" id="p-search" role="region" data-i18n-aria="tabSearch">
   <div class="drag-handle"></div>
   <div class="sbox">
     <input type="text" id="mobSearch" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr"
            autocomplete="off" autocorrect="off" spellcheck="false"
            onkeydown="if(event.key==='Enter')runSearch(true)">
-    <button class="sbtn" onclick="runSearch(true)">🔍</button>
+    <button class="sbtn" data-i18n-aria="tabSearch" aria-label="Search" onclick="runSearch(true)"><span aria-hidden="true">🔍</span></button>
   </div>
   <div class="stabs">
     <button class="stab on" onclick="setSMode(this,'addr')">📍 <span data-i18n="tabAddress">Address</span></button>
@@ -771,7 +825,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <!-- Stations list -->
-<div class="panel" id="p-stations">
+<div class="panel" id="p-stations" role="region" data-i18n-aria="stationsHeader">
   <div class="drag-handle"></div>
   <div class="ptr">⟳</div>
   <div class="phead">
@@ -787,7 +841,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <!-- Country comparison -->
-<div class="panel" id="p-compare">
+<div class="panel" id="p-compare" role="region" data-i18n-aria="cmpTitle">
   <div class="drag-handle"></div>
   <div class="phead" style="padding:2px 16px 8px"><h2 style="font-size:0.76rem;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2)" data-i18n="cmpTitle">Price by country</h2></div>
   <div class="view-seg" id="cmp-views">
@@ -803,7 +857,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <!-- Filters -->
-<div class="panel" id="p-filter">
+<div class="panel" id="p-filter" role="region" data-i18n-aria="tabFilter">
   <div class="drag-handle"></div>
   <div class="panel-scroll">
     <div class="brand-card"><img src="logo.svg" alt="EuroFuelPrices" width="220" height="40"><p data-i18n="brandTag">Live fuel prices at every station across Europe.</p></div>
@@ -830,11 +884,11 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
     <label data-i18n="labelLanguage">Language</label>
     <div class="lang-row">
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">🇬🇧 EN</button>
-      <button class="lang-btn" data-lang="sv" onclick="setLang('sv')">🇸🇪 SV</button>
-      <button class="lang-btn" data-lang="de" onclick="setLang('de')">🇩🇪 DE</button>
-      <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">🇫🇷 FR</button>
-      <button class="lang-btn" data-lang="es" onclick="setLang('es')">🇪🇸 ES</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')"><img class="flg" src="flags/gb.png" alt=""> EN</button>
+      <button class="lang-btn" data-lang="sv" onclick="setLang('sv')"><img class="flg" src="flags/se.png" alt=""> SV</button>
+      <button class="lang-btn" data-lang="de" onclick="setLang('de')"><img class="flg" src="flags/de.png" alt=""> DE</button>
+      <button class="lang-btn" data-lang="fr" onclick="setLang('fr')"><img class="flg" src="flags/fr.png" alt=""> FR</button>
+      <button class="lang-btn" data-lang="es" onclick="setLang('es')"><img class="flg" src="flags/es.png" alt=""> ES</button>
     </div>
 
     <button class="install-row" id="install-row" onclick="installApp()" style="display:none">📲 <span data-i18n="installApp2">Add to Home Screen</span></button>
@@ -843,10 +897,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <!-- Trust / source-grade explainer (shown once on first visit; reopenable from Filter) -->
-<div id="trust-overlay" class="trust-overlay">
+<div id="trust-overlay" class="trust-overlay" role="dialog" aria-modal="true" aria-labelledby="trust-title" onclick="if(event.target===this)closeTrust()">
   <div class="trust-card">
     <img class="trust-logo" src="logo.svg" alt="EuroFuelPrices" height="36">
-    <div class="trust-title" data-i18n="trustTitle">How we grade sources</div>
+    <div class="trust-title" id="trust-title" data-i18n="trustTitle">How we grade sources</div>
     <p class="trust-intro" data-i18n="trustIntro">Every price shows where it came from and how old it is. We grade each country\'s data source so you know how much to trust it:</p>
     <div class="trust-row"><span class="gb gA">A</span><span data-i18n="grade_A">Official feed · stations must report price changes</span></div>
     <div class="trust-row"><span class="gb gB">B</span><span data-i18n="grade_B">Official feed · periodic / regulated prices</span></div>
@@ -865,33 +919,33 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 </div>
 
 <!-- Tab bar -->
-<div id="tabbar">
+<nav id="tabbar" aria-label="Main">
   <button class="tb on"  id="tb-map"     onclick="goTab('map')">
-    <span class="tb-icon">🗺</span><span class="tb-lbl" data-i18n="tabMap">Map</span>
+    <span class="tb-icon" aria-hidden="true">🗺</span><span class="tb-lbl" data-i18n="tabMap">Map</span>
   </button>
   <button class="tb nb"  id="tb-nearby"  onclick="goTab('nearby')">
-    <span class="tb-icon">📍</span><span class="tb-lbl" data-i18n="tabNearby">Near Me</span>
+    <span class="tb-icon" aria-hidden="true">📍</span><span class="tb-lbl" data-i18n="tabNearby">Near Me</span>
   </button>
   <button class="tb"     id="tb-search"  onclick="goTab('search')">
-    <span class="tb-icon">🔍</span><span class="tb-lbl" data-i18n="tabSearch">Search</span>
+    <span class="tb-icon" aria-hidden="true">🔍</span><span class="tb-lbl" data-i18n="tabSearch">Search</span>
   </button>
   <button class="tb"     id="tb-stations" onclick="goTab('stations')">
-    <span class="tb-icon">⛽</span><span class="tb-lbl" id="tb-list-lbl" data-i18n="tabList">List</span>
+    <span class="tb-icon" aria-hidden="true">⛽</span><span class="tb-lbl" id="tb-list-lbl" data-i18n="tabList">List</span>
   </button>
   <button class="tb"     id="tb-compare" onclick="goTab('compare')">
-    <span class="tb-icon">📊</span><span class="tb-lbl" data-i18n="tabCompare">Prices</span>
+    <span class="tb-icon" aria-hidden="true">📊</span><span class="tb-lbl" data-i18n="tabCompare">Prices</span>
   </button>
   <button class="tb"     id="tb-filter"  onclick="goTab('filter')">
-    <span class="tb-icon">⚡</span><span class="tb-lbl" data-i18n="tabFilter">Filter</span>
+    <span class="tb-icon" aria-hidden="true">⚡</span><span class="tb-lbl" data-i18n="tabFilter">Filter</span>
   </button>
-</div>
+</nav>
 
 <div id="toast"></div>
 
 <!-- Navigation app chooser -->
-<div id="nav-overlay" class="trust-overlay" onclick="if(event.target===this)closeNav()">
+<div id="nav-overlay" class="trust-overlay" role="dialog" aria-modal="true" aria-labelledby="nav-title" onclick="if(event.target===this)closeNav()">
   <div class="trust-card">
-    <div class="trust-title" data-i18n="navTitle">Navigate with</div>
+    <div class="trust-title" id="nav-title" data-i18n="navTitle">Navigate with</div>
     <div class="nav-sub" id="nav-sub"></div>
     <div id="nav-list"></div>
     <label class="nav-rem"><input type="checkbox" id="nav-rem"> <span data-i18n="navRemember">Use this app next time</span></label>
@@ -910,14 +964,16 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 // ════════════════════════════════════════════════════
 // Constants
 // ════════════════════════════════════════════════════
-const FLAGS = {
+const FLAGE = {
   AT:'🇦🇹',BE:'🇧🇪',HR:'🇭🇷',CZ:'🇨🇿',DK:'🇩🇰',EE:'🇪🇪',FI:'🇫🇮',FR:'🇫🇷',
   DE:'🇩🇪',GR:'🇬🇷',HU:'🇭🇺',IS:'🇮🇸',IT:'🇮🇹',LV:'🇱🇻',LT:'🇱🇹',LU:'🇱🇺',
   NL:'🇳🇱',NO:'🇳🇴',PL:'🇵🇱',PT:'🇵🇹',RO:'🇷🇴',SK:'🇸🇰',SI:'🇸🇮',ES:'🇪🇸',
   SE:'🇸🇪',CH:'🇨🇭',BG:'🇧🇬',RS:'🇷🇸',ME:'🇲🇪',MK:'🇲🇰',AL:'🇦🇱',BA:'🇧🇦',
   XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
-  GB:'🇬🇧',IE:'🇮🇪',MC:'🇲🇨',SM:'🇸🇲',TR:'🇹🇷',IL:'🇮🇱',GL:'🇬🇱',
+  GB:'🇬🇧',IE:'🇮🇪',MC:'🇲🇨',SM:'🇸🇲',TR:'🇹🇷',IL:'🇮🇱',GL:'🇬🇱',EU:'🇪🇺',
 };
+// Flag as an <img> (Windows renders flag emoji as plain letters). FLAGE = emoji, only for <option> text.
+const FLAGS = Object.fromEntries(Object.keys(FLAGE).map(cc => [cc, `<img class="flg" src="flags/${cc.toLowerCase()}.png" alt="" decoding="async">`]));
 const CNAMES = {
   AT:'Austria',BE:'Belgium',HR:'Croatia',CZ:'Czechia',DK:'Denmark',EE:'Estonia',
   FI:'Finland',FR:'France',DE:'Germany',GR:'Greece',HU:'Hungary',IS:'Iceland',
@@ -1119,6 +1175,12 @@ Object.assign(I18N.es, { worthYes:'✅ Compensa ir — ahorras {s}', worthNo:'�
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
 
+Object.assign(I18N.en, { retry:'Retry', loadFail:"Couldn't load {c}", offlineNote:"You're offline — showing saved data where available", mapBackup:'Switched to a backup map', mapDown:'The map is unavailable right now — prices still work in the list.', lgToggle:'Switch colours: price / source grade', gradeInfo:'How we grade sources' });
+Object.assign(I18N.sv, { retry:'Försök igen', loadFail:'Kunde inte ladda {c}', offlineNote:'Du är offline — visar sparad data där det finns', mapBackup:'Bytte till reservkarta', mapDown:'Kartan är inte tillgänglig just nu — priserna fungerar i listan.', lgToggle:'Byt färg: pris / källbetyg', gradeInfo:'Så betygsätter vi källor' });
+Object.assign(I18N.de, { retry:'Erneut versuchen', loadFail:'{c} konnte nicht geladen werden', offlineNote:'Du bist offline — gespeicherte Daten werden angezeigt', mapBackup:'Auf Ersatzkarte umgeschaltet', mapDown:'Die Karte ist gerade nicht verfügbar — Preise gibt es weiterhin in der Liste.', lgToggle:'Farben wechseln: Preis / Quellenbewertung', gradeInfo:'So bewerten wir Quellen' });
+Object.assign(I18N.fr, { retry:'Réessayer', loadFail:'Impossible de charger {c}', offlineNote:'Vous êtes hors ligne — données enregistrées affichées', mapBackup:'Carte de secours activée', mapDown:'La carte est indisponible — les prix restent dans la liste.', lgToggle:'Changer les couleurs : prix / note de source', gradeInfo:'Comment nous notons les sources' });
+Object.assign(I18N.es, { retry:'Reintentar', loadFail:'No se pudo cargar {c}', offlineNote:'Sin conexión — se muestran los datos guardados', mapBackup:'Mapa de respaldo activado', mapDown:'El mapa no está disponible ahora — los precios siguen en la lista.', lgToggle:'Cambiar colores: precio / calificación de fuente', gradeInfo:'Cómo calificamos las fuentes' });
+
 let lang = (function () {
   try {
     const saved = localStorage.getItem('efp_lang');
@@ -1138,6 +1200,7 @@ function applyStaticI18n() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria'))); });
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
   const fab = document.getElementById('fab');
   if (fab && !fab.classList.contains('busy')) fab.textContent = '📍 ' + t('tabNearby');
@@ -1167,15 +1230,31 @@ const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:true });
 map.attributionControl.setPosition('bottomleft');
 map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
 map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">ℹ️ Sources</a>');
-// ESRI World Dark Gray Canvas — free, no API key required
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors',
-  maxZoom:16,
+// Esri light-grey canvas (free, no key). If it keeps failing, switch to Carto's light basemap so the
+// map never stays blank; if both fail (offline) say so once instead of showing an unexplained grey void.
+const baseEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors', maxZoom:16,
 }).addTo(map);
-// Reference layer (labels) on top
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+const refEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
   attribution:'', maxZoom:16, pane:'overlayPane',
 }).addTo(map);
+const baseBackup = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; OpenStreetMap contributors &copy; CARTO', subdomains:'abcd', maxZoom:19,
+});
+(function tileFailover() {
+  let bad = 0, onBackup = false, bad2 = 0, down = false;
+  baseEsri.on('tileload', () => { bad = 0; });
+  baseEsri.on('tileerror', () => {
+    if (onBackup || ++bad < 4) return;
+    onBackup = true;
+    map.removeLayer(baseEsri); map.removeLayer(refEsri); baseBackup.addTo(map);
+    if (typeof toast === 'function') toast(t('mapBackup'));
+  });
+  baseBackup.on('tileload', () => { bad2 = 0; down = false; });
+  baseBackup.on('tileerror', () => {
+    if (++bad2 >= 6 && !down) { down = true; if (typeof toast === 'function') toast(t('mapDown'), 6000); }
+  });
+})();
 
 // ════════════════════════════════════════════════════
 // State
@@ -1213,7 +1292,7 @@ let   activeTab = 'map';
 (function buildSelects() {
   const opts = `<option value="" data-i18n="allCountries">${t('allCountries')}</option>` +
     Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
-      .map(([cc,n]) => `<option value="${cc}">${FLAGS[cc]||''} ${n}</option>`).join('');
+      .map(([cc,n]) => `<option value="${cc}">${FLAGE[cc]||''} ${n}</option>`).join('');
   ['mobCountry'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
@@ -1284,7 +1363,18 @@ function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixe
 // optionally overridden per station (e.g. Germany stations upgraded to the statutory MTS-K feed).
 const GRADE_COL = { A:'#16A34A', B:'#2563EB', C:'#F59E0B', D:'#E8542F', L:'#94A3B8' };
 function gradeTxt(g) { return t('grade_' + g); }
-function gradeOf(s) { return s.grade || metaOf[s.country]?.grade || 'C'; }
+const AGG_SRC = new Set(['anwb']);
+function gradeOf(s) {
+  if (s.grade) return s.grade;
+  const g = metaOf[s.country]?.grade || 'C';
+  // Country grade D (community) comes from the crowd source; stations priced only by the ANWB aggregator are third-party (C).
+  if (g === 'D' && s.prices?.length && s.prices.every(p => AGG_SRC.has(String(p.source || '').toLowerCase()))) return 'C';
+  return g;
+}
+// "anwb.nl (ANWB POI API)" → "anwb.nl": the raw feed label is jargon to a driver
+function cleanSrc(x) { return String(x || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim(); }
+// 3 decimals only where pumps really price in tenths of a cent/penny (EUR, GBP); 2 elsewhere
+function pfmt(price, cur) { return Number(price).toFixed(cur === 'EUR' || cur === 'GBP' ? 3 : 2); }
 
 function fmtAgo(iso) {
   if (!iso) return '';
@@ -1314,11 +1404,12 @@ function provHtml(p) {
   if (reg) bits.push(`<span class="reg">${t('regulatedMax')}</span>`);
   // ANWB delivers EUR; for non-euro countries we convert with the ECB rate (decision D13: say so)
   if (p.basis === 'converted_eur' || (p.source === 'anwb' && p.currency && p.currency !== 'EUR')) bits.push(t('convertedEur'));
-  if (p.source || reg || p.alt?.length) bits.push(ageTxt(p.updated_at));
+  // unknown age is stated once, by the station-level line below the prices (ageHtml) — not per fuel
+  if ((p.source || reg || p.alt?.length) && p.updated_at) bits.push(ageTxt(p.updated_at));
   let h = bits.join(' · ');
   if (p.disagree) h += (h ? ' · ' : '') + t('sourcesDiffer');
   if (p.alt?.length) {
-    const li = p.alt.map(a => `${Number(a.price).toFixed(3)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
+    const li = p.alt.map(a => `${pfmt(a.price, p.currency)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
     h += `<details><summary>${t('otherSources', { n: p.alt.length })}</summary>${li}</details>`;
   }
   return h;
@@ -1352,7 +1443,7 @@ function ageHtml(s) {
     : t('priceSetAt', { t: fmtAgo(new Date(Date.now() - h*3600000).toISOString()) });
   const stale = m.status === 'stale'
     ? `<div class="stale-note">${t('staleNote', { t: fmtAgo(m.fetched_at) })}</div>` : '';
-  return `<div class="age-line"><span class="gb g${g}">${g}</span> ${gradeTxt(g)}<br>⏱ ${when}</div>${stale}`;
+  return `<div class="age-line"><button type="button" class="gb g${g}" aria-label="${esc(t('gradeInfo'))}" onclick="event.stopPropagation();openTrust()">${g} ⓘ</button> ${gradeTxt(g)}<br>⏱ ${when}</div>${stale}`;
 }
 
 function fmtDate(iso) {
@@ -1443,13 +1534,25 @@ function mkCluster() {
       // mkMarker / PRICE_ZOOM) — that is the one place they render without overlap.
       const n  = c.getChildCount();
       const sz = n<50?'small':n<200?'medium':'large';
+      // tint = median price level (0 cheap … 4 dear, per-country quintiles) of the priced stations inside; untinted when too few are priced
+      let tint = '';
+      if (colorBy === 'price') {
+        const qs = [];
+        for (const m of c.getAllChildMarkers()) { const q = m.options._qi; if (q != null) qs.push(q); }
+        if (qs.length >= 3 && qs.length >= n * 0.3) {
+          qs.sort((a, b) => a - b);
+          const i = qs[qs.length >> 1];
+          tint = ` style="--cc:${RAMP[i]};--ct:${i === 1 || i === 2 ? '#16181D' : '#fff'}"`;
+        }
+      }
       return L.divIcon({
-        html:`<div>${n}</div>`,
+        html:`<div${tint}>${n}</div>`,
         className:`marker-cluster marker-cluster-${sz}`,
         iconSize:[40,40],
       });
     },
   });
+  cluster.on('animationend', () => schedDeclutter());
   map.addLayer(cluster);
 }
 mkCluster();
@@ -1472,11 +1575,16 @@ function quintiles(cc, key) {
   return (_qCache[k] = q);
 }
 function fuelKeyOf(p) { return isP95(p) ? 'P95' : isP98(p) ? 'P98' : p.fuel_type; }
+function qIndex(s, cp) {
+  if (!cp) return null;
+  const q = quintiles(s.country, fuelKeyOf(cp));
+  return q ? q.filter(x => cp.price > x).length : null;
+}
 function markerCol(s, cp) {
   if (!cp) return '#334155';
   if (colorBy === 'price') {
-    const q = quintiles(s.country, fuelKeyOf(cp));
-    if (q) return RAMP[q.filter(x => cp.price > x).length];
+    const i = qIndex(s, cp);
+    if (i != null) return RAMP[i];
   }
   return GRADE_COL[gradeOf(s)] || '#f59e0b';
 }
@@ -1486,12 +1594,13 @@ function mkMarker(s) {
   const col  = markerCol(s, cp);
   const sz   = cp ? 12 : 7;
   const op   = cp ? 1 : 0.45;
+  // 30 px transparent hit box around the (7–12 px) dot so it can be tapped with a thumb; the dot stays centred on the anchor
   const icon = L.divIcon({
     className:'',
-    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2px solid #fff;opacity:${op};box-shadow:0 0 0 1px rgba(0,0,0,0.25),0 1px 4px rgba(0,0,0,0.35)"></div>`,
-    iconSize:[sz,sz], iconAnchor:[sz>>1,sz>>1],
+    html:`<div class="mk"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2px solid #fff;opacity:${op};box-shadow:0 0 0 1px rgba(0,0,0,0.25),0 1px 4px rgba(0,0,0,0.35)"></div></div>`,
+    iconSize:[30,30], iconAnchor:[15,15],
   });
-  const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE) });
+  const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE), _qi:(colorBy === 'price' ? qIndex(s, cp) : null) });
   if (cp) {
     const a95 = minOf(s,F95), dd = minOf(s,FDIE), sy = SYM[cp.currency]||cp.currency;
     const tip = fFuel ? `${fuelLabel(cp)} ${cp.price.toFixed(2)}${sy}`
@@ -1504,6 +1613,23 @@ function mkMarker(s) {
   return m;
 }
 
+// Hide price labels that would overlap a label already shown (greedy, DOM order), so dense cities stay readable.
+let _dcT = null;
+function schedDeclutter() { clearTimeout(_dcT); _dcT = setTimeout(declutter, 180); }
+function declutter() {
+  const mc = map.getContainer();
+  if (mc.classList.contains('hide-prices')) return;
+  const els = mc.querySelectorAll('.leaflet-tooltip.ptip');
+  els.forEach(e => e.classList.remove('ptip-off'));
+  const rects = Array.from(els, e => e.getBoundingClientRect());
+  const kept = [];
+  rects.forEach((r, i) => {
+    if (!r.width) return;
+    for (const k of kept) { if (r.left < k.right + 2 && r.right + 2 > k.left && r.top < k.bottom + 1 && r.bottom + 1 > k.top) { els[i].classList.add('ptip-off'); return; } }
+    kept.push(r);
+  });
+}
+map.on('moveend zoomend', schedDeclutter);
 function addToMap(cc, stations) {
   const toAdd = [];
   for (const s of stations) {
@@ -1512,7 +1638,7 @@ function addToMap(cc, stations) {
     byId.set(s.id, m);
     toAdd.push(m);
   }
-  if (toAdd.length) cluster.addLayers(toAdd);
+  if (toAdd.length) { cluster.addLayers(toAdd); schedDeclutter(); }
 }
 
 // ════════════════════════════════════════════════════
@@ -1524,7 +1650,7 @@ function mkPopup(s) {
     const sym = SYM[p.currency] || p.currency || '';
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
     const pv = provHtml(p);
-    return `<tr><td class="ft">${fuelLabel(p)}${e10}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
+    return `<tr><td class="ft">${fuelLabel(p)}${e10}</td><td class="pr">${pfmt(p.price, p.currency)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
       + (pv ? `<tr><td class="pv" colspan="3">${pv}</td></tr>` : '');
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
@@ -1532,7 +1658,7 @@ function mkPopup(s) {
   return `<div class="pop">
     <div class="pop-name">${flag} ${esc(s.name||s.brand||'—')}</div>
     ${s.address ? `<div class="pop-addr">${esc(s.address)}</div>` : ''}
-    <div class="pop-meta">${esc([s.city, s.source].filter(Boolean).join(' · '))}</div>
+    <div class="pop-meta">${esc([s.city, cleanSrc(s.source)].filter(Boolean).join(' · '))}</div>
     <table class="pop-tbl">${rows}</table>${noP}
     ${fillHtml(cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
     <div class="worth" id="worth-${esc(s.id)}">${worthHtml(s, fFuel || _worthKey || (cheapest(s) ? fuelKeyOf(cheapest(s)) : 'P95'))}</div>
@@ -1576,7 +1702,7 @@ function mkCard(s, km) {
       <div class="scard-name">${flag} ${esc(s.name||s.brand||'—')}${noPin}</div>
       ${favBtn}${goBtn}
     </div>
-    <div class="scard-meta">${esc([s.city,s.source].filter(Boolean).join(' · '))}${distHtml ? ' '+distHtml : ''}</div>
+    <div class="scard-meta">${esc([s.city,cleanSrc(s.source)].filter(Boolean).join(' · '))}${distHtml ? ' '+distHtml : ''}</div>
     <div class="pchips">${chips||`<span style="color:var(--text3);font-size:0.71rem">${t('noPricesShort')}</span>`}</div>
     ${fillHtml(cp)}
     ${ageHtml(s)}
@@ -1590,7 +1716,8 @@ function mkCard(s, km) {
 // worker serves repeat visits from cache and a changed version simply becomes a new URL.
 let metaIdx = {};
 function fetchMeta(fresh) {
-  return fetch('meta.json', fresh ? { cache:'no-store' } : {}).then(r => r.ok ? r.json() : null).then(m => {
+  const go = () => fetch('meta.json', fresh ? { cache:'no-store' } : {}).then(r => r.ok ? r.json() : null).catch(() => null);
+  return go().then(m => m || _sleep(1500).then(go)).then(m => {
     if (m) { metaAt = m.fetched_at; metaCountries = m.countries || []; metaIdx = Object.fromEntries(metaCountries.map(c => [c.country, c.fetched_at])); }
     return m;
   }).catch(() => null);
@@ -1616,6 +1743,33 @@ function dlRelease() {
   } else _dlActive--;
 }
 
+const failedCC = new Set();
+function showNetBanner() {
+  const el = document.getElementById('net-banner'); if (!el) return;
+  if (!failedCC.size) { el.classList.remove('on'); return; }
+  const names = [...failedCC].map(c => CNAMES[c] || c);
+  const list = names.slice(0, 2).join(', ') + (names.length > 2 ? ' +' + (names.length - 2) : '');
+  el.querySelector('span').textContent = navigator.onLine === false ? t('offlineNote') : t('loadFail', { c: list });
+  el.classList.add('on');
+}
+function retryFailed() { const l = [...failedCC]; failedCC.clear(); showNetBanner(); l.forEach(c => loadCC(c)); }
+window.addEventListener('online', () => { if (failedCC.size) retryFailed(); });
+window.addEventListener('offline', showNetBanner);
+// Up to 3 tries (1 s, 3 s back-off), 45 s timeout each — a flaky mobile link shouldn't leave a country silently empty.
+async function fetchJSONRetry(url, tries = 3) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 45000);
+    try {
+      const r = await fetch(url, { signal: ac.signal });
+      if (!r.ok) throw new Error(r.status);
+      return await r.json();
+    } catch (e) { last = e; if (i < tries - 1) await _sleep(1000 * Math.pow(3, i)); }
+    finally { clearTimeout(to); }
+  }
+  throw last;
+}
+
 async function loadCC(cc, opts) {
   const force = !!(opts && opts.force);
   if ((loaded.has(cc) && !force) || loading.has(cc)) return;
@@ -1624,9 +1778,8 @@ async function loadCC(cc, opts) {
   try {
     if (metaReady) await Promise.race([metaReady, _sleep(2500)]);
     const v = metaIdx[cc];
-    const r = await fetch(`${cc.toLowerCase()}.json${v ? '?v=' + encodeURIComponent(v) : ''}`);
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
+    const j = await fetchJSONRetry(`${cc.toLowerCase()}.json${v ? '?v=' + encodeURIComponent(v) : ''}`);
+    failedCC.delete(cc);
     if (j.meta?.fetched_at && !metaAt) metaAt = j.meta.fetched_at;
     data[cc] = j.stations || [];
     metaOf[cc] = j.meta || {};
@@ -1636,9 +1789,10 @@ async function loadCC(cc, opts) {
     if (!force) { addToMap(cc, data[cc]); onNewData(); }
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
+    failedCC.add(cc);
   } finally {
     dlRelease();
-    loading.delete(cc); updStatus();
+    loading.delete(cc); updStatus(); showNetBanner();
   }
 }
 
@@ -2056,7 +2210,9 @@ function goTab(tab) {
   if (tab === 'map' && DESK.matches) tab = 'stations';   // desktop has no separate map tab
   activeTab = tab;
   document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b => b.removeAttribute('aria-current'));
   document.getElementById(`tb-${tab}`)?.classList.add('on');
+  document.getElementById(`tb-${tab}`)?.setAttribute('aria-current', 'page');
 
   if (tab === 'map') { closePanel(); return; }
 
@@ -2071,7 +2227,8 @@ function goTab(tab) {
   }
 }
 
-function openTrust() { document.getElementById('trust-overlay')?.classList.add('on'); }
+function openTrust() { document.getElementById('trust-overlay')?.classList.add('on'); document.querySelector('#trust-overlay .trust-dismiss')?.focus(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeTrust(); closeNav(); } });
 function closeTrust() {
   document.getElementById('trust-overlay')?.classList.remove('on');
   try { localStorage.setItem('efp_seen_trust_intro', '1'); } catch (_) {}
@@ -2558,7 +2715,7 @@ function renderLegend() {
        <div class="lg-ends"><span>${t('lgCheap')}</span><span>${t('lgDear')}</span></div>`
     : `<div class="lg-grades">${Object.entries(GRADE_COL).filter(([g]) => g !== 'L').map(([g,c]) => `<span><i style="background:${c}"></i>${g}</span>`).join('')}</div>`;
   el.innerHTML = `<div class="lg-top"><span class="lg-title">${t(colorBy === 'price' ? 'lgPrice' : 'lgSource')}</span>
-    <button class="lg-mode" onclick="toggleColorBy()">⇄</button></div>${body}`;
+    <span style="display:flex;gap:4px"><button class="lg-mode" aria-label="${esc(t('lgToggle'))}" title="${esc(t('lgToggle'))}" onclick="toggleColorBy()">⇄</button><button class="lg-mode" aria-label="${esc(t('gradeInfo'))}" title="${esc(t('gradeInfo'))}" onclick="openTrust()">ⓘ</button></span></div>${body}`;
 }
 function toggleColorBy() {
   colorBy = colorBy === 'price' ? 'source' : 'price';
@@ -2601,7 +2758,7 @@ function renderTrip() {
     const pool = nb.length ? nb : list.filter(c => c !== trip.from);
     trip.to = pool.sort((a, b) => (tripPrice(a) ?? 9) - (tripPrice(b) ?? 9))[0];
   }
-  const opts = sel => list.map(c => `<option value="${c}"${c === sel ? ' selected' : ''}>${FLAGS[c] || ''} ${esc(CNAMES[c] || c)}</option>`).join('');
+  const opts = sel => list.map(c => `<option value="${c}"${c === sel ? ' selected' : ''}>${FLAGE[c] || ''} ${esc(CNAMES[c] || c)}</option>`).join('');
   el.innerHTML = `
     <div class="tcard">
       <label style="margin-top:0">${t('tripCons')}</label>
@@ -2726,7 +2883,7 @@ function updStatus() {
   const spin = act > 0 ? ' <i class="spin"></i>' : '';
   let html, cls = 'ok';
   if (!cc) {
-    html = `<div class="pl-row1">🇪🇺 Europe${spin}</div><div class="pl-row2"><span class="pl-sub">${t('statsStations', { n: n.toLocaleString() })}</span></div>`;
+    html = `<div class="pl-row1">${FLAGS.EU} Europe${spin}</div><div class="pl-row2"><span class="pl-sub">${t('statsStations', { n: n.toLocaleString() })}</span></div>`;
   } else if (!loaded.has(cc)) {
     html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)} <i class="spin"></i></div><div class="pl-row2"><span class="pl-sub">${t('loadingEllipsis')}</span></div>`;
     cls = 'loading';
@@ -2775,9 +2932,7 @@ window.addEventListener('appinstalled', () => { const r = document.getElementByI
   updStatus(); updPriceLbls(); renderLegend(); renderCompare(); updLabel();
   document.querySelectorAll('#p-stations .panel-scroll, #p-nearby .panel-scroll').forEach(initPTR);
 
-  try {
-    if (!localStorage.getItem('efp_seen_trust_intro')) openTrust();
-  } catch (_) {}
+  // The source-grade explainer no longer pops up over the map: it opens from the legend ⓘ, the grade chip on any station, or Filter.
 
   if (DESK.matches) goTab('stations');
   DESK.addEventListener?.('change', e => { if (e.matches) goTab('stations'); else closePanel(); setTimeout(() => map.invalidateSize(), 50); });
@@ -2798,7 +2953,17 @@ window.addEventListener('appinstalled', () => { const r = document.getElementByI
   } catch (_) {}
   // Home country: the region of the browser language (sv-SE → SE, de-AT → AT …); Sweden otherwise
   let home = 'SE';
-  try { const rg = (navigator.language || '').split('-')[1]; if (rg && CNAMES[rg.toUpperCase()]) home = rg.toUpperCase(); } catch (_) {}
+  try {
+    const rg = (navigator.language || '').split('-')[1];
+    if (rg && CNAMES[rg.toUpperCase()]) home = rg.toUpperCase();
+    else {   // plain "en"/"de": the device time zone is a good proxy for where the driver is
+      const TZ = { Stockholm:'SE', Oslo:'NO', Copenhagen:'DK', Helsinki:'FI', Berlin:'DE', Paris:'FR', Madrid:'ES', Rome:'IT', Amsterdam:'NL', Brussels:'BE',
+        Vienna:'AT', Zurich:'CH', Warsaw:'PL', Prague:'CZ', Lisbon:'PT', Athens:'GR', Dublin:'IE', London:'GB', Budapest:'HU', Bucharest:'RO', Sofia:'BG',
+        Zagreb:'HR', Istanbul:'TR', Tallinn:'EE', Riga:'LV', Vilnius:'LT', Bratislava:'SK', Ljubljana:'SI', Belgrade:'RS', Luxembourg:'LU', Reykjavik:'IS', Malta:'MT' };
+      const city = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').split('/')[1];
+      if (city && TZ[city]) home = TZ[city];
+    }
+  } catch (_) {}
   if (home !== 'SE' && CB[home] && !new URLSearchParams(location.search).get('s')) map.fitBounds(CB[home], { padding:[10,10] });
   loadCC(home);
   schedVP();

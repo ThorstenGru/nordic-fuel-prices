@@ -10,7 +10,7 @@
 // Versioned CDN libraries (URL contains the version) and small static icons: cache-first — safe,
 // because a version bump changes the URL itself.
 
-const SHELL_CACHE = 'efp-shell-v4';
+const SHELL_CACHE = 'efp-shell-v5';
 const DATA_CACHE  = 'efp-data-v3';
 const SLOW_NET_MS = 3500;   // flaky/slow connection: serve the cached copy instead of waiting
 
