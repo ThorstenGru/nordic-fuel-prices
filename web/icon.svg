@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <rect width="512" height="512" rx="112" fill="#E8542F"/>
-<circle cx="256.0" cy="92.0" r="10" fill="#FFE3DA"/>
-<circle cx="354.0" cy="118.3" r="10" fill="#FFE3DA"/>
-<circle cx="425.7" cy="190.0" r="10" fill="#FFE3DA"/>
-<circle cx="452.0" cy="288.0" r="10" fill="#FFE3DA"/>
-<circle cx="425.7" cy="386.0" r="10" fill="#FFE3DA"/>
-<circle cx="354.0" cy="457.7" r="10" fill="#FFE3DA"/>
-<circle cx="256.0" cy="484.0" r="10" fill="#FFE3DA"/>
-<circle cx="158.0" cy="457.7" r="10" fill="#FFE3DA"/>
-<circle cx="86.3" cy="386.0" r="10" fill="#FFE3DA"/>
-<circle cx="60.0" cy="288.0" r="10" fill="#FFE3DA"/>
-<circle cx="86.3" cy="190.0" r="10" fill="#FFE3DA"/>
-<circle cx="158.0" cy="118.3" r="10" fill="#FFE3DA"/>
-<path d="M256 138 L180.8 252.6 A90 90 0 1 0 331.2 252.6 Z" fill="#fff"/>
-<g transform="translate(256 298) scale(1) translate(-265 -319)">
+<circle cx="256.0" cy="64.0" r="10" fill="#FFE3DA"/>
+<circle cx="352.0" cy="89.7" r="10" fill="#FFE3DA"/>
+<circle cx="422.3" cy="160.0" r="10" fill="#FFE3DA"/>
+<circle cx="448.0" cy="256.0" r="10" fill="#FFE3DA"/>
+<circle cx="422.3" cy="352.0" r="10" fill="#FFE3DA"/>
+<circle cx="352.0" cy="422.3" r="10" fill="#FFE3DA"/>
+<circle cx="256.0" cy="448.0" r="10" fill="#FFE3DA"/>
+<circle cx="160.0" cy="422.3" r="10" fill="#FFE3DA"/>
+<circle cx="89.7" cy="352.0" r="10" fill="#FFE3DA"/>
+<circle cx="64.0" cy="256.0" r="10" fill="#FFE3DA"/>
+<circle cx="89.7" cy="160.0" r="10" fill="#FFE3DA"/>
+<circle cx="160.0" cy="89.7" r="10" fill="#FFE3DA"/>
+<path d="M256 129 L180.8 243.6 A90 90 0 1 0 331.2 243.6 Z" fill="#fff"/>
+<g transform="translate(256 297) scale(1) translate(-265 -319)">
 <g fill="#0F766E"><path fill-rule="evenodd" d="M222 276a10 10 0 0 1 10-10h40a10 10 0 0 1 10 10v86h-60zM232 276h40v30h-40z"/><rect x="212" y="362" width="80" height="10" rx="5"/></g>
 <rect x="234.0" y="278" width="7.4" height="26" fill="#16A34A"/>
 <rect x="241.2" y="278" width="7.4" height="26" fill="#84CC16"/>
