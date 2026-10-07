@@ -97,6 +97,16 @@ Goal: first revenue without hurting trust; measure RPM and affiliate EPC.
 
 **Exit gate:** 10k+ MAU; RPM and affiliate EPC measured; retention not down more than 5% against an ads-off holdout.
 
+### IDEA (owner, 2026-10-07) - Route-aware cheapest stops
+Plan a route (A -> B, optional via points) and list the cheapest pumps *along* it for the fuel and litres the driver needs, updating as prices refresh.
+- Shape: route polyline -> corridor (e.g. 3-5 km) -> stations from the already-loaded country files -> rank by `price - detour_cost` (extra km x consumption x price), honouring tank size/range so stops are spaced sensibly; show "fill up here, saves X EUR vs the average on route".
+- Needs: a routing source (OSRM/Valhalla/ORS public demo is not production-grade; options: self-hosted OSRM on a small VM, or a paid/free-tier router with licence for this use), corridor search client-side (data already in browser; ~1 s for a 1,000 km route with a grid index), cross-border legs priced in EUR via the per-country stats already published.
+- Honesty rules carry over: show source + age per price, never promise "live" where a feed has no timestamp.
+- Builds on: Trip calculator (v1.9), tank size, nav-app chooser. Effort: M-L (routing is the cost driver). Decision needed: routing provider/budget.
+
+### IDEA (owner, 2026-10-07) - EV charging and other alternative energy
+Research report: `docs/EV_ALT_ENERGY_RESEARCH.md` (commissioned 2026-10-07; read it before deciding).
+
 ### LATER - Phase 2: Premium consumer tier (Jul-Dec 2027)
 - Price alerts (web push/email): 3 free, paid unlimited, thresholds, weekly digest.
 - Price history/trend: basic free, extended/export paid, built on our own archive of open feeds; wording "trend, not forecast".

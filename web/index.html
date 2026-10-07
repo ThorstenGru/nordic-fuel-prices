@@ -35,6 +35,9 @@
   form-action 'self';
   frame-ancestors 'none';
 ">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+<link rel="preload" href="meta.json" as="fetch" crossorigin>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -135,6 +138,41 @@ html, body {
 .drag-handle { position:relative; margin:0 auto; width:100%; height:30px; background:none; border-radius:0; cursor:grab; touch-action:none; flex-shrink:0; }
 .drag-handle::after { content:''; position:absolute; left:50%; top:12px; width:40px; height:5px; margin-left:-20px; border-radius:3px; background:#D5D8DD; }
 .panel.dragging .drag-handle::after { background:var(--coral); }
+
+/* ── Pull-to-refresh, last-updated line ── */
+.panel-scroll { overscroll-behavior-y:contain; }
+.ptr { position:absolute; left:50%; top:34px; width:34px; height:34px; margin-left:-17px; border-radius:50%; background:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:center; font-size:1rem;
+  opacity:0; pointer-events:none; z-index:5; transition:opacity .15s; }
+.ptr.spin-on { opacity:1; animation:spin .8s linear infinite; }
+.upd-row { padding:0 16px 6px; }
+.upd-line { background:none; border:none; font:inherit; font-size:0.7rem; color:var(--text3); cursor:pointer; padding:2px 0; }
+.upd-line.old { color:#B45309; }
+.upd-line:active { opacity:.6; }
+
+/* ── Trip calculator ── */
+.view-seg { display:flex; gap:4px; padding:0 14px 8px; }
+.view-seg button { flex:1; background:none; border:none; border-bottom:2px solid transparent; font:inherit; font-size:0.8rem; font-weight:600; color:var(--text3); padding:8px 4px; cursor:pointer; }
+.view-seg button.on { color:var(--blue); border-bottom-color:var(--blue); }
+.tcard { background:var(--surf2); border:1px solid var(--border); border-radius:16px; padding:12px 14px; margin-bottom:12px; }
+.tcard h3 { font-size:0.9rem; margin-bottom:8px; }
+.tcard label { display:block; font-size:0.66rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text2); margin:10px 0 4px; }
+.tcard select, .tcard input[type=number] { width:100%; background:var(--surf); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-size:16px; font-family:inherit; }
+.tcard input[type=range] { width:100%; accent-color:var(--coral); }
+.tstep { display:flex; align-items:center; gap:8px; }
+.tstep button { width:44px; height:44px; border-radius:12px; border:1px solid var(--border); background:var(--surf); font-size:1.2rem; cursor:pointer; }
+.tstep b { flex:1; text-align:center; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+.tverdict { margin-top:10px; border-radius:14px; padding:12px; font-size:0.9rem; font-weight:700; line-height:1.35; }
+.tverdict.good { background:rgba(22,163,74,0.12); color:#15803D; }
+.tverdict.bad  { background:rgba(239,68,68,0.10); color:#B91C1C; }
+.tverdict small { display:block; font-weight:500; color:var(--text2); margin-top:3px; font-size:0.74rem; }
+.tchips { display:flex; flex-wrap:wrap; gap:6px; }
+.tchips button { border:1px solid var(--border); background:var(--surf); border-radius:16px; padding:7px 11px; font:inherit; font-size:0.78rem; cursor:pointer; color:var(--text2); }
+.tchips button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.trow { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--border); font-size:0.82rem; }
+.trow:first-child { border-top:none; }
+.trow.best { font-weight:700; color:#15803D; }
+.trow .d { color:var(--text3); font-size:0.7rem; min-width:56px; text-align:right; }
 
 /* ── Navigation chooser ── */
 .nav-row { display:flex; align-items:center; gap:14px; padding:11px 2px; border-top:1px solid var(--border); min-height:56px; cursor:pointer; font-size:0.98rem; font-weight:600; background:none; border-left:0; border-right:0; border-bottom:0; width:100%; font-family:inherit; color:var(--text); text-align:left; }
@@ -673,6 +711,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <!-- Near Me -->
 <div class="panel" id="p-nearby">
   <div class="drag-handle"></div>
+  <div class="ptr">⟳</div>
   <div class="panel-title">📍 <span data-i18n="nearbyTitle">Cheapest Near You</span></div>
   <div id="nearby-summary" style="display:none" class="nearby-summary">
     <div class="ns-label" data-i18n="bestPriceNearby">Best price nearby</div>
@@ -707,10 +746,12 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <!-- Stations list -->
 <div class="panel" id="p-stations">
   <div class="drag-handle"></div>
+  <div class="ptr">⟳</div>
   <div class="phead">
     <h2><span data-i18n="stationsHeader">Stations</span> <span id="mobCount">—</span></h2>
     <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortView">In view</span></button>
   </div>
+  <div class="upd-row"><button class="upd-line" id="upd-line" onclick="refreshData(true)">⟳ <span id="upd-lbl"></span></button></div>
   <div class="seg" id="list-seg">
     <button class="on" data-m="all" onclick="setListMode('all')"><span data-i18n="allSt">All</span></button>
     <button data-m="saved" onclick="setListMode('saved')">♥ <span data-i18n="saved">Saved</span> <span id="fav-n"></span></button>
@@ -722,6 +763,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <div class="panel" id="p-compare">
   <div class="drag-handle"></div>
   <div class="phead" style="padding:2px 16px 8px"><h2 style="font-size:0.76rem;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2)" data-i18n="cmpTitle">Price by country</h2></div>
+  <div class="view-seg" id="cmp-views">
+    <button class="on" data-v="countries" onclick="setCmpView('countries')"><span data-i18n="ctyTab">Countries</span></button>
+    <button data-v="trip" onclick="setCmpView('trip')">🧮 <span data-i18n="tripTab">Trip</span></button>
+  </div>
   <div class="seg">
     <button class="on" data-k="p95" onclick="setCmpKey('p95')">⛽ 95</button>
     <button data-k="diesel" onclick="setCmpKey('diesel')">🛢 Diesel</button>
@@ -1024,23 +1069,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { sortView:'In view', navTitle:'Navigate with', navRemember:'Use this app next time', cancel:'Cancel', navCopy:'Copy address', navCopied:'Address copied', navOther:'Other app…', navPrefLabel:'Navigation app', navAsk:'Ask every time', installApp2:'Add to Home Screen', iosInstall:'Tap the Share button, then “Add to Home Screen”.', cheapTip:'Tip: tap 🏆 to jump to the cheapest station in view.', cheapHere:'Cheapest here', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'🏆 {p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap ♥ on a station to save it here.', share:'Share', copied:'Link copied', tankLabel:'Tank size', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { ctyTab:'Countries', tripTab:'Trip', updAgo:'Updated {t}', updOld:'Updated {t} — tap to refresh', updDone:'Updated — {n} countries refreshed', updNone:'Already up to date', updFail:'Couldn’t reach the server — showing saved data', tripBorder:'Border run: is it worth the drive?', tripFrom:'Fill up here', tripTo:'…or drive to', tripExtra:'Extra driving, round trip: {k} km', tripCons:'Consumption', tripLper:'L / 100 km', tripWorth:'✅ Worth it — you save {s}', tripNot:'❌ Not worth it — it costs {s} more', tripBreak:'Break-even at about {k} km extra (round trip). Fill-up: {l} L, driving cost included.', tripRoad:'Road trip: where to fill up?', tripDist:'Distance (km)', tripVia:'Countries on the way', tripNeed:'{l} L needed · {n} fill-up(s) with a {t} L tank', tripBest:'Cheapest: {c} — {s} less than {w}', tripAll:'Fuel for the whole trip, if bought in…', tripPick:'Pick at least two countries', tripNote:'Uses each country’s median station price (EUR). Real stations vary — use 🏆 for the cheapest near you.', sortView:'In view', navTitle:'Navigate with', navRemember:'Use this app next time', cancel:'Cancel', navCopy:'Copy address', navCopied:'Address copied', navOther:'Other app…', navPrefLabel:'Navigation app', navAsk:'Ask every time', installApp2:'Add to Home Screen', iosInstall:'Tap the Share button, then “Add to Home Screen”.', cheapTip:'Tip: tap 🏆 to jump to the cheapest station in view.', cheapHere:'Cheapest here', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'🏆 {p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap ♥ on a station to save it here.', share:'Share', copied:'Link copied', tankLabel:'Tank size', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { sortView:'I vyn', navTitle:'Navigera med', navRemember:'Använd den här appen nästa gång', cancel:'Avbryt', navCopy:'Kopiera adress', navCopied:'Adress kopierad', navOther:'Annan app…', navPrefLabel:'Navigeringsapp', navAsk:'Fråga varje gång', installApp2:'Lägg till på hemskärmen', iosInstall:'Tryck på Dela-knappen och sedan ”Lägg till på hemskärmen”.', cheapTip:'Tips: tryck på 🏆 för att hoppa till billigaste stationen i vyn.', cheapHere:'Billigast här', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'🏆 {p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på ♥ vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', tankLabel:'Tankstorlek', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { ctyTab:'Länder', tripTab:'Resa', updAgo:'Uppdaterad {t}', updOld:'Uppdaterad {t} — tryck för att uppdatera', updDone:'Uppdaterat — {n} länder', updNone:'Redan uppdaterat', updFail:'Ingen kontakt med servern — visar sparad data', tripBorder:'Gränshandel: lönar det sig?', tripFrom:'Tanka här', tripTo:'…eller kör till', tripExtra:'Extra körning, tur och retur: {k} km', tripCons:'Förbrukning', tripLper:'L / 100 km', tripWorth:'✅ Lönar sig — du sparar {s}', tripNot:'❌ Lönar sig inte — det kostar {s} mer', tripBreak:'Break-even vid ca {k} km extra (tur och retur). Tankning: {l} L, körkostnad inräknad.', tripRoad:'Roadtrip: var ska jag tanka?', tripDist:'Sträcka (km)', tripVia:'Länder på vägen', tripNeed:'{l} L behövs · {n} tankning(ar) med {t} L tank', tripBest:'Billigast: {c} — {s} mindre än {w}', tripAll:'Bränsle för hela resan om du köper i…', tripPick:'Välj minst två länder', tripNote:'Använder varje lands medianpris (EUR). Enskilda stationer varierar — använd 🏆 för billigast nära dig.', sortView:'I vyn', navTitle:'Navigera med', navRemember:'Använd den här appen nästa gång', cancel:'Avbryt', navCopy:'Kopiera adress', navCopied:'Adress kopierad', navOther:'Annan app…', navPrefLabel:'Navigeringsapp', navAsk:'Fråga varje gång', installApp2:'Lägg till på hemskärmen', iosInstall:'Tryck på Dela-knappen och sedan ”Lägg till på hemskärmen”.', cheapTip:'Tips: tryck på 🏆 för att hoppa till billigaste stationen i vyn.', cheapHere:'Billigast här', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'🏆 {p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på ♥ vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', tankLabel:'Tankstorlek', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { sortView:'Im Ausschnitt', navTitle:'Navigieren mit', navRemember:'Diese App nächstes Mal verwenden', cancel:'Abbrechen', navCopy:'Adresse kopieren', navCopied:'Adresse kopiert', navOther:'Andere App…', navPrefLabel:'Navigations-App', navAsk:'Jedes Mal fragen', installApp2:'Zum Home-Bildschirm', iosInstall:'Tippe auf „Teilen“ und dann auf „Zum Home-Bildschirm“.', cheapTip:'Tipp: Tippe auf 🏆, um zur günstigsten Tankstelle im Ausschnitt zu springen.', cheapHere:'Günstigste hier', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'🏆 {p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf ♥, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', tankLabel:'Tankgröße', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { ctyTab:'Länder', tripTab:'Reise', updAgo:'Aktualisiert {t}', updOld:'Aktualisiert {t} — zum Aktualisieren tippen', updDone:'Aktualisiert — {n} Länder', updNone:'Bereits aktuell', updFail:'Server nicht erreichbar — zeige gespeicherte Daten', tripBorder:'Grenztanken: lohnt sich die Fahrt?', tripFrom:'Hier tanken', tripTo:'…oder fahren nach', tripExtra:'Extra-Strecke, hin und zurück: {k} km', tripCons:'Verbrauch', tripLper:'L / 100 km', tripWorth:'✅ Lohnt sich — du sparst {s}', tripNot:'❌ Lohnt sich nicht — es kostet {s} mehr', tripBreak:'Break-even bei ca. {k} km extra (hin und zurück). Tankfüllung: {l} L, Fahrkosten eingerechnet.', tripRoad:'Reise: wo tanken?', tripDist:'Strecke (km)', tripVia:'Länder auf dem Weg', tripNeed:'{l} L nötig · {n} Tankstopp(s) mit {t}-L-Tank', tripBest:'Am günstigsten: {c} — {s} weniger als {w}', tripAll:'Kraftstoff für die ganze Reise, gekauft in…', tripPick:'Wähle mindestens zwei Länder', tripNote:'Basiert auf dem Medianpreis je Land (EUR). Einzelne Tankstellen weichen ab — nutze 🏆 für die günstigste in deiner Nähe.', sortView:'Im Ausschnitt', navTitle:'Navigieren mit', navRemember:'Diese App nächstes Mal verwenden', cancel:'Abbrechen', navCopy:'Adresse kopieren', navCopied:'Adresse kopiert', navOther:'Andere App…', navPrefLabel:'Navigations-App', navAsk:'Jedes Mal fragen', installApp2:'Zum Home-Bildschirm', iosInstall:'Tippe auf „Teilen“ und dann auf „Zum Home-Bildschirm“.', cheapTip:'Tipp: Tippe auf 🏆, um zur günstigsten Tankstelle im Ausschnitt zu springen.', cheapHere:'Günstigste hier', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'🏆 {p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf ♥, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', tankLabel:'Tankgröße', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { sortView:'Dans la vue', navTitle:'Naviguer avec', navRemember:'Utiliser cette app la prochaine fois', cancel:'Annuler', navCopy:'Copier l’adresse', navCopied:'Adresse copiée', navOther:'Autre app…', navPrefLabel:'Application de navigation', navAsk:'Toujours demander', installApp2:'Ajouter à l’écran d’accueil', iosInstall:'Touchez Partager, puis « Sur l’écran d’accueil ».', cheapTip:'Astuce : touchez 🏆 pour aller à la station la moins chère en vue.', cheapHere:'Le moins cher ici', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'🏆 {p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez ♥ sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', tankLabel:'Taille du réservoir', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { ctyTab:'Pays', tripTab:'Trajet', updAgo:'Mis à jour {t}', updOld:'Mis à jour {t} — touchez pour actualiser', updDone:'Actualisé — {n} pays', updNone:'Déjà à jour', updFail:'Serveur injoignable — données enregistrées affichées', tripBorder:'Plein de l’autre côté : ça vaut le coup ?', tripFrom:'Faire le plein ici', tripTo:'…ou aller en', tripExtra:'Détour aller-retour : {k} km', tripCons:'Consommation', tripLper:'L / 100 km', tripWorth:'✅ Ça vaut le coup — vous économisez {s}', tripNot:'❌ Pas rentable — {s} de plus', tripBreak:'Seuil de rentabilité vers {k} km de détour (aller-retour). Plein : {l} L, coût du trajet inclus.', tripRoad:'Road trip : où faire le plein ?', tripDist:'Distance (km)', tripVia:'Pays traversés', tripNeed:'{l} L nécessaires · {n} plein(s) avec un réservoir de {t} L', tripBest:'Moins cher : {c} — {s} de moins que {w}', tripAll:'Carburant pour tout le trajet, acheté en…', tripPick:'Choisissez au moins deux pays', tripNote:'Basé sur le prix médian par pays (EUR). Les stations varient — utilisez 🏆 pour la moins chère près de vous.', sortView:'Dans la vue', navTitle:'Naviguer avec', navRemember:'Utiliser cette app la prochaine fois', cancel:'Annuler', navCopy:'Copier l’adresse', navCopied:'Adresse copiée', navOther:'Autre app…', navPrefLabel:'Application de navigation', navAsk:'Toujours demander', installApp2:'Ajouter à l’écran d’accueil', iosInstall:'Touchez Partager, puis « Sur l’écran d’accueil ».', cheapTip:'Astuce : touchez 🏆 pour aller à la station la moins chère en vue.', cheapHere:'Le moins cher ici', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'🏆 {p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez ♥ sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', tankLabel:'Taille du réservoir', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { sortView:'En vista', navTitle:'Navegar con', navRemember:'Usar esta app la próxima vez', cancel:'Cancelar', navCopy:'Copiar dirección', navCopied:'Dirección copiada', navOther:'Otra app…', navPrefLabel:'App de navegación', navAsk:'Preguntar siempre', installApp2:'Añadir a la pantalla de inicio', iosInstall:'Toca Compartir y luego «Añadir a pantalla de inicio».', cheapTip:'Consejo: toca 🏆 para ir a la estación más barata a la vista.', cheapHere:'Más barata aquí', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'🏆 {p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca ♥ en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', tankLabel:'Tamaño del depósito', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { ctyTab:'Países', tripTab:'Viaje', updAgo:'Actualizado {t}', updOld:'Actualizado {t} — toca para actualizar', updDone:'Actualizado — {n} países', updNone:'Ya está al día', updFail:'Sin conexión con el servidor — mostrando datos guardados', tripBorder:'Repostar al otro lado: ¿compensa?', tripFrom:'Repostar aquí', tripTo:'…o conducir a', tripExtra:'Desvío ida y vuelta: {k} km', tripCons:'Consumo', tripLper:'L / 100 km', tripWorth:'✅ Compensa — ahorras {s}', tripNot:'❌ No compensa — cuesta {s} más', tripBreak:'Punto de equilibrio en unos {k} km de desvío (ida y vuelta). Repostaje: {l} L, coste de conducción incluido.', tripRoad:'Viaje: ¿dónde repostar?', tripDist:'Distancia (km)', tripVia:'Países en el camino', tripNeed:'{l} L necesarios · {n} repostaje(s) con depósito de {t} L', tripBest:'Más barato: {c} — {s} menos que {w}', tripAll:'Combustible de todo el viaje, comprado en…', tripPick:'Elige al menos dos países', tripNote:'Usa el precio mediano de cada país (EUR). Las estaciones varían — usa 🏆 para la más barata cerca de ti.', sortView:'En vista', navTitle:'Navegar con', navRemember:'Usar esta app la próxima vez', cancel:'Cancelar', navCopy:'Copiar dirección', navCopied:'Dirección copiada', navOther:'Otra app…', navPrefLabel:'App de navegación', navAsk:'Preguntar siempre', installApp2:'Añadir a la pantalla de inicio', iosInstall:'Toca Compartir y luego «Añadir a pantalla de inicio».', cheapTip:'Consejo: toca 🏆 para ir a la estación más barata a la vista.', cheapHere:'Más barata aquí', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'🏆 {p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca ♥ en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', tankLabel:'Tamaño del depósito', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
@@ -1120,6 +1165,7 @@ let   fCountry= '', fFuel = '';
 let   colorBy = 'price';       // 'price' | 'source'
 let   metaCountries = [];      // meta.json countries[] (with stats_eur once the pipeline publishes it)
 let   cmpKey = 'p95';
+let   cmpView = 'countries';   // 'countries' | 'trip'
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
@@ -1510,11 +1556,45 @@ function mkCard(s, km) {
 // ════════════════════════════════════════════════════
 // Data loading
 // ════════════════════════════════════════════════════
-async function loadCC(cc) {
-  if (loaded.has(cc) || loading.has(cc)) return;
+// meta.json tells us each country's data version; `<cc>.json?v=<version>` is immutable, so the service
+// worker serves repeat visits from cache and a changed version simply becomes a new URL.
+let metaIdx = {};
+function fetchMeta(fresh) {
+  return fetch('meta.json', fresh ? { cache:'no-store' } : {}).then(r => r.ok ? r.json() : null).then(m => {
+    if (m) { metaAt = m.fetched_at; metaCountries = m.countries || []; metaIdx = Object.fromEntries(metaCountries.map(c => [c.country, c.fetched_at])); }
+    return m;
+  }).catch(() => null);
+}
+let metaReady = null;
+const _sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// At most N downloads at once (1 on Save-Data/2G/3G), nearest-to-map-centre first — a 4G connection
+// gets the country you are looking at in about a second instead of 10 countries fighting for bandwidth.
+const _conn = navigator.connection || {};
+const MAX_DL = (_conn.saveData || /(^|-)(2g|3g)$/.test(_conn.effectiveType || '')) ? 1 : 3;
+let _dlActive = 0; const _dlWait = [];
+function dlSlot(cc) {
+  if (_dlActive < MAX_DL) { _dlActive++; return Promise.resolve(); }
+  return new Promise(res => _dlWait.push({ cc, res }));
+}
+function dlRelease() {
+  const c = map.getCenter();
+  if (_dlWait.length) {
+    let bi = 0, bd = Infinity;
+    _dlWait.forEach((w, i) => { const m = CB[w.cc]?.getCenter(); const d = m ? (m.lat - c.lat) ** 2 + (m.lng - c.lng) ** 2 : 1e9; if (d < bd) { bd = d; bi = i; } });
+    _dlWait.splice(bi, 1)[0].res();
+  } else _dlActive--;
+}
+
+async function loadCC(cc, opts) {
+  const force = !!(opts && opts.force);
+  if ((loaded.has(cc) && !force) || loading.has(cc)) return;
   loading.add(cc); updStatus();
+  await dlSlot(cc);
   try {
-    const r = await fetch(`${cc.toLowerCase()}.json`);
+    if (metaReady) await Promise.race([metaReady, _sleep(2500)]);
+    const v = metaIdx[cc];
+    const r = await fetch(`${cc.toLowerCase()}.json${v ? '?v=' + encodeURIComponent(v) : ''}`);
     if (!r.ok) throw new Error(r.status);
     const j = await r.json();
     if (j.meta?.fetched_at && !metaAt) metaAt = j.meta.fetched_at;
@@ -1523,13 +1603,66 @@ async function loadCC(cc) {
     loaded.add(cc);
     for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
     delete _cs[cc];
-    addToMap(cc, data[cc]);
-    onNewData();
+    if (!force) { addToMap(cc, data[cc]); onNewData(); }
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
   } finally {
+    dlRelease();
     loading.delete(cc); updStatus();
   }
+}
+
+// Pull-to-refresh / "last updated": only countries whose version changed are downloaded again.
+let _refreshing = false;
+async function refreshData(manual) {
+  if (_refreshing) return;
+  _refreshing = true; buzz(10);
+  const ind = document.querySelectorAll('.ptr'); ind.forEach(e => e.classList.add('spin-on'));
+  let n = 0, m = null;
+  try {
+    m = await fetchMeta(true);
+    if (m) {
+      const jobs = [];
+      for (const cc of [...loaded]) if (metaIdx[cc] && metaIdx[cc] !== metaOf[cc]?.fetched_at) jobs.push(loadCC(cc, { force:true }).then(() => n++));
+      await Promise.all(jobs);
+      if (n) { applyFilters(); if (activeTab === 'nearby' && myLat != null) showNearby(); }
+      renderCompare();
+    }
+  } finally {
+    ind.forEach(e => { e.classList.remove('spin-on'); e.style.transform = ''; });
+    _refreshing = false; updLabel();
+  }
+  if (manual) toast(m ? t(n ? 'updDone' : 'updNone', { n }) : t('updFail'));
+}
+function updLabel() {
+  const el = document.getElementById('upd-lbl'), line = document.getElementById('upd-line');
+  if (!el) return;
+  const cc = centerCountry();
+  const iso = (cc && metaOf[cc]?.fetched_at) || metaAt;
+  if (!iso) { el.textContent = ''; return; }
+  const h = (Date.now() - new Date(iso)) / 3600000;
+  el.textContent = h > 2 ? t('updOld', { t: fmtAgo(iso) }) : t('updAgo', { t: fmtAgo(iso) });
+  line.classList.toggle('old', h > 2);
+}
+setInterval(updLabel, 30000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { window._hiddenAt = Date.now(); return; }
+  if (window._hiddenAt && Date.now() - window._hiddenAt > 10 * 60000) refreshData(false);
+  updLabel();
+});
+function initPTR(sc) {
+  let y0 = null, dy = 0; const ind = sc.parentElement.querySelector('.ptr');
+  sc.addEventListener('touchstart', e => { y0 = sc.scrollTop <= 0 ? e.touches[0].clientY : null; dy = 0; }, { passive:true });
+  sc.addEventListener('touchmove', e => {
+    if (y0 == null || !ind) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy > 0 && sc.scrollTop <= 0) { ind.style.opacity = Math.min(1, dy / 70); ind.style.transform = `translateY(${Math.min(dy, 100) * 0.5}px) rotate(${dy * 3}deg)`; }
+  }, { passive:true });
+  sc.addEventListener('touchend', () => {
+    if (y0 != null && dy > 75) refreshData(true);
+    if (ind && !ind.classList.contains('spin-on')) { ind.style.opacity = ''; ind.style.transform = ''; }
+    y0 = null;
+  }, { passive:true });
 }
 
 function onNewData() {
@@ -1547,11 +1680,14 @@ function onNewData() {
 let _vpt = null;
 function schedVP() { clearTimeout(_vpt); _vpt = setTimeout(checkVP, 150); }
 function checkVP() {
-  const b = map.getBounds();
+  const b = map.getBounds(), z = map.getZoom();
+  const here = z >= 5 ? centerCountry() : null;
   for (const [cc, bbox] of Object.entries(CB)) {
     if (loaded.has(cc) || loading.has(cc)) continue;
     if (fCountry && cc !== fCountry) continue;
-    if (b.intersects(bbox)) loadCC(cc);
+    if (!b.intersects(bbox)) continue;
+    if (z < 6 && cc !== here) continue;          // continental view: only the country in the middle
+    loadCC(cc);
   }
 }
 map.on('moveend zoomend', schedVP);
@@ -2114,9 +2250,84 @@ function setCmpKey(k) {
   document.querySelectorAll('#p-compare .seg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
   renderCompare();
 }
+function setCmpView(v) {
+  cmpView = v;
+  document.querySelectorAll('#cmp-views button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  if (v === 'trip') renderTrip(); else renderCompare();
+}
+
+// ── Trip calculator: border run + road trip, on each country's median price (EUR, from meta.json) ──
+let trip = Object.assign({ cons:7, extra:30, km:600, from:'', to:'', via:[] }, store.get('efp_trip', {}));
+const tripSave = () => store.set('efp_trip', trip);
+function tripPrice(cc) { return metaCountries.find(c => c.country === cc)?.stats_eur?.[cmpKey]?.median ?? null; }
+function tripList() { return metaCountries.filter(c => c.stats_eur?.[cmpKey]).map(c => c.country).sort((a, b) => (CNAMES[a] || a).localeCompare(CNAMES[b] || b)); }
+function tripSet(k, v) { trip[k] = v; tripSave(); renderTrip(); }
+function tripToggleVia(cc) { const i = trip.via.indexOf(cc); if (i >= 0) trip.via.splice(i, 1); else trip.via.push(cc); tripSave(); renderTrip(); }
+function tripStep(d) { trip.cons = Math.min(20, Math.max(2, Math.round((trip.cons + d) * 2) / 2)); tripSave(); renderTrip(); }
+function tripLive(k, v) { trip[k] = +v || 0; tripSave(); tripCalc(); }
+
+function renderTrip() {
+  const el = document.getElementById('cmp-body'); if (!el) return;
+  const list = tripList();
+  if (list.length < 2) { el.innerHTML = `<p class="empty">${t('cmpNoData')}</p>`; return; }
+  if (!list.includes(trip.from)) trip.from = (centerCountry() && list.includes(centerCountry())) ? centerCountry() : (list.includes(myCountry) ? myCountry : list[0]);
+  if (!list.includes(trip.to) || trip.to === trip.from) {
+    const nb = list.filter(c => c !== trip.from && CB[c] && CB[trip.from] && CB[c].intersects(CB[trip.from]));
+    const pool = nb.length ? nb : list.filter(c => c !== trip.from);
+    trip.to = pool.sort((a, b) => (tripPrice(a) ?? 9) - (tripPrice(b) ?? 9))[0];
+  }
+  const opts = sel => list.map(c => `<option value="${c}"${c === sel ? ' selected' : ''}>${FLAGS[c] || ''} ${esc(CNAMES[c] || c)}</option>`).join('');
+  el.innerHTML = `
+    <div class="tcard">
+      <label style="margin-top:0">${t('tripCons')}</label>
+      <div class="tstep"><button onclick="tripStep(-0.5)">−</button><b>${trip.cons.toFixed(1)} ${t('tripLper')}</b><button onclick="tripStep(0.5)">+</button></div>
+    </div>
+    <div class="tcard">
+      <h3>🚗 ${t('tripBorder')}</h3>
+      <label>${t('tripFrom')}</label><select onchange="tripSet('from',this.value)">${opts(trip.from)}</select>
+      <label>${t('tripTo')}</label><select onchange="tripSet('to',this.value)">${opts(trip.to)}</select>
+      <label id="t-extra-lbl"></label>
+      <input type="range" min="0" max="250" step="5" value="${trip.extra}" oninput="tripLive('extra',this.value)">
+      <div id="t-border"></div>
+    </div>
+    <div class="tcard">
+      <h3>🛣️ ${t('tripRoad')}</h3>
+      <label style="margin-top:0">${t('tripDist')}</label>
+      <input type="number" inputmode="numeric" min="10" max="9999" value="${trip.km}" onchange="tripLive('km',this.value)">
+      <label>${t('tripVia')}</label>
+      <div class="tchips">${list.map(c => `<button class="${trip.via.includes(c) ? 'on' : ''}" onclick="tripToggleVia('${c}')">${FLAGS[c] || ''} ${c}</button>`).join('')}</div>
+      <div id="t-road"></div>
+    </div>
+    <p class="cmp-note">${t('tripNote')}</p>`;
+  tripCalc();
+}
+function tripCalc() {
+  const L = tank, cons = trip.cons;
+  const pf = tripPrice(trip.from), pt = tripPrice(trip.to);
+  const lbl = document.getElementById('t-extra-lbl'); if (lbl) lbl.textContent = t('tripExtra', { k: trip.extra });
+  const bEl = document.getElementById('t-border');
+  if (bEl && pf != null && pt != null) {
+    const drive = trip.extra * cons / 100 * pt;                // fuel burnt on the detour, bought over there
+    const save = L * pf - (L * pt + drive);
+    const brk = (L * (pf - pt)) / (pt * cons / 100);
+    bEl.innerHTML = `<div class="tverdict ${save > 0 ? 'good' : 'bad'}">${t(save > 0 ? 'tripWorth' : 'tripNot', { s: money(Math.abs(save), 'EUR') })}
+      <small>${FLAGS[trip.from] || ''} ${pf.toFixed(2)} € → ${FLAGS[trip.to] || ''} ${pt.toFixed(2)} € / L${brk > 0 ? ' · ' + t('tripBreak', { k: Math.round(brk), l: L }) : ''}</small></div>`;
+  } else if (bEl) bEl.innerHTML = '';
+  const rEl = document.getElementById('t-road'); if (!rEl) return;
+  const via = trip.via.filter(c => tripPrice(c) != null);
+  if (via.length < 2) { rEl.innerHTML = `<p class="cmp-note">${t('tripPick')}</p>`; return; }
+  const need = trip.km * cons / 100, stops = Math.max(1, Math.ceil(need / L));
+  const rows = via.map(c => ({ c, cost: need * tripPrice(c) })).sort((a, b) => a.cost - b.cost);
+  const best = rows[0], worst = rows[rows.length - 1];
+  rEl.innerHTML = `<p class="cmp-note" style="margin:8px 0">${t('tripNeed', { l: Math.round(need), n: stops, t: L })}</p>
+    <div class="tverdict good">${t('tripBest', { c: (FLAGS[best.c] || '') + ' ' + (CNAMES[best.c] || best.c), s: money(worst.cost - best.cost, 'EUR'), w: (CNAMES[worst.c] || worst.c) })}</div>
+    <label>${t('tripAll')}</label>
+    ${rows.map((r, i) => `<div class="trow${i === 0 ? ' best' : ''}"><span>${FLAGS[r.c] || ''} ${esc(CNAMES[r.c] || r.c)}</span><span class="d">${i ? '+' + money(r.cost - best.cost, 'EUR') : ''}</span><span>${money(r.cost, 'EUR')}</span></div>`).join('')}`;
+}
 function renderCompare() {
   const el = document.getElementById('cmp-body');
   if (!el) return;
+  if (cmpView === 'trip') { renderTrip(); return; }
   const rows = metaCountries.filter(c => c.stats_eur?.[cmpKey])
     .map(c => ({ cc:c.country, st:c.stats_eur[cmpKey] }))
     .sort((a,b) => a.st.median - b.st.median);
@@ -2233,11 +2444,10 @@ window.addEventListener('appinstalled', () => { const r = document.getElementByI
 // ════════════════════════════════════════════════════
 (async () => {
   applyStaticI18n();
-  try {
-    const r = await fetch('meta.json');
-    if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; metaCountries = m.countries || []; }
-  } catch(_) {}
-  updStatus(); updPriceLbls(); renderLegend(); renderCompare();
+  metaReady = fetchMeta();
+  await Promise.race([metaReady, _sleep(2500)]);
+  updStatus(); updPriceLbls(); renderLegend(); renderCompare(); updLabel();
+  document.querySelectorAll('#p-stations .panel-scroll, #p-nearby .panel-scroll').forEach(initPTR);
 
   try {
     if (!localStorage.getItem('efp_seen_trust_intro')) openTrust();
@@ -2260,8 +2470,11 @@ window.addEventListener('appinstalled', () => { const r = document.getElementByI
       }, 4500);
     }
   } catch (_) {}
-  // Always pre-load Sweden (home country priority)
-  loadCC('SE');
+  // Home country: the region of the browser language (sv-SE → SE, de-AT → AT …); Sweden otherwise
+  let home = 'SE';
+  try { const rg = (navigator.language || '').split('-')[1]; if (rg && CNAMES[rg.toUpperCase()]) home = rg.toUpperCase(); } catch (_) {}
+  if (home !== 'SE' && CB[home] && !new URLSearchParams(location.search).get('s')) map.fitBounds(CB[home], { padding:[10,10] });
+  loadCC(home);
   schedVP();
 
   // Shared station link: ?s=<station id>

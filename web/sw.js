@@ -3,12 +3,16 @@
 //   (Was cache-first — meant anyone who had ever opened the app kept seeing the shell from the
 //   day they first visited, forever, with no way to get a layout/bugfix short of clearing site
 //   data. Data is king; the app itself must stay just as fresh.)
-// Data JSON: network-first with cache fallback (unchanged).
+// Data JSON: the app asks for `<cc>.json?v=<fetched_at from meta.json>` — a URL that never changes
+//   content — so those are cache-first (instant on repeat visits, nothing re-downloaded until the
+//   data really changed) and older versions of the same country are pruned. meta.json and other
+//   unversioned JSON stay network-first, with a short timeout so slow 4G falls back to the cache.
 // Versioned CDN libraries (URL contains the version) and small static icons: cache-first — safe,
 // because a version bump changes the URL itself.
 
-const SHELL_CACHE = 'efp-shell-v3';
-const DATA_CACHE  = 'efp-data-v2';
+const SHELL_CACHE = 'efp-shell-v4';
+const DATA_CACHE  = 'efp-data-v3';
+const SLOW_NET_MS = 3500;   // flaky/slow connection: serve the cached copy instead of waiting
 
 const SHELL_ASSETS = [
   './',
@@ -17,6 +21,7 @@ const SHELL_ASSETS = [
   './manifest.json',
   './icon.svg',
   './logo.svg',
+  './icon-192.png',
 ];
 
 // CDN assets — versioned URLs, safe to cache indefinitely
@@ -58,13 +63,17 @@ self.addEventListener('fetch', event => {
     || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/admin.html')
     || url.pathname === '/' || url.pathname.endsWith('/');
   if (isHtmlShell && url.origin === self.location.origin) {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE));
+    event.respondWith(networkFirst(event.request, SHELL_CACHE, SLOW_NET_MS));
     return;
   }
 
-  // Data JSON files: network-first, fall back to cached copy
-  if (url.pathname.match(/\.(json)$/) && !url.pathname.includes('nominatim')) {
-    event.respondWith(networkFirst(event.request, DATA_CACHE));
+  // Data JSON
+  if (url.origin === self.location.origin && /\.json$/.test(url.pathname)) {
+    if (url.searchParams.has('v') && url.pathname !== '/manifest.json') {
+      event.respondWith(versionedData(event.request, url));
+    } else {
+      event.respondWith(networkFirst(event.request, DATA_CACHE, SLOW_NET_MS));
+    }
     return;
   }
 
@@ -79,21 +88,43 @@ self.addEventListener('fetch', event => {
   event.respondWith(cacheFirst(event.request));
 });
 
-async function networkFirst(request, cacheName) {
+async function networkFirst(request, cacheName, timeoutMs) {
+  const cache = await caches.open(cacheName);
+  const net = fetch(request, { cache: 'no-store' }).then(res => {
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  });
+  net.catch(() => {});                       // a late failure after the race must not surface
+  const offline = () => new Response(JSON.stringify({ error: 'offline' }), {
+    status: 503, headers: { 'Content-Type': 'application/json' } });
   try {
-    const response = await fetch(request, { cache: 'no-store' });
-    if (response.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, response.clone());
-    }
-    return response;
+    if (!timeoutMs || !(await cache.match(request))) return await net;
+    return await Promise.race([net, new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), timeoutMs))]);
   } catch (_) {
-    const cached = await caches.match(request);
+    const cached = await cache.match(request);
     if (cached) return cached;
-    return new Response(JSON.stringify({ error: 'offline' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    try { return await net; } catch (e) { return offline(); }
+  }
+}
+
+// Versioned data URL = immutable content: cache-first, then drop older versions of the same file.
+async function versionedData(request, url) {
+  const cache = await caches.open(DATA_CACHE);
+  const hit = await cache.match(request);
+  if (hit) return hit;
+  try {
+    const res = await fetch(request);
+    if (res.ok) {
+      await cache.put(request, res.clone());
+      for (const k of await cache.keys()) {
+        const u = new URL(k.url);
+        if (u.pathname === url.pathname && u.search !== url.search) cache.delete(k);
+      }
+    }
+    return res;
+  } catch (_) {
+    const any = (await cache.keys()).find(k => new URL(k.url).pathname === url.pathname);   // offline: last version we have
+    return any ? cache.match(any) : new Response(JSON.stringify({ error: 'offline' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
   }
 }
 
