@@ -87,8 +87,8 @@ html, body {
 .chip {
   flex-shrink:0;
   background:rgba(255,255,255,0.88); border:1px solid var(--border);
-  border-radius:20px; padding:5px 13px;
-  font-size:0.73rem; font-weight:500; color:var(--text2);
+  border-radius:20px; padding:8px 14px;
+  font-size:0.78rem; font-weight:500; color:var(--text2);
   cursor:pointer; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   transition:all 0.15s; white-space:nowrap; user-select:none;
 }
@@ -135,8 +135,8 @@ html, body {
 
 /* ── Price tooltips ── */
 .leaflet-tooltip.ptip {
-  background:rgba(255,255,255,0.95); border:1px solid rgba(15,118,110,0.25);
-  color:var(--green); font-size:0.63rem; font-weight:500;
+  background:rgba(255,255,255,0.96); border:1px solid rgba(22,24,29,0.12);
+  color:var(--text); font-size:0.63rem; font-weight:600; font-variant-numeric:tabular-nums;
   padding:1px 5px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.08);
 }
 .leaflet-tooltip.ptip::before { display:none; }
@@ -159,8 +159,10 @@ html, body {
    position:fixed children relative to the column instead of the window).
 ══════════════════════════════════════════ */
 html { background:#E7E9EC; height:100%; }
-body { max-width:520px; margin:0 auto; height:100%; position:relative; overflow:hidden;
+body { max-width:520px; margin:0 auto; height:100%; position:relative; overflow:hidden; overflow:clip;
        transform:translateZ(0); box-shadow:0 0 30px rgba(0,0,0,0.08); }
+/* Tablets get a wider column (more map, roomier sheets); desktops keep the same centred app column */
+@media (min-width:700px) { body { max-width:680px; } .panel { max-height:72vh; } }
 button, .tb, .chip, select, input { touch-action:manipulation; }
 body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
@@ -185,28 +187,29 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .gb { display:inline-block; padding:1px 6px; border-radius:8px; font-size:0.58rem; font-weight:500; letter-spacing:.2px; color:#16181D; vertical-align:middle; }
 .gb.gA { background:#86E8A8; } .gb.gB { background:#93C5FD; } .gb.gC { background:#FDD68B; } .gb.gD { background:#F2A6A6; } .gb.gL { background:#D7DADF; }
 .stale-note { margin-top:5px; padding:3px 6px; border-radius:10px; background:rgba(239,68,68,.10); color:#B91C1C; font-size:0.62rem; }
-.age-line { font-size:0.62rem; color:var(--text3); margin-top:4px; line-height:1.35; }
+.age-line { font-size:0.68rem; color:var(--text3); margin-top:4px; line-height:1.35; }
 
 .scard-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:3px; }
-.scard-name { font-size:0.88rem; font-weight:500; color:var(--text); flex:1; line-height:1.3; }
+.scard-name { font-size:0.94rem; font-weight:600; color:var(--text); flex:1; line-height:1.3; }
 .go-btn {
   flex-shrink:0; background:none; border:1px solid var(--border);
   border-radius:10px; color:var(--blue); font-size:0.72rem;
-  padding:3px 8px; cursor:pointer; display:flex; align-items:center; gap:3px;
+  padding:6px 11px; min-height:32px; cursor:pointer; display:flex; align-items:center; gap:3px;
   white-space:nowrap; font-family:inherit;
 }
 .go-btn:active { background:var(--surf); }
-.scard-meta { font-size:0.67rem; color:var(--text3); margin-bottom:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.scard-meta { font-size:0.72rem; color:var(--text3); margin-bottom:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .dist-badge { color:var(--text2); font-weight:500; }
 .pchips { display:flex; flex-wrap:wrap; gap:4px; }
 .pc {
   background:var(--surf); border:1px solid var(--border);
-  border-radius:10px; padding:3px 8px; font-size:0.71rem;
+  border-radius:10px; padding:4px 9px; font-size:0.78rem;
   display:flex; align-items:center; gap:3px;
 }
 .pc .t { color:var(--text2); }
-.pc .v { color:var(--green); font-weight:500; }
-.pc .u { color:var(--text3); font-size:0.63rem; }
+.pc .v { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; }
+.pc.best .v { color:#15803D; font-size:0.86rem; }
+.pc .u { color:var(--text3); font-size:0.66rem; }
 .pc.best { border-color:var(--green); background:rgba(22,163,74,0.08); }
 .pc.best .t { color:#15803D; }
 .scard-foot { margin-top:4px; font-size:0.61rem; color:var(--text3); }
@@ -260,7 +263,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     height:calc(var(--tab-h) + var(--safe-b));
     padding-bottom:var(--safe-b);
     background:var(--surf); border-top:1px solid var(--border);
-    display:grid; grid-template-columns:repeat(5,1fr); z-index:800;
+    display:grid; grid-template-columns:repeat(6,1fr); z-index:800;
   }
   .tb {
     background:none; border:none; color:var(--text3);
@@ -276,7 +279,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   }
   .tb.on.nb::before { background:var(--coral); }
   .tb-icon { font-size:1.3rem; line-height:1; }
-  .tb-lbl  { font-size:0.57rem; font-weight:500; letter-spacing:0.02em; }
+  .tb-lbl  { font-size:0.62rem; font-weight:500; letter-spacing:0.02em; }
 
   /* Panels */
   .panel {
@@ -397,6 +400,66 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   color:#fff; font-size:0.9rem; font-weight:500; padding:13px; cursor:pointer; font-family:inherit;
 }
 
+
+/* ══════════════════════════════════════════
+   MAP LEGEND (price colour ramp / source grade toggle)
+══════════════════════════════════════════ */
+#legend {
+  position:absolute; left:10px; z-index:600;
+  bottom:calc(var(--tab-h) + var(--safe-b) + 38px);
+  background:rgba(255,255,255,0.92); border:1px solid var(--border); border-radius:12px;
+  padding:6px 9px 7px; font-size:0.62rem; color:var(--text2); line-height:1.3;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 1px 6px rgba(0,0,0,0.06); min-width:132px;
+}
+#legend .lg-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+#legend .lg-title { font-weight:600; color:var(--text); font-size:0.64rem; }
+#legend .lg-mode {
+  border:1px solid var(--border); background:var(--surf2); color:var(--text2); border-radius:8px;
+  font:inherit; font-size:0.58rem; padding:1px 6px; cursor:pointer;
+}
+#legend .lg-ramp { display:flex; height:7px; border-radius:4px; overflow:hidden; }
+#legend .lg-ramp i { flex:1; }
+#legend .lg-ends { display:flex; justify-content:space-between; margin-top:2px; }
+#legend .lg-grades { display:flex; gap:5px; flex-wrap:wrap; }
+#legend .lg-grades span { display:inline-flex; align-items:center; gap:3px; }
+#legend .lg-grades i { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+/* ══════════════════════════════════════════
+   COUNTRY COMPARISON
+══════════════════════════════════════════ */
+.seg { display:flex; gap:4px; padding:0 14px 8px; }
+.seg button {
+  flex:1; background:var(--surf2); border:1px solid var(--border); border-radius:12px;
+  padding:8px 6px; font:inherit; font-size:0.78rem; font-weight:500; color:var(--text2); cursor:pointer;
+}
+.seg button.on { background:var(--coral); border-color:var(--coral); color:#fff; }
+#p-compare .panel-scroll { padding:0 14px 16px; }
+.cmp-sum { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.cmp-stat { background:var(--surf2); border:1px solid var(--border); border-radius:14px; padding:9px 11px; }
+.cmp-stat .k { font-size:0.6rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text3); }
+.cmp-stat .v { font-size:1.15rem; font-weight:600; line-height:1.2; margin-top:1px; font-variant-numeric:tabular-nums; }
+.cmp-stat .d { font-size:0.68rem; color:var(--text2); margin-top:1px; }
+.cmp-axis, .cmp-row { display:grid; grid-template-columns:104px 1fr 42px; align-items:center; gap:8px; }
+.cmp-axis { position:sticky; top:0; z-index:2; background:var(--surf); padding:4px 0 2px; font-size:0.58rem; color:var(--text3); }
+.cmp-axis .ax { position:relative; height:12px; }
+.cmp-axis .ax span { position:absolute; transform:translateX(-50%); font-variant-numeric:tabular-nums; }
+.cmp-row { padding:4px 4px; margin:0 -4px; border-radius:10px; cursor:pointer; font-size:0.76rem; }
+.cmp-row:active, .cmp-row.sel { background:rgba(15,118,110,0.08); }
+.cmp-row.me .cmp-name::after { content:'📍'; margin-left:3px; font-size:0.62rem; }
+.cmp-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cmp-track { position:relative; height:18px; }
+.cmp-track .gl { position:absolute; top:0; bottom:0; width:1px; background:var(--border); }
+.cmp-track .rng { position:absolute; top:7px; height:4px; border-radius:2px; background:rgba(22,24,29,0.13); }
+.cmp-track .dot { position:absolute; top:3px; width:12px; height:12px; margin-left:-6px; border-radius:50%;
+  border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,0.15); }
+.cmp-row.few { opacity:0.55; }
+.cmp-val { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+.cmp-note { font-size:0.62rem; color:var(--text3); line-height:1.45; margin-top:12px; }
+.cmp-key { display:flex; gap:12px; font-size:0.62rem; color:var(--text2); margin:0 0 4px; align-items:center; flex-wrap:wrap; }
+.cmp-key .kd { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--text2); vertical-align:-1px; margin-right:3px; }
+.cmp-key .kr { display:inline-block; width:18px; height:4px; border-radius:2px; background:rgba(22,24,29,0.2); vertical-align:1px; margin-right:3px; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -449,6 +512,9 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   <!-- Status -->
   <div id="badge" class="loading">Loading…</div>
 
+  <!-- Legend -->
+  <div id="legend"></div>
+
   <!-- FAB -->
   <button id="fab" onclick="goNearby()">📍 Near Me</button>
 </div>
@@ -495,6 +561,17 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortDefault">Default</span></button>
   </div>
   <div class="panel-scroll" id="mobList"><p class="empty" data-i18n="loadingEllipsis">Loading…</p></div>
+</div>
+
+<!-- Country comparison -->
+<div class="panel" id="p-compare">
+  <div class="drag-handle"></div>
+  <div class="phead" style="padding:2px 16px 8px"><h2 style="font-size:0.76rem;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2)" data-i18n="cmpTitle">Price by country</h2></div>
+  <div class="seg">
+    <button class="on" data-k="p95" onclick="setCmpKey('p95')">⛽ 95</button>
+    <button data-k="diesel" onclick="setCmpKey('diesel')">🛢 Diesel</button>
+  </div>
+  <div class="panel-scroll" id="cmp-body"><p class="empty" data-i18n="loadingEllipsis">Loading…</p></div>
 </div>
 
 <!-- Filters -->
@@ -557,6 +634,9 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   </button>
   <button class="tb"     id="tb-stations" onclick="goTab('stations')">
     <span class="tb-icon">⛽</span><span class="tb-lbl" id="tb-list-lbl" data-i18n="tabList">List</span>
+  </button>
+  <button class="tb"     id="tb-compare" onclick="goTab('compare')">
+    <span class="tb-icon">📊</span><span class="tb-lbl" data-i18n="tabCompare">Prices</span>
   </button>
   <button class="tb"     id="tb-filter"  onclick="goTab('filter')">
     <span class="tb-icon">⚡</span><span class="tb-lbl" data-i18n="tabFilter">Filter</span>
@@ -760,6 +840,28 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
   reportedAgo:'notificado {t}', ageUnknown:'antigüedad desconocida', srcLabel:'Fuente: {s}', otherSources:'otras fuentes ({n})', sourcesDiffer:'las fuentes difieren', regulatedMax:'precio máximo regulado — no es un precio de estación', convertedEur:'convertido desde EUR' },
 };
 
+// Extra strings (price colouring, country comparison). Missing keys fall back to English.
+Object.assign(I18N.en, { tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+  cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
+  cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
+  cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
+Object.assign(I18N.sv, { tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+  cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
+  cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
+  cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
+Object.assign(I18N.de, { tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+  cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
+  cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
+  cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
+Object.assign(I18N.fr, { tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+  cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
+  cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
+  cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
+Object.assign(I18N.es, { tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+  cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
+  cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
+  cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
+
 let lang = (function () {
   try {
     const saved = localStorage.getItem('efp_lang');
@@ -792,6 +894,7 @@ function setLang(l) {
   try { localStorage.setItem('efp_lang', l); } catch (_) {}
   applyStaticI18n();
   updStatus();
+  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); }
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'nearby' && myLat != null) showNearby();
 }
@@ -831,6 +934,9 @@ let   myLat   = null, myLon = null, myCountry = null;
 let   myMark  = null, myCirc = null;
 let   metaAt  = null;
 let   fCountry= '', fFuel = '';
+let   colorBy = 'price';       // 'price' | 'source'
+let   metaCountries = [];      // meta.json countries[] (with stats_eur once the pipeline publishes it)
+let   cmpKey = 'p95';
 let   sortMode= 'default';    // 'default'|'price'|'distance'
 let   sMode   = 'addr';       // search mode
 let   vpOff   = 0;            // virtual scroll offset
@@ -1036,14 +1142,38 @@ mkCluster();
 // ════════════════════════════════════════════════════
 // Markers
 // ════════════════════════════════════════════════════
+// Price colour: where this station's headline price falls within ITS OWN country's distribution
+// (quintiles of per-station cheapest price for the same fuel). Countries differ too much in level
+// and currency for a global scale, so this answers "is this cheap for here?".
+const RAMP = ['#16A34A','#84CC16','#F4B000','#F97316','#DC2626'];
+const _qCache = {};
+function quintiles(cc, key) {
+  const k = cc + '|' + key;
+  if (k in _qCache) return _qCache[k];
+  const v = [];
+  for (const s of (data[cc] || [])) { const p = minOf(s, key); if (p) v.push(p.price); }
+  let q = null;
+  if (v.length >= 25) { v.sort((a,b) => a-b); q = [.2,.4,.6,.8].map(f => v[Math.floor(f * v.length)]); }
+  return (_qCache[k] = q);
+}
+function fuelKeyOf(p) { return isP95(p) ? 'P95' : isP98(p) ? 'P98' : p.fuel_type; }
+function markerCol(s, cp) {
+  if (!cp) return '#334155';
+  if (colorBy === 'price') {
+    const q = quintiles(s.country, fuelKeyOf(cp));
+    if (q) return RAMP[q.filter(x => cp.price > x).length];
+  }
+  return GRADE_COL[gradeOf(s)] || '#f59e0b';
+}
+
 function mkMarker(s) {
   const cp   = cheapest(s);
-  const col  = cp ? (GRADE_COL[gradeOf(s)] || '#f59e0b') : '#334155';
-  const sz   = cp ? 10 : 7;
+  const col  = markerCol(s, cp);
+  const sz   = cp ? 12 : 7;
   const op   = cp ? 1 : 0.45;
   const icon = L.divIcon({
     className:'',
-    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:1.5px solid rgba(255,255,255,0.55);opacity:${op};box-shadow:0 0 5px rgba(0,0,0,0.4)"></div>`,
+    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2px solid #fff;opacity:${op};box-shadow:0 0 0 1px rgba(0,0,0,0.25),0 1px 4px rgba(0,0,0,0.35)"></div>`,
     iconSize:[sz,sz], iconAnchor:[sz>>1,sz>>1],
   });
   const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE) });
@@ -1152,6 +1282,7 @@ async function loadCC(cc) {
     data[cc] = j.stations || [];
     metaOf[cc] = j.meta || {};
     loaded.add(cc);
+    for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
     addToMap(cc, data[cc]);
     onNewData();
   } catch(e) {
@@ -1319,7 +1450,13 @@ function selectStation(id) {
   document.getElementById(`c-${selId}`)?.classList.remove('sel');
   selId = id;
   const card = document.getElementById(`c-${id}`);
-  if (card) { card.classList.add('sel'); card.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+  if (card) {
+    card.classList.add('sel');
+    // Scroll only the open sheet's own list. scrollIntoView() on a card in a closed (off-screen)
+    // sheet scrolled the whole fixed page upward and pushed the tab bar out of view.
+    const sc = card.closest('.panel.open .panel-scroll');
+    if (sc) sc.scrollTo({ top: Math.max(0, card.offsetTop - sc.clientHeight / 3), behavior:'smooth' });
+  }
   const m = byId.get(id);
   if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); if (true) closePanel(); }
 }
@@ -1489,7 +1626,7 @@ async function runSearch(isMob) {
 // ════════════════════════════════════════════════════
 // Tab / Panel management
 // ════════════════════════════════════════════════════
-const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', filter:'p-filter' };
+const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', compare:'p-compare', filter:'p-filter' };
 
 function goTab(tab) {
   activeTab = tab;
@@ -1531,6 +1668,78 @@ document.querySelectorAll('.panel').forEach(p => {
   p.addEventListener('touchstart', e => { sy=e.touches[0].clientY; st=Date.now(); }, { passive:true });
   p.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY-sy > 70 && Date.now()-st < 500) closePanel(); }, { passive:true });
 });
+
+// ════════════════════════════════════════════════════
+// Legend
+// ════════════════════════════════════════════════════
+function renderLegend() {
+  const el = document.getElementById('legend');
+  if (!el) return;
+  const body = colorBy === 'price'
+    ? `<div class="lg-ramp">${RAMP.map(c => `<i style="background:${c}"></i>`).join('')}</div>
+       <div class="lg-ends"><span>${t('lgCheap')}</span><span>${t('lgDear')}</span></div>`
+    : `<div class="lg-grades">${Object.entries(GRADE_COL).filter(([g]) => g !== 'L').map(([g,c]) => `<span><i style="background:${c}"></i>${g}</span>`).join('')}</div>`;
+  el.innerHTML = `<div class="lg-top"><span class="lg-title">${t(colorBy === 'price' ? 'lgPrice' : 'lgSource')}</span>
+    <button class="lg-mode" onclick="toggleColorBy()">⇄</button></div>${body}`;
+}
+function toggleColorBy() {
+  colorBy = colorBy === 'price' ? 'source' : 'price';
+  renderLegend();
+  applyFilters();
+}
+
+// ════════════════════════════════════════════════════
+// Country comparison (median + middle 80 %, EUR) from meta.json stats_eur
+// ════════════════════════════════════════════════════
+function setCmpKey(k) {
+  cmpKey = k;
+  document.querySelectorAll('#p-compare .seg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  renderCompare();
+}
+function renderCompare() {
+  const el = document.getElementById('cmp-body');
+  if (!el) return;
+  const rows = metaCountries.filter(c => c.stats_eur?.[cmpKey])
+    .map(c => ({ cc:c.country, st:c.stats_eur[cmpKey] }))
+    .sort((a,b) => a.st.median - b.st.median);
+  if (!rows.length) { el.innerHTML = `<p class="empty">${t('cmpNoData')}</p>`; return; }
+
+  const lo = rows[0], hi = rows[rows.length-1];
+  const a0 = Math.floor(Math.min(...rows.map(r => r.st.p10)) * 10) / 10;
+  const a1 = Math.ceil (Math.max(...rows.map(r => r.st.p90)) * 10) / 10;
+  const pos = v => ((v - a0) / (a1 - a0) * 100).toFixed(2);
+  const step = (a1 - a0) > 1.6 ? 0.5 : 0.25;
+  const ticks = [];
+  for (let v = Math.ceil(a0 / step) * step; v <= a1 + 1e-9; v += step) ticks.push(v);
+  const spread = Math.round((hi.st.median / lo.st.median - 1) * 100);
+  const nm = r => `${FLAGS[r.cc] || ''} ${CNAMES[r.cc] || r.cc}`;
+  const cls = r => (r.cc === fCountry ? ' sel' : '') + (r.cc === myCountry ? ' me' : '') + (r.st.n < 30 ? ' few' : '');
+
+  el.innerHTML = `
+    <div class="cmp-sum">
+      <div class="cmp-stat"><div class="k">${t('cmpCheapest')}</div><div class="v" style="color:${RAMP[0]}">€${lo.st.median.toFixed(2)}</div><div class="d">${nm(lo)}</div></div>
+      <div class="cmp-stat"><div class="k">${t('cmpPriciest')}</div><div class="v" style="color:${RAMP[4]}">€${hi.st.median.toFixed(2)}</div><div class="d">${nm(hi)} · ${t('cmpSpread', { p: spread })}</div></div>
+    </div>
+    <div class="cmp-key"><span><i class="kd"></i>${t('cmpMedian')}</span><span><i class="kr"></i>${t('cmpRange')}</span><span>€/L</span></div>
+    <div class="cmp-axis"><span></span><div class="ax">${ticks.map(v => `<span style="left:${pos(v)}%">${v.toFixed(2).replace(/0$/,'')}</span>`).join('')}</div><span></span></div>
+    ${rows.map((r, i) => {
+      const col = RAMP[Math.min(4, Math.floor(i / rows.length * 5))];
+      return `<div class="cmp-row${cls(r)}" onclick="pickCountry('${r.cc}')" title="${esc(t('cmpStations', { n: r.st.n.toLocaleString() }))}">
+        <div class="cmp-name">${nm(r)}</div>
+        <div class="cmp-track">${ticks.map(v => `<span class="gl" style="left:${pos(v)}%"></span>`).join('')}
+          <span class="rng" style="left:${pos(r.st.p10)}%;width:${(pos(r.st.p90) - pos(r.st.p10)).toFixed(2)}%"></span>
+          <span class="dot" style="left:${pos(r.st.median)}%;background:${col}"></span></div>
+        <div class="cmp-val">${r.st.median.toFixed(2)}</div></div>`;
+    }).join('')}
+    <p class="cmp-note">${t('cmpNote')}</p>`;
+}
+function pickCountry(cc) {
+  if (fCountry === cc) { setCountry(''); renderCompare(); return; }
+  setCountry(cc);
+  if (CB[cc]) map.fitBounds(CB[cc], { padding:[24,24] });
+  renderCompare();
+  closePanel();
+}
 
 // ════════════════════════════════════════════════════
 // Price labels
@@ -1596,9 +1805,9 @@ window.addEventListener('beforeinstallprompt', e => {
   applyStaticI18n();
   try {
     const r = await fetch('meta.json');
-    if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; }
+    if (r.ok) { const m = await r.json(); metaAt = m.fetched_at; metaCountries = m.countries || []; }
   } catch(_) {}
-  updStatus(); updPriceLbls();
+  updStatus(); updPriceLbls(); renderLegend(); renderCompare();
 
   try {
     if (!localStorage.getItem('efp_seen_trust_intro')) openTrust();

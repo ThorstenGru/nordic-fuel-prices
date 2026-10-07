@@ -116,6 +116,56 @@ def clean_stations(stations: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]]
     return list(out.values()), dict(dropped)
 
 
+FX: Dict[str, float] = {}     # currency -> units per 1 EUR (filled in run_all from the ECB feed)
+
+
+def _median(vals: List[float]) -> float:
+    v = sorted(vals)
+    n = len(v)
+    return v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2
+
+
+def price_stats(stations: List[Dict[str, Any]], currency: str) -> Optional[Dict[str, Any]]:
+    """Per-country price distribution for the frontend's comparison views.
+
+    Mainstream fuels only (95-octane petrol, diesel); regulated maxima are not station prices and are
+    excluded. Values are in EUR (ECB rate) so countries can be compared; absent when no FX rate exists.
+    Each entry: n stations, median, p10, p90, min, max.
+    """
+    rate = 1.0 if currency == "EUR" else FX.get(currency)
+    if not rate:
+        return None
+    buckets: Dict[str, List[float]] = {"p95": [], "diesel": []}
+    for s in stations:
+        best: Dict[str, float] = {}
+        for p in s.get("prices") or []:
+            if p.get("basis") == "regulated_max" or not p.get("price"):
+                continue
+            ft = p.get("fuel_type")
+            if ft in ("E10", "E5", "95", "98"):
+                if int(p.get("octane") or (98 if ft == "98" else 95)) != 95:
+                    continue
+                k = "p95"
+            elif ft == "DIESEL":
+                k = "diesel"
+            else:
+                continue
+            v = p["price"] / rate
+            if k not in best or v < best[k]:
+                best[k] = v
+        for k, v in best.items():
+            buckets[k].append(v)
+    out: Dict[str, Any] = {}
+    for k, vals in buckets.items():
+        if len(vals) < 5:
+            continue
+        vals.sort()
+        q = lambda f: vals[min(len(vals) - 1, int(f * len(vals)))]  # noqa: E731
+        out[k] = {"n": len(vals), "median": round(_median(vals), 3), "p10": round(q(0.10), 3),
+                  "p90": round(q(0.90), 3), "min": round(vals[0], 3), "max": round(vals[-1], 3)}
+    return out or None
+
+
 def summarize(stations: List[Dict[str, Any]], fallback_currency: str) -> Dict[str, Any]:
     priced = [s for s in stations if s["prices"]]
     entries = [p for s in priced for p in s["prices"]]
@@ -210,6 +260,9 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         **{k: summ[k] for k in ("station_count", "priced_count", "price_entries",
                                 "with_timestamp_pct", "newest_price_at", "oldest_price_at")},
     }
+    stats = price_stats(clean, summ["currency"])
+    if stats:
+        meta["stats_eur"] = stats
     health: Dict[str, Any] = {"seconds": round(time.monotonic() - started, 1), "dropped": dropped, "error": error}
     # Provenance from the merge engine (optional; scrapers not yet migrated simply have none).
     report = getattr(scraper, "merge_report", None)
@@ -239,7 +292,7 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
             old_meta = old.get("meta", {})
             meta.update({k: v for k, v in old_meta.items() if k in (
                 "currency", "source", "grade", "confidence", "fetched_at", "station_count", "priced_count",
-                "price_entries", "with_timestamp_pct", "newest_price_at", "oldest_price_at")})
+                "price_entries", "with_timestamp_pct", "newest_price_at", "oldest_price_at", "stats_eur")})
             meta["status"] = "stale"
             meta["stale_since"] = old_meta.get("stale_since") or old_meta.get("fetched_at") or now_iso()
             meta["last_error"] = reason
@@ -271,6 +324,11 @@ async def run_all() -> None:
         base = await resolve_pages_base(session)
         prev = await fetch_json(session, f"{base}/meta.json", timeout=30) or {}
         prev_meta = {c["country"]: c for c in prev.get("countries", []) if isinstance(c, dict) and "country" in c}
+        try:
+            from scrapers._anwb import _ecb_rates
+            FX.update(await _ecb_rates(session))
+        except Exception as e:  # noqa: BLE001 — stats are optional
+            print(f"[stats] no FX rates: {e}")
         results = await asyncio.gather(*(run_one(sc, session, prev_meta) for sc in ALL_SCRAPERS))
 
     generated = now_iso()
