@@ -1,0 +1,383 @@
+[
+{
+"osm": "n993257638",
+"lat": 64.17078,
+"lon": -51.73431,
+"name": "Deres Tank",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n1559849464",
+"lat": 65.90722,
+"lon": -36.38152,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n1914008944",
+"lat": 66.93478,
+"lon": -53.6652,
+"name": "",
+"brand": "",
+"tags": {
+"fuel:diesel": "yes",
+"fuel:octane_95": "yes"
+}
+},
+{
+"osm": "n4007252589",
+"lat": 66.94007,
+"lon": -53.67521,
+"name": "",
+"brand": "",
+"tags": {
+"fuel:diesel": "yes",
+"fuel:octane_95": "yes"
+}
+},
+{
+"osm": "n4399888528",
+"lat": 69.24904,
+"lon": -53.53069,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n4475964610",
+"lat": 65.57549,
+"lon": -37.18208,
+"name": "Orsersorfik",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n4612973290",
+"lat": 68.70673,
+"lon": -52.87579,
+"name": "",
+"brand": "Butik No 3",
+"tags": {
+"opening_hours": "Mo-Su 08:00-18:00"
+}
+},
+{
+"osm": "n4612974189",
+"lat": 70.50106,
+"lon": -51.30022,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n4663623111",
+"lat": 70.67286,
+"lon": -52.12476,
+"name": "",
+"brand": "PolarOil",
+"tags": {}
+},
+{
+"osm": "n4685901289",
+"lat": 71.04871,
+"lon": -51.88946,
+"name": "",
+"brand": "",
+"tags": {
+"opening_hours": "Mo-Fr 09:00-17:00"
+}
+},
+{
+"osm": "n5643052221",
+"lat": 68.30658,
+"lon": -53.46233,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n6175512307",
+"lat": 68.71266,
+"lon": -52.84283,
+"name": "",
+"brand": "Aasiaat Olie",
+"tags": {
+"opening_hours": "Mo-Su 08:00-18:00"
+}
+},
+{
+"osm": "n6188583939",
+"lat": 66.96882,
+"lon": -50.94907,
+"name": "Havne Tanken",
+"brand": "",
+"tags": {
+"fuel:diesel": "yes",
+"fuel:octane_95": "yes",
+"opening_hours": "Mo-Fr 10:00-14:30"
+}
+},
+{
+"osm": "n6188583944",
+"lat": 67.01872,
+"lon": -50.69708,
+"name": "",
+"brand": "",
+"tags": {
+"fuel:diesel": "yes"
+}
+},
+{
+"osm": "n6795140844",
+"lat": 69.24503,
+"lon": -53.55226,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n7162673364",
+"lat": 68.81573,
+"lon": -51.20269,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n7913014485",
+"lat": 70.67315,
+"lon": -52.12532,
+"name": "",
+"brand": "",
+"tags": {
+"opening_hours": "Mo-Fr 08:00-15:30"
+}
+},
+{
+"osm": "n11775554170",
+"lat": 64.16653,
+"lon": -51.72668,
+"name": "Polaroil",
+"brand": "",
+"tags": {
+"opening_hours": "Su-Th 08:00-16:00"
+}
+},
+{
+"osm": "n13294962821",
+"lat": 65.82494,
+"lon": -53.34261,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n13950776828",
+"lat": 69.22069,
+"lon": -51.09447,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n13970879537",
+"lat": 69.22057,
+"lon": -51.09382,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "n13970879538",
+"lat": 69.22054,
+"lon": -51.09377,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w257366767",
+"lat": 64.1719,
+"lon": -51.71248,
+"name": "Orsiivik",
+"brand": "Orsiivik",
+"tags": {
+"opening_hours": "Mo-Fr 08:00-18:00, Sa-Su 08:00-16:00"
+}
+},
+{
+"osm": "w352410326",
+"lat": 70.48492,
+"lon": -21.97572,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w360055697",
+"lat": 69.21692,
+"lon": -51.09847,
+"name": "Easy2go",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w362186729",
+"lat": 70.67304,
+"lon": -52.1211,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w363406273",
+"lat": 71.04909,
+"lon": -51.88987,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w366750790",
+"lat": 71.53531,
+"lon": -53.21551,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w368610674",
+"lat": 73.36791,
+"lon": -56.05307,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w378696424",
+"lat": 60.14018,
+"lon": -45.2407,
+"name": "Nanco Oil",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w378696427",
+"lat": 60.14319,
+"lon": -45.22832,
+"name": "SB Tank",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w394118207",
+"lat": 60.71715,
+"lon": -46.03941,
+"name": "Oliekompagniet",
+"brand": "Oliekompagniet",
+"tags": {
+"fuel:benzin": "yes",
+"fuel:diesel": "yes",
+"fuel:petroleum": "yes",
+"opening_hours": "Mo-Fr 08:00-17:00; Sa 08:00-13:00; Su 08:00-12:00"
+}
+},
+{
+"osm": "w409529186",
+"lat": 60.71406,
+"lon": -46.04332,
+"name": "Polar OIL",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w511802738",
+"lat": 60.90813,
+"lon": -46.046,
+"name": "Nanco",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w513122388",
+"lat": 60.90742,
+"lon": -46.05414,
+"name": "Polar Oil",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w515621147",
+"lat": 60.71389,
+"lon": -46.04354,
+"name": "Polar Oil",
+"brand": "KNI A/S",
+"tags": {
+"fuel:JetA1": "yes",
+"fuel:benzin": "yes",
+"fuel:diesel": "yes",
+"fuel:gas": "yes",
+"fuel:oil": "yes",
+"fuel:petroleum": "yes",
+"opening_hours": "Mo-Fr 08:00-15:30"
+}
+},
+{
+"osm": "w526344693",
+"lat": 61.1626,
+"lon": -45.4144,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w588139363",
+"lat": 60.71386,
+"lon": -46.04399,
+"name": "SB Tank",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w659320907",
+"lat": 68.70649,
+"lon": -52.8806,
+"name": "Polaroil",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w1008812816",
+"lat": 64.17082,
+"lon": -51.67799,
+"name": "",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w1383766668",
+"lat": 65.61427,
+"lon": -37.62839,
+"name": "Polaroil",
+"brand": "",
+"tags": {}
+},
+{
+"osm": "w1387110757",
+"lat": 68.70661,
+"lon": -52.87537,
+"name": "",
+"brand": "Butik No 3",
+"tags": {}
+},
+{
+"osm": "w1394960232",
+"lat": 68.71258,
+"lon": -52.84219,
+"name": "",
+"brand": "Aasiaat Olie",
+"tags": {}
+}
+]

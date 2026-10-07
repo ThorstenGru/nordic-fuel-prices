@@ -26,7 +26,9 @@ try:
 except ImportError:   # package-style import
     from ..merge_engine import SourceResult, MergeConfig, merge_sources
 
-CAP_URL = "https://nafta.hr/cijene-goriva-crna-gora/"
+GOVME_LIST = "https://wapi.gov.me/v1/articles?title=cijene%20goriva"
+GOVME_ARTICLE = "https://www.gov.me/clanak/{slug}"
+CAP_URL = "https://nafta.hr/cijene-goriva-crna-gora/"   # fallback only: republisher, lags the ministry by ~1 week
 CAP_UA = "EuroFuelPrices/1.0 (+https://eurofuelprices.com)"
 MAX_AGE_DAYS = 30
 PETROL_BAND = (0.8, 3.0)
@@ -81,6 +83,37 @@ def parse_cap_page(raw_html: str, today: Optional[date] = None) -> Optional[Dict
     return {"date": eff.isoformat(), "valid_until": until.isoformat() if until else None, "prices": prices}
 
 
+def parse_govme_article(raw_html: str, title: str, today: Optional[date] = None) -> Optional[Dict[str, Any]]:
+    """Parse a gov.me 'Nove cijene goriva od DD.MM.YYYY' article (primary source, Ministry of Energy)."""
+    today = today or date.today()
+    m = re.search(r"od\s+(\d{1,2})\.(\d{1,2})\.(\d{4})", title)
+    if not m:
+        return None
+    try:
+        eff = date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+    except ValueError:
+        return None
+    if eff > today + timedelta(days=2) or (today - eff).days > MAX_AGE_DAYS:
+        return None
+    t = _text(raw_html)
+
+    def val(label: str) -> Optional[float]:
+        mm = re.search(label + r"\s*:\s*(\d[.,]\d{1,3})\s*€\s*/\s*l", t, re.I)
+        return float(mm.group(1).replace(",", ".")) if mm else None
+
+    found = {"DIESEL": val(r"EURODIZEL"), "95": val(r"EUROSUPER\s*95"), "98": val(r"EUROSUPER\s*98")}
+    prices = {}
+    for k, v in found.items():
+        if v is None:
+            continue
+        if not (PETROL_BAND[0] <= v <= PETROL_BAND[1]):
+            return None
+        prices[k] = v
+    if "DIESEL" not in prices or "95" not in prices:
+        return None
+    return {"date": eff.isoformat(), "valid_until": None, "prices": prices}
+
+
 def build_cap_stations(stations: List[dict], cap: Dict[str, Any], currency: str = "EUR") -> List[dict]:
     plist = []
     for k in ("95", "98", "DIESEL", "LPG"):
@@ -119,11 +152,35 @@ class MontenegroScraper(ANWBScraper):
     COUNTRY    = "ME"
     ISO3       = "MNE"
     BBOX       = (41.87, 18.43, 43.57, 20.36)
-    SOURCE     = "anwb.nl (ANWB POI API) + regulated max prices (gov.me via nafta.hr)"
+    SOURCE     = "anwb.nl (ANWB POI API) + regulated max prices (gov.me, Ministry of Energy)"
     CONFIDENCE = 0.90
     merge_report: Dict[str, Any] = {}
 
+    async def _fetch_govme(self) -> Optional[Dict[str, Any]]:
+        hdr = {"User-Agent": CAP_UA}
+        try:
+            to = aiohttp.ClientTimeout(total=30)
+            async with self.session.get(GOVME_LIST, headers=hdr, timeout=to) as r:
+                if r.status != 200:
+                    return None
+                arts = (await r.json(content_type=None))["data"]["data"]
+            for a in arts:
+                title = a.get("title", "")
+                if not re.match(r"\s*Nove cijene goriva od", title, re.I):
+                    continue
+                async with self.session.get(GOVME_ARTICLE.format(slug=a["slug"]), headers=hdr, timeout=to) as r:
+                    if r.status != 200:
+                        return None
+                    return parse_govme_article(await r.text(errors="replace"), title)
+        except Exception as e:
+            print(f"[ME] gov.me fetch failed: {e}")
+        return None
+
     async def _fetch_cap(self) -> Optional[Dict[str, Any]]:
+        cap = await self._fetch_govme()
+        if cap:
+            return cap
+        print("[ME] gov.me primary unavailable - falling back to nafta.hr")
         try:
             async with self.session.get(CAP_URL, headers={"User-Agent": CAP_UA},
                                         timeout=aiohttp.ClientTimeout(total=30)) as resp:

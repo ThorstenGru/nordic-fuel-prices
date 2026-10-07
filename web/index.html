@@ -916,7 +916,7 @@ const FLAGS = {
   NL:'🇳🇱',NO:'🇳🇴',PL:'🇵🇱',PT:'🇵🇹',RO:'🇷🇴',SK:'🇸🇰',SI:'🇸🇮',ES:'🇪🇸',
   SE:'🇸🇪',CH:'🇨🇭',BG:'🇧🇬',RS:'🇷🇸',ME:'🇲🇪',MK:'🇲🇰',AL:'🇦🇱',BA:'🇧🇦',
   XK:'🇽🇰',AD:'🇦🇩',MD:'🇲🇩',MT:'🇲🇹',CY:'🇨🇾',LI:'🇱🇮',
-  GB:'🇬🇧',IE:'🇮🇪',MC:'🇲🇨',SM:'🇸🇲',
+  GB:'🇬🇧',IE:'🇮🇪',MC:'🇲🇨',SM:'🇸🇲',TR:'🇹🇷',IL:'🇮🇱',GL:'🇬🇱',
 };
 const CNAMES = {
   AT:'Austria',BE:'Belgium',HR:'Croatia',CZ:'Czechia',DK:'Denmark',EE:'Estonia',
@@ -926,12 +926,12 @@ const CNAMES = {
   SE:'Sweden',CH:'Switzerland',BG:'Bulgaria',RS:'Serbia',ME:'Montenegro',
   MK:'N.Macedonia',AL:'Albania',BA:'Bosnia',XK:'Kosovo',AD:'Andorra',
   MD:'Moldova',MT:'Malta',CY:'Cyprus',LI:'Liechtenstein',
-  GB:'United Kingdom',IE:'Ireland',MC:'Monaco',SM:'San Marino',
+  GB:'United Kingdom',IE:'Ireland',MC:'Monaco',SM:'San Marino',TR:'Türkiye',IL:'Israel',GL:'Greenland',
 };
 const SYM = {
   EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',
   PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',
-  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£',
+  BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪',
 };
 const UNIT = { L:'/L', kWh:'/kWh', kg:'/kg' };
 const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40;
@@ -958,6 +958,7 @@ const BBOX = {
   CY:[[34.63,32.26],[35.71,34.59]], LI:[[47.05,9.47],[47.27,9.64]],
   GB:[[49.80,-8.70],[60.90,1.90]],  IE:[[51.30,-10.70],[55.50,-5.30]],
   MC:[[43.72,7.40],[43.76,7.45]],   SM:[[43.88,12.40],[43.99,12.52]],
+  TR:[[35.80,25.60],[42.20,44.90]], IL:[[29.45,34.20],[33.40,35.90]], GL:[[59.70,-73.50],[83.70,-11.30]],
 };
 const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
   [cc, L.latLngBounds(b[0], b[1])]

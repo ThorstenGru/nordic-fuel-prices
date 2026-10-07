@@ -41,12 +41,14 @@ PRICE_BANDS: Dict[str, Tuple[float, float]] = {
     "EUR": (0.4, 4.5), "SEK": (8, 40), "NOK": (8, 40), "DKK": (5, 35), "CZK": (15, 90),
     "PLN": (3, 16), "HUF": (250, 1200), "CHF": (0.9, 3.8), "ISK": (150, 500), "RON": (3, 16),
     "BAM": (1, 5), "RSD": (100, 400), "ALL": (100, 300), "MKD": (40, 150), "MDL": (10, 50),
-    "GBP": (0.9, 3.0), "BGN": (0.8, 4.0),
+    "GBP": (0.9, 3.0), "BGN": (0.8, 4.0), "TRY": (20, 200), "ILS": (4, 15),
 }
 BAND_EXEMPT_FUELS = {"H2"}    # hydrogen is priced far above the litre bands
 
 # Rough lat/lon envelope of Europe (+ Iceland, Cyprus, Canaries); anything outside is bad data.
 EUROPE_BOUNDS = (26.0, 72.0, -32.0, 46.0)  # min_lat, max_lat, min_lon, max_lon
+# Countries that lie (partly) outside the Europe envelope get their own envelope.
+COUNTRY_BOUNDS = {"GL": (59.0, 84.0, -74.0, -11.0), "TR": (35.5, 42.5, 25.5, 45.0), "IL": (29.3, 33.5, 34.1, 35.95)}
 
 
 def now_iso() -> str:
@@ -79,7 +81,8 @@ def clean_stations(stations: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]]
         except (TypeError, ValueError):
             dropped["no_coords"] += 1
             continue
-        if not (EUROPE_BOUNDS[0] <= lat <= EUROPE_BOUNDS[1] and EUROPE_BOUNDS[2] <= lon <= EUROPE_BOUNDS[3]):
+        bnd = COUNTRY_BOUNDS.get(s.get("country"), EUROPE_BOUNDS)
+        if not (bnd[0] <= lat <= bnd[1] and bnd[2] <= lon <= bnd[3]):
             dropped["coords_outside_europe"] += 1
             continue
         s["lat"], s["lon"] = round(lat, 6), round(lon, 6)

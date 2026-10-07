@@ -73,6 +73,24 @@ def parse_erc_homepage(html: str) -> Dict[str, Any]:
     return {"prices": prices, "date": date, "decision_url": url}
 
 
+MIRROR_URL = "https://gorivo.mk"
+_MIRROR_ROWS = [(r"бензин", "95", 95), (r"бензин 98\+", "98", 98), (r"дизел", "DIESEL", None)]   # label before price
+
+
+def parse_gorivo_mk(html: str, today=None) -> Dict[str, Any]:
+    """Fallback: gorivo.mk mirrors the ERC decision ('Цена на бензин 98,5 ден' = BS-95, '98+' = BS-98).
+    The page carries no effective date, so the cap is dated with the scrape day and flagged as a mirror."""
+    t = re.sub(r"(?is)<(script|style).*?</>", " ", html)
+    t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t))
+    prices: Dict[tuple, float] = {}
+    for pat, ft, octane in _MIRROR_ROWS:
+        m = re.search(r"Цена на " + pat + r"\s+(\d{2,3}(?:,\d)?)\s*ден", t)
+        if m:
+            prices[(ft, octane)] = float(m.group(1).replace(",", "."))
+    d = today or datetime.now(timezone.utc).date()
+    return {"prices": prices, "date": d, "decision_url": None}
+
+
 def validate_cap(parsed: Dict[str, Any], today=None) -> Optional[str]:
     """Return an error string if the parsed cap must NOT be used, else None."""
     today = today or datetime.now(timezone.utc).date()
@@ -108,12 +126,29 @@ class NorthMacedoniaScraper(ANWBScraper):
                     raise RuntimeError(f"HTTP {resp.status}")
                 parsed = parse_erc_homepage(await resp.text())
         except Exception as e:
-            print(f"[MK] ERC unreachable - no cap ({type(e).__name__}: {e})")
-            return None
+            print(f"[MK] ERC unreachable ({type(e).__name__}: {e}) - trying gorivo.mk mirror")
+            return await self._fetch_mirror()
         err = validate_cap(parsed)
         if err:
             print(f"[MK] ERC cap not used: {err}")
             return None
+        return parsed
+
+    async def _fetch_mirror(self) -> Optional[Dict[str, Any]]:
+        try:
+            async with self.session.get(MIRROR_URL, headers={"User-Agent": "Mozilla/5.0 (compatible; EuroFuelPrices/1.0)"},
+                                        timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status != 200:
+                    raise RuntimeError(f"HTTP {resp.status}")
+                parsed = parse_gorivo_mk(await resp.text(errors="replace"))
+        except Exception as e:
+            print(f"[MK] gorivo.mk mirror failed - no cap ({type(e).__name__}: {e})")
+            return None
+        err = validate_cap(parsed)
+        if err:
+            print(f"[MK] gorivo.mk cap not used: {err}")
+            return None
+        parsed["mirror"] = True
         return parsed
 
     def build_cap_result(self, anwb: List[Dict[str, Any]], cap: Dict[str, Any]) -> SourceResult:
@@ -157,8 +192,9 @@ class NorthMacedoniaScraper(ANWBScraper):
         # decision date (2026.10.05), the prices apply from the next day (RKE: effective 2026-10-06 00:01).
         # We publish the filename date (conservative, never too new).
         self.cap_info = {"prices": {k[0] + (str(k[1]) if k[1] else ""): v for k, v in cap["prices"].items()},
-                         "date": cap["date"].isoformat(), "date_basis": "decision_filename",
-                         "source": "erc.org.mk", "url": ERC_URL, "decision_url": cap["decision_url"]}
+                         "date": cap["date"].isoformat(), "date_basis": "scrape_day" if cap.get("mirror") else "decision_filename",
+                         "source": "gorivo.mk (mirror of ERC decision)" if cap.get("mirror") else "erc.org.mk",
+                         "url": MIRROR_URL if cap.get("mirror") else ERC_URL, "decision_url": cap["decision_url"]}
         print(f"[MK] ERC legal-maximum fill: {report['regulated_fills']} price buckets (effective {cap['date']})"
               f" | final={report['final_station_count']} priced={report['priced_station_count']}")
         return merged

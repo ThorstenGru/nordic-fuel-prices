@@ -42,6 +42,9 @@ from .united_kingdom import UnitedKingdomScraper
 from .ireland import IrelandScraper
 from .monaco import MonacoScraper
 from .san_marino import SanMarinoScraper
+from .turkey import TurkeyScraper
+from .israel import IsraelScraper
+from .greenland import GreenlandScraper
 
 ALL_SCRAPERS = [
     # Nordic
@@ -92,4 +95,8 @@ ALL_SCRAPERS = [
     IrelandScraper,
     MonacoScraper,
     SanMarinoScraper,
+    # Türkiye
+    TurkeyScraper,
+    IsraelScraper,
+    GreenlandScraper,
 ]
