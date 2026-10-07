@@ -103,6 +103,7 @@ Plan a route (A -> B, optional via points) and list the cheapest pumps *along* i
 - Needs: a routing source (OSRM/Valhalla/ORS public demo is not production-grade; options: self-hosted OSRM on a small VM, or a paid/free-tier router with licence for this use), corridor search client-side (data already in browser; ~1 s for a 1,000 km route with a grid index), cross-border legs priced in EUR via the per-country stats already published.
 - Honesty rules carry over: show source + age per price, never promise "live" where a feed has no timestamp.
 - Builds on: Trip calculator (v1.9), tank size, nav-app chooser. Effort: M-L (routing is the cost driver). Decision needed: routing provider/budget.
+- Design + provider research (2026-10-07): `docs/ROUTE_PLANNER_DESIGN.md`.
 
 ### IDEA (owner, 2026-10-07) - EV charging and other alternative energy
 Research report: `docs/EV_ALT_ENERGY_RESEARCH.md` (commissioned 2026-10-07; read it before deciding).
