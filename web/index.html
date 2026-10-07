@@ -466,6 +466,64 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .cmp-key .kd { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--text2); vertical-align:-1px; margin-right:3px; }
 .cmp-key .kr { display:inline-block; width:18px; height:4px; border-radius:2px; background:rgba(22,24,29,0.2); vertical-align:1px; margin-right:3px; }
 
+/* ══════════════════════════════════════════
+   DESKTOP PAGE (>= 1000 px) — additive: sidebar + full-width map.
+   Phones and tablets (the 95 %) never match this block and are untouched.
+══════════════════════════════════════════ */
+#brandbar { display:none; }
+@media (min-width:1000px) {
+  :root { --side-w:460px; --brand-h:68px; --tabs-h:54px; }
+  html { background:var(--bg); }
+  body { max-width:none; box-shadow:none; }
+  #map-wrap { left:var(--side-w); }
+  #bd, #bd.on { display:none; }
+  .drag-handle { display:none; }
+
+  #brandbar {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    position:fixed; top:0; left:0; width:var(--side-w); height:var(--brand-h); z-index:810;
+    padding:0 18px; background:var(--cream); border-bottom:1px solid #F3E3CC; border-right:1px solid var(--border);
+  }
+  #brandbar img { height:38px; width:auto; display:block; }
+  #brandbar .bb-links { display:flex; gap:12px; font-size:0.74rem; }
+  #brandbar .bb-links a { color:var(--text2); text-decoration:none; }
+  #brandbar .bb-links a:hover { color:var(--coral); }
+
+  #tabbar {
+    top:var(--brand-h); bottom:auto; left:0; right:auto; width:var(--side-w);
+    height:var(--tabs-h); padding-bottom:0; border-top:none; border-bottom:1px solid var(--border);
+    border-right:1px solid var(--border); grid-template-columns:repeat(5,1fr);
+  }
+  #tb-map { display:none; }
+  .tb { flex-direction:row; gap:6px; }
+  .tb:hover { background:var(--surf2); }
+  .tb-icon { font-size:1.05rem; }
+  .tb-lbl  { font-size:0.74rem; white-space:nowrap; }
+  .tb { padding:4px 2px; gap:5px; }
+  .tb.on::before { top:auto; bottom:0; height:3px; border-radius:2px 2px 0 0; left:18%; right:18%; }
+
+  .panel {
+    top:calc(var(--brand-h) + var(--tabs-h)); bottom:0; left:0; right:auto; width:var(--side-w); max-height:none;
+    border-radius:0; border-top:none; border-right:1px solid var(--border);
+    transform:translateX(-102%); padding-top:10px;
+  }
+  .panel.open { transform:translateX(0); }
+  .scard:hover { border-color:var(--blue); background:rgba(15,118,110,0.04); }
+  .cmp-row:hover { background:rgba(15,118,110,0.06); }
+  .chip:hover { background:#fff; border-color:var(--coral); color:var(--coral); }
+  .chip.on:hover { color:#fff; }
+
+  #chips { top:14px; left:14px; right:230px; }
+  #badge { top:14px; right:14px; max-width:200px; }
+  #fab { bottom:28px; right:20px; }
+  #legend { left:14px; bottom:40px; }
+  .leaflet-bottom { bottom:6px; }
+  .leaflet-top { top:60px; }
+  .leaflet-control-attribution { max-width:none; }
+  .trust-overlay { align-items:center; }
+  .trust-card { border-radius:24px; max-width:460px; }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -626,6 +684,12 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <a class="trust-more" href="about.html">Full methodology →</a>
     <button class="trust-dismiss" onclick="closeTrust()"><span data-i18n="trustDismiss">Got it</span></button>
   </div>
+</div>
+
+<!-- Desktop brand bar (hidden below 1000 px) -->
+<div id="brandbar">
+  <a href="./"><img src="logo.svg" alt="EuroFuelPrices"></a>
+  <div class="bb-links"><a href="about.html" data-i18n="bbAbout">About</a><a href="admin.html" data-i18n="bbSources">Sources</a></div>
 </div>
 
 <!-- Tab bar -->
@@ -848,23 +912,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
@@ -1465,7 +1529,7 @@ function selectStation(id) {
     if (sc) sc.scrollTo({ top: Math.max(0, card.offsetTop - sc.clientHeight / 3), behavior:'smooth' });
   }
   const m = byId.get(id);
-  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); if (true) closePanel(); }
+  if (m) { cluster.zoomToShowLayer(m, () => m.openPopup()); autoClose(); }
 }
 
 // ════════════════════════════════════════════════════
@@ -1622,7 +1686,7 @@ async function runSearch(isMob) {
     }
     const { lat, lon, display_name } = rows[0];   // display_name comes live from Nominatim — not trusted
     map.setView([+lat,+lon], 13);
-    if (isMob) closePanel();
+    if (isMob) autoClose();
     L.popup().setLatLng([+lat,+lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${esc(display_name)}</div>`).openOn(map);
   } catch(e) {
     const msg = t('searchErrorPrefix') + esc(e.message);
@@ -1636,6 +1700,7 @@ async function runSearch(isMob) {
 const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', compare:'p-compare', filter:'p-filter' };
 
 function goTab(tab) {
+  if (tab === 'map' && DESK.matches) tab = 'stations';   // desktop has no separate map tab
   activeTab = tab;
   document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
   document.getElementById(`tb-${tab}`)?.classList.add('on');
@@ -1659,6 +1724,10 @@ function closeTrust() {
   try { localStorage.setItem('efp_seen_trust_intro', '1'); } catch (_) {}
 }
 
+const DESK = window.matchMedia('(min-width:1000px)');
+// Phones/tablets: a sheet covers the map, so selecting something closes it. Desktop: the sidebar stays.
+function autoClose() { if (!DESK.matches) closePanel(); }
+
 function closePanel() {
   Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
   document.getElementById('bd').classList.remove('on');
@@ -1667,7 +1736,7 @@ function closePanel() {
   activeTab = 'map';
 }
 
-map.on('click movestart', () => { if (true) closePanel(); });
+map.on('click movestart', autoClose);
 
 // Swipe down to close
 document.querySelectorAll('.panel').forEach(p => {
@@ -1745,7 +1814,7 @@ function pickCountry(cc) {
   setCountry(cc);
   if (CB[cc]) map.fitBounds(CB[cc], { padding:[24,24] });
   renderCompare();
-  closePanel();
+  autoClose();
 }
 
 // ════════════════════════════════════════════════════
@@ -1819,6 +1888,9 @@ window.addEventListener('beforeinstallprompt', e => {
   try {
     if (!localStorage.getItem('efp_seen_trust_intro')) openTrust();
   } catch (_) {}
+
+  if (DESK.matches) goTab('stations');
+  DESK.addEventListener?.('change', e => { if (e.matches) goTab('stations'); else closePanel(); setTimeout(() => map.invalidateSize(), 50); });
 
   // Always pre-load Sweden (home country priority)
   loadCC('SE');
