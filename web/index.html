@@ -135,6 +135,10 @@ html, body {
   100%{ box-shadow:0 0 0 0   rgba(15,118,110,0); }
 }
 
+.leaflet-popup-content-wrapper { border-radius:18px; box-shadow:0 6px 24px rgba(22,24,29,0.18); }
+.leaflet-popup-content { margin:14px 16px; }
+.leaflet-container a.leaflet-popup-close-button { width:30px; height:30px; font-size:20px; line-height:30px; }
+
 /* ── Price tooltips ── */
 .leaflet-tooltip.ptip {
   background:rgba(255,255,255,0.96); border:1px solid rgba(22,24,29,0.12);
@@ -226,14 +230,15 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 /* ══════════════════════════════════════════
    POPUP
 ══════════════════════════════════════════ */
-.pop { font-family:system-ui,sans-serif; font-size:0.82rem; min-width:150px; max-width:270px; }
-.pop-name { font-weight:500; color:var(--text); font-size:0.92rem; margin-bottom:2px; }
-.pop-addr { color:var(--text2); font-size:0.7rem; margin-bottom:1px; }
-.pop-meta { color:var(--text2); font-size:0.67rem; margin-bottom:7px; }
+.pop { font-family:system-ui,sans-serif; font-size:0.9rem; min-width:190px; max-width:290px; }
+.pop-name { font-weight:700; color:var(--text); font-size:1rem; margin-bottom:2px; line-height:1.25; }
+.pop-addr { color:var(--text2); font-size:0.76rem; margin-bottom:1px; }
+.pop-meta { color:var(--text2); font-size:0.72rem; margin-bottom:8px; }
 .pop-tbl { border-collapse:collapse; margin-bottom:4px; }
-.pop-tbl td { padding:2px 5px 2px 0; }
+.pop-tbl { width:100%; }
+.pop-tbl td { padding:3px 6px 3px 0; }
 .pop-tbl .ft { color:var(--text2); }
-.pop-tbl .pr { color:var(--green); font-weight:500; }
+.pop-tbl .pr { color:var(--text); font-weight:700; font-size:1.02rem; font-variant-numeric:tabular-nums; text-align:right; }
 .pop-tbl .pv { font-size:0.6rem; color:var(--text3); padding:0 0 3px; line-height:1.3; }
 .pop-tbl .pv details { margin-top:1px; } .pop-tbl .pv summary { cursor:pointer; }
 .pop-tbl .pv .reg { color:#B45309; }
@@ -243,7 +248,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .pop-go {
   display:inline-flex; align-items:center; gap:4px;
   background:var(--coral); color:#fff; text-decoration:none;
-  border-radius:10px; padding:5px 11px; font-size:0.75rem; font-weight:500;
+  border-radius:12px; padding:9px 16px; font-size:0.85rem; font-weight:600;
 }
 
 /* ══════════════════════════════════════════
@@ -393,7 +398,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   width:100%; max-width:520px; background:var(--surf); border-radius:24px 24px 0 0;
   padding:22px 20px calc(22px + var(--safe-b)); box-shadow:0 -4px 30px rgba(0,0,0,0.15);
 }
-.trust-title { font-size:1.05rem; font-weight:500; margin-bottom:8px; }
+.trust-logo { display:block; height:36px; width:auto; margin-bottom:14px; }
+.trust-title { font-size:1.1rem; font-weight:700; margin-bottom:8px; }
 .trust-intro { font-size:0.82rem; color:var(--text2); line-height:1.5; margin-bottom:14px; }
 .trust-row {
   display:flex; align-items:center; gap:10px; font-size:0.82rem; color:var(--text);
@@ -548,6 +554,13 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .nearby-summary .ns-label { color:var(--green); font-weight:500; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; }
 .nearby-summary .ns-price { font-size:1.4rem; font-weight:500; color:var(--text); line-height:1.1; }
 .nearby-summary .ns-detail { color:var(--text2); font-size:0.73rem; }
+.nearby-summary .ns-save { color:#15803D; font-size:0.78rem; font-weight:600; }
+.nearby-summary .ns-save:empty { display:none; }
+.nearby-summary .ns-go {
+  margin-top:8px; background:var(--coral); color:#fff; border:none; border-radius:14px;
+  padding:12px; font:inherit; font-size:0.9rem; font-weight:600; cursor:pointer; min-height:44px;
+}
+.nearby-summary .ns-go:active { transform:scale(0.98); }
 
 </style>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
@@ -593,6 +606,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <div class="ns-label" data-i18n="bestPriceNearby">Best price nearby</div>
     <div class="ns-price" id="ns-price">—</div>
     <div class="ns-detail" id="ns-detail"></div>
+    <div class="ns-save" id="ns-save"></div>
+    <button class="ns-go" id="ns-go" onclick="nearGo()"></button>
   </div>
   <div class="panel-scroll" id="nearby-list">
     <p class="empty" data-i18n="tapToLocate">Tap the button to find your location…</p>
@@ -674,6 +689,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 <!-- Trust / source-grade explainer (shown once on first visit; reopenable from Filter) -->
 <div id="trust-overlay" class="trust-overlay">
   <div class="trust-card">
+    <img class="trust-logo" src="logo.svg" alt="EuroFuelPrices" height="36">
     <div class="trust-title" data-i18n="trustTitle">How we grade sources</div>
     <p class="trust-intro" data-i18n="trustIntro">Every price shows where it came from and how old it is. We grade each country\'s data source so you know how much to trust it:</p>
     <div class="trust-row"><span class="gb gA">A</span><span data-i18n="grade_A">Official feed · stations must report price changes</span></div>
@@ -912,23 +928,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { nearGo:'Navigate to the cheapest', nearSave:'{d} below the nearby average ({a})', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { nearGo:'Navigera till billigaste', nearSave:'{d} under snittet i närheten ({a})', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { nearGo:'Zur günstigsten navigieren', nearSave:'{d} unter dem Durchschnitt in der Nähe ({a})', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { nearGo:'Naviguer vers la moins chère', nearSave:'{d} sous la moyenne à proximité ({a})', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { nearGo:'Navegar a la más barata', nearSave:'{d} por debajo de la media cercana ({a})', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
@@ -1551,6 +1567,8 @@ async function detectCountry(lat, lon) {
 }
 
 const NEARBY_RADIUS_KM = 15;
+let _nearBest = null;
+function nearGo() { if (_nearBest) doNav(_nearBest.id); }
 
 function goNearby() {
   if (!navigator.geolocation) { alert(t('geoNotSupported')); return; }
@@ -1610,12 +1628,15 @@ function showNearby() {
   }
 
   const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'L',BAM:'KM',MDL:'lei',GBP:'£' };
-  let bestGlobal = null, bestGlobalKm = null;
+  let bestGlobal = null, bestGlobalKm = null, bestSt = null;
+  const seen = [];
   for (const {s,km} of cands) {
     const cp = cheapest(s);
     if (!cp) continue;
-    if (!bestGlobal || cp.price < bestGlobal.price) { bestGlobal = cp; bestGlobalKm = km; }
+    seen.push(cp);
+    if (!bestGlobal || cp.price < bestGlobal.price) { bestGlobal = cp; bestGlobalKm = km; bestSt = s; }
   }
+  _nearBest = bestSt;
 
   const sumEl = document.getElementById('nearby-summary');
   const priceEl = document.getElementById('ns-price');
@@ -1624,6 +1645,13 @@ function showNearby() {
     const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
     priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${fuelLabel(bestGlobal)}`;
     detailEl.textContent = t('bestWithinDetail', { d: fmtDist(bestGlobalKm), n: cands.length, r: NEARBY_RADIUS_KM, c: CNAMES[country]||country||t('yourCountry') });
+    // Compare like with like: same fuel bucket, same currency
+    const same = seen.filter(p => p.currency === bestGlobal.currency && fuelKeyOf(p) === fuelKeyOf(bestGlobal));
+    const avg = same.length >= 3 ? same.reduce((a, p) => a + p.price, 0) / same.length : null;
+    const diff = avg != null ? avg - bestGlobal.price : 0;
+    document.getElementById('ns-save').textContent = diff >= 0.01
+      ? t('nearSave', { d: diff.toFixed(2) + ' ' + sym, a: avg.toFixed(2) + ' ' + sym }) : '';
+    document.getElementById('ns-go').textContent = '🧭 ' + t('nearGo');
     sumEl.style.display = 'flex';
   } else {
     sumEl.style.display = 'none';
