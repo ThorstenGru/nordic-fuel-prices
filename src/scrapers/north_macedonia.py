@@ -6,7 +6,10 @@ retailers may sell below it. It is only used to fill price buckets (95, 98, dies
 no price, and those prices are flagged basis='regulated_max' by the merge engine. ANWB station prices
 are never overridden.
 
-Source: https://www.erc.org.mk/ homepage block "AKTUELNI CENI" (official, current, MKD/L). The block
+Source: ERC only (official regulator). nafta.hr/cijene-goriva-makedonija was checked on 2026-10-07 and its
+MK figures were WRONG versus the RKE decision (diesel 104.5 vs 97 MKD) - it must NOT be used for MK.
+When ERC is unreachable (HTTP 403 from GitHub runners) NO cap is published and ANWB is returned unchanged.
+ERC homepage block "AKTUELNI CENI" (official, current, MKD/L). The block
 carries no date, so the effective date is the date of the newest "Odluka za ceni na ND" decision listed
 on the same page (filename prefix YYYY.MM.DD) - a conservative (never too new) date. No cap is produced
 when the figures are missing, implausible (MKD 50-190/L) or the date is older than 30 days.
@@ -98,12 +101,15 @@ class NorthMacedoniaScraper(ANWBScraper):
     cap_info: Dict[str, Any] = {}
 
     async def _fetch_cap(self) -> Optional[Dict[str, Any]]:
-        async with self.session.get(ERC_URL, headers={"User-Agent": UA},
-                                    timeout=aiohttp.ClientTimeout(total=30)) as resp:
-            if resp.status != 200:
-                raise RuntimeError(f"ERC HTTP {resp.status}")
-            html = await resp.text()
-        parsed = parse_erc_homepage(html)
+        try:
+            async with self.session.get(ERC_URL, headers={"User-Agent": UA},
+                                        timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status != 200:
+                    raise RuntimeError(f"HTTP {resp.status}")
+                parsed = parse_erc_homepage(await resp.text())
+        except Exception as e:
+            print(f"[MK] ERC unreachable - no cap ({type(e).__name__}: {e})")
+            return None
         err = validate_cap(parsed)
         if err:
             print(f"[MK] ERC cap not used: {err}")
@@ -147,8 +153,12 @@ class NorthMacedoniaScraper(ANWBScraper):
                    self.build_cap_result(anwb, cap)]
         merged, report = merge_sources(results, MergeConfig(country="MK"))
         self.merge_report = report
+        # The page does not state the date the prices are valid FROM; the decision link filename carries the
+        # decision date (2026.10.05), the prices apply from the next day (RKE: effective 2026-10-06 00:01).
+        # We publish the filename date (conservative, never too new).
         self.cap_info = {"prices": {k[0] + (str(k[1]) if k[1] else ""): v for k, v in cap["prices"].items()},
-                         "date": cap["date"].isoformat(), "url": ERC_URL, "decision_url": cap["decision_url"]}
+                         "date": cap["date"].isoformat(), "date_basis": "decision_filename",
+                         "source": "erc.org.mk", "url": ERC_URL, "decision_url": cap["decision_url"]}
         print(f"[MK] ERC legal-maximum fill: {report['regulated_fills']} price buckets (effective {cap['date']})"
               f" | final={report['final_station_count']} priced={report['priced_station_count']}")
         return merged
