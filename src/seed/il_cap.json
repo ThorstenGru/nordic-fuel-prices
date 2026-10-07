@@ -1,0 +1,10 @@
+{
+  "effective": "2026-10-05",
+  "self_service_95": 7.77,
+  "full_service_95": 8.03,
+  "guard": {
+    "excise_petrol_kl": 2809.06,
+    "refinery_95_pipeline_kl": 3110.44
+  },
+  "basis": "Ministry of Energy monthly maximum (press reports citing the ministry: Maariv, Autocom, Mako; 8.27 -> 7.77 after the 5 Oct 50-agorot excise cut, confirmed by data.gov.il excise 3232.79 -> 2809.06 per kL). gov.il itself is not reachable. Valid only while the data.gov.il guard inputs are unchanged."
+}

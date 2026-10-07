@@ -34,3 +34,16 @@ class GorivoMk(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IsraelCapGuard(unittest.TestCase):
+    CAP = {"effective": "2026-10-05", "guard": {"excise_petrol_kl": 2809.06, "refinery_95_pipeline_kl": 3110.44}}
+
+    def test_valid_and_invalidated(self):
+        from scrapers.israel import cap_is_valid
+        d = date(2026, 10, 20)
+        self.assertIsNone(cap_is_valid(self.CAP, 2809.06, 3110.44, d))
+        self.assertIn("excise", cap_is_valid(self.CAP, 3232.79, 3110.44, d))
+        self.assertIn("refinery", cap_is_valid(self.CAP, 2809.06, 3200.0, d))
+        self.assertIn("unavailable", cap_is_valid(self.CAP, None, 3110.44, d))
+        self.assertIn("days old", cap_is_valid(self.CAP, 2809.06, 3110.44, date(2026, 12, 1)))
