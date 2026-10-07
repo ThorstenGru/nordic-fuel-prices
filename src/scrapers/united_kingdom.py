@@ -32,7 +32,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from ._anwb import ANWBScraper
-from .base import iso_utc
+from .base import iso_utc, octane_of
 
 _FEEDS = {
     "Asda":   "https://storelocator.asda.com/fuel_prices_data.json",
@@ -44,6 +44,7 @@ _FEEDS = {
 _MAX_AGE_DAYS = 7
 _MERGE_RADIUS_M = 100.0
 _FUEL_MAP = {"E10": "E10", "E5": "E5", "B7": "DIESEL"}   # SDV (premium diesel) intentionally dropped
+_FUEL_OCTANE = {"E10": 95, "E5": 97}   # UK retailer E5 = super unleaded (97+ RON); E10 = standard 95
 _HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
                           "Chrome/124.0 Safari/537.36", "Accept": "application/json"}
 _LAT = (49.8, 60.9)
@@ -102,7 +103,7 @@ class UnitedKingdomScraper(ANWBScraper):
                         continue
                     if pence <= 0:
                         continue
-                    e = self.price_entry(ft, round(pence / 100.0, 3), "L", ts)
+                    e = self.price_entry(ft, round(pence / 100.0, 3), "L", ts, octane=_FUEL_OCTANE.get(ft))
                     e["source"] = "retailer"
                     prices.append(e)
                 sid = str(s.get("site_id") or f"{lat:.5f}_{lon:.5f}")
@@ -140,11 +141,15 @@ class UnitedKingdomScraper(ANWBScraper):
                 p["updated_at"] = None
                 # Benchmark 2026-10-07: ANWB's UK "Euro 95 (E10)" price is really the E5 super-unleaded
                 # price (85% within 1 p of the retailer E5, 8% of E10; ~17 p above true E10). Label it E5.
-                if p["fuel_type"] == "E10":
+                # New ANWB mapping: that price arrives as fuel_type "95" (old: "E10"/"E5"); the 98 grade as
+                # "98" (old: "E5"). Both are UK super-unleaded: E5, octane 97 (98 when ANWB says 98).
+                if p["fuel_type"] in ("E10", "E5", "95", "98"):
+                    o = octane_of(p)
+                    p["octane"] = 98 if (p["fuel_type"] == "98" or (o or 0) >= 98) else 97
                     p["fuel_type"] = "E5"
                 ps.append(p)
             best: Dict[str, Dict[str, Any]] = {}
-            for p in ps:                       # E5 can now appear twice (95-super and 98): keep the lower
+            for p in ps:                       # E5 can appear twice (super + 98): keep the lower
                 if p["fuel_type"] not in best or p["price"] < best[p["fuel_type"]]["price"]:
                     best[p["fuel_type"]] = p
             ps = list(best.values())
@@ -215,6 +220,14 @@ def _dist_m(a_lat, a_lon, b_lat, b_lon) -> float:
     return math.hypot(dlat, dlon)
 
 
+def _slot(p: Dict) -> str:
+    """Merge slot: petrol bucketed by octane (95 / 97+), other fuels by fuel_type."""
+    o = octane_of(p)
+    if o is None:
+        return p["fuel_type"]
+    return "P97" if o >= 97 else "P95"
+
+
 def _merge(retail: List[Dict], anwb: List[Dict]):
     """Mutually-unique <=100 m + compatible-brand match; retailer prices win, ANWB fills missing fuels."""
     for s in retail + anwb:
@@ -242,12 +255,12 @@ def _merge(retail: List[Dict], anwb: List[Dict]):
         c = fwd.get(i, [])
         if len(c) == 1 and len(rev.get(c[0], [])) == 1:
             r = retail[c[0]]
-            have = {p["fuel_type"] for p in r["prices"]}
+            have = {_slot(p) for p in r["prices"]}
             filled = False
             for p in a["prices"]:
-                if p["fuel_type"] not in have:
+                if _slot(p) not in have:
                     r["prices"].append(p)
-                    have.add(p["fuel_type"])
+                    have.add(_slot(p))
                     filled = True
             if filled:
                 r["sources"].append("anwb")

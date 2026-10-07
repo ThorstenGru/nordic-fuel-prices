@@ -150,7 +150,7 @@ class RomaniaScraper(BaseScraper):
         result = []
         for s in stations_by_key.values():
             prices = [
-                self.price_entry(ft, pr, unit)
+                self.price_entry(ft, pr, unit, octane=95 if ft == "E5" else None)   # Benzina_Regular = 95
                 for ft, (pr, unit) in s.pop("_prices").items()
                 if pr > 0
             ]

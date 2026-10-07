@@ -124,7 +124,8 @@ class GermanyScraper(BaseScraper):
             for field, (ft, unit) in FUEL_MAP.items():
                 val = s.get(field)
                 if isinstance(val, (int, float)) and val > 0:
-                    prices.append(self.price_entry(ft, float(val), unit))
+                    prices.append(self.price_entry(ft, float(val), unit,
+                                                   octane=95 if ft in ("E5", "E10") else None))
             brand, name = s.get("brand", ""), s.get("name", "")
             out.append({
                 "id": f"de_tk_{s.get('id', '')}",

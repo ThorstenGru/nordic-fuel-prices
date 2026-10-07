@@ -35,14 +35,14 @@ HOSTS = [
 
 # Spanish field name → (internal fuel_type, unit)
 FUEL_FIELDS = {
-    "Precio Gasoleo A":                      ("DIESEL", "L"),
-    "Precio Gasolina 95 E5":                 ("E5",     "L"),
-    "Precio Gasolina 95 E10":                ("E10",    "L"),
-    "Precio Gasolina 98 E5":                 ("E5",     "L"),  # premium 98 (deduped below)
-    "Precio Gases licuados del petroleo":    ("LPG",    "L"),
-    "Precio Gas Natural Comprimido":         ("CNG",    "kg"),
-    "Precio Bioetanol":                      ("E85",    "L"),
-    "Precio Hidrogeno":                      ("H2",     "kg"),
+    "Precio Gasoleo A":                      ("DIESEL", "L", None),
+    "Precio Gasolina 95 E5":                 ("E5",     "L", 95),
+    "Precio Gasolina 95 E10":                ("E10",    "L", 95),
+    "Precio Gasolina 98 E5":                 ("E5",     "L", 98),  # premium 98 (deduped below)
+    "Precio Gases licuados del petroleo":    ("LPG",    "L", None),
+    "Precio Gas Natural Comprimido":         ("CNG",    "kg", None),
+    "Precio Bioetanol":                      ("E85",    "L", None),
+    "Precio Hidrogeno":                      ("H2",     "kg", None),
 }
 
 
@@ -98,7 +98,7 @@ class SpainScraper(BaseScraper):
         stations = []
         for s in data["ListaEESSPrecio"]:
             prices, seen = [], set()
-            for field, (ft, unit) in FUEL_FIELDS.items():
+            for field, (ft, unit, octane) in FUEL_FIELDS.items():
                 val_str = (s.get(field) or "").strip()
                 if not val_str or ft in seen:
                     continue
@@ -107,7 +107,7 @@ class SpainScraper(BaseScraper):
                 except ValueError:
                     continue
                 if price > 0:
-                    prices.append(self.price_entry(ft, price, unit, updated_at=as_of))
+                    prices.append(self.price_entry(ft, price, unit, updated_at=as_of, octane=octane))
                     seen.add(ft)
 
             try:

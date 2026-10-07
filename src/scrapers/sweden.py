@@ -28,7 +28,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
-from .base import BaseScraper, iso_utc
+from .base import BaseScraper, iso_utc, octane_of
 from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
@@ -155,6 +155,14 @@ class _SEAnwb(ANWBScraper):
     CONFIDENCE = 0.80
 
 
+def _slot(p: Dict) -> str:
+    """Merge slot: petrol bucketed by octane (95 / 98+), other fuels by fuel_type."""
+    o = octane_of(p)
+    if o is None:
+        return p["fuel_type"]
+    return "P98" if o >= 97 else "P95"
+
+
 def _merge_anwb(stations: List[Dict], anwb: List[Dict]) -> Tuple[int, int, int]:
     """Fold ANWB stations into ``stations`` conservatively (never averages, never invents timestamps).
 
@@ -187,14 +195,14 @@ def _merge_anwb(stations: List[Dict], anwb: List[Dict]) -> Tuple[int, int, int]:
             pr["source"] = "anwb"
         if best is not None and best_d <= MATCH_RADIUS_M:
             claimed.add(id(best))
-            have = {p["fuel_type"] for p in best["prices"]}
+            have = {_slot(p) for p in best["prices"]}
             if not have:
                 best["prices"] = a["prices"]
                 best["source"] = a["source"]
                 best["confidence"] = a["confidence"]
                 filled += 1
             else:
-                extra = [p for p in a["prices"] if p["fuel_type"] not in have]
+                extra = [p for p in a["prices"] if _slot(p) not in have]
                 if extra:
                     best["prices"] = best["prices"] + extra
                     topped += 1
@@ -473,7 +481,8 @@ class SwedenScraper(BaseScraper):
             for ft_raw, (ft, unit) in FUEL_MAP.items():
                 p = prices_by_fuel.get(ft_raw)
                 if p and p > 0:
-                    entries.append(self.price_entry(ft, p, unit, updated_at=station_ts.get(station_id)))
+                    entries.append(self.price_entry(ft, p, unit, updated_at=station_ts.get(station_id),
+                                                    octane={"95": 95, "98": 98}.get(ft_raw)))
             if not entries:
                 continue
             info = _parse_station_id(station_id)

@@ -203,7 +203,7 @@ class NorwayScraper(BaseScraper):
             try:
                 p = float(values[idx])
                 if p > 0:
-                    prices.append(self.price_entry(fuel_type, p, unit))
+                    prices.append(self.price_entry(fuel_type, p, unit, octane=95 if fuel_type == "E10" else None))
             except (TypeError, ValueError, IndexError):
                 pass
         return prices

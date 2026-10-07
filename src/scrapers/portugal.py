@@ -10,11 +10,11 @@ from .base import BaseScraper
 BASE_URL = "https://precoscombustiveis.dgeg.gov.pt/api/PrecoComb/PesquisarPostos"
 
 FUEL_IDS: Dict[int, tuple] = {
-    2101: ("DIESEL", "L"),   # Gasóleo simples
-    3201: ("E5",     "L"),   # Gasolina simples 95
-    3400: ("E5",     "L"),   # Gasolina simples 98 (maps to E5 — best available)
-    1120: ("LPG",    "L"),   # GPL Auto
-    1143: ("CNG",    "kg"),  # GNC (compressed natural gas), EUR/kg
+    2101: ("DIESEL", "L", None),   # Gasóleo simples
+    3201: ("E5",     "L", 95),     # Gasolina simples 95
+    3400: ("E5",     "L", 98),     # Gasolina simples 98 (maps to E5 — best available)
+    1120: ("LPG",    "L", None),   # GPL Auto
+    1143: ("CNG",    "kg", None),  # GNC (compressed natural gas), EUR/kg
 }
 
 LAT_MIN, LAT_MAX = 32.0, 43.0      # mainland + Madeira + Azores
@@ -71,7 +71,7 @@ class PortugalScraper(BaseScraper):
         if not data.get("status"):
             return []
 
-        ft, unit = FUEL_IDS[fuel_id]
+        ft, unit, octane = FUEL_IDS[fuel_id]
         result = []
         for s in data.get("resultado", []):
             try:
@@ -101,6 +101,6 @@ class PortugalScraper(BaseScraper):
                 "lon": lon,
                 "source": self.SOURCE,
                 "confidence": self.CONFIDENCE,
-                "prices": [self.price_entry(ft, price, unit, updated_at=s.get("DataAtualizacao"), tz="Europe/Lisbon")],
+                "prices": [self.price_entry(ft, price, unit, updated_at=s.get("DataAtualizacao"), tz="Europe/Lisbon", octane=octane)],
             })
         return result

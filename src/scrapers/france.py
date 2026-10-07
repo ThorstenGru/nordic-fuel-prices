@@ -15,12 +15,12 @@ BASE_URL = (
 # Direct numerical price fields present in the v2.1 API export (no JSON parsing needed)
 # {field_name: (fuel_type, unit, timestamp_field)} — *_maj = when the station last changed that price
 PRICE_FIELDS = {
-    "gazole_prix": ("DIESEL", "L", "gazole_maj"),
-    "sp95_prix":   ("E5",     "L", "sp95_maj"),
-    "sp98_prix":   ("E5",     "L", "sp98_maj"),  # premium 98 — also maps to E5, deduped via seen set
-    "e10_prix":    ("E10",    "L", "e10_maj"),
-    "e85_prix":    ("E85",    "L", "e85_maj"),
-    "gplc_prix":   ("LPG",    "L", "gplc_maj"),
+    "gazole_prix": ("DIESEL", "L", "gazole_maj", None),
+    "sp95_prix":   ("E5",     "L", "sp95_maj", 95),
+    "sp98_prix":   ("E5",     "L", "sp98_maj", 98),  # premium 98 — also maps to E5, deduped via seen set
+    "e10_prix":    ("E10",    "L", "e10_maj", 95),
+    "e85_prix":    ("E85",    "L", "e85_maj", None),
+    "gplc_prix":   ("LPG",    "L", "gplc_maj", None),
 }
 
 
@@ -69,7 +69,7 @@ class FranceScraper(BaseScraper):
             # Use the pre-parsed direct price fields (floats) — avoids JSON string parsing
             seen: set = set()
             prices = []
-            for field, (ft, unit, ts_field) in PRICE_FIELDS.items():
+            for field, (ft, unit, ts_field, octane) in PRICE_FIELDS.items():
                 if ft in seen:
                     continue
                 val = s.get(field)
@@ -81,7 +81,8 @@ class FranceScraper(BaseScraper):
                     continue
                 if price > 0:
                     prices.append(self.price_entry(ft, price, unit,
-                                                   updated_at=self._maj(s.get(ts_field)), tz="Europe/Paris"))
+                                                   updated_at=self._maj(s.get(ts_field)), tz="Europe/Paris",
+                                                   octane=octane))
                     seen.add(ft)
 
             if not prices:

@@ -16,7 +16,7 @@ REGISTRY_URL = "https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_at
 PRICES_URL   = "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv"
 
 FUEL_MAP = {
-    "Benzina":          ("E5",     "L"),
+    "Benzina":          ("E5",     "L"),   # standard unleaded = 95 RON
     "Gasolio":          ("DIESEL", "L"),
     "Gasolio BTZ":      ("DIESEL", "L"),
     "GPL":              ("LPG",    "L"),
@@ -110,7 +110,8 @@ class ItalyScraper(BaseScraper):
             prev = best.setdefault(sid, {}).get(ft)
             if prev is not None and (prev[0] or not is_self):
                 continue                      # keep an existing self-service price / first served price
-            entry = self.price_entry(ft, price, unit, updated_at=row.get("dtComu"), tz="Europe/Rome")
+            entry = self.price_entry(ft, price, unit, updated_at=row.get("dtComu"), tz="Europe/Rome",
+                                     octane=95 if ft == "E5" else None)
             best[sid][ft] = (is_self, entry)
         for sid, by_fuel in best.items():
             stations[sid]["prices"] = [e for _, e in by_fuel.values()]

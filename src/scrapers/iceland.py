@@ -56,7 +56,8 @@ class IcelandScraper(BaseScraper):
             for field, (ft, unit) in FUEL_MAP.items():
                 val = s.get(field)
                 if isinstance(val, (int, float)) and val > 0:
-                    prices.append(self.price_entry(ft, float(val), unit))
+                    prices.append(self.price_entry(ft, float(val), unit,
+                                                   octane=95 if ft == "E5" else None))
 
             if not prices:
                 continue

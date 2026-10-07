@@ -53,24 +53,24 @@ EXCLUDE_ANWB = os.environ.get("SEO_EXCLUDE_ANWB") == "1"   # kill switch: skip c
 COUNTRIES: Dict[str, Dict[str, Any]] = {
     "se": dict(lang="sv", currency="SEK", sym="kr", mode="places", ts_kind="snapshot", fallback_nearby=True,
                hub="Bensinpriser Sverige", hub_title="Bensinpriser Sverige idag – billigaste bensin & diesel",
-               fuels=[("E10", "Bensin 95"), ("E5", "Bensin 98"), ("DIESEL", "Diesel"), ("E85", "E85")],
-               cheapest=("E10", "DIESEL"), src="bensinpriser.nu", osm=True),
+               fuels=[("P95", "Bensin 95"), ("P98", "Bensin 98"), ("DIESEL", "Diesel"), ("E85", "E85")],
+               cheapest=("P95", "DIESEL"), src="bensinpriser.nu", osm=True),
     "at": dict(lang="de", currency="EUR", sym="€", mode="places", ts_kind="fetched", fallback_nearby=False,
                hub="Spritpreise Österreich", hub_title="Spritpreise Österreich aktuell – günstig tanken",
-               fuels=[("E5", "Super 95"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
-               cheapest=("E5", "DIESEL"), src="E-Control Spritpreisrechner", osm=True,
+               fuels=[("P95", "Super 95"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
+               cheapest=("P95", "DIESEL"), src="E-Control Spritpreisrechner", osm=True,
                nation="Österreich-Median"),
     "de": dict(lang="de", currency="EUR", sym="€", mode="city", ts_kind="fetched", fallback_nearby=False,
                hub="Spritpreise Deutschland", hub_title="Spritpreise Deutschland aktuell – günstig tanken",
-               fuels=[("E10", "Super E10"), ("E5", "Super E5"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
+               fuels=[("E10", "Super E10"), ("E5_95", "Super E5"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
                cheapest=("E10", "DIESEL"), src="Tankerkönig / MTS-K", osm=False, nation="Deutschland-Median"),
     "ch": dict(lang="de", currency="CHF", sym="CHF", mode="city", ts_kind="fetched", fallback_nearby=False,
                hub="Benzinpreise Schweiz", hub_title="Benzinpreise Schweiz aktuell – günstig tanken",
-               fuels=[("E10", "Bleifrei 95 (E10)"), ("E5", "Bleifrei 95/98 (E5)"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
+               fuels=[("E10", "Bleifrei 95 (E10)"), ("E5_95", "Bleifrei 95 (E5)"), ("P98", "Bleifrei 98"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
                cheapest=("E10", "DIESEL"), src="Community", osm=False, nation="Schweiz-Median"),
     "fr": dict(lang="fr", currency="EUR", sym="€", mode="city", ts_kind="price", fallback_nearby=False, max_age_h=336,
                hub="Prix des carburants en France", hub_title="Prix des carburants en France – le moins cher aujourd’hui",
-               fuels=[("E10", "SP95-E10"), ("E5", "SP95 / SP98 (E5)"), ("DIESEL", "Gazole"), ("E85", "E85 (superéthanol)"), ("LPG", "GPLc")],
+               fuels=[("E10", "SP95-E10"), ("E5_95", "SP95 (E5)"), ("P98", "SP98"), ("DIESEL", "Gazole"), ("E85", "E85 (superéthanol)"), ("LPG", "GPLc")],
                cheapest=("E10", "DIESEL"), src="prix-carburants.gouv.fr (data.economie.gouv.fr)", osm=False,
                nation="médiane nationale"),
 }
@@ -198,10 +198,40 @@ def money(v: float, cfg: Dict) -> str:
     return f"{fmt_price(v, cfg)} {cfg['sym']}"
 
 
+# Petrol rows are matched by OCTANE bucket (same rule as web/index.html) so a 98 price is never
+# shown under a 95 label. Row keys: "P95" = octane-95 bucket (E10, E5@95, generic 95), "P98" = octane >= 97,
+# "E5_95" = fuel_type E5 at 95 octane; any other key is a plain fuel_type match (E10, DIESEL, LPG, E85 ...).
+_PETROL = ("E10", "E5", "95", "98")
+
+
+def octane_of(p: Dict[str, Any]) -> Optional[int]:
+    if p.get("fuel_type") not in _PETROL:
+        return None
+    if p.get("octane"):
+        try:
+            return int(p["octane"])
+        except (TypeError, ValueError):
+            return None
+    return 98 if p.get("fuel_type") == "98" else 95   # legacy: E10/E5/95 without octane = 95
+
+
+def fuel_match(p: Dict[str, Any], key: str) -> bool:
+    if key == "P95":
+        return octane_of(p) == 95
+    if key == "P98":
+        o = octane_of(p)
+        return o is not None and o >= 97
+    if key == "E5_95":
+        return p.get("fuel_type") == "E5" and octane_of(p) == 95
+    if key == "E10":
+        return p.get("fuel_type") == "E10"
+    return p.get("fuel_type") == key
+
+
 def fresh_price(station: Dict[str, Any], fuel: str, now: datetime, cfg: Dict) -> Optional[Tuple[float, Optional[datetime]]]:
     best = None
     for p in station.get("prices") or []:
-        if p.get("fuel_type") != fuel or p.get("currency") != cfg["currency"] or p.get("unit") != "L":
+        if not fuel_match(p, fuel) or p.get("currency") != cfg["currency"] or p.get("unit") != "L":
             continue
         try:
             price = float(p["price"])

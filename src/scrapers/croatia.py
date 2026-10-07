@@ -28,16 +28,16 @@ DATA_URL = "https://mzoe-gor.hr/data.json"
 
 # vrsta_goriva_id → (fuel_type, unit)
 _VRSTA_MAP = {
-    1:  ("E5",     "L"),
-    2:  ("E5",     "L"),
-    5:  ("E5",     "L"),
-    6:  ("E5",     "L"),
-    7:  ("DIESEL", "L"),
-    8:  ("DIESEL", "L"),
-    9:  ("LPG",    "L"),
-    12: ("E85",    "L"),
-    13: ("HVO100", "L"),
-    26: ("CNG",    "kg"),
+    1:  ("E5",     "L", 95),
+    2:  ("E5",     "L", 95),
+    5:  ("E5",     "L", 100),
+    6:  ("E5",     "L", 100),
+    7:  ("DIESEL", "L", None),
+    8:  ("DIESEL", "L", None),
+    9:  ("LPG",    "L", None),
+    12: ("E85",    "L", None),
+    13: ("HVO100", "L", None),
+    26: ("CNG",    "kg", None),
 }
 
 # Croatia geographic bounds
@@ -112,7 +112,7 @@ class CroatiaScraper(BaseScraper):
                 except (ValueError, TypeError):
                     continue
                 if price > 0:
-                    prices.append(self.price_entry(ft_info[0], price, ft_info[1]))
+                    prices.append(self.price_entry(ft_info[0], price, ft_info[1], octane=ft_info[2]))
                     seen.add(ft_info[0])
 
             if not prices:

@@ -4,7 +4,7 @@ import math
 import os
 import re
 from typing import List, Dict, Any, Tuple
-from .base import BaseScraper
+from .base import BaseScraper, octane_of
 from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
@@ -63,6 +63,14 @@ class _DKAnwb(ANWBScraper):
     BBOX       = (54.80, 8.00, 57.80, 15.20)
     SOURCE     = "anwb.nl (ANWB POI API)"
     CONFIDENCE = 0.90
+
+def _slot(p: Dict) -> str:
+    """Merge slot of a price: petrol is bucketed by OCTANE (95 / 98+), everything else by fuel_type."""
+    o = octane_of(p)
+    if o is None:
+        return p["fuel_type"]
+    return "P98" if o >= 97 else "P95"
+
 
 # Shell: (fuelType, octane) → fuel_type
 SHELL_FUEL_MAP = {
@@ -154,11 +162,11 @@ class DenmarkScraper(BaseScraper):
                 cands = fwd.get(i, [])
                 if len(cands) == 1 and len(rev.get(cands[0], [])) == 1:
                     k = kept[cands[0]]
-                    have = {p["fuel_type"] for p in k["prices"]}
+                    have = {_slot(p) for p in k["prices"]}
                     for p in st.get("prices", []):
-                        if p["fuel_type"] not in have:
+                        if _slot(p) not in have:
                             k["prices"].append(p)
-                            have.add(p["fuel_type"])
+                            have.add(_slot(p))
                     k["sources"].append(src)
                 else:
                     add.append(st)
@@ -186,12 +194,13 @@ class DenmarkScraper(BaseScraper):
             prices = []
             for p in item.get("prices", []):
                 ft = OK_FUEL_MAP.get((p.get("product_name") or "").strip().lower())
+                oct_ = 95 if ft == "E10" else None
                 try:
                     price = float(p.get("price"))
                 except (TypeError, ValueError):
                     continue
                 if ft and price > 0:
-                    prices.append(self.price_entry(ft, price, "L", updated_at=ts, tz=DK_TZ))
+                    prices.append(self.price_entry(ft, price, "L", updated_at=ts, tz=DK_TZ, octane=oct_))
             if not prices:
                 continue
             city = item.get("city", "") or ""
@@ -240,7 +249,8 @@ class DenmarkScraper(BaseScraper):
                 except (TypeError, ValueError):
                     continue
                 if ft and price > 0:
-                    prices.append(self.price_entry(ft, price, "L", updated_at=p.get("lastUpdated"), tz=DK_TZ))
+                    prices.append(self.price_entry(ft, price, "L", updated_at=p.get("lastUpdated"), tz=DK_TZ,
+                                                   octane=95 if ft == "E10" else None))
             if not prices:
                 continue
             city = item.get("city", "") or ""
@@ -303,7 +313,13 @@ class DenmarkScraper(BaseScraper):
                 except (KeyError, TypeError, ValueError):
                     continue
                 if price > 0:
-                    prices.append(self.price_entry(ft, price, "L", updated_at=p.get("lastUpdated"), tz=DK_TZ))
+                    oct_ = None
+                    if ft == "E10":
+                        oct_ = 95
+                    elif ft == "E5":
+                        oct_ = 98 if str(p.get("octane") or "") == "98" else 95
+                    prices.append(self.price_entry(ft, price, "L", updated_at=p.get("lastUpdated"), tz=DK_TZ,
+                                                   octane=oct_))
 
             if not prices:
                 continue
@@ -353,7 +369,9 @@ class DenmarkScraper(BaseScraper):
                 except (KeyError, TypeError, ValueError):
                     continue
                 if price > 0:
-                    prices.append(self.price_entry(ft, price, "L", updated_at=p.get("priceChangeDate"), tz=DK_TZ))
+                    # Q8 petrol names state 95 ("95 E10", "95 Extra", "95")
+                    prices.append(self.price_entry(ft, price, "L", updated_at=p.get("priceChangeDate"), tz=DK_TZ,
+                                                   octane=95 if ft in ("E10", "E5") else None))
 
             if not prices:
                 continue

@@ -82,8 +82,8 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
 
 # fuelType -> (fuel_type, unit)  — EURO95 handled separately (E10 if name says so)
 _FUEL_MAP = {
-    "EURO98":         ("E5",     "L"),
-    "SUPER_E5":       ("E5",     "L"),
+    "EURO98":         ("98",     "L"),   # octane 98, ethanol not stated
+    "SUPER_E5":       ("E5",     "L"),   # octane 95 (see _octane_for)
     "DIESEL":         ("DIESEL", "L"),
     "DIESEL_SPECIAL": ("DIESEL_SPECIAL", "L"),   # resolved per station below
     "LPG":            ("LPG",    "L"),
@@ -97,8 +97,13 @@ _FUEL_MAP = {
 
 def _map_fuel(fuel_type: str, fuel_name: str) -> Optional[Tuple[str, str]]:
     if fuel_type == "EURO95":
-        return ("E10", "L") if "E10" in fuel_name else ("E5", "L")
+        # ANWB labels ALL petrol 'Euro 95 (E10)' even where the real fuel is E5 (benchmark vs ES/GB
+        # official feeds), so the ethanol grade is NOT stated: generic "95".
+        return ("95", "L")
     return _FUEL_MAP.get(fuel_type)
+
+
+_OCTANE = {"95": 95, "98": 98, "E5": 95, "E10": 95}   # ANWB-sourced petrol only (E5 here = SUPER_E5)
 
 
 _MIN_TILE_DEG = 0.04   # never split below ~4 km; give up on that tile instead
@@ -204,8 +209,19 @@ class ANWBScraper(BaseScraper):
                     continue
                 fuel_type, unit = mapped
                 # EUR as delivered; converted to local currency below when a rate exists
-                prices.append({"fuel_type": fuel_type, "price": float(val), "currency": "EUR",
-                               "unit": unit, "updated_at": None})
+                entry = {"fuel_type": fuel_type, "price": float(val), "currency": "EUR",
+                         "unit": unit, "updated_at": None}
+                if fuel_type in _OCTANE:
+                    entry["octane"] = _OCTANE[fuel_type]
+                prices.append(entry)
+
+            # One price per octane bucket: collapse duplicates (e.g. EURO95 + SUPER_E5) to the lower.
+            best: Dict[int, Dict[str, Any]] = {}
+            for p in prices:
+                o = p.get("octane")
+                if o and (o not in best or p["price"] < best[o]["price"]):
+                    best[o] = p
+            prices = [p for p in prices if not p.get("octane") or best[p["octane"]] is p]
 
             # Regular vs premium diesel: a station must never carry two DIESEL prices (benchmark
             # 2026-10-07: they differ by 7-24 ct). Prefer the regular one; use "special" only when

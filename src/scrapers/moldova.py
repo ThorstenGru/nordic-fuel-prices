@@ -108,7 +108,7 @@ class MoldovaScraper(BaseScraper):
                 p = _price(item.get(field))
                 lo, hi = _BANDS[ft]
                 if p is not None and lo <= p <= hi:
-                    prices.append(self.price_entry(ft, round(p, 2), "L"))
+                    prices.append(self.price_entry(ft, round(p, 2), "L", octane=95 if ft == "E5" else None))
             if not prices:
                 continue
 

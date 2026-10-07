@@ -21,14 +21,14 @@ from .base import BaseScraper
 BASE_URL = "https://goriva.si/api/v1/search/"
 
 _PRICE_MAP = {
-    "95":           ("E5",     "L"),
-    "98":           ("E5",     "L"),
-    "100":          ("E5",     "L"),
-    "dizel":        ("DIESEL", "L"),
-    "dizel-premium":("DIESEL", "L"),
-    "avtoplin-lpg": ("LPG",    "L"),
-    "hvo":          ("HVO100", "L"),
-    "cng":          ("CNG",    "kg"),
+    "95":           ("E5",     "L", 95),
+    "98":           ("E5",     "L", 98),
+    "100":          ("E5",     "L", 100),
+    "dizel":        ("DIESEL", "L", None),
+    "dizel-premium":("DIESEL", "L", None),
+    "avtoplin-lpg": ("LPG",    "L", None),
+    "hvo":          ("HVO100", "L", None),
+    "cng":          ("CNG",    "kg", None),
 }
 
 _HEADERS = {
@@ -98,7 +98,7 @@ class SloveniaScraper(BaseScraper):
             prices_raw = item.get("prices") or {}
             prices = []
             seen: set = set()
-            for key, (ft, unit) in _PRICE_MAP.items():
+            for key, (ft, unit, octane) in _PRICE_MAP.items():
                 if ft in seen:
                     continue
                 val = prices_raw.get(key)
@@ -112,7 +112,7 @@ class SloveniaScraper(BaseScraper):
                 if not (lo <= price <= hi):
                     dropped += 1
                     continue
-                prices.append(self.price_entry(ft, price, unit))
+                prices.append(self.price_entry(ft, price, unit, octane=octane))
                 seen.add(ft)
 
             if not prices:

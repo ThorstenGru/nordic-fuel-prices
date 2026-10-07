@@ -148,6 +148,6 @@ class AustriaScraper(BaseScraper):
                 "lon": loc.get("longitude"),
                 "source": self.SOURCE,
                 "confidence": self.CONFIDENCE,
-                "prices": [self.price_entry(row_ft, price_val, row_unit)],
+                "prices": [self.price_entry(row_ft, price_val, row_unit, octane=95 if row_ft == "E5" else None)],
             })
         return result

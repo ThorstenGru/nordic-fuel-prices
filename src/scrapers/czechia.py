@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
-from .base import BaseScraper, iso_utc
+from .base import BaseScraper, iso_utc, octane_of
 from ._anwb import ANWBScraper
 
 BM_URL = "https://benzinmapa.cz/data/map_data.json"
@@ -88,6 +88,14 @@ def _dist_m(a_lat, a_lon, b_lat, b_lon) -> float:
 def _in_cz(lat, lon) -> bool:
     return (isinstance(lat, (int, float)) and isinstance(lon, (int, float))
             and LAT_RANGE[0] <= lat <= LAT_RANGE[1] and LON_RANGE[0] <= lon <= LON_RANGE[1])
+
+
+def _slot(p: Dict) -> str:
+    """Merge slot: petrol bucketed by octane (95 / 98+), other fuels by fuel_type."""
+    o = octane_of(p)
+    if o is None:
+        return p["fuel_type"]
+    return "P98" if o >= 97 else "P95"
 
 
 def _plausible(fuel: str, price: float) -> bool:
@@ -177,7 +185,8 @@ class CzechiaScraper(BaseScraper):
                     except (TypeError, ValueError):
                         continue
                     if val > 0 and _plausible(fuel, val):
-                        e = self.price_entry(fuel, val, "L", updated_at=ts, tz=CZ_TZ)
+                        e = self.price_entry(fuel, val, "L", updated_at=ts, tz=CZ_TZ,
+                                             octane={"E10": 95, "E5": 98}.get(fuel))
                         e["source"] = "benzinmapa"
                         prices.append(e)
             city = it.get("city") or ""
@@ -198,7 +207,7 @@ class CzechiaScraper(BaseScraper):
 
     # -- ANWB cleanup --------------------------------------------------------
     def _clean_anwb(self, stations: List[Dict]) -> None:
-        """ANWB sometimes returns two entries for one fuel (95 and 98 both -> E5): keep the lower
+        """ANWB may return several entries for one slot (octane bucket 95 / 98+): keep the lower
         price per fuel (never average), drop implausible values and out-of-country coordinates."""
         for st in stations[:]:
             if not _in_cz(st.get("lat"), st.get("lon")):
@@ -208,9 +217,9 @@ class CzechiaScraper(BaseScraper):
             for p in st.get("prices", []):
                 if p.get("currency") != "CZK" or not _plausible(p["fuel_type"], p["price"]):
                     continue
-                cur = best.get(p["fuel_type"])
+                cur = best.get(_slot(p))
                 if cur is None or p["price"] < cur["price"]:
-                    best[p["fuel_type"]] = p
+                    best[_slot(p)] = p
             st["prices"] = list(best.values())
 
     # -- merge ---------------------------------------------------------------
@@ -245,15 +254,15 @@ class CzechiaScraper(BaseScraper):
                 cands = fwd.get(i, [])
                 if len(cands) == 1 and len(rev.get(cands[0], [])) == 1:
                     k = kept[cands[0]]
-                    by_fuel = {p["fuel_type"]: p for p in k["prices"]}
+                    by_fuel = {_slot(p): p for p in k["prices"]}
                     for p in st.get("prices", []):
-                        cur = by_fuel.get(p["fuel_type"])
+                        cur = by_fuel.get(_slot(p))
                         if cur is None:
                             k["prices"].append(p)
-                            by_fuel[p["fuel_type"]] = p
+                            by_fuel[_slot(p)] = p
                         elif (p.get("updated_at") or "") > (cur.get("updated_at") or ""):
                             k["prices"][k["prices"].index(cur)] = p      # strictly newer wins
-                            by_fuel[p["fuel_type"]] = p
+                            by_fuel[_slot(p)] = p
                     k["sources"].append(src)
                 elif src != "benzinmapa" or st["prices"] or not near.get(i):
                     add.append(st)

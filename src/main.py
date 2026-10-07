@@ -28,7 +28,11 @@ from scrapers.geocoder import resolve_pages_base
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
 SCRAPER_TIMEOUT_S = int(os.environ.get("SCRAPER_TIMEOUT_S", "900"))
 MIN_KEEP_RATIO = 0.6          # new result smaller than 60 % of the last good one => suspicious
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 2          # JSON layout; app release version lives in /VERSION (see below)
+try:
+    APP_VERSION = (Path(__file__).parent.parent / "VERSION").read_text(encoding="utf-8").strip()
+except OSError:
+    APP_VERSION = "unknown"
 FORCE_REFRESH = os.environ.get("FORCE_REFRESH", "0") == "1"
 
 # Sanity band per currency (min, max) for ONE unit (litre / kg). Anything outside is a
@@ -256,6 +260,7 @@ async def run_all() -> None:
 
     write_json(OUTPUT_DIR / "meta.json", {
         "schema": SCHEMA_VERSION,
+        "version": APP_VERSION,
         "fetched_at": generated,
         "total_stations": total,
         "total_priced": priced,
@@ -263,6 +268,7 @@ async def run_all() -> None:
     })
     write_json(OUTPUT_DIR / "health.json", {
         "schema": SCHEMA_VERSION,
+        "version": APP_VERSION,
         "generated_at": generated,
         "run_seconds": round(time.monotonic() - t0, 1),
         "totals": {"stations": total, "priced": priced, "countries": len(metas), **dict(status_counts)},

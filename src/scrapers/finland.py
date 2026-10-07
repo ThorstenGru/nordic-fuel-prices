@@ -179,16 +179,16 @@ class FinlandScraper(BaseScraper):
             if len(cells) < 3:
                 continue
 
-            fuel_defs = [("E10", "L"), ("E5", "L"), ("DIESEL", "L")]
+            fuel_defs = [("E10", "L", 95), ("E5", "L", 98), ("DIESEL", "L", None)]   # 95E10 / 98E5 / Di
             prices = []
-            for val, (ft, unit) in zip(cells[-3:], fuel_defs):
+            for val, (ft, unit, oct_) in zip(cells[-3:], fuel_defs):
                 val = val.strip()
                 if val == "-" or not val:
                     continue
                 try:
                     p = float(val.replace(",", "."))
                     if p > 0:
-                        prices.append(self.price_entry(ft, p, unit))
+                        prices.append(self.price_entry(ft, p, unit, octane=oct_))
                 except ValueError:
                     pass
 

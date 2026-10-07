@@ -434,8 +434,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   <!-- Fuel type chips -->
   <div id="chips">
     <button class="chip on" data-f="" onclick="setFuel(this,'')"><span data-i18n="fuelAll">All fuels</span></button>
-    <button class="chip" data-f="E10" onclick="setFuel(this,'E10')">⛽ E10 / 95</button>
-    <button class="chip" data-f="E5"  onclick="setFuel(this,'E5')">⛽ E5 / 98</button>
+    <button class="chip" data-f="P95" onclick="setFuel(this,'P95')">⛽ 95</button>
+    <button class="chip" data-f="P98" onclick="setFuel(this,'P98')">⛽ 98+</button>
     <button class="chip" data-f="DIESEL" onclick="setFuel(this,'DIESEL')">🛢 Diesel</button>
     <button class="chip" data-f="HVO100" onclick="setFuel(this,'HVO100')">🌿 HVO</button>
     <button class="chip" data-f="LPG" onclick="setFuel(this,'LPG')">💨 LPG</button>
@@ -503,8 +503,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <label data-i18n="labelFuelType">Fuel Type</label>
     <select id="mobFuel" onchange="setFuel(null,this.value)">
       <option value="" data-i18n="fuelAll">All fuels</option>
-      <option value="E10" data-i18n="fuelOptE10">E10 / 95 Octane</option>
-      <option value="E5" data-i18n="fuelOptE5">E5 / 98 Octane</option>
+      <option value="P95" data-i18n="fuelOpt95">95 Octane</option>
+      <option value="P98" data-i18n="fuelOpt98">98+ Octane</option>
       <option value="DIESEL" data-i18n="fuelOptDiesel">Diesel</option>
       <option value="HVO100">HVO100</option>
       <option value="E85">E85</option>
@@ -641,14 +641,14 @@ en: { fuelAll:'All fuels', tabMap:'Map', tabNearby:'Near Me', tabSearch:'Search'
   loadingEllipsis:'Loading…', loadingData:'Loading data…', noMatch:'No stations match. Try adjusting the filters.',
   loadMore:'⬇ Load {n} more  ({rem} remaining)',
   labelCountry:'Country', labelFuelType:'Fuel Type', labelLanguage:'Language', resetFilters:'Reset all filters', allCountries:'All countries',
-  fuelOptE10:'E10 / 95 Octane', fuelOptE5:'E5 / 98 Octane', fuelOptDiesel:'Diesel', fuelOptLPG:'LPG', fuelOptCNG:'CNG',
+  fuelOpt95:'95 Octane', fuelOpt98:'98+ Octane', fuelOptDiesel:'Diesel', fuelOptLPG:'LPG', fuelOptCNG:'CNG',
   grade_A:'Official feed · stations must report price changes', grade_B:'Official feed · periodic / regulated prices',
   grade_C:'Third-party data · price time unknown', grade_D:'Community-reported prices', grade_L:'Location only',
   justNow:'just now', minAgo:'{m} min ago', hAgo:'{h} h ago', daysAgo:'{d} days ago',
   priceTimeUnknown:'price time unknown', checkedAt:' · checked {t}', priceSetAt:'source data updated {t}',
   staleNote:'⚠ Source temporarily unavailable — showing data from {t}',
   noPriceData:'No price data available', noPricesShort:'No prices', noGpsTitle:'No GPS', go:'Go', youAreHere:'📍 You are here',
-  geoNotSupported:'Geolocation not supported.', locErrorPrefix:'Location error: ', permDenied:'Permission denied.',
+  e10ok:'E10-compatible', geoNotSupported:'Geolocation not supported.', locErrorPrefix:'Location error: ', permDenied:'Permission denied.',
   posUnavailable:'Position unavailable.', timedOut:'Timed out.',
   statsStations:'{n} stations', loadingMore:'Loading {n} more…', countriesShort:'{ld}/{tot} countries',
   installApp:'📲 Install app',
@@ -665,14 +665,14 @@ sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabNearby:'Nära mig', tabSearch
   loadingEllipsis:'Laddar…', loadingData:'Laddar data…', noMatch:'Inga stationer matchar. Prova att justera filtren.',
   loadMore:'⬇ Visa {n} till  ({rem} kvar)',
   labelCountry:'Land', labelFuelType:'Bränsletyp', labelLanguage:'Språk', resetFilters:'Återställ alla filter', allCountries:'Alla länder',
-  fuelOptE10:'E10 / 95 Oktan', fuelOptE5:'E5 / 98 Oktan', fuelOptDiesel:'Diesel', fuelOptLPG:'Gasol (LPG)', fuelOptCNG:'Fordonsgas (CNG)',
+  fuelOpt95:'95 Oktan', fuelOpt98:'98+ Oktan', fuelOptDiesel:'Diesel', fuelOptLPG:'Gasol (LPG)', fuelOptCNG:'Fordonsgas (CNG)',
   grade_A:'Officiellt flöde · stationer måste rapportera prisändringar', grade_B:'Officiellt flöde · periodiska/reglerade priser',
   grade_C:'Tredjepartsdata · okänd pristid', grade_D:'Priser rapporterade av communityn', grade_L:'Endast plats',
   justNow:'just nu', minAgo:'för {m} min sedan', hAgo:'för {h} tim sedan', daysAgo:'för {d} dagar sedan',
   priceTimeUnknown:'okänd pristid', checkedAt:' · kontrollerad {t}', priceSetAt:'källdata uppdaterad {t}',
   staleNote:'⚠ Källan är tillfälligt otillgänglig — visar data som hämtades {t}',
   noPriceData:'Inga prisuppgifter tillgängliga', noPricesShort:'Inga priser', noGpsTitle:'Ingen GPS', go:'Kör', youAreHere:'📍 Du är här',
-  geoNotSupported:'Geolokalisering stöds inte.', locErrorPrefix:'Platsfel: ', permDenied:'Behörighet nekad.',
+  e10ok:'E10-kompatibel', geoNotSupported:'Geolokalisering stöds inte.', locErrorPrefix:'Platsfel: ', permDenied:'Behörighet nekad.',
   posUnavailable:'Position ej tillgänglig.', timedOut:'Tidsgräns överskriden.',
   statsStations:'{n} stationer', loadingMore:'Laddar {n} till…', countriesShort:'{ld}/{tot} länder',
   installApp:'📲 Installera app',
@@ -689,14 +689,14 @@ de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabNearby:'In der Nähe', tabS
   loadingEllipsis:'Lädt…', loadingData:'Daten werden geladen…', noMatch:'Keine Tankstellen gefunden. Passe die Filter an.',
   loadMore:'⬇ {n} weitere laden  ({rem} übrig)',
   labelCountry:'Land', labelFuelType:'Kraftstoffart', labelLanguage:'Sprache', resetFilters:'Alle Filter zurücksetzen', allCountries:'Alle Länder',
-  fuelOptE10:'E10 / 95 Oktan', fuelOptE5:'E5 / 98 Oktan', fuelOptDiesel:'Diesel', fuelOptLPG:'Autogas (LPG)', fuelOptCNG:'Erdgas (CNG)',
+  fuelOpt95:'95 Oktan', fuelOpt98:'98+ Oktan', fuelOptDiesel:'Diesel', fuelOptLPG:'Autogas (LPG)', fuelOptCNG:'Erdgas (CNG)',
   grade_A:'Offizieller Feed · Tankstellen müssen Preisänderungen melden', grade_B:'Offizieller Feed · periodische/regulierte Preise',
   grade_C:'Daten von Drittanbietern · Preiszeitpunkt unbekannt', grade_D:'Von der Community gemeldete Preise', grade_L:'Nur Standort',
   justNow:'gerade eben', minAgo:'vor {m} Min.', hAgo:'vor {h} Std.', daysAgo:'vor {d} Tagen',
   priceTimeUnknown:'Preiszeitpunkt unbekannt', checkedAt:' · geprüft {t}', priceSetAt:'Quelldaten aktualisiert {t}',
   staleNote:'⚠ Quelle vorübergehend nicht verfügbar — zeige Daten von {t}',
   noPriceData:'Keine Preisdaten verfügbar', noPricesShort:'Keine Preise', noGpsTitle:'Kein GPS', go:'Los', youAreHere:'📍 Du bist hier',
-  geoNotSupported:'Standortbestimmung wird nicht unterstützt.', locErrorPrefix:'Standortfehler: ', permDenied:'Zugriff verweigert.',
+  e10ok:'E10-verträglich', geoNotSupported:'Standortbestimmung wird nicht unterstützt.', locErrorPrefix:'Standortfehler: ', permDenied:'Zugriff verweigert.',
   posUnavailable:'Standort nicht verfügbar.', timedOut:'Zeitüberschreitung.',
   statsStations:'{n} Tankstellen', loadingMore:'Lade {n} weitere…', countriesShort:'{ld}/{tot} Länder',
   installApp:'📲 App installieren',
@@ -713,14 +713,14 @@ fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabNearby:'Près de moi', t
   loadingEllipsis:'Chargement…', loadingData:'Chargement des données…', noMatch:'Aucune station ne correspond. Essayez d’ajuster les filtres.',
   loadMore:'⬇ Afficher {n} de plus  ({rem} restantes)',
   labelCountry:'Pays', labelFuelType:'Type de carburant', labelLanguage:'Langue', resetFilters:'Réinitialiser les filtres', allCountries:'Tous les pays',
-  fuelOptE10:'E10 / 95 Octane', fuelOptE5:'E5 / 98 Octane', fuelOptDiesel:'Diesel', fuelOptLPG:'GPL', fuelOptCNG:'GNV',
+  fuelOpt95:'95 Octane', fuelOpt98:'98+ Octane', fuelOptDiesel:'Diesel', fuelOptLPG:'GPL', fuelOptCNG:'GNV',
   grade_A:'Flux officiel · les stations doivent déclarer tout changement de prix', grade_B:'Flux officiel · prix périodiques / réglementés',
   grade_C:'Données tierces · horodatage du prix inconnu', grade_D:'Prix signalés par la communauté', grade_L:'Emplacement uniquement',
   justNow:'à l’instant', minAgo:'il y a {m} min', hAgo:'il y a {h} h', daysAgo:'il y a {d} jours',
   priceTimeUnknown:'horodatage du prix inconnu', checkedAt:' · vérifié {t}', priceSetAt:'données source mises à jour {t}',
   staleNote:'⚠ Source temporairement indisponible — affichage des données de {t}',
   noPriceData:'Aucune donnée de prix disponible', noPricesShort:'Aucun prix', noGpsTitle:'Pas de GPS', go:'Y aller', youAreHere:'📍 Vous êtes ici',
-  geoNotSupported:'La géolocalisation n’est pas prise en charge.', locErrorPrefix:'Erreur de localisation : ', permDenied:'Autorisation refusée.',
+  e10ok:'compatible E10', geoNotSupported:'La géolocalisation n’est pas prise en charge.', locErrorPrefix:'Erreur de localisation : ', permDenied:'Autorisation refusée.',
   posUnavailable:'Position indisponible.', timedOut:'Délai dépassé.',
   statsStations:'{n} stations', loadingMore:'Chargement de {n} de plus…', countriesShort:'{ld}/{tot} pays',
   installApp:'📲 Installer l’application',
@@ -737,14 +737,14 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
   loadingEllipsis:'Cargando…', loadingData:'Cargando datos…', noMatch:'Ninguna estación coincide. Prueba a ajustar los filtros.',
   loadMore:'⬇ Cargar {n} más  ({rem} restantes)',
   labelCountry:'País', labelFuelType:'Tipo de combustible', labelLanguage:'Idioma', resetFilters:'Restablecer todos los filtros', allCountries:'Todos los países',
-  fuelOptE10:'E10 / 95 Octanos', fuelOptE5:'E5 / 98 Octanos', fuelOptDiesel:'Diésel', fuelOptLPG:'GLP', fuelOptCNG:'GNC',
+  fuelOpt95:'95 Octanos', fuelOpt98:'98+ Octanos', fuelOptDiesel:'Diésel', fuelOptLPG:'GLP', fuelOptCNG:'GNC',
   grade_A:'Fuente oficial · las estaciones deben declarar los cambios de precio', grade_B:'Fuente oficial · precios periódicos / regulados',
   grade_C:'Datos de terceros · hora del precio desconocida', grade_D:'Precios reportados por la comunidad', grade_L:'Solo ubicación',
   justNow:'justo ahora', minAgo:'hace {m} min', hAgo:'hace {h} h', daysAgo:'hace {d} días',
   priceTimeUnknown:'hora del precio desconocida', checkedAt:' · comprobado {t}', priceSetAt:'datos de origen actualizados {t}',
   staleNote:'⚠ Fuente temporalmente no disponible — mostrando datos de {t}',
   noPriceData:'No hay datos de precio disponibles', noPricesShort:'Sin precios', noGpsTitle:'Sin GPS', go:'Ir', youAreHere:'📍 Estás aquí',
-  geoNotSupported:'La geolocalización no es compatible.', locErrorPrefix:'Error de ubicación: ', permDenied:'Permiso denegado.',
+  e10ok:'compatible con E10', geoNotSupported:'La geolocalización no es compatible.', locErrorPrefix:'Error de ubicación: ', permDenied:'Permiso denegado.',
   posUnavailable:'Posición no disponible.', timedOut:'Tiempo agotado.',
   statsStations:'{n} estaciones', loadingMore:'Cargando {n} más…', countriesShort:'{ld}/{tot} países',
   installApp:'📲 Instalar app',
@@ -858,17 +858,35 @@ function escId(v) {
   return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
-// Mainstream fuels only: 95 (E10/E5) and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
+// Mainstream fuels only: 95-octane petrol and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
 // so they must never set the headline price (unless the user filters for them).
-const F95 = ['E10','E5'], FDIE = ['DIESEL'];
-function minOf(s, types) {
+// Petrol is bucketed by OCTANE (not E-number): '95' bucket = octane 95 (E10, E5@95, generic 95);
+// '98+' bucket = octane >= 97 or fuel_type 98. A 98-only station never gets a 95 headline price.
+const PETROL = ['E10','E5','95','98'];
+function octOf(p) {
+  if (!PETROL.includes(p.fuel_type)) return null;
+  if (p.octane) return +p.octane;
+  return p.fuel_type === '98' ? 98 : 95;      // legacy: E10/E5/95 without octane = 95
+}
+const isP95 = p => octOf(p) === 95;
+const isP98 = p => { const o = octOf(p); return o !== null && o >= 97; };
+function inFuel(p, f) { return f === 'P95' ? isP95(p) : f === 'P98' ? isP98(p) : p.fuel_type === f; }
+// Human label for one price row: 95 (E10), 95 (E5), 98 (E5), 95, 98 ...
+function fuelLabel(p) {
+  const o = octOf(p);
+  if (o === null) return p.fuel_type;
+  const ob = o >= 97 ? String(o) : '95';
+  return (p.fuel_type === 'E10' || p.fuel_type === 'E5') ? `${ob} (${p.fuel_type})` : ob;
+}
+const F95 = 'P95', FDIE = 'DIESEL';
+function minOf(s, f) {
   let best = null;
-  for (const p of (s.prices||[])) if (types.includes(p.fuel_type) && p.price > 0 && (!best || p.price < best.price)) best = p;
+  for (const p of (s.prices||[])) if (inFuel(p, f) && p.price > 0 && (!best || p.price < best.price)) best = p;
   return best;
 }
 function cheapest(s) {
   if (!s.prices?.length) return null;
-  if (fFuel) return minOf(s, [fFuel]);
+  if (fFuel) return minOf(s, fFuel);
   const a = minOf(s, F95), d = minOf(s, FDIE);
   if (a && d) return a.price <= d.price ? a : d;
   return a || d || null;       // no mainstream fuel => no headline price
@@ -941,7 +959,7 @@ function fmtDate(iso) {
 
 function matches(s) {
   if (fCountry && s.country !== fCountry) return false;
-  if (fFuel && !s.prices?.some(p => p.fuel_type === fFuel)) return false;
+  if (fFuel && !s.prices?.some(p => inFuel(p, fFuel))) return false;
   return true;
 }
 
@@ -995,7 +1013,7 @@ function mkMarker(s) {
   const m = L.marker([s.lat, s.lon], { icon, _cp:cp, _p95:minOf(s,F95), _pd:minOf(s,FDIE) });
   if (cp) {
     const a95 = minOf(s,F95), dd = minOf(s,FDIE), sy = SYM[cp.currency]||cp.currency;
-    const tip = fFuel ? `${cp.fuel_type} ${cp.price.toFixed(2)}${sy}`
+    const tip = fFuel ? `${fuelLabel(cp)} ${cp.price.toFixed(2)}${sy}`
       : [a95 && `95 ${a95.price.toFixed(2)}${sy}`, dd && `D ${dd.price.toFixed(2)}${sy}`].filter(Boolean).join(' · ');
     m.bindTooltip(tip,
       { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
@@ -1023,7 +1041,8 @@ function mkPopup(s) {
   const flag = FLAGS[s.country] || '';
   const rows = (s.prices||[]).map(p => {
     const sym = SYM[p.currency] || p.currency || '';
-    return `<tr><td class="ft">${p.fuel_type}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
+    const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
+    return `<tr><td class="ft">${fuelLabel(p)}${e10}</td><td class="pr">${p.price.toFixed(3)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`;
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
   const goUrl = (s.lat && s.lon) ? navUrl(s.lat, s.lon, s.name||s.brand) : null;
@@ -1050,9 +1069,9 @@ function mkCard(s, km) {
   const cp   = cheapest(s);
   const chips = (s.prices||[]).map(p => {
     const sym = SYM[p.currency] || p.currency || '';
-    const best = cp && p.fuel_type === cp.fuel_type && Math.abs(p.price-cp.price) < 0.001;
+    const best = cp && p === cp;
     return `<span class="pc${best?' best':''}">
-      <span class="t">${p.fuel_type}</span>
+      <span class="t">${fuelLabel(p)}</span>
       <span class="v">${p.price.toFixed(2)}</span>
       <span class="u">${sym}</span>
     </span>`;
@@ -1348,8 +1367,6 @@ function showNearby() {
   for (const {s,km} of cands) {
     const cp = cheapest(s);
     if (!cp) continue;
-    const ftMatch = !fFuel || cp.fuel_type === fFuel;
-    if (!ftMatch) continue;
     if (!bestGlobal || cp.price < bestGlobal.price) { bestGlobal = cp; bestGlobalKm = km; }
   }
 
@@ -1358,7 +1375,7 @@ function showNearby() {
   const detailEl = document.getElementById('ns-detail');
   if (bestGlobal) {
     const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
-    priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${bestGlobal.fuel_type}`;
+    priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${fuelLabel(bestGlobal)}`;
     detailEl.textContent = t('bestWithinDetail', { d: fmtDist(bestGlobalKm), n: cands.length, r: NEARBY_RADIUS_KM, c: CNAMES[country]||country||t('yourCountry') });
     sumEl.style.display = 'flex';
   } else {

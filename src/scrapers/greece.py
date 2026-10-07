@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
-from .base import BaseScraper, iso_utc
+from .base import BaseScraper, iso_utc, octane_of
 from ._anwb import ANWBScraper
 
 GR_TZ = "Europe/Athens"
@@ -140,6 +140,14 @@ def _hav_km(a_lat, a_lon, b_lat, b_lon) -> float:
 def _in_greece(lat, lon) -> bool:
     return (isinstance(lat, (int, float)) and isinstance(lon, (int, float))
             and LAT_RANGE[0] <= lat <= LAT_RANGE[1] and LON_RANGE[0] <= lon <= LON_RANGE[1])
+
+
+def _slot(p: Dict) -> str:
+    """Merge slot: petrol bucketed by octane (95 / 98+), other fuels by fuel_type."""
+    o = octane_of(p)
+    if o is None:
+        return p["fuel_type"]
+    return "P98" if o >= 97 else "P95"
 
 
 class _GRAnwb(ANWBScraper):
@@ -267,7 +275,8 @@ class GreeceScraper(BaseScraper):
                     continue
                 pr = self._ok_price(m[0], val)
                 if pr is not None:
-                    prices.append(self.price_entry(m[0], pr, m[1], updated_at=ts, tz=GR_TZ))
+                    prices.append(self.price_entry(m[0], pr, m[1], updated_at=ts, tz=GR_TZ,
+                                                   octane=95 if m[0] == "E5" else None))
             addr = (it.get("a") or "").strip()
             street, _, city = addr.rpartition(",")
             if not street:
@@ -410,7 +419,8 @@ class GreeceScraper(BaseScraper):
                 if ((m[0], round(pr, 3)) in self._pref_avgs and n_same >= 3) or n_same >= AVG_REPEAT_MIN:
                     dropped_avg += 1
                     continue
-                prices.append(self.price_entry(m[0], pr, m[1], updated_at=ts, tz=GR_TZ))
+                prices.append(self.price_entry(m[0], pr, m[1], updated_at=ts, tz=GR_TZ,
+                                                   octane=95 if m[0] == "E5" else None))
             brand = (it.get("brand") or it.get("name") or "").strip()
             out.append({
                 "id": f"gr_fp_{sid}",
@@ -434,14 +444,16 @@ class GreeceScraper(BaseScraper):
     async def _fetch_anwb(self) -> List[Dict]:
         sts = await _GRAnwb(self.session).fetch_stations()
         out = [s for s in sts if _in_greece(s.get("lat"), s.get("lon"))]
-        for s in out:   # Greek 95 is one product (E5); ANWB labels some stations E10 -> unify
+        for s in out:   # Greek 95 is one product (E5, octane 95); ANWB's "95" (old: E10/E5) -> unify
             for p in s["prices"]:
-                if p["fuel_type"] == "E10":
+                if p["fuel_type"] in ("E10", "E5", "95") and (octane_of(p) or 95) < 97:
                     p["fuel_type"] = "E5"
+                    p["octane"] = 95
             seen_ft: Dict[str, Dict] = {}
-            for p in s["prices"]:
-                if p["fuel_type"] not in seen_ft or p["price"] < seen_ft[p["fuel_type"]]["price"]:
-                    seen_ft[p["fuel_type"]] = p
+            for p in s["prices"]:      # one price per octane bucket (95 / 98+): keep the lower
+                k = _slot(p)
+                if k not in seen_ft or p["price"] < seen_ft[k]["price"]:
+                    seen_ft[k] = p
             s["prices"] = list(seen_ft.values())
         return out
 
@@ -516,15 +528,15 @@ class GreeceScraper(BaseScraper):
     @staticmethod
     def _absorb(base: Dict, other: Dict, src: str) -> None:
         """Merge other's prices into base per fuel: newer timestamp wins, ties keep the earlier source."""
-        by_ft = {p["fuel_type"]: p for p in base["prices"]}
+        by_ft = {_slot(p): p for p in base["prices"]}
         for p in other["prices"]:
-            cur = by_ft.get(p["fuel_type"])
+            cur = by_ft.get(_slot(p))
             if cur is None:
-                by_ft[p["fuel_type"]] = p
+                by_ft[_slot(p)] = p
             else:
                 tn, tc = p.get("updated_at"), cur.get("updated_at")
                 if tn and (not tc or tn > tc):      # ISO UTC strings compare chronologically
-                    by_ft[p["fuel_type"]] = p
+                    by_ft[_slot(p)] = p
         base["prices"] = list(by_ft.values())
         base["sources"].append(src)
         for f in ("city", "address", "postal_code"):

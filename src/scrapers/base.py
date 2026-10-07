@@ -89,17 +89,45 @@ class BaseScraper:
         }
 
     def price_entry(self, fuel_type: str, price: float, unit: str = "L",
-                    updated_at: Any = None, tz: Optional[str] = None) -> Dict:
+                    updated_at: Any = None, tz: Optional[str] = None,
+                    octane: Optional[int] = None) -> Dict:
         """Build a price record.
 
         ``updated_at`` must be the time the SOURCE says the price was set/reported.
+        ``octane`` is the RON rating (95, 98, 100) when the source states it. E10 is always 95; E5 can be
+        95 OR 98, so E5 prices should always carry it. Leave None when genuinely unknown.
+
         Pass nothing when the source gives no timestamp — it is then published as
         null (age unknown) instead of pretending the price is as fresh as our scrape.
         """
-        return {
+        entry = {
             "fuel_type": fuel_type,
             "price": price,
             "currency": self.CURRENCY,
             "unit": unit,
             "updated_at": iso_utc(updated_at, tz),
         }
+        if octane is not None:       # 95 / 98 / 100 — ethanol (E5/E10) and octane are independent
+            entry["octane"] = octane
+        return entry
+
+
+# ── Petrol grade helpers (ethanol E5/E10 and octane 95/98 are independent scales) ──────────────
+# fuel_type values for petrol:  "E10"  (always 95 RON) · "E5" (95 OR 98 RON — must carry `octane`)
+#                               "95"   (Euro 95, ethanol not stated — ANWB) · "98" (Euro 98/premium,
+#                                       ethanol not stated — ANWB)
+# `octane` on the price entry is the RON rating; the UI buckets petrol by octane, not by E-number.
+def octane_of(price: Dict) -> Optional[int]:
+    """RON rating of a petrol price entry, or None for non-petrol / unknown. E5 without an explicit
+    octane is treated as 95 (the historical meaning in most national feeds)."""
+    o = price.get("octane")
+    if o:
+        return int(o)
+    ft = price.get("fuel_type")
+    if ft in ("E10", "95"):
+        return 95
+    if ft == "98":
+        return 98
+    if ft == "E5":
+        return 95
+    return None
