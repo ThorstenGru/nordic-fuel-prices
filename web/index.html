@@ -97,6 +97,15 @@ html, body {
 .chip:active, .chip.on { background:var(--coral); border-color:var(--coral); color:#fff; }
 .chip.install-chip { background:rgba(34,197,94,0.15); border-color:var(--green); color:var(--green); }
 
+/* ── Snapshot pill: the country under the map centre + its typical prices (tap = compare) ── */
+#badge.pill-ready, #badge.ok, #badge.loading { pointer-events:auto; cursor:pointer; }
+.pl-row1 { display:flex; align-items:center; justify-content:flex-end; gap:5px; font-weight:700; color:var(--text); font-size:0.7rem; }
+.pl-row2 { display:flex; justify-content:flex-end; gap:8px; margin-top:1px; font-variant-numeric:tabular-nums; color:var(--text2); }
+.pl-row2 b { color:var(--text); font-weight:700; }
+.pl-sub { font-weight:500; color:var(--text3); font-size:0.62rem; }
+.spin { display:inline-block; width:8px; height:8px; border:2px solid var(--border); border-top-color:var(--coral); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
 /* ── Status badge (sits below the chip row so it never overlaps it) ── */
 #badge {
   position:absolute; top:48px; right:10px; z-index:500;
@@ -104,10 +113,9 @@ html, body {
   border-radius:8px; padding:4px 10px;
   font-size:0.63rem; color:var(--text2); line-height:1.5;
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  pointer-events:none; max-width:160px; text-align:right;
+  max-width:190px; text-align:right;
 }
-#badge.ok  { color:var(--green); }
-#badge.loading { color:var(--amber); }
+#badge.ok, #badge.loading { color:var(--text2); }
 
 /* ── FAB – Near Me ── */
 #fab {
@@ -121,6 +129,48 @@ html, body {
 }
 #fab:active { transform:scale(0.95); box-shadow:0 2px 8px rgba(232,84,47,0.25); }
 #fab.busy   { background:var(--surf2); color:var(--text2); box-shadow:none; }
+
+/* ── Cheapest-in-view button, toast, pulse ── */
+#cheap-btn {
+  position:absolute; right:14px; z-index:1100;
+  bottom:calc(var(--tab-h) + var(--safe-b) + 68px);
+  background:#fff; color:var(--text); border:2px solid var(--sun); border-radius:28px;
+  padding:9px 15px; font:inherit; font-size:0.82rem; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(255,199,44,0.45);
+  transition:transform .12s;
+}
+#cheap-btn:active { transform:scale(0.95); }
+body.sheet #fab, body.sheet #cheap-btn, body.sheet #legend { display:none; }
+#toast {
+  position:fixed; left:12px; right:12px; z-index:3000; text-align:center;
+  bottom:calc(var(--tab-h) + var(--safe-b) + 128px);
+  background:rgba(22,24,29,0.94); color:#fff; border-radius:16px; padding:12px 16px;
+  font-size:0.84rem; line-height:1.4; box-shadow:0 8px 30px rgba(0,0,0,0.25);
+  opacity:0; transform:translateY(12px); pointer-events:none; transition:opacity .22s, transform .22s;
+}
+#toast.on { opacity:1; transform:translateY(0); }
+.pulse-ring { position:relative; width:56px; height:56px; margin:-28px 0 0 -28px; }
+.pulse-ring i { position:absolute; inset:0; border-radius:50%; border:3px solid var(--sun); animation:ring 1.4s ease-out infinite; }
+.pulse-ring i:nth-child(2) { animation-delay:.45s; }
+.pulse-ring i:nth-child(3) { animation-delay:.9s; }
+@keyframes ring { 0% { transform:scale(.25); opacity:1; } 100% { transform:scale(1.2); opacity:0; } }
+.pulse-ring::after { content:'🏆'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:20px; }
+
+/* ── Favourites, fill-up cost, popup actions ── */
+.fav-btn { flex-shrink:0; background:none; border:none; font-size:1.25rem; line-height:1; color:var(--border); cursor:pointer; padding:4px 6px; min-width:36px; min-height:36px; }
+.fav-btn.on { color:var(--coral); animation:pop .25s; }
+@keyframes pop { 50% { transform:scale(1.35); } }
+.fill-line { margin-top:6px; font-size:0.74rem; color:var(--text2); }
+.fill-line b { color:var(--text); font-variant-numeric:tabular-nums; }
+.pop-actions { display:flex; align-items:center; gap:2px; }
+.pop-act { background:none; border:1px solid var(--border); border-radius:12px; min-width:40px; min-height:40px; font-size:1.05rem; cursor:pointer; color:var(--text2); }
+.pop-act.on { color:var(--coral); border-color:var(--coral); }
+.pop-act.fav-btn { padding:0; font-size:1.05rem; min-width:40px; min-height:40px; margin-right:6px; color:var(--text3); }
+.pop-act.fav-btn.on { color:var(--coral); }
+.pop-act + .pop-act { margin-left:0; }
+.tank-row { display:flex; gap:6px; }
+.tank-row button { flex:1; background:var(--surf2); border:1px solid var(--border); border-radius:12px; padding:10px 0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--text2); cursor:pointer; }
+.tank-row button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
 
 /* ── Location dot ── */
 .loc-dot {
@@ -592,6 +642,9 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   <!-- Legend -->
   <div id="legend"></div>
 
+  <!-- Cheapest in view -->
+  <button id="cheap-btn" onclick="cheapestInView()">🏆 <span data-i18n="cheapHere">Cheapest here</span></button>
+
   <!-- FAB -->
   <button id="fab" onclick="goNearby()">📍 Near Me</button>
 </div>
@@ -639,6 +692,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <h2><span data-i18n="stationsHeader">Stations</span> <span id="mobCount">—</span></h2>
     <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortDefault">Default</span></button>
   </div>
+  <div class="seg" id="list-seg">
+    <button class="on" data-m="all" onclick="setListMode('all')"><span data-i18n="allSt">All</span></button>
+    <button data-m="saved" onclick="setListMode('saved')">♥ <span data-i18n="saved">Saved</span> <span id="fav-n"></span></button>
+  </div>
   <div class="panel-scroll" id="mobList"><p class="empty" data-i18n="loadingEllipsis">Loading…</p></div>
 </div>
 
@@ -671,6 +728,10 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
       <option value="LPG" data-i18n="fuelOptLPG">LPG</option>
       <option value="CNG" data-i18n="fuelOptCNG">CNG</option>
     </select>
+    <label data-i18n="tankLabel">Tank size</label>
+    <div class="tank-row" id="tank-row">
+      <button data-l="20" onclick="setTank(20)">20 L</button><button data-l="30" onclick="setTank(30)">30 L</button><button data-l="40" onclick="setTank(40)">40 L</button><button data-l="50" onclick="setTank(50)">50 L</button><button data-l="70" onclick="setTank(70)">70 L</button>
+    </div>
     <button class="rbtn" onclick="resetAll()">↺ <span data-i18n="resetFilters">Reset all filters</span></button>
 
     <label data-i18n="labelLanguage">Language</label>
@@ -729,6 +790,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     <span class="tb-icon">⚡</span><span class="tb-lbl" data-i18n="tabFilter">Filter</span>
   </button>
 </div>
+
+<div id="toast"></div>
 
 <!-- Backdrop -->
 <div id="bd" onclick="closePanel()"></div>
@@ -928,23 +991,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { nearGo:'Navigate to the cheapest', nearSave:'{d} below the nearby average ({a})', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { cheapHere:'Cheapest here', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'🏆 {p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap ♥ on a station to save it here.', share:'Share', copied:'Link copied', tankLabel:'Tank size', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { nearGo:'Navigera till billigaste', nearSave:'{d} under snittet i närheten ({a})', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { cheapHere:'Billigast här', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'🏆 {p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på ♥ vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', tankLabel:'Tankstorlek', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { nearGo:'Zur günstigsten navigieren', nearSave:'{d} unter dem Durchschnitt in der Nähe ({a})', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { cheapHere:'Günstigste hier', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'🏆 {p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf ♥, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', tankLabel:'Tankgröße', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { nearGo:'Naviguer vers la moins chère', nearSave:'{d} sous la moyenne à proximité ({a})', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { cheapHere:'Le moins cher ici', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'🏆 {p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez ♥ sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', tankLabel:'Taille du réservoir', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { nearGo:'Navegar a la más barata', nearSave:'{d} por debajo de la media cercana ({a})', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { cheapHere:'Más barata aquí', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'🏆 {p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca ♥ en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', tankLabel:'Tamaño del depósito', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
@@ -1024,6 +1087,13 @@ let   fCountry= '', fFuel = '';
 let   colorBy = 'price';       // 'price' | 'source'
 let   metaCountries = [];      // meta.json countries[] (with stats_eur once the pipeline publishes it)
 let   cmpKey = 'p95';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+};
+let   tank    = store.get('efp_tank', 40);     // litres, used for "fill-up cost"
+let   favs    = store.get('efp_favs', {});     // station id -> { cc, name }
+let   favOnly = false;
 let   sortMode= 'default';    // 'default'|'price'|'distance'
 let   sMode   = 'addr';       // search mode
 let   vpOff   = 0;            // virtual scroll offset
@@ -1271,7 +1341,7 @@ function mkMarker(s) {
     m.bindTooltip(tip,
       { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
   }
-  m.bindPopup(mkPopup(s), { maxWidth:290 });
+  m.bindPopup(() => mkPopup(s), { maxWidth:290 });
   m.on('click', () => selectStation(s.id));
   return m;
 }
@@ -1306,9 +1376,13 @@ function mkPopup(s) {
     ${s.address ? `<div class="pop-addr">${esc(s.address)}</div>` : ''}
     <div class="pop-meta">${esc([s.city, s.source].filter(Boolean).join(' · '))}</div>
     <table class="pop-tbl">${rows}</table>${noP}
+    ${fillHtml(cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
     ${ageHtml(s)}
     <div class="pop-foot">
-      <span></span>
+      <span class="pop-actions">
+        <button class="pop-act fav-btn${favs[s.id] ? ' on' : ''}" data-fav="${esc(s.id)}" aria-label="${t('saved')}" onclick="toggleFav('${escId(s.id)}')">♥</button>
+        <button class="pop-act" aria-label="${t('share')}" onclick="shareStation('${escId(s.id)}')">⤴</button>
+      </span>
       ${goUrl ? `<a class="pop-go" href="${goUrl}" target="_blank" rel="noopener">🧭 ${t('go')}</a>` : ''}
     </div>
   </div>`;
@@ -1335,15 +1409,17 @@ function mkCard(s, km) {
   const noPin = (!s.lat||!s.lon) ? ` <span title="${t('noGpsTitle')}" style="color:var(--text3)">📍✕</span>` : '';
   const goBtn = (s.lat && s.lon)
     ? `<button class="go-btn" onclick="event.stopPropagation();doNav('${escId(s.id)}')">🧭 ${t('go')}</button>` : '';
+  const favBtn = `<button class="fav-btn${favs[s.id] ? ' on' : ''}" data-fav="${esc(s.id)}" aria-label="${t('saved')}" onclick="event.stopPropagation();toggleFav('${escId(s.id)}')">♥</button>`;
   const distHtml = km != null
     ? `<span class="dist-badge">📏 ${fmtDist(km)}</span>` : '';
   return `<div class="scard ${fc}${isSel}" id="c-${esc(s.id)}" onclick="selectStation('${escId(s.id)}')">
     <div class="scard-top">
       <div class="scard-name">${flag} ${esc(s.name||s.brand||'—')}${noPin}</div>
-      ${goBtn}
+      ${favBtn}${goBtn}
     </div>
     <div class="scard-meta">${esc([s.city,s.source].filter(Boolean).join(' · '))}${distHtml ? ' '+distHtml : ''}</div>
     <div class="pchips">${chips||`<span style="color:var(--text3);font-size:0.71rem">${t('noPricesShort')}</span>`}</div>
+    ${fillHtml(cp)}
     ${ageHtml(s)}
   </div>`;
 }
@@ -1370,6 +1446,7 @@ async function loadCC(cc) {
     metaOf[cc] = j.meta || {};
     loaded.add(cc);
     for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
+    delete _cs[cc];
     addToMap(cc, data[cc]);
     onNewData();
   } catch(e) {
@@ -1456,7 +1533,7 @@ function splitPricedFirst(arr, pricedCmp, unpricedCmp) {
 function getAll() {
   const all = [];
   for (const arr of Object.values(data))
-    for (const s of arr) { if (matches(s)) all.push(s); }
+    for (const s of arr) { if (favOnly ? favs[s.id] : matches(s)) all.push(s); }
   let pricedCmp = null, unpricedCmp = null;
   if (sortMode === 'distance' && myLat != null) {
     const byDist = (a,b) => {
@@ -1500,8 +1577,8 @@ function renderPage(all, offset, reset) {
 
   if (reset || offset === 0) {
     if (!all.length) {
-      list.innerHTML = loading.size
-        ? `<p class="empty">${t('loadingData')}</p>`
+      list.innerHTML = favOnly && !Object.keys(favs).length ? `<p class="empty">${t('noFavs')}</p>`
+        : loading.size ? `<p class="empty">${t('loadingData')}</p>`
         : `<p class="empty">${t('noMatch')}</p>`;
       return;
     }
@@ -1650,7 +1727,7 @@ function showNearby() {
     const avg = same.length >= 3 ? same.reduce((a, p) => a + p.price, 0) / same.length : null;
     const diff = avg != null ? avg - bestGlobal.price : 0;
     document.getElementById('ns-save').textContent = diff >= 0.01
-      ? t('nearSave', { d: diff.toFixed(2) + ' ' + sym, a: avg.toFixed(2) + ' ' + sym }) : '';
+      ? t('nearSave', { d: diff.toFixed(2) + ' ' + sym, a: avg.toFixed(2) + ' ' + sym, s: money(diff * tank, bestGlobal.currency), l: tank }) : '';
     document.getElementById('ns-go').textContent = '🧭 ' + t('nearGo');
     sumEl.style.display = 'flex';
   } else {
@@ -1737,7 +1814,7 @@ function goTab(tab) {
 
   Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
   const pid = PANEL_MAP[tab];
-  if (pid) { document.getElementById(pid)?.classList.add('open'); document.getElementById('bd').classList.add('on'); }
+  if (pid) { document.getElementById(pid)?.classList.add('open'); document.getElementById('bd').classList.add('on'); document.body.classList.add('sheet'); }
 
   if (tab === 'nearby') {
     if (myLat == null) goNearby(); else showNearby();
@@ -1757,6 +1834,7 @@ const DESK = window.matchMedia('(min-width:1000px)');
 function autoClose() { if (!DESK.matches) closePanel(); }
 
 function closePanel() {
+  document.body.classList.remove('sheet');
   Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
   document.getElementById('bd').classList.remove('on');
   document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
@@ -1772,6 +1850,115 @@ document.querySelectorAll('.panel').forEach(p => {
   p.addEventListener('touchstart', e => { sy=e.touches[0].clientY; st=Date.now(); }, { passive:true });
   p.addEventListener('touchend',   e => { if (e.changedTouches[0].clientY-sy > 70 && Date.now()-st < 500) closePanel(); }, { passive:true });
 });
+
+// ════════════════════════════════════════════════════
+// Fun + useful: toast, vibration, fill-up cost, favourites, share, cheapest-in-view
+// ════════════════════════════════════════════════════
+let _toastT = null;
+function toast(msg, ms = 3600) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(_toastT); _toastT = setTimeout(() => el.classList.remove('on'), ms);
+}
+function buzz(ms = 18) { try { navigator.vibrate && navigator.vibrate(ms); } catch (_) {} }
+function money(v, cur) {
+  const sy = SYM[cur] || cur || '';
+  return `${v >= 100 ? Math.round(v) : v.toFixed(2)} ${sy}`.trim();
+}
+function fillHtml(cp) {
+  if (!cp || (cp.unit && cp.unit !== 'L') || !tank) return '';
+  return `<div class="fill-line">⛽ ${t('fillLine', { l: tank, c: '<b>' + money(cp.price * tank, cp.currency) + '</b>' })}</div>`;
+}
+function setTank(n) {
+  tank = n; store.set('efp_tank', n); syncTankUi();
+  rebuildList();
+  if (activeTab === 'nearby' && myLat != null) showNearby();
+}
+function syncTankUi() { document.querySelectorAll('#tank-row button').forEach(b => b.classList.toggle('on', +b.dataset.l === tank)); }
+
+function findStation(id) {
+  const cc = String(id).slice(0, 2).toUpperCase();
+  return (data[cc] || []).find(x => x.id === id) || null;
+}
+function toggleFav(id) {
+  if (favs[id]) delete favs[id];
+  else { const s = findStation(id); favs[id] = { cc: String(id).slice(0, 2).toUpperCase(), name: s ? (s.name || s.brand || '') : '' }; buzz(); }
+  store.set('efp_favs', favs);
+  document.querySelectorAll('[data-fav]').forEach(b => { if (b.dataset.fav === id) b.classList.toggle('on', !!favs[id]); });
+  updFavCount();
+  if (favOnly) rebuildList();
+}
+function updFavCount() {
+  const n = Object.keys(favs).length;
+  const el = document.getElementById('fav-n'); if (el) el.textContent = n ? `(${n})` : '';
+}
+function setListMode(m) {
+  favOnly = m === 'saved';
+  document.querySelectorAll('#list-seg button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  if (favOnly) for (const f of Object.values(favs)) loadCC(f.cc);
+  rebuildList();
+}
+async function shareStation(id) {
+  const s = findStation(id); if (!s) return;
+  const cp = cheapest(s) || s.prices?.[0];
+  const name = s.name || s.brand || 'Fuel station';
+  const url = `${location.origin}${location.pathname}?s=${encodeURIComponent(id)}`;
+  const text = cp ? `${fuelLabel(cp)} ${cp.price.toFixed(2)} ${SYM[cp.currency] || cp.currency} — ${name}${s.city ? ', ' + s.city : ''}` : name;
+  if (navigator.share) { try { await navigator.share({ title: 'EuroFuelPrices', text, url }); } catch (_) {} return; }
+  try { await navigator.clipboard.writeText(`${text}\n${url}`); toast(t('copied')); } catch (_) { toast(url); }
+}
+
+// Country under the map centre (smallest containing bbox wins, so LU beats BE, MC beats FR…)
+function centerCountry() {
+  const c = map.getCenter(); const cands = [];
+  for (const [cc, b] of Object.entries(CB)) if (b.contains(c)) cands.push([cc, (b.getNorth() - b.getSouth()) * (b.getEast() - b.getWest())]);
+  if (!cands.length) return null;
+  if (cands.length === 1) return cands[0][0];
+  // Bounding boxes overlap (DE/AT/CH…): pick the candidate whose nearest loaded station is closest to the centre.
+  const k = Math.cos(c.lat * Math.PI / 180);
+  let best = null, bd = Infinity;
+  for (const [cc] of cands) {
+    for (const s of (data[cc] || [])) {
+      if (!s.lat) continue;
+      const d = (s.lat - c.lat) ** 2 + ((s.lon - c.lng) * k) ** 2;
+      if (d < bd) { bd = d; best = cc; }
+    }
+  }
+  if (best) return best;
+  return cands.sort((x, y) => x[1] - y[1])[0][0];
+}
+const _cs = {};
+function cstat(cc) {
+  if (_cs[cc]) return _cs[cc];
+  const arr = data[cc] || [];
+  const med = k => { const v = []; for (const s of arr) { const p = minOf(s, k); if (p) v.push(p.price); } if (v.length < 5) return null; v.sort((a, b) => a - b); return v[v.length >> 1]; };
+  return (_cs[cc] = { p95: med('P95'), d: med('DIESEL'), cur: metaOf[cc]?.currency || 'EUR' });
+}
+
+let _pulse = null;
+function cheapestInView() {
+  buzz(10);
+  const cc = map.getZoom() >= 6 ? centerCountry() : null;
+  if (!cc) { toast(t('cheapFar')); return; }
+  const b = map.getBounds();
+  let best = null, n = 0;
+  for (const s of (data[cc] || [])) {
+    if (!s.lat || !s.lon || !matches(s) || !b.contains([s.lat, s.lon])) continue;
+    const p = cheapest(s);
+    if (!p || p.price <= 0) continue;
+    n++;
+    if (!best || p.price < best.p.price) best = { s, p };
+  }
+  if (!best) { toast(t('cheapNone')); return; }
+  const { s, p } = best;
+  map.flyTo([s.lat, s.lon], Math.max(map.getZoom(), 15), { duration: 1.1 });
+  if (_pulse) map.removeLayer(_pulse);
+  _pulse = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', html:'<div class="pulse-ring"><i></i><i></i><i></i></div>', iconSize:[0,0] }), interactive:false, zIndexOffset:900 }).addTo(map);
+  setTimeout(() => { if (_pulse) { map.removeLayer(_pulse); _pulse = null; } }, 6000);
+  map.once('moveend', () => { setTimeout(() => { const m = byId.get(s.id); if (m) m.openPopup(); buzz([30, 40, 30]); }, 150); });
+  toast(t('cheapResult', { p: `${p.price.toFixed(2)} ${SYM[p.currency] || p.currency}`, n: s.name || s.brand || '—', c: n.toLocaleString() }), 5200);
+}
 
 // ════════════════════════════════════════════════════
 // Legend
@@ -1867,23 +2054,29 @@ function updProgress() {
 // Status
 // ════════════════════════════════════════════════════
 function updStatus() {
-  const n    = Object.values(data).reduce((s,a) => s+a.length, 0);
-  const ld   = loaded.size, tot = Object.keys(CB).length;
-  const act  = loading.size;
+  const n   = Object.values(data).reduce((x, a) => x + a.length, 0);
+  const act = loading.size;
   const badge = document.getElementById('badge');
-
-  let txt, cls;
-  if (act > 0) {
-    txt = `${t('statsStations', { n: n.toLocaleString() })}\n${t('loadingMore', { n: act })}`; cls = 'loading';
+  const z = map.getZoom();
+  const cc = z >= 5 ? centerCountry() : null;
+  const spin = act > 0 ? ' <i class="spin"></i>' : '';
+  let html, cls = 'ok';
+  if (!cc) {
+    html = `<div class="pl-row1">🇪🇺 Europe${spin}</div><div class="pl-row2"><span class="pl-sub">${t('statsStations', { n: n.toLocaleString() })}</span></div>`;
+  } else if (!loaded.has(cc)) {
+    html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)} <i class="spin"></i></div><div class="pl-row2"><span class="pl-sub">${t('loadingEllipsis')}</span></div>`;
+    cls = 'loading';
   } else {
-    const tm = metaAt ? new Date(metaAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-    txt = `${t('statsStations', { n: n.toLocaleString() })}\n${t('countriesShort', { ld, tot })}${tm?' · '+tm:''}`;
-    cls = ld > 0 ? 'ok' : 'loading';
+    const st = cstat(cc), sy = SYM[st.cur] || st.cur;
+    const bits = [st.p95 != null && `<span>95 <b>${st.p95.toFixed(2)}</b> ${sy}</span>`, st.d != null && `<span>D <b>${st.d.toFixed(2)}</b> ${sy}</span>`].filter(Boolean).join('');
+    html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)}${spin}</div><div class="pl-row2">${bits || `<span class="pl-sub">${t('noPricesShort')}</span>`}</div>`;
   }
-  badge.textContent = txt; badge.className = cls;
-    updCounts();
+  badge.innerHTML = html; badge.className = cls;
+  badge.onclick = () => goTab('compare');
+  updCounts();
   updProgress();
 }
+map.on('moveend', updStatus);
 
 // ════════════════════════════════════════════════════
 // PWA
@@ -1920,9 +2113,21 @@ window.addEventListener('beforeinstallprompt', e => {
   if (DESK.matches) goTab('stations');
   DESK.addEventListener?.('change', e => { if (e.matches) goTab('stations'); else closePanel(); setTimeout(() => map.invalidateSize(), 50); });
 
+  syncTankUi(); updFavCount();
   // Always pre-load Sweden (home country priority)
   loadCC('SE');
   schedVP();
+
+  // Shared station link: ?s=<station id>
+  try {
+    const sid = new URLSearchParams(location.search).get('s');
+    const scc = sid ? sid.slice(0, 2).toUpperCase() : '';
+    if (sid && CNAMES[scc]) {
+      await loadCC(scc);
+      const st = findStation(sid);
+      if (st && st.lat) { map.setView([st.lat, st.lon], 15); setTimeout(() => selectStation(sid), 900); }
+    }
+  } catch (_) {}
 
   // Auto-trigger Near Me on mobile if geolocation was previously granted
   if (true && navigator.permissions) {
