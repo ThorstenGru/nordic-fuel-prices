@@ -104,6 +104,7 @@ Plan a route (A -> B, optional via points) and list the cheapest pumps *along* i
 - Honesty rules carry over: show source + age per price, never promise "live" where a feed has no timestamp.
 - Builds on: Trip calculator (v1.9), tank size, nav-app chooser. Effort: M-L (routing is the cost driver). Decision needed: routing provider/budget.
 - Design + provider research (2026-10-07): `docs/ROUTE_PLANNER_DESIGN.md`.
+- **Status:** v1.10.0 ships a labelled PREVIEW (Prices sheet -> Route): OSRM demo routing, Nominatim search on submit, client-side corridor search, 'below the route median' wording, prices known to be >10 h old hidden. Owner decisions 2026-10-07: non-commercial stance, no paid autocomplete, 10 h staleness cutoff. Before public launch: Cloudflare Worker proxy (CSP currently allows router.project-osrm.org directly), ferry-aware provider, fuel-stop planning, tests on golden routes.
 
 ### IDEA (owner, 2026-10-07) - EV charging and other alternative energy
 Research report: `docs/EV_ALT_ENERGY_RESEARCH.md` (commissioned 2026-10-07; read it before deciding).
