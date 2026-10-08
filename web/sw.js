@@ -10,7 +10,7 @@
 // Versioned CDN libraries (URL contains the version) and small static icons: cache-first — safe,
 // because a version bump changes the URL itself.
 
-const SHELL_CACHE = 'efp-shell-v6';
+const SHELL_CACHE = 'efp-shell-v7';   // v7: purges Nominatim/OSRM responses that older versions cached by mistake (see the fetch handler)
 const DATA_CACHE  = 'efp-data-v3';
 const SLOW_NET_MS = 3500;   // flaky/slow connection: serve the cached copy instead of waiting
 
@@ -60,7 +60,9 @@ self.addEventListener('fetch', event => {
     || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/admin.html')
     || url.pathname === '/' || url.pathname.endsWith('/');
   if (isHtmlShell && url.origin === self.location.origin) {
-    event.respondWith(networkFirst(event.request, SHELL_CACHE, SLOW_NET_MS));
+    // one cache entry per page, not per query string: every shared link (/?s=<station>) used to store its own 210 KB copy of the app
+    const key = event.request.mode === 'navigate' ? new Request(url.origin + url.pathname) : event.request;
+    event.respondWith(networkFirst(event.request, SHELL_CACHE, SLOW_NET_MS, key));
     return;
   }
 
@@ -81,24 +83,29 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Everything else (versioned CDN libs, manifest, icon): cache-first
+  // Third-party APIs (Nominatim place search / reverse geocoding, OSRM routes, analytics) are never cached: answers would go stale,
+  // and reverse-geocode URLs contain the user's coordinates — they must not pile up in a cache on the device. Returning without
+  // respondWith() lets the browser fetch them normally.
+  if (url.origin !== self.location.origin && url.hostname !== 'unpkg.com') return;
+
+  // Everything else (versioned CDN libs, manifest, icon, flags): cache-first
   event.respondWith(cacheFirst(event.request));
 });
 
-async function networkFirst(request, cacheName, timeoutMs) {
+async function networkFirst(request, cacheName, timeoutMs, cacheKey = request) {
   const cache = await caches.open(cacheName);
   const net = fetch(request, { cache: 'no-store' }).then(res => {
-    if (res.ok) cache.put(request, res.clone());
+    if (res.ok) cache.put(cacheKey, res.clone());
     return res;
   });
   net.catch(() => {});                       // a late failure after the race must not surface
   const offline = () => new Response(JSON.stringify({ error: 'offline' }), {
     status: 503, headers: { 'Content-Type': 'application/json' } });
   try {
-    if (!timeoutMs || !(await cache.match(request))) return await net;
+    if (!timeoutMs || !(await cache.match(cacheKey))) return await net;
     return await Promise.race([net, new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), timeoutMs))]);
   } catch (_) {
-    const cached = await cache.match(request);
+    const cached = await cache.match(cacheKey);
     if (cached) return cached;
     try { return await net; } catch (e) { return offline(); }
   }

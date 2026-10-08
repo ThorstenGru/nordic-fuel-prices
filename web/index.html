@@ -233,12 +233,13 @@ html, body {
 #cheap-btn:active { transform:scale(0.95); }
 body.sheet #fab, body.sheet #cheap-btn, body.sheet #legend { display:none; }
 body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); display:flex; }
+/* Toasts sit just under the chip row: at the bottom they landed on top of sheets, station cards and the Go button */
 #toast {
-  position:fixed; left:12px; right:12px; z-index:3000; text-align:center;
-  bottom:calc(var(--tab-h) + var(--safe-b) + 128px);
+  position:fixed; left:62px; right:12px; z-index:3000; text-align:center;      /* left:62px — clear of the zoom buttons */
+  top:calc(var(--safe-t) + 100px);
   background:rgba(22,24,29,0.94); color:#fff; border-radius:16px; padding:12px 16px;
   font-size:0.84rem; line-height:1.4; box-shadow:0 8px 30px rgba(0,0,0,0.25);
-  opacity:0; transform:translateY(12px); pointer-events:none; transition:opacity .22s, transform .22s;
+  opacity:0; transform:translateY(-12px); pointer-events:none; transition:opacity .22s, transform .22s;
 }
 #toast.on { opacity:1; transform:translateY(0); }
 .pulse-ring { position:relative; width:56px; height:56px; margin:-28px 0 0 -28px; }
@@ -281,14 +282,17 @@ body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); 
 .leaflet-popup-content { margin:14px 16px; }
 .leaflet-container a.leaflet-popup-close-button { width:30px; height:30px; font-size:20px; line-height:30px; }
 
-/* ── Price tooltips ── */
-.leaflet-tooltip.ptip {
+/* ── Price labels: drawn INSIDE the marker icon. (A Leaflet tooltip per marker cost ~2 ms each — about 200 ms for a
+   dense city at zoom 13 — against ~0.03 ms for a plain element, which is what made zooming into cities hitch.) ── */
+.mk .lbl {
+  position:absolute; left:calc(50% + 11px); top:50%; transform:translateY(-50%);
   background:var(--glass); border:1px solid var(--border);
-  color:var(--text); font-size:0.63rem; font-weight:600; font-variant-numeric:tabular-nums;
+  color:var(--text); font-size:0.68rem; font-weight:600; font-variant-numeric:tabular-nums;
   padding:1px 5px; border-radius:4px; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.08);
+  pointer-events:none; transition:opacity .15s;
 }
-.leaflet-tooltip.ptip::before { display:none; }
-#map.hide-prices .ptip { display:none; }
+.mk .lbl.off { opacity:0; }
+#map.hide-prices .mk .lbl { display:none; }
 
 /* ── Clusters (drawn by our own viewport renderer) ── */
 .marker-cluster { width:40px; height:40px; border-radius:50%; background:var(--halo); cursor:pointer; }
@@ -307,7 +311,7 @@ html { background:var(--page); height:100%; height:100dvh; }
 body { max-width:520px; margin:0 auto; height:100%; height:var(--app-h, 100dvh); position:relative; overflow:hidden; overflow:clip;
        transform:translateZ(0); box-shadow:0 0 30px rgba(0,0,0,0.08); }
 /* Tablets get a wider column (more map, roomier sheets); desktops keep the same centred app column */
-@media (min-width:700px) { body { max-width:680px; } .panel { max-height:72vh; } }
+@media (min-width:700px) { body { max-width:680px; } .panel { max-height:72vh; max-height:min(72vh, calc(var(--app-h, 100dvh) - var(--tab-h) - var(--safe-b) - 6px)); } }
 button, .tb, .chip, select, input { touch-action:manipulation; }
 body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
@@ -390,6 +394,32 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   border-radius:12px; padding:9px 16px; font-size:0.85rem; font-weight:600;
 }
 
+/* ── Station details: a bottom sheet on phones/tablets. The map popup did not fit a 573 px-tall iPhone screen: the zoom
+   buttons, country badge and Near Me button covered its name, close button and Go button. ── */
+#p-station { z-index:710; }
+.st-head { padding:0 14px 8px; flex-shrink:0; }
+.st-top { display:flex; align-items:flex-start; gap:8px; }
+.st-id { flex:1; min-width:0; }
+.st-name { font-size:1.08rem; font-weight:700; line-height:1.25; color:var(--text); overflow-wrap:anywhere; }
+.st-sub { font-size:0.76rem; color:var(--text2); margin-top:2px; line-height:1.35; overflow-wrap:anywhere; }
+.st-x { flex-shrink:0; width:40px; height:40px; margin:-6px -6px 0 0; border:none; background:none; color:var(--text2); font-size:1.15rem; cursor:pointer; border-radius:12px; }
+.st-x:active { background:var(--surf2); }
+.st-acts { display:flex; gap:8px; margin-top:10px; }
+.st-go { flex:1; min-height:46px; border:none; border-radius:14px; background:var(--coral); color:#fff; font:inherit; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+.st-go:active { transform:scale(0.98); }
+.st-acts .pop-act { width:46px; min-width:46px; min-height:46px; margin:0; }
+#p-station .panel-scroll { padding:0 14px 16px; }
+#p-station .pop { min-width:0; max-width:none; }
+.sel-ring { width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; border:3px solid var(--coral); box-shadow:0 0 0 3px rgba(232,84,47,0.25); animation:pulse 1.8s infinite; pointer-events:none; }
+
+/* ── Country bubbles: a zoomed-out map shows every country that is not loaded yet, so it never looks empty ── */
+.cty-b { width:66px; height:66px; border-radius:50%; background:var(--glass); border:2px solid var(--border); box-shadow:0 2px 10px rgba(0,0,0,0.2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; color:var(--text); line-height:1.1; text-align:center; cursor:pointer;
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.cty-b img { height:14px; width:auto; max-width:22px; border-radius:2px; box-shadow:0 0 0 1px rgba(0,0,0,0.16); }
+.cty-b b { font-size:0.74rem; font-variant-numeric:tabular-nums; }
+.cty-b small { font-size:0.58rem; color:var(--text2); font-variant-numeric:tabular-nums; }
+
 /* ══════════════════════════════════════════
    MOBILE LAYOUT
 ══════════════════════════════════════════ */
@@ -425,7 +455,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
   }
   .tb.on.nb::before { background:var(--coral); }
   .tb-icon { font-size:1.3rem; line-height:1; }
-  .tb-lbl  { font-size:0.62rem; font-weight:500; letter-spacing:0.02em; }
+  .tb-lbl  { font-size:0.62rem; font-weight:500; letter-spacing:0.02em; white-space:nowrap; }
 
   /* Panels */
   .panel {
@@ -433,15 +463,16 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
     background:var(--surf); border-top:1px solid var(--border);
     border-radius:24px 24px 0 0; z-index:700;
     display:flex; flex-direction:column; max-height:78vh;
+    /* never taller than what is really visible: iPhone Safari's bars make 100vh larger than the page, which pushed the sheet's
+       title, drag handle and the Countries/Trip/Route tabs off the top of the screen */
+    max-height:min(78vh, calc(var(--app-h, 100dvh) - var(--tab-h) - var(--safe-b) - 6px));
     transform:translateY(100%);
     transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
     overflow:hidden;
   }
   .panel.open { transform:translateY(var(--sy, 0px)); }
-  .drag-handle {
-    width:36px; height:4px; background:var(--border); border-radius:2px;
-    margin:10px auto 6px; flex-shrink:0; cursor:grab;
-  }
+  /* (the drag handle is defined once, near the top: a 30 px tall full-width grab area with one centred pill.
+     A second, older definition used to live here — it shrank the grab area to a 4 px strip and drew a second pill.) */
   .panel-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
   /* Backdrop */
@@ -572,6 +603,8 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 #legend .lg-ramp { display:flex; height:7px; border-radius:4px; overflow:hidden; }
 #legend .lg-ramp i { flex:1; }
 #legend .lg-ends { display:flex; justify-content:space-between; margin-top:2px; }
+#legend .lg-un { display:flex; align-items:center; gap:4px; margin-top:3px; font-size:0.58rem; color:var(--text3); }
+#legend .lg-un i { width:8px; height:8px; border-radius:50%; background:#94A3B8; display:inline-block; }
 #legend .lg-grades { display:flex; gap:5px; flex-wrap:wrap; }
 #legend .lg-grades span { display:inline-flex; align-items:center; gap:3px; }
 #legend .lg-grades i { width:8px; height:8px; border-radius:50%; display:inline-block; }
@@ -660,6 +693,7 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 
   #chips { top:14px; left:14px; right:230px; }
   #badge { top:14px; right:14px; max-width:200px; }
+  #toast { left:calc(var(--side-w) + 12px); top:70px; }
   #fab { bottom:28px; right:20px; }
   #legend { left:14px; bottom:40px; }
   .leaflet-bottom { bottom:6px; }
@@ -722,16 +756,13 @@ body { -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
 .seg button { padding:11px 6px; }
 .view-seg button { padding:11px 4px; }
 #p-search .sbtn { min-width:48px; }
-.mk { width:30px; height:30px; display:flex; align-items:center; justify-content:center; }
+.mk { position:relative; width:30px; height:30px; display:flex; align-items:center; justify-content:center; }
 #legend .lg-mode, .leaflet-control-attribution a[href="admin.html"], .gb-btn { position:relative; }
 #legend .lg-mode::after, .leaflet-control-attribution a[href="admin.html"]::after { content:''; position:absolute; inset:-14px -10px; }
 #legend .lg-mode { font-size:0.7rem; padding:2px 8px; }
 button.gb { border:none; font-family:inherit; cursor:pointer; }
 .age-line button.gb { padding:2px 7px; }
 
-/* Legend ⓘ + station-name labels that must not collide */
-.leaflet-tooltip.ptip { font-size:0.68rem; transition:opacity .15s; }
-.leaflet-tooltip.ptip.ptip-off { opacity:0 !important; pointer-events:none; }
 
 /* Clusters: tinted by the typical price level inside (green cheap … red dear) */
 .marker-cluster div { background:var(--cc, rgba(232,84,47,0.92)); color:var(--ct, #fff); }
@@ -755,6 +786,10 @@ button.gb { border:none; font-family:inherit; cursor:pointer; }
 .pop-tbl tr.np .pr, .pop-tbl tr.np .ft { text-decoration:line-through; color:var(--text3); }
 .pop-tbl tr.np .pr { text-decoration-thickness:2px; }
 .pop-tbl .npnote { color:var(--warn-text); font-size:0.66rem; }
+.pc.sus { border-style:dashed; border-color:var(--warn-bd); }
+.pc.sus .v { color:var(--text2); }
+.pc .q { color:var(--warn-text); font-size:0.66rem; font-weight:800; margin-left:2px; }
+.sus-note { color:var(--warn-text); font-size:0.66rem; }
 .pc.np { background:var(--warn-bg); border-color:var(--warn-bd); }
 .pc.np .t, .pc.np .v { color:var(--text3); text-decoration:line-through; font-weight:500; }
 .pc.np .npl { color:var(--warn-text); font-size:0.62rem; font-weight:700; margin-left:2px; }
@@ -785,13 +820,12 @@ button.gb { border:none; font-family:inherit; cursor:pointer; }
 .leaflet-bar a.leaflet-disabled { background:var(--surf2); color:var(--text3); }
 .leaflet-container .leaflet-control-attribution { background:var(--glass); color:var(--text2); }
 .leaflet-container .leaflet-control-attribution a { color:var(--blue); }
-.leaflet-tooltip.ptip { color:var(--text); }
 .brand-card p { color:#4B5563; }
 .trust-logo { background:#FFF8EF; padding:6px 10px; border-radius:10px; box-sizing:content-box; }
 .theme-btn { flex:1; min-width:64px; background:var(--surf2); border:1px solid var(--border); border-radius:12px; padding:11px 6px; font-size:0.8rem; font-weight:500; color:var(--text2); cursor:pointer; font-family:inherit; }
 .theme-btn.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
 body.kb #tabbar { display:none; }
-body.kb .panel { bottom:0; max-height:none; }
+body.kb .panel { bottom:0; max-height:calc(var(--app-h, 100dvh) - 6px); }
 </style>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
 </head>
@@ -949,6 +983,13 @@ body.kb .panel { bottom:0; max-height:none; }
   </div>
 </div>
 
+<!-- Station details: a bottom sheet on phones/tablets (desktop keeps the map popup) -->
+<div class="panel" id="p-station" role="dialog" aria-labelledby="st-name">
+  <div class="drag-handle"></div>
+  <div class="st-head" id="st-head"></div>
+  <div class="panel-scroll" id="st-body"></div>
+</div>
+
 <!-- Trust / source-grade explainer (shown once on first visit; reopenable from Filter) -->
 <div id="trust-overlay" class="trust-overlay" role="dialog" aria-modal="true" aria-labelledby="trust-title" onclick="if(event.target===this)closeTrust()">
   <div class="trust-card">
@@ -1041,20 +1082,28 @@ const SYM = {
   BGN:'лв',RSD:'din',MKD:'ден',ALL:'lek',BAM:'BAM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪',
 };
 const UNIT = { L:'/L', kWh:'/kWh', kg:'/kg' };
-const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40;
+const NOM_CC = Object.keys(CNAMES).map(c => c.toLowerCase()).join(',');   // place search only inside the countries we have data for
+const PRICE_ZOOM = 13, CLUSTER_ZOOM = 11, PAGE = 40, BUBBLE_ZOOM = 6;   // below BUBBLE_ZOOM, countries that are not loaded yet show as bubbles
+// Where a country's bubble sits on a zoomed-out map (roughly where its stations are, not the geometric centre)
+const CPT = { AT:[47.6,14.1], BE:[50.6,4.6], HR:[45.4,15.9], CZ:[49.8,15.5], DK:[56.0,9.6], EE:[58.7,25.5], FI:[62.5,26.0], FR:[46.7,2.5],
+  DE:[51.0,10.3], GR:[39.1,22.5], HU:[47.1,19.4], IS:[64.9,-18.5], IT:[42.8,12.6], LV:[56.9,24.9], LT:[55.3,23.9], LU:[49.8,6.1],
+  NL:[52.2,5.5], NO:[60.8,9.0], PL:[52.0,19.4], PT:[39.6,-8.0], RO:[45.9,25.0], SK:[48.7,19.6], SI:[46.1,14.8], ES:[40.0,-3.7],
+  SE:[59.8,15.5], CH:[46.8,8.2], BG:[42.7,25.3], RS:[44.0,20.9], ME:[42.7,19.3], MK:[41.6,21.7], AL:[41.1,20.0], BA:[44.2,17.9],
+  XK:[42.6,20.9], AD:[42.55,1.58], MD:[47.2,28.5], MT:[35.9,14.4], CY:[35.0,33.2], LI:[47.15,9.55], GB:[53.0,-1.8], IE:[53.2,-7.7],
+  MC:[43.74,7.42], SM:[43.94,12.46], TR:[39.0,34.0], IL:[31.8,35.0], GL:[64.2,-51.7] };
 
 const BBOX = {
-  AT:[[46.37,9.52],[49.02,17.16]],  BE:[[49.50,2.50],[51.50,6.40]],
+  AT:[[46.37,9.52],[49.02,17.16]],  BE:[[49.50,2.50],[51.50,6.40]],   // FI/IT/RO below were too tight (Åland, Lampedusa, east Finland: stations vanished)
   HR:[[42.39,13.49],[46.55,19.45]], CZ:[[48.55,12.10],[51.06,18.87]],
   DK:[[54.56,8.07],[57.77,15.19]],  EE:[[57.52,21.83],[59.68,28.21]],
-  FI:[[59.81,20.55],[70.09,29.58]], FR:[[41.33,-5.14],[51.09,9.56]],
+  FI:[[59.70,19.30],[70.20,31.30]], FR:[[41.33,-5.14],[51.09,9.56]],
   DE:[[47.27,5.87],[55.06,15.04]],  GR:[[34.70,19.30],[41.80,29.70]],
   HU:[[45.70,16.10],[48.60,22.90]], IS:[[63.29,-24.54],[66.56,-13.49]],
-  IT:[[36.49,6.63],[47.09,18.52]],  LV:[[55.68,20.97],[57.84,28.24]],
+  IT:[[35.40,6.60],[47.10,18.60]],  LV:[[55.68,20.97],[57.84,28.24]],
   LT:[[53.90,20.95],[56.45,26.83]], LU:[[49.44,5.73],[50.18,6.53]],
   NL:[[50.75,3.36],[53.55,7.22]],   NO:[[57.97,4.64],[71.19,31.15]],
   PL:[[49.00,14.10],[54.90,24.10]], PT:[[36.84,-9.52],[42.15,-6.19]],
-  RO:[[43.62,22.34],[48.26,29.68]], SK:[[47.73,16.84],[49.62,22.57]],
+  RO:[[43.60,20.20],[48.30,29.80]], SK:[[47.73,16.84],[49.62,22.57]],
   SI:[[45.42,13.38],[46.88,16.61]], ES:[[27.60,-18.40],[43.79,4.32]],
   SE:[[55.34,11.11],[69.06,24.17]], CH:[[45.80,5.90],[47.80,10.50]],
   BG:[[41.23,22.36],[44.22,28.69]], RS:[[42.23,18.84],[46.19,23.01]],
@@ -1244,6 +1293,36 @@ Object.assign(I18N.de, { labelTheme:'Darstellung', themeAuto:'Auto', themeLight:
 Object.assign(I18N.fr, { labelTheme:'Apparence', themeAuto:'Auto', themeLight:'Clair', themeDark:'Sombre' });
 Object.assign(I18N.es, { labelTheme:'Apariencia', themeAuto:'Auto', themeLight:'Claro', themeDark:'Oscuro' });
 
+// v1.16 — station sheet, Near Me states, notes on headline claims
+Object.assign(I18N.en, { lgUnverified:'unverified price', suspectNote:'Unverified — well below the verified prices in this country', suspectOctane:'Unverified — this source’s 98 prices are cheaper than its own 95 prices', close:'Close', locHelp:'Allow location for this site in your browser settings, or search for a place instead.', searchPlace:'Search for a place',
+  cheapZooming:'Looking for the cheapest in {c}…', cheapSkipped:'unverified lower prices ignored: {n}', loadFailShort:"Couldn't load — tap to retry", statsLoaded:'{n} of {tot} stations' });
+Object.assign(I18N.sv, { lgUnverified:'overifierat pris', suspectNote:'Overifierat — långt under landets verifierade priser', suspectOctane:'Overifierat — den här källans 98-priser är lägre än dess egna 95-priser', close:'Stäng', locHelp:'Tillåt plats för den här webbplatsen i webbläsarens inställningar, eller sök efter en plats i stället.', searchPlace:'Sök efter en plats',
+  cheapZooming:'Letar efter billigaste i {c}…', cheapSkipped:'overifierade lägre priser ignorerade: {n}', loadFailShort:'Kunde inte ladda — tryck för att försöka igen', statsLoaded:'{n} av {tot} stationer' });
+Object.assign(I18N.de, { lgUnverified:'nicht verifizierter Preis', suspectNote:'Nicht verifiziert — deutlich unter den verifizierten Preisen im Land', suspectOctane:'Nicht verifiziert — die 98er-Preise dieser Quelle liegen unter ihren eigenen 95er-Preisen', close:'Schließen', locHelp:'Erlaube den Standort für diese Seite in den Browsereinstellungen, oder suche stattdessen nach einem Ort.', searchPlace:'Nach einem Ort suchen',
+  cheapZooming:'Suche den günstigsten Preis in {c}…', cheapSkipped:'nicht verifizierte niedrigere Preise ignoriert: {n}', loadFailShort:'Laden fehlgeschlagen — tippen zum Wiederholen', statsLoaded:'{n} von {tot} Tankstellen' });
+Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vérifié — bien en dessous des prix vérifiés du pays', suspectOctane:'Non vérifié — les prix 98 de cette source sont inférieurs à ses propres prix 95', close:'Fermer', locHelp:'Autorisez la localisation pour ce site dans les réglages du navigateur, ou cherchez plutôt un lieu.', searchPlace:'Rechercher un lieu',
+  cheapZooming:'Recherche du moins cher en {c}…', cheapSkipped:'prix plus bas non vérifiés ignorés : {n}', loadFailShort:'Échec du chargement — touchez pour réessayer', statsLoaded:'{n} stations sur {tot}' });
+Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', suspectOctane:'Sin verificar — los precios 98 de esta fuente son más bajos que sus propios precios 95', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', searchPlace:'Buscar un lugar',
+  cheapZooming:'Buscando el más barato en {c}…', cheapSkipped:'precios más bajos sin verificar ignorados: {n}', loadFailShort:'No se pudo cargar — toca para reintentar', statsLoaded:'{n} de {tot} estaciones' });
+
+// Route planner — French and Spanish (these 29 keys were missing, so the whole Route view showed in English)
+Object.assign(I18N.fr, { routeTab:'Itinéraire', rtPreview:'Aperçu', rtFrom:'Départ', rtTo:'Arrivée', rtPh:'Adresse ou lieu', rtMyLoc:'Ma position', rtPickMap:'Choisir sur la carte',
+  rtTapMap:'Touchez la carte pour définir le {w}', rtStart:'point de départ', rtEnd:'point d’arrivée', rtWidth:'Largeur du couloir', rtHideUnknown:'Masquer les prix d’âge inconnu',
+  rtGo:'Trouver les pompes les moins chères', rtSearching:'Recherche des lieux…', rtRouting:'Calcul de l’itinéraire…', rtLoading:'Chargement des prix : {c}…',
+  rtNoPlace:'Impossible de trouver « {q} »', rtFail:'Impossible de calculer un itinéraire — le serveur gratuit est peut-être occupé. Réessayez dans un instant.',
+  rtNone:'Aucune pompe avec prix à moins de {w} km de l’itinéraire.', rtSummary:'{d} km · environ {h} · {n} pompes avec prix à moins de {w} km',
+  rtMedian:'Médiane sur l’itinéraire {p} par litre', rtCheaper:'{d}/L sous la médiane de l’itinéraire', rtSame:'proche de la médiane de l’itinéraire',
+  rtAlong:'km {k} sur {n}', rtDetour:'+{k} km de détour (est.)', rtVia:'Itinéraire via ici', rtOld:'{n} prix de plus de 10 h sont masqués.', rtClear:'Effacer l’itinéraire',
+  rtNote:'Aperçu. Itinéraire du serveur de démonstration OSRM gratuit (voiture ; ferries et péages non pris en compte). Les détours sont des estimations (à vol d’oiseau × 1,3). Les prix changent — vérifiez à la pompe. Votre départ et votre arrivée sont envoyés à OpenStreetMap (Nominatim) et au serveur OSRM.' });
+Object.assign(I18N.es, { routeTab:'Ruta', rtPreview:'Vista previa', rtFrom:'Desde', rtTo:'Hasta', rtPh:'Dirección o lugar', rtMyLoc:'Mi ubicación', rtPickMap:'Elegir en el mapa',
+  rtTapMap:'Toca el mapa para fijar el {w}', rtStart:'origen', rtEnd:'destino', rtWidth:'Ancho del corredor', rtHideUnknown:'Ocultar precios de edad desconocida',
+  rtGo:'Buscar los surtidores más baratos', rtSearching:'Buscando lugares…', rtRouting:'Calculando la ruta…', rtLoading:'Cargando precios: {c}…',
+  rtNoPlace:'No se encontró «{q}»', rtFail:'No se pudo calcular una ruta: el servidor gratuito puede estar ocupado. Inténtalo de nuevo en un momento.',
+  rtNone:'Ningún surtidor con precio a menos de {w} km de la ruta.', rtSummary:'{d} km · unas {h} · {n} surtidores con precio a menos de {w} km',
+  rtMedian:'Mediana de la ruta {p} por litro', rtCheaper:'{d}/L por debajo de la mediana de la ruta', rtSame:'cerca de la mediana de la ruta',
+  rtAlong:'km {k} de {n}', rtDetour:'+{k} km de desvío (est.)', rtVia:'Ruta por aquí', rtOld:'Se ocultan {n} precios de más de 10 h.', rtClear:'Borrar ruta',
+  rtNote:'Vista previa. Ruta del servidor de demostración OSRM gratuito (coche; no se tienen en cuenta ferris ni peajes). Los desvíos son estimaciones (línea recta × 1,3). Los precios cambian: compruébalo en el surtidor. Tu origen y destino se envían a OpenStreetMap (Nominatim) y al servidor OSRM.' });
+
 let lang = (function () {
   try {
     const saved = localStorage.getItem('efp_lang');
@@ -1348,7 +1427,7 @@ const metaOf  = {};           // cc → meta (grade, status, fetched_at …)
 let   selId   = null;
 let   myLat   = null, myLon = null, myCountry = null;
 let   myMark  = null, myCirc = null;
-let   metaAt  = null;
+let   metaAt  = null, metaTotal = 0;
 let   fCountry= '', fFuel = '';
 let   colorBy = 'price';       // 'price' | 'source'
 let   metaCountries = [];      // meta.json countries[] (with stats_eur once the pipeline publishes it)
@@ -1429,6 +1508,94 @@ function cheapest(s) {
   if (a && d) return a.price <= d.price ? a : d;
   return a || d || null;       // no mainstream fuel => no headline price
 }
+// like minOf, but ignoring prices the data contradicts (see suspectLow) — for averages and colour scales, so they describe what a driver will pay
+function minOfTrusted(s, f) {
+  let best = null;
+  for (const p of (s.prices||[])) if (inFuel(p, f) && p.price > 0 && p.basis !== 'regulated_max' && p.plausible !== false && !suspectLow(s.country, p) && (!best || p.price < best.price)) best = p;
+  return best;
+}
+
+// ── Headline claims ("cheapest here", "best price nearby", "saves X kr") must rest on prices we can stand behind. ──
+// Two kinds of price may not win such a claim (they stay visible in lists and on the map, and the claim says how many were set aside):
+//  · an unverified price (no timestamp, or an old one) that is cheaper than the bottom of the VERIFIED range — the 5th percentile of the
+//    country's fresh, dated prices — wherever verified prices are common enough (≥ 15 %) to speak for the country. (Sweden: ANWB's
+//    undated 95 prices run ~2.5 kr under the dated ones and its "98" is cheaper than its own "95": "saves 152 kr" was a data artefact.)
+//  · any price more than 20 % below the country's median for that fuel: stations don't differ that much, so it is a typo or a special
+//    pump (agricultural diesel, a crowd entry), not what a driver will pay.
+const FRESH_H = 36, MEDIAN_FLOOR = 0.80, MIN_DATED = 20, DATED_SHARE = 0.15;
+function isFresh(p) { if (!p.updated_at) return false; const h = (Date.now() - tsDate(p.updated_at)) / 3600000; return h >= -1 && h <= FRESH_H; }
+const _dm = {};
+function priceStats(cc, key) {
+  const k = cc + '|' + key + '|' + (_cv[cc] | 0) + '|' + Math.floor(Date.now() / 3600000);
+  if (k in _dm) return _dm[k];
+  const all = [], dated = [];
+  for (const s of (data[cc] || [])) for (const p of (s.prices || [])) {
+    if (!(p.price > 0) || p.plausible === false || p.basis === 'regulated_max' || fuelKeyOf(p) !== key) continue;
+    all.push(p.price); if (isFresh(p)) dated.push(p.price);
+  }
+  let r = null;
+  if (all.length >= MIN_DATED) {
+    all.sort((a, b) => a - b); dated.sort((a, b) => a - b);
+    r = { n: all.length, med: all[all.length >> 1], dn: dated.length, dp05: dated.length >= MIN_DATED ? dated[Math.floor(dated.length * 0.05)] : null };
+  }
+  return (_dm[k] = r);
+}
+// A feed whose "98" prices are, on the whole, no dearer than its own "95" prices has its fuel slots mixed up (seen: ANWB in Sweden —
+// its 98 sits at E85 level —, and the Slovak and Estonian feeds). Its 98 prices cannot win a claim.
+const _ob = {};
+function octaneBad(cc) {
+  const k = cc + '|' + (_cv[cc] | 0);
+  if (k in _ob) return _ob[k];
+  const by = {};
+  for (const s of (data[cc] || [])) for (const p of (s.prices || [])) {
+    if (!(p.price > 0) || p.plausible === false || p.basis === 'regulated_max') continue;
+    const key = fuelKeyOf(p); if (key !== 'P95' && key !== 'P98') continue;
+    const o = by[String(p.source ?? '')] || (by[String(p.source ?? '')] = { P95: [], P98: [] });
+    o[key].push(p.price);
+  }
+  const bad = new Set(), med = a => { a.sort((x, y) => x - y); return a[a.length >> 1]; };
+  for (const [src, o] of Object.entries(by)) if (o.P95.length >= MIN_DATED && o.P98.length >= MIN_DATED && med(o.P98) <= med(o.P95)) bad.add(src);
+  return (_ob[k] = bad);
+}
+// '' = fine, 'octane' = this feed's 98 slot is unreliable, 'low' = far below what verified prices / the country median say
+function suspectWhy(cc, p) {
+  const ck = (_cv[cc] | 0) * 100000 + (Math.floor(Date.now() / 3600000) % 100000);      // verdict is cached on the price until the country reloads / the hour turns
+  if (p._sk !== ck) { p._sw = suspectWhy0(cc, p); p._sk = ck; }
+  return p._sw;
+}
+function suspectWhy0(cc, p) {
+  if (fuelKeyOf(p) === 'P98' && octaneBad(cc).has(String(p.source ?? ''))) return 'octane';
+  const st = priceStats(cc, fuelKeyOf(p));
+  if (!st) return '';
+  if (p.price < st.med * MEDIAN_FLOOR) return 'low';
+  return (!isFresh(p) && st.dp05 != null && st.dn >= st.n * DATED_SHARE && p.price < st.dp05 * 0.98) ? 'low' : '';
+}
+const suspectLow = (cc, p) => !!suspectWhy(cc, p);
+const suspectMsg = (cc, p) => { const w = suspectWhy(cc, p); return w === 'octane' ? t('suspectOctane') : w ? t('suspectNote') : ''; };
+
+// EUR per local unit, derived from the published EUR medians vs the local medians we hold (no extra FX call). Lets prices of
+// different countries be ORDERED — raw numbers are not comparable (1.2 EUR vs 785 HUF vs 17 SEK).
+const _fx = {};
+function fx(cc) {
+  const cur = metaOf[cc]?.currency || metaCountries.find(c => c.country === cc)?.currency || 'EUR';
+  if (cur === 'EUR') return 1;
+  const key = (_cv[cc] | 0) + '|' + metaCountries.length, hit = _fx[cc];
+  if (hit && hit.k === key) return hit.r;
+  const e = metaCountries.find(c => c.country === cc)?.stats_eur, st = cstat(cc);
+  const r = (e?.p95?.median && st.rp95) ? e.p95.median / st.rp95 : (e?.diesel?.median && st.rd) ? e.diesel.median / st.rd : null;
+  _fx[cc] = { k: key, r };
+  return r;
+}
+// cached headline price of a station (cheapest() loops over its prices; several calls per station per list build added up to 24 ms per pass)
+function headline(s) {
+  const v = _cv[s.country] | 0;
+  if (s._hf !== fFuel || s._hv !== v) { s._hp = cheapest(s); s._hf = fFuel; s._hv = v; }
+  return s._hp;
+}
+// sort key for "cheapest first": EUR price; unverified lows (see suspectLow) sort after everything else instead of topping the list
+function eurPrice(s) { const p = headline(s); if (!p) return Infinity; const r = fx(s.country); return (r ? p.price * r : 1e8) + (suspectLow(s.country, p) ? 1e5 : 0); }
+// decorate–sort–undecorate: the key is computed once per item, not once per comparison (sorting 120k stations took 420–670 ms)
+function sortBy(arr, keyFn) { const d = arr.map(x => [keyFn(x), x]); d.sort((a, b) => a[0] - b[0]); return d.map(p => p[1]); }
 
 function dist(a, b, c, d) {
   const R=6371, dLat=(c-a)*Math.PI/180, dLon=(d-b)*Math.PI/180;
@@ -1456,9 +1623,19 @@ function cleanSrc(x) { return String(x || '').replace(/\s*\([^)]*\)\s*/g, ' ').t
 // 3 decimals only where pumps really price in tenths of a cent/penny (EUR, GBP); 2 elsewhere
 function pfmt(price, cur) { return Number(price).toFixed(cur === 'EUR' || cur === 'GBP' ? 3 : 2); }
 
+// Feeds sometimes send "2026-10-07T00:00:00" or a bare date without a zone: that is UTC. (new Date() would read it as the
+// phone's local time and make the price look 1–2 h older than it is.)
+function tsDate(iso) {
+  let s = String(iso);
+  if (/^\d{4}-\d\d-\d\d$/.test(s)) s += 'T00:00:00';
+  return new Date(/(Z|[+-]\d\d:?\d\d)$/i.test(s) ? s : s + 'Z');
+}
+// Compact counts for tight spots (tab label, cluster bubbles): 987 · 4.0k → 4k · 12 846 → 13k
+function fmtCount(n) { return n < 1000 ? String(n) : n < 9950 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : Math.round(n / 1000) + 'k'; }
+
 function fmtAgo(iso) {
   if (!iso) return '';
-  const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  const m = Math.max(0, Math.round((Date.now() - tsDate(iso)) / 60000));
   if (m < 2)    return t('justNow');
   if (m < 90)   return t('minAgo', { m });
   const h = Math.round(m / 60);
@@ -1500,7 +1677,7 @@ function priceAgeH(s) {
   let best = null;
   for (const p of (s.prices || [])) {
     if (!p.updated_at) continue;
-    const h = (Date.now() - new Date(p.updated_at)) / 3600000;
+    const h = (Date.now() - tsDate(p.updated_at)) / 3600000;
     if (best === null || h < best) best = h;
   }
   return best;
@@ -1530,7 +1707,7 @@ function ageHtml(s) {
 function fmtDate(iso) {
   if (!iso) return '';
   try {
-    const d = new Date(iso);
+    const d = tsDate(iso);
     const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];
     return `${d.getUTCDate()} ${mo} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')} UTC`;
   } catch { return ''; }
@@ -1615,7 +1792,7 @@ function quintiles(cc, key) {
   const k = cc + '|' + key;
   if (k in _qCache) return _qCache[k];
   const v = [];
-  for (const s of (data[cc] || [])) { const p = minOf(s, key); if (p) v.push(p.price); }
+  for (const s of (data[cc] || [])) { const p = minOfTrusted(s, key); if (p) v.push(p.price); }
   let q = null;
   if (v.length >= 25) { v.sort((a,b) => a-b); q = [.2,.4,.6,.8].map(f => v[Math.floor(f * v.length)]); }
   return (_qCache[k] = q);
@@ -1645,14 +1822,17 @@ function prepStations(arr) {
   }
 }
 let _qVer = 0, _sig = '';
-// headline price / colour / price-level of a station, cached until the filter, colour mode or data changes
+const _cv = {};                              // country → data version. A country finishing its download only invalidates ITS stations (a global counter recoloured all 120k on every load)
+// headline price / colour / price-level of a station, cached until the filter, colour mode or its country's data changes
 function lvl(s) {
-  if (s._ck !== _sig) {
+  const cv = _cv[s.country] | 0;
+  if (s._ck !== _sig || s._cv !== cv) {
     const cp = cheapest(s);
     s._cp = cp;
-    s._qi = cp && colorBy === 'price' ? qIndex(s, cp) : null;
-    s._col = markerCol(s, cp);
-    s._ck = _sig;
+    const sus = !!cp && colorBy === 'price' && suspectLow(s.country, cp);     // an unverified price must not look "cheap": neutral grey, not part of the cluster tint
+    s._qi = cp && !sus && colorBy === 'price' ? qIndex(s, cp) : null;
+    s._col = sus ? '#94A3B8' : markerCol(s, cp);
+    s._ck = _sig; s._cv = cv;
   }
   return s;
 }
@@ -1664,36 +1844,40 @@ const CELL_PX = 56, CELL_PX_NEAR = 26, NOCLUSTER_ZOOM = 16, MAX_SHOWN = 700;
 function mkMarker(s) {
   const cp = s._cp, col = s._col;
   const sz = cp ? 12 : 7, op = cp ? 1 : 0.45;
-  // 30 px transparent hit box around the (7–12 px) dot so it can be tapped with a thumb; the dot stays centred on the anchor
-  const icon = L.divIcon({
-    className:'',
-    html:`<div class="mk"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2px solid #fff;opacity:${op};box-shadow:0 0 0 1px rgba(0,0,0,0.25),0 1px 4px rgba(0,0,0,0.35)"></div></div>`,
-    iconSize:[30,30], iconAnchor:[15,15],
-  });
-  const m = L.marker([s.lat, s.lon], { icon, riseOnHover:false });
-  if (cp && map.getZoom() >= PRICE_ZOOM) {
+  // The price label is part of the icon itself (shown from zoom 13 by CSS, thinned out by declutter()) — see .mk .lbl
+  let lbl = '';
+  if (cp) {
     const a95 = minOf(s,F95), dd = minOf(s,FDIE), sy = SYM[cp.currency]||cp.currency;
     const tip = fFuel ? `${fuelLabel(cp)} ${cp.price.toFixed(2)}${sy}`
       : [a95 && `95 ${a95.price.toFixed(2)}${sy}`, dd && `D ${dd.price.toFixed(2)}${sy}`].filter(Boolean).join(' · ');
-    m.bindTooltip(tip, { permanent:true, direction:'right', className:'ptip', offset:[6,0] });
+    if (tip) lbl = `<span class="lbl">${esc(tip)}</span>`;
   }
+  // 30 px transparent hit box around the (7–12 px) dot so it can be tapped with a thumb; the dot stays centred on the anchor
+  const icon = L.divIcon({
+    className:'',
+    html:`<div class="mk"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};border:2px solid #fff;opacity:${op};box-shadow:0 0 0 1px rgba(0,0,0,0.25),0 1px 4px rgba(0,0,0,0.35)"></div>${lbl}</div>`,
+    iconSize:[30,30], iconAnchor:[15,15],
+  });
+  const m = L.marker([s.lat, s.lon], { icon, riseOnHover:false });
   m.on('click', () => selectStation(s.id, true));
   return m;
 }
 
-function mkClusterMarker(c) {
-  const n = c.n;
-  const sz = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
-  // tint = median price level (0 cheap … 4 dear, per-country quintiles) of the priced stations inside; untinted when too few are priced
-  let tint = '';
+// tint = median price level (0 cheap … 4 dear, per-country quintiles) of the priced stations inside; untinted when too few are priced
+function clusterTint(c) {
   const tot = c.h[0] + c.h[1] + c.h[2] + c.h[3] + c.h[4];
-  if (colorBy === 'price' && tot >= 3 && tot >= n * 0.3) {
+  if (colorBy === 'price' && tot >= 3 && tot >= c.n * 0.3) {
     let acc = 0, i = 0;
     for (; i < 5; i++) { acc += c.h[i]; if (acc >= tot / 2) break; }
-    tint = ` style="--cc:${RAMP[i]};--ct:${i === 1 || i === 2 ? '#16181D' : '#fff'}"`;
+    return ` style="--cc:${RAMP[i]};--ct:${i === 1 || i === 2 ? '#16181D' : '#fff'}"`;
   }
+  return '';
+}
+function mkClusterMarker(c, tint) {
+  const n = c.n;
+  const sz = n < 50 ? 'small' : n < 200 ? 'medium' : 'large';
   const m = L.marker([c.lat / n, c.lon / n], {
-    icon: L.divIcon({ html:`<div${tint}>${n}</div>`, className:`marker-cluster marker-cluster-${sz}`, iconSize:[40,40] }),
+    icon: L.divIcon({ html:`<div${tint}>${fmtCount(n)}</div>`, className:`marker-cluster marker-cluster-${sz}`, iconSize:[40,40] }),
     keyboard:false,
   });
   const lat0 = c.minLat, lat1 = c.maxLat, lon0 = c.minLon, lon1 = c.maxLon;
@@ -1701,11 +1885,43 @@ function mkClusterMarker(c) {
     if (lat1 - lat0 < 1e-5 && lon1 - lon0 < 1e-5) map.setView(m.getLatLng(), Math.min(map.getZoom() + 3, 17));
     else map.fitBounds([[lat0, lon0], [lat1, lon1]], { padding:[48, 48], maxZoom:17 });
   });
-  return { m, tint };
+  return m;
+}
+
+// Zoomed out, only the country in the middle is downloaded (a phone must not fetch 8 MB to show a continent), so the rest
+// of Europe used to look EMPTY. Countries that are not loaded yet are drawn as one bubble each (flag, station count, typical
+// 95 price from meta.json); tapping one zooms in and loads it. Greedy, biggest first, so bubbles never pile up.
+const bubbleLayer = L.layerGroup().addTo(map);
+let bubbleKey = '';
+function renderBubbles() {
+  const z = map.getZoom();
+  if (z >= BUBBLE_ZOOM || fCountry || !metaCountries.length) { if (bubbleKey) { bubbleLayer.clearLayers(); bubbleKey = ''; } return; }
+  const b = map.getBounds().pad(0.15);
+  const items = metaCountries.filter(c => !loaded.has(c.country) && CPT[c.country] && c.station_count > 0 && b.contains(CPT[c.country]))
+    .sort((a, c) => c.station_count - a.station_count);
+  const placed = [], keep = [];
+  for (const c of items) {
+    const p = map.latLngToContainerPoint(CPT[c.country]);
+    if (placed.every(q => Math.hypot(q.x - p.x, q.y - p.y) > 62)) { placed.push(p); keep.push(c); }
+  }
+  const key = z + '|' + keep.map(c => c.country + c.station_count).join(',');
+  if (key === bubbleKey) return;
+  bubbleKey = key; bubbleLayer.clearLayers();
+  for (const c of keep) {
+    const med = c.stats_eur?.p95?.median;
+    const m = L.marker(CPT[c.country], {
+      icon: L.divIcon({ className:'', html:`<div class="cty-b" title="${esc(CNAMES[c.country] || c.country)}">${FLAGS[c.country] || ''}<b>${fmtCount(c.station_count)}</b>${med ? `<small>€${med.toFixed(2)}</small>` : ''}</div>`, iconSize:[66, 66], iconAnchor:[33, 33] }),
+      keyboard:false,
+    });
+    const cc = c.country;
+    m.on('click', () => { if (CB[cc]) map.fitBounds(CB[cc], { padding:[24, 24] }); });
+    bubbleLayer.addLayer(m);
+  }
 }
 
 function renderMarkers() {
-  _sig = fFuel + '|' + colorBy + '|' + _qVer;
+  _sig = fFuel + '|' + colorBy;
+  renderBubbles();
   const z = map.getZoom();
   const bd = map.getBounds().pad(0.3);
   const n = bd.getNorth(), so = bd.getSouth(), w = bd.getWest(), e = bd.getEast();
@@ -1732,10 +1948,11 @@ function renderMarkers() {
   }
   const want = new Map();
   const add = (key, make) => { const old = shown.get(key); want.set(key, old || make()); };
+  const sk = s => 's|' + s.id + '|' + _sig + '|' + (_cv[s.country] | 0);   // a changed country version (fresh prices) must rebuild its markers
   if (cell) {
     for (const c of cells.values()) {
-      if (c.n === 1) add('s|' + c.first.id + '|' + _sig, () => mkMarker(c.first));
-      else { const r = mkClusterMarker(c); add('c|' + c.key + '|' + c.n + '|' + r.tint, () => r.m); }
+      if (c.n === 1) add(sk(c.first), () => mkMarker(c.first));
+      else { const tint = clusterTint(c); add('c|' + c.key + '|' + c.n + '|' + tint, () => mkClusterMarker(c, tint)); }   // only built when it is new
     }
   } else {
     let list = singles;
@@ -1743,7 +1960,7 @@ function renderMarkers() {
       const c = map.getCenter();
       list = list.map(s => [(s.lat - c.lat) ** 2 + (s.lon - c.lng) ** 2, s]).sort((a, b) => a[0] - b[0]).slice(0, MAX_SHOWN).map(x => x[1]);
     }
-    for (const s of list) add('s|' + s.id + '|' + _sig, () => mkMarker(s));
+    for (const s of list) add(sk(s), () => mkMarker(s));
   }
   for (const [k, m] of shown) if (!want.has(k)) viewLayer.removeLayer(m);
   for (const [k, m] of want) if (!shown.has(k)) viewLayer.addLayer(m);
@@ -1760,49 +1977,116 @@ function schedDeclutter() { clearTimeout(_dcT); _dcT = setTimeout(declutter, 180
 function declutter() {
   const mc = map.getContainer();
   if (mc.classList.contains('hide-prices')) return;
-  const els = mc.querySelectorAll('.leaflet-tooltip.ptip');
-  els.forEach(e => e.classList.remove('ptip-off'));
+  const els = mc.querySelectorAll('.mk .lbl');
+  els.forEach(e => e.classList.remove('off'));
   const rects = Array.from(els, e => e.getBoundingClientRect());
   const kept = [];
   rects.forEach((r, i) => {
     if (!r.width) return;
-    for (const k of kept) { if (r.left < k.right + 2 && r.right + 2 > k.left && r.top < k.bottom + 1 && r.bottom + 1 > k.top) { els[i].classList.add('ptip-off'); return; } }
+    for (const k of kept) { if (r.left < k.right + 2 && r.right + 2 > k.left && r.top < k.bottom + 1 && r.bottom + 1 > k.top) { els[i].classList.add('off'); return; } }
     kept.push(r);
   });
 }
 
-// Open a station's popup at its position (independent of whether its marker is currently drawn)
+// Open a station's details at its position (independent of whether its marker is currently drawn).
+// Desktop: a map popup. Phones/tablets: a bottom sheet — a popup did not fit a 573 px-tall iPhone screen (the zoom buttons, country
+// badge and Near Me button covered its name, close button and Go button), and a sheet keeps Go / ♥ / share always reachable.
 function openStation(s, zoomTo) {
   if (!s || !s.lat) return;
   const ll = [s.lat, s.lon];
-  if (zoomTo && map.getZoom() < 14) map.setView(ll, 14);
-  L.popup({ maxWidth:290, offset:[0, -6], autoPanPadding:[12, 70] }).setLatLng(ll).setContent(mkPopup(s)).openOn(map);
+  if (DESK.matches) {
+    if (zoomTo && map.getZoom() < 14) map.setView(ll, 14);
+    L.popup({ maxWidth:290, offset:[0, -6], autoPanPadding:[12, 70] }).setLatLng(ll).setContent(mkPopup(s)).openOn(map);
+    return;
+  }
+  openStationSheet(s, zoomTo);
+}
+
+let stId = null, stPrev = null, selRing = null;
+function setSelRing(s) {
+  clearSelRing();
+  selRing = L.marker([s.lat, s.lon], { icon:L.divIcon({ className:'', html:'<div class="sel-ring"></div>', iconSize:[0, 0] }), interactive:false, keyboard:false, zIndexOffset:800 }).addTo(map);
+}
+function clearSelRing() { if (selRing) { map.removeLayer(selRing); selRing = null; } }
+function clearStationUi() { stId = null; clearSelRing(); }
+
+function openStationSheet(s, zoomTo) {
+  const p = document.getElementById('p-station'); if (!p) return;
+  stId = s.id; selId = s.id;
+  document.getElementById('st-head').innerHTML = stHead(s);
+  const body = document.getElementById('st-body');
+  body.innerHTML = `<div class="pop">${stBody(s)}</div>`; body.scrollTop = 0;
+  // remember the sheet that was open underneath (list / near me / search at some height) so ✕ brings it back untouched
+  if (curPanel && curPanel.id !== 'p-station') stPrev = { panel:curPanel, state:sheetState };
+  Object.values(PANEL_MAP).forEach(pid => { if (pid !== 'p-station') document.getElementById(pid)?.classList.remove('open'); });
+  p.classList.add('open'); document.body.classList.add('sheet'); curPanel = p;
+  setSheet('half');
+  setSelRing(s);
+  // one move only: a zoom animation and a separate reveal-pan fight each other (the pump ended up hidden behind the sheet)
+  if (zoomTo && map.getZoom() < 14) viewAbove([s.lat, s.lon], 14, p, 'half'); else revealAbove([s.lat, s.lon], p, 'half');
+  try { document.getElementById('st-name')?.focus({ preventScroll:true }); } catch (_) {}
+}
+// ✕ returns to the sheet underneath (if any); a tap on the empty map (toMap) just dismisses everything
+function closeStation(toMap) {
+  const prev = toMap ? null : stPrev; stPrev = null;
+  document.getElementById('p-station')?.classList.remove('open');
+  clearStationUi();
+  if (prev && prev.panel) { prev.panel.classList.add('open'); curPanel = prev.panel; document.body.classList.add('sheet'); setSheet(prev.state); }
+  else closePanel();
+}
+// The free map area above a sheet: from just under the chip row down to a little above the sheet's top edge
+function freeBand(sheetEl, state) {
+  const size = map.getSize(), tb = document.getElementById('tabbar').offsetHeight;
+  const top = size.y - tb - (sheetEl.offsetHeight - sheetOffset(sheetEl, state));
+  const y0 = 104;
+  return { size, y0, y1: Math.max(y0 + 40, top - 24) };
+}
+// pan the map just enough that the selected pump sits in that band
+function revealAbove(ll, sheetEl, state) {
+  const { size, y0, y1 } = freeBand(sheetEl, state);
+  const pt = map.latLngToContainerPoint(ll);
+  const ty = (pt.y < y0 || pt.y > y1) ? (y0 + y1) / 2 : pt.y, tx = Math.min(Math.max(pt.x, 30), size.x - 30);
+  if (Math.abs(tx - pt.x) > 1 || Math.abs(ty - pt.y) > 1) map.panBy([pt.x - tx, pt.y - ty], { animate:true, duration:0.3 });
+}
+// zoom to z AND offset the view in one move, so the pump lands in the middle of the band above the sheet
+function viewAbove(ll, z, sheetEl, state) {
+  const { size, y0, y1 } = freeBand(sheetEl, state);
+  const px = map.project(ll, z); px.y -= (y0 + y1) / 2 - size.y / 2;
+  map.setView(map.unproject(px, z), z);
 }
 
 // ════════════════════════════════════════════════════
 // Popup
 // ════════════════════════════════════════════════════
-function mkPopup(s) {
-  const flag = FLAGS[s.country] || '';
+// What a station's details contain — identical in the desktop popup and the phone sheet: prices with provenance, fill-up cost,
+// "worth the drive?" and the age / source-grade line
+function stBody(s) {
   const rows = (s.prices||[]).map(p => {
     const sym = SYM[p.currency] || p.currency || '';
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
     const pv = provHtml(p);
     const np = p.plausible === false;
+    const sus = np ? '' : suspectMsg(s.country, p);       // not flagged by the pipeline, but the data contradicts it: shown, marked, never ranked first
     return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? '⚠ ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${pfmt(p.price, p.currency)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
       + (np ? `<tr class="np"><td class="pv npnote" colspan="3"><b>${t('notPlausible')}</b> — ${t('np_' + (p.implausible_reason || 'far_from_country'))}. ${t('npExcluded')}</td></tr>`
-            : (pv ? `<tr><td class="pv" colspan="3">${pv}</td></tr>` : ''));
+            : (pv || sus ? `<tr><td class="pv" colspan="3">${pv}${sus ? `${pv ? '<br>' : ''}<span class="sus-note">⚠ ${sus}</span>` : ''}</td></tr>` : ''));
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
+  return `<table class="pop-tbl">${rows}</table>${noP}
+    ${fillHtml(cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
+    <div class="worth" id="worth-${esc(s.id)}">${worthHtml(s, fFuel || _worthKey || (cheapest(s) ? fuelKeyOf(cheapest(s)) : 'P95'))}</div>
+    ${ageHtml(s)}`;
+}
+
+// Desktop map popup
+function mkPopup(s) {
+  const flag = FLAGS[s.country] || '';
   const goUrl = (s.lat && s.lon) ? true : null;
   return `<div class="pop">
     <div class="pop-name">${flag} ${esc(s.name||s.brand||'—')}</div>
     ${s.address ? `<div class="pop-addr">${esc(s.address)}</div>` : ''}
     <div class="pop-meta">${esc([s.city, cleanSrc(s.source)].filter(Boolean).join(' · '))}</div>
-    <table class="pop-tbl">${rows}</table>${noP}
-    ${fillHtml(cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
-    <div class="worth" id="worth-${esc(s.id)}">${worthHtml(s, fFuel || _worthKey || (cheapest(s) ? fuelKeyOf(cheapest(s)) : 'P95'))}</div>
-    ${ageHtml(s)}
+    ${stBody(s)}
     <div class="pop-foot">
       <span class="pop-actions">
         <button class="pop-act fav-btn${favs[s.id] ? ' on' : ''}" data-fav="${esc(s.id)}" aria-label="${t('saved')}" onclick="toggleFav('${escId(s.id)}')">♥</button>
@@ -1811,6 +2095,21 @@ function mkPopup(s) {
       ${goUrl ? `<button class="pop-go" style="border:none;font-family:inherit;cursor:pointer" onclick="doNav('${escId(s.id)}')">🧭 ${t('go')}</button>` : ''}
     </div>
   </div>`;
+}
+
+// Phone/tablet sheet header: name, address and the three actions — this part never scrolls away
+function stHead(s) {
+  const flag = FLAGS[s.country] || '';
+  const sub = [s.address, s.city, cleanSrc(s.source)].filter(Boolean).join(' · ');
+  return `<div class="st-top">
+      <div class="st-id"><div class="st-name" id="st-name" tabindex="-1">${flag} ${esc(s.name||s.brand||'—')}</div>${sub ? `<div class="st-sub">${esc(sub)}</div>` : ''}</div>
+      <button class="st-x" aria-label="${esc(t('close'))}" onclick="closeStation()">✕</button>
+    </div>
+    <div class="st-acts">
+      ${(s.lat && s.lon) ? `<button class="st-go" onclick="doNav('${escId(s.id)}')">🧭 ${t('go')}</button>` : ''}
+      <button class="pop-act fav-btn${favs[s.id] ? ' on' : ''}" data-fav="${esc(s.id)}" aria-label="${esc(t('saved'))}" onclick="toggleFav('${escId(s.id)}')">♥</button>
+      <button class="pop-act" aria-label="${esc(t('share'))}" onclick="shareStation('${escId(s.id)}')">⤴</button>
+    </div>`;
 }
 
 // ════════════════════════════════════════════════════
@@ -1823,13 +2122,14 @@ function mkCard(s, km) {
   const cp   = cheapest(s);
   const chips = (s.prices||[]).map(p => {
     const sym = SYM[p.currency] || p.currency || '';
-    const best = cp && p === cp;
-    const tip = [p.source && srcName(p.source), p.basis === 'regulated_max' ? t('regulatedMax') : '', (p.source || p.basis === 'regulated_max') ? ageTxt(p.updated_at) : ''].filter(Boolean).join(' · ');
+    const sus = p.plausible === false ? '' : suspectMsg(s.country, p);
+    const best = cp && p === cp && !sus;
+    const tip = [p.source && srcName(p.source), p.basis === 'regulated_max' ? t('regulatedMax') : '', (p.source || p.basis === 'regulated_max') ? ageTxt(p.updated_at) : '', sus].filter(Boolean).join(' · ');
     if (p.plausible === false) return `<span class="pc np" title="${esc(t('notPlausible') + ' — ' + t('np_' + (p.implausible_reason || 'far_from_country')))}"><span class="t">⚠ ${fuelLabel(p)}</span><span class="v">${p.price.toFixed(2)}</span><span class="u">${sym}</span><span class="npl">${t('notPlausible')}</span></span>`;
-    return `<span class="pc${best?' best':''}"${tip ? ` title="${esc(tip)}"` : ''}>
+    return `<span class="pc${best?' best':''}${sus?' sus':''}"${tip ? ` title="${esc(tip)}"` : ''}>
       <span class="t">${fuelLabel(p)}</span>
       <span class="v">${p.price.toFixed(2)}</span>
-      <span class="u">${sym}</span>
+      <span class="u">${sym}</span>${sus ? '<span class="q" aria-label="' + esc(sus) + '">?</span>' : ''}
     </span>`;
   }).join('');
   const noPin = (!s.lat||!s.lon) ? ` <span title="${t('noGpsTitle')}" style="color:var(--text3)">📍✕</span>` : '';
@@ -1859,7 +2159,7 @@ let metaIdx = {};
 function fetchMeta(fresh) {
   const go = () => fetch('meta.json', fresh ? { cache:'no-store' } : {}).then(r => r.ok ? r.json() : null).catch(() => null);
   return go().then(m => m || _sleep(1500).then(go)).then(m => {
-    if (m) { metaAt = m.fetched_at; metaCountries = m.countries || []; metaIdx = Object.fromEntries(metaCountries.map(c => [c.country, c.fetched_at])); }
+    if (m) { metaAt = m.fetched_at; metaTotal = m.total_stations || 0; metaCountries = m.countries || []; metaIdx = Object.fromEntries(metaCountries.map(c => [c.country, c.fetched_at])); schedRender(); }
     return m;
   }).catch(() => null);
 }
@@ -1928,7 +2228,7 @@ async function loadCC(cc, opts) {
     prepStations(data[cc]);
     for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
     delete _cs[cc];
-    _qVer++;
+    _cv[cc] = (_cv[cc] | 0) + 1; _qVer++;
     if (!force) { schedRender(); onNewData(); }
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
@@ -1956,7 +2256,7 @@ async function refreshData(manual) {
       renderCompare();
     }
   } finally {
-    ind.forEach(e => { e.classList.remove('spin-on'); e.style.transform = ''; });
+    ind.forEach(e => { e.classList.remove('spin-on'); e.style.transform = ''; e.style.opacity = ''; });   // opacity too: it was left at 1 and the circle stayed on the sheet
     _refreshing = false; updLabel();
   }
   if (manual) toast(m ? t(n ? 'updDone' : 'updNone', { n }) : t('updFail'));
@@ -1967,7 +2267,7 @@ function updLabel() {
   const cc = centerCountry();
   const iso = (cc && metaOf[cc]?.fetched_at) || metaAt;
   if (!iso) { el.textContent = ''; return; }
-  const h = (Date.now() - new Date(iso)) / 3600000;
+  const h = (Date.now() - tsDate(iso)) / 3600000;
   el.textContent = h > 2 ? t('updOld', { t: fmtAgo(iso) }) : t('updAgo', { t: fmtAgo(iso) });
   line.classList.toggle('old', h > 2);
 }
@@ -2093,34 +2393,33 @@ function getAll() {
       if (view && !(s.lat && s.lon && s.lat <= n && s.lat >= so && s.lon >= w && s.lon <= e)) continue;
       all.push(s);
     }
-  let pricedCmp = null, unpricedCmp = null;
+  // Priced stations first (sorted as asked), unpriced after — never interleaved. Sort keys are computed ONCE per station (a
+  // comparator that called cheapest() twice per comparison made "By price" take 420 ms and "By distance" 670 ms on 120k stations),
+  // and prices of different countries are ordered in EUR: raw numbers put every euro station before the first krona.
+  const priced = [], unpriced = [];
+  for (const s of all) (headline(s) ? priced : unpriced).push(s);
   if (view) {
-    // What the map shows, cheapest first — own country before neighbours so currencies never get compared
-    const cc = centerCountry();
-    pricedCmp = (a, c) => ((a.country === cc ? 0 : 1) - (c.country === cc ? 0 : 1)) || (cheapest(a).price - cheapest(c).price);
-  } else if (sortMode === 'distance' && myLat != null) {
-    const byDist = (a,b) => {
-      const da = (a.lat&&a.lon) ? dist(myLat,myLon,a.lat,a.lon) : 99999;
-      const db = (b.lat&&b.lon) ? dist(myLat,myLon,b.lat,b.lon) : 99999;
-      return da-db;
-    };
-    pricedCmp = unpricedCmp = byDist;   // distance is meaningful for both groups
-  } else if (sortMode === 'price') {
-    pricedCmp = (a,b) => cheapest(a).price - cheapest(b).price;
-    // unpricedCmp stays null: there's no price to sort by, so that group keeps its original order
+    const cc = centerCountry();              // what the map shows, cheapest first — own country before neighbours
+    return sortBy(priced, s => (s.country === cc ? 0 : 1e9) + eurPrice(s)).concat(unpriced);
   }
-  return splitPricedFirst(all, pricedCmp, unpricedCmp);
+  if (sortMode === 'distance' && myLat != null) {
+    const dk = s => (s.lat && s.lon) ? dist(myLat, myLon, s.lat, s.lon) : 99999;   // distance is meaningful for both groups
+    return sortBy(priced, dk).concat(sortBy(unpriced, dk));
+  }
+  if (sortMode === 'price') return sortBy(priced, eurPrice).concat(unpriced);       // unpriced keep their original order
+  return priced.concat(unpriced);
 }
 
 function updCounts() {
   const n = countAll();
   document.getElementById('mobCount').textContent   = n.toLocaleString();
-  document.getElementById('tb-list-lbl').textContent = n > 0 ? t('tabListCount', { n: n.toLocaleString() }) : t('tabList');
+  document.getElementById('tb-list-lbl').textContent = n > 0 ? t('tabListCount', { n: fmtCount(n) }) : t('tabList');   // compact: "List (123,169)" wrapped onto two lines and shoved the icon up
 }
 
+let lastAll = [];                            // the list as last built — "Load more" pages through it instead of re-filtering and re-sorting everything
 function rebuildList() {
   vpOff = 0;
-  const all = getAll();
+  const all = lastAll = getAll();
   updCounts();
   renderPage(all, 0, true);
 }
@@ -2159,7 +2458,7 @@ function renderPage(all, offset, reset) {
 }
 
 function loadMore() {
-  renderPage(getAll(), vpOff + PAGE, false);
+  renderPage(lastAll, vpOff + PAGE, false);
 }
 
 function cycleSort() {
@@ -2185,7 +2484,7 @@ function selectStation(id, fromMap) {
     if (sc) sc.scrollTo({ top: Math.max(0, card.offsetTop - sc.clientHeight / 3), behavior:'smooth' });
   }
   const st = findStation(id);
-  if (st) { openStation(st, !fromMap); autoClose(); }
+  if (st) openStation(st, !fromMap);   // phones: the station sheet takes the place of whatever sheet was open (✕ brings that one back)
 }
 
 // ════════════════════════════════════════════════════
@@ -2194,31 +2493,41 @@ function selectStation(id, fromMap) {
 // "Near Me" never crosses a border: resolve the user's own country via reverse geocoding
 // (falls back, in showNearby(), to the nearest already-loaded station's country if this fails).
 async function detectCountry(lat, lon) {
+  // 2.5 s at most: a slow geocoder used to hold the whole Near Me flow hostage (the tap seemed to do nothing for as long as it took)
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 2500);
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=5`,
-      { headers:{ 'Accept-Language':'en' } });
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=5&accept-language=en`, { signal: ac.signal });
     if (r.ok) {
       const j = await r.json();
       const cc = (j.address?.country_code || '').toUpperCase();
       if (cc && CNAMES[cc]) return cc;
     }
-  } catch (_) {}
+  } catch (_) {} finally { clearTimeout(to); }
   return null;
 }
 
 const NEARBY_RADIUS_KM = 15;
-let _nearBest = null;
+let _nearBest = null, _locating = false;
 function nearGo() { if (_nearBest) doNav(_nearBest.id); }
+function nearbyNote(html) {
+  const el = document.getElementById('nearby-list'); if (el) el.innerHTML = html;
+  const s = document.getElementById('nearby-summary'); if (s) s.style.display = 'none';
+}
 
 function goNearby() {
-  if (!navigator.geolocation) { alert(t('geoNotSupported')); return; }
+  if (!navigator.geolocation) { toast(t('geoNotSupported')); return; }
+  // Open the sheet at once: waiting for the position with nothing on screen felt like a dead button. goTab('nearby') calls back
+  // into goNearby() while no position is known yet — the _locating guard turns that second call into a no-op.
+  if (activeTab !== 'nearby') goTab('nearby');
+  if (_locating) return;
+  _locating = true;
   const fab = document.getElementById('fab');
   fab.textContent = '⏳ ' + t('locating'); fab.classList.add('busy');
+  if (myLat == null) nearbyNote(`<p class="empty"><i class="spin"></i> ${t('locating')}</p>`);
+  const done = () => { _locating = false; fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy'); };
 
   navigator.geolocation.getCurrentPosition(async pos => {
     myLat = pos.coords.latitude; myLon = pos.coords.longitude;
-    fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy');
-    myCountry = await detectCountry(myLat, myLon);
 
     if (myMark) { map.removeLayer(myMark); map.removeLayer(myCirc); }
     myMark = L.marker([myLat,myLon], {
@@ -2229,22 +2538,29 @@ function goNearby() {
       radius:Math.min(pos.coords.accuracy,500), color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.08, weight:1,
     }).addTo(map);
 
-    map.setView([myLat,myLon], 13);
+    map.setView([myLat,myLon], 13, { animate:false });
+    const np = document.getElementById('p-nearby');
+    if (np.classList.contains('open')) revealAbove([myLat, myLon], np, sheetState);   // keep "you are here" above the sheet, not under it
     schedVP();
-    if (true) goTab('nearby');
-    else showNearby();
+    myCountry = await detectCountry(myLat, myLon);
+    done();
+    if (activeTab === 'nearby') showNearby();
   }, err => {
-    fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy');
-    alert(t('locErrorPrefix') + ({ 1:t('permDenied'),2:t('posUnavailable'),3:t('timedOut')}[err.code]||err.message));
+    done();
+    const why = { 1:t('permDenied'), 2:t('posUnavailable'), 3:t('timedOut') }[err.code] || err.message;
+    if (activeTab === 'nearby') nearbyNote(`<p class="empty">${esc(t('locErrorPrefix') + why)}<br>${esc(t('locHelp'))}</p><button class="trust-link" style="margin-top:0" onclick="goTab('search')">🔍 ${t('searchPlace')}</button>`);
+    else toast(t('locErrorPrefix') + why);
   }, { timeout:10000, maximumAge:60000 });
 }
 
 function showNearby() {
   if (myLat == null) return;
+  // Only the ~30 km around you matters: pre-filter on a lat/lon box so 120k stations are never measured and sorted
+  const dLat = 0.28, dLon = 0.28 / Math.max(0.2, Math.cos(myLat * Math.PI / 180));
   const all = [];
   for (const arr of Object.values(data))
     for (const s of arr) {
-      if (!s.lat || !s.lon) continue;
+      if (!s.lat || !s.lon || Math.abs(s.lat - myLat) > dLat || Math.abs(s.lon - myLon) > dLon) continue;
       all.push({ s, km: dist(myLat,myLon,s.lat,s.lon) });
     }
   all.sort((a,b) => a.km-b.km);   // only used below to find the nearest country; final order comes from splitPricedFirst
@@ -2268,11 +2584,12 @@ function showNearby() {
   }
 
   const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'lek',BAM:'BAM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪' };
-  let bestGlobal = null, bestGlobalKm = null, bestSt = null;
+  let bestGlobal = null, bestGlobalKm = null, bestSt = null, skipped = 0;
   const seen = [];
   for (const {s,km} of cands) {
     const cp = cheapest(s);
     if (!cp) continue;
+    if (suspectLow(s.country, cp)) { skipped++; continue; }      // see "Headline claims": stays in the list, can't win the headline
     seen.push(cp);
     if (!bestGlobal || cp.price < bestGlobal.price) { bestGlobal = cp; bestGlobalKm = km; bestSt = s; }
   }
@@ -2284,12 +2601,13 @@ function showNearby() {
   if (bestGlobal) {
     const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
     priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${fuelLabel(bestGlobal)}`;
-    detailEl.textContent = t('bestWithinDetail', { d: fmtDist(bestGlobalKm), n: cands.length, r: NEARBY_RADIUS_KM, c: CNAMES[country]||country||t('yourCountry') });
+    detailEl.textContent = t('bestWithinDetail', { d: fmtDist(bestGlobalKm), n: cands.length, r: NEARBY_RADIUS_KM, c: CNAMES[country]||country||t('yourCountry') })
+      + (skipped ? ' · ' + t('cheapSkipped', { n: skipped }) : '');
     // Compare like with like: same fuel bucket, same currency
     const same = seen.filter(p => p.currency === bestGlobal.currency && fuelKeyOf(p) === fuelKeyOf(bestGlobal));
     const avg = same.length >= 3 ? same.reduce((a, p) => a + p.price, 0) / same.length : null;
     const diff = avg != null ? avg - bestGlobal.price : 0;
-    document.getElementById('ns-save').textContent = diff >= 0.01
+    document.getElementById('ns-save').textContent = diff >= 0.01 && diff / avg >= 0.01      // below 1 % it is noise ("0.05 kr/L below average — saves 2 kr")
       ? t('nearSave', { d: diff.toFixed(2) + ' ' + sym, a: avg.toFixed(2) + ' ' + sym, s: money(diff * tank, bestGlobal.currency), l: tank }) : '';
     document.getElementById('ns-go').textContent = '🧭 ' + t('nearGo');
     sumEl.style.display = 'flex';
@@ -2345,7 +2663,7 @@ async function runSearch(isMob) {
   // Address search (Nominatim)
   try {
     if (isMob && resEl) resEl.innerHTML = `<p class="empty">${t('searching')}</p>`;
-    const r    = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers:{'Accept-Language':'en'} });
+    const r    = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=${NOM_CC}&accept-language=${lang}`);
     const rows = await r.json();
     if (!rows.length) {
       if (isMob) resEl.innerHTML = `<p class="empty">${t('nothingFoundFor', { q: esc(q) })}</p>`;
@@ -2365,11 +2683,12 @@ async function runSearch(isMob) {
 // ════════════════════════════════════════════════════
 // Tab / Panel management
 // ════════════════════════════════════════════════════
-const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', compare:'p-compare', filter:'p-filter' };
+const PANEL_MAP = { nearby:'p-nearby', search:'p-search', stations:'p-stations', compare:'p-compare', filter:'p-filter', station:'p-station' };
 
 function goTab(tab) {
   if (tab === 'map' && DESK.matches) tab = 'stations';   // desktop has no separate map tab
   activeTab = tab;
+  clearStationUi(); stPrev = null;
   document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
   document.querySelectorAll('.tb').forEach(b => b.removeAttribute('aria-current'));
   document.getElementById(`tb-${tab}`)?.classList.add('on');
@@ -2389,7 +2708,7 @@ function goTab(tab) {
 }
 
 function openTrust() { document.getElementById('trust-overlay')?.classList.add('on'); document.querySelector('#trust-overlay .trust-dismiss')?.focus(); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeTrust(); closeNav(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeTrust(); closeNav(); if (stId && !DESK.matches) closeStation(true); } });
 function closeTrust() {
   document.getElementById('trust-overlay')?.classList.remove('on');
   try { localStorage.setItem('efp_seen_trust_intro', '1'); } catch (_) {}
@@ -2400,6 +2719,7 @@ const DESK = window.matchMedia('(min-width:1000px)');
 function autoClose() { if (!DESK.matches && curPanel) setSheet('peek'); }
 
 function closePanel() {
+  clearStationUi(); stPrev = null;
   document.body.classList.remove('sheet', 'sheet-peek');
   curPanel = null;
   Object.values(PANEL_MAP).forEach(pid => document.getElementById(pid)?.classList.remove('open'));
@@ -2412,6 +2732,7 @@ function closePanel() {
 // Only a deliberate gesture (tap or drag on the map) shrinks a full sheet — popup auto-pan or a flyTo finishing
 // right after a tab tap used to collapse the Prices sheet to half height.
 map.on('click dragstart', () => { if (!DESK.matches && curPanel && sheetState === 'full') setSheet('half'); });
+map.on('click', () => { if (stId && !DESK.matches) closeStation(true); });   // a tap on empty map dismisses the station sheet
 
 // ── Draggable sheets: full / half / peek (phones & tablets). Drag the handle; swipe past peek to close. ──
 let sheetState = 'full', curPanel = null;
@@ -2420,7 +2741,9 @@ function sheetOffset(p, st) {
   const h = p.offsetHeight;
   if (st === 'full') return 0;
   if (st === 'half') return Math.max(0, h - Math.round(innerHeight * 0.46));
-  return Math.max(0, h - 124);
+  // peek: handle + the station header (name, Go, ♥, share) for the station sheet; a fixed 124 px for the others
+  const keep = p.id === 'p-station' ? 30 + (p.querySelector('.st-head')?.offsetHeight || 94) + 6 : 124;
+  return Math.max(0, h - keep);
 }
 function setSheet(st) {
   const p = curPanel; if (!p) return;
@@ -2552,12 +2875,15 @@ const _cs = {};
 function cstat(cc) {
   if (_cs[cc]) return _cs[cc];
   const arr = data[cc] || [];
-  const med = k => { const v = []; for (const s of arr) { const p = minOf(s, k); if (p) v.push(p.price); } if (v.length < 5) return null; v.sort((a, b) => a - b); return v[v.length >> 1]; };
-  return (_cs[cc] = { p95: med('P95'), d: med('DIESEL'), cur: metaOf[cc]?.currency || 'EUR' });
+  // p95 / d describe what a driver will pay (prices the data contradicts are left out). rp95 / rd are the plain medians over ALL
+  // plausible prices — the same set meta.json's stats_eur is computed over, which is what exchange-rate derivation (fx, rtRate) needs.
+  const med = (k, pick) => { const v = []; for (const s of arr) { const p = pick(s, k); if (p) v.push(p.price); } if (v.length < 5) return null; v.sort((a, b) => a - b); return v[v.length >> 1]; };
+  return (_cs[cc] = { p95: med('P95', minOfTrusted), d: med('DIESEL', minOfTrusted), rp95: med('P95', minOf), rd: med('DIESEL', minOf), cur: metaOf[cc]?.currency || 'EUR' });
 }
 
 // ── "Worth the drive?" — break-even for ONE selected pump, from the user's position (or the map centre) ──
 const ROAD_FACTOR = 1.3;                       // straight line -> typical road distance
+const WORTH_NEAR_KM = 60;                      // GPS counts only for pumps this close; no verdict beyond twice that
 function fuelKeysOf(s) {
   const ks = [];
   for (const p of (s.prices || [])) {
@@ -2569,13 +2895,18 @@ function fuelKeysOf(s) {
 }
 function worthCalc(s, key) {
   const pP = minOf(s, key); if (!pP || !s.lat) return null;
+  if (suspectLow(s.country, pP)) return null;       // no verdict built on a price the data itself contradicts
   const c = map.getCenter();
-  const from = myLat != null ? { lat:myLat, lon:myLon, you:true } : { lat:c.lat, lon:c.lng, you:false };
+  // Your GPS position only counts when this pump is actually near you. Looking at another city (search, browsing), "is it worth
+  // the drive?" from 660 km away is meaningless ("costs 1454 kr more"), so measure from the map centre instead.
+  const near = myLat != null && dist(myLat, myLon, s.lat, s.lon) <= WORTH_NEAR_KM;
+  const from = near ? { lat:myLat, lon:myLon, you:true } : { lat:c.lat, lon:c.lng, you:false };
   const dP = dist(from.lat, from.lon, s.lat, s.lon) * ROAD_FACTOR;
+  if (dP > WORTH_NEAR_KM * 2) return null;
   let alt = null, altD = Infinity;
   for (const o of (data[s.country] || [])) {
     if (o.id === s.id || !o.lat) continue;
-    const q = minOf(o, key); if (!q || q.currency !== pP.currency) continue;
+    const q = minOf(o, key); if (!q || q.currency !== pP.currency || suspectLow(o.country, q)) continue;
     const d = dist(from.lat, from.lon, o.lat, o.lon);
     if (d < altD) { altD = d; alt = { s:o, p:q }; }
   }
@@ -2612,28 +2943,48 @@ function setWorthKey(id, key) {
   if (s && el) el.innerHTML = worthHtml(s, key);
 }
 
-let _pulse = null;
-function cheapestInView() {
+let _pulse = null, _cheapBusy = false;
+// resolves true once the country's file is in (it may already be downloading for another reason)
+async function whenLoaded(cc, ms = 20000) {
+  loadCC(cc);
+  const t0 = Date.now();
+  while (!loaded.has(cc) && !failedCC.has(cc) && Date.now() - t0 < ms) await _sleep(150);
+  return loaded.has(cc);
+}
+async function cheapestInView() {
   buzz(10);
-  const cc = map.getZoom() >= 6 ? centerCountry() : null;
-  if (!cc) { toast(t('cheapFar')); return; }
-  const b = map.getBounds();
-  let best = null, n = 0;
-  for (const s of (data[cc] || [])) {
-    if (!s.lat || !s.lon || !matches(s) || !b.contains([s.lat, s.lon])) continue;
-    const p = cheapest(s);
-    if (!p || p.price <= 0) continue;
-    n++;
-    if (!best || p.price < best.p.price) best = { s, p };
-  }
-  if (!best) { toast(t('cheapNone')); return; }
-  const { s, p } = best;
-  map.flyTo([s.lat, s.lon], Math.max(map.getZoom(), 15), { duration: 1.1 });
-  if (_pulse) map.removeLayer(_pulse);
-  _pulse = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', html:'<div class="pulse-ring"><i></i><i></i><i></i></div>', iconSize:[0,0] }), interactive:false, zIndexOffset:900 }).addTo(map);
-  setTimeout(() => { if (_pulse) { map.removeLayer(_pulse); _pulse = null; } }, 6000);
-  map.once('moveend', () => { setTimeout(() => { openStation(s); buzz([30, 40, 30]); }, 150); });
-  toast(t('cheapResult', { p: `${p.price.toFixed(2)} ${SYM[p.currency] || p.currency}`, n: s.name || s.brand || '—', c: n.toLocaleString() }), 5200);
+  if (_cheapBusy) return;
+  _cheapBusy = true;
+  try {
+    const cc = centerCountry();
+    if (!cc) { toast(t('cheapFar')); return; }
+    // Zoomed out (or the country is still downloading): go to the country in the middle first, instead of answering
+    // "Zoom in to a country first." — which was the very first thing a new visitor got from the most prominent button.
+    if (map.getZoom() < 6 || !loaded.has(cc)) {
+      toast(t('cheapZooming', { c: CNAMES[cc] || cc }), 2400);
+      if (map.getZoom() < 6 && CB[cc]) map.fitBounds(CB[cc], { padding:[24, 24], animate:false });
+      if (!(await whenLoaded(cc))) { toast(t('loadFailShort')); return; }
+    }
+    const b = map.getBounds();
+    let best = null, n = 0, skipped = 0;
+    for (const s of (data[cc] || [])) {
+      if (!s.lat || !s.lon || !matches(s) || !b.contains([s.lat, s.lon])) continue;
+      const p = cheapest(s);
+      if (!p || p.price <= 0) continue;
+      n++;
+      if (suspectLow(cc, p)) { skipped++; continue; }          // see "Headline claims"
+      if (!best || p.price < best.p.price) best = { s, p };
+    }
+    if (!best) { toast(t('cheapNone')); return; }
+    const { s, p } = best;
+    map.flyTo([s.lat, s.lon], Math.max(map.getZoom(), 15), { duration: 1.1 });
+    if (_pulse) map.removeLayer(_pulse);
+    _pulse = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', html:'<div class="pulse-ring"><i></i><i></i><i></i></div>', iconSize:[0,0] }), interactive:false, zIndexOffset:900 }).addTo(map);
+    setTimeout(() => { if (_pulse) { map.removeLayer(_pulse); _pulse = null; } }, 6000);
+    map.once('moveend', () => { setTimeout(() => { openStation(s); buzz([30, 40, 30]); }, 150); });
+    toast(t('cheapResult', { p: `${p.price.toFixed(2)} ${SYM[p.currency] || p.currency}`, n: s.name || s.brand || '—', c: n.toLocaleString() })
+      + (skipped ? ' · ' + t('cheapSkipped', { n: skipped }) : ''), 5200);
+  } finally { _cheapBusy = false; }
 }
 
 
@@ -2692,7 +3043,7 @@ map.on('click', e => {
 });
 
 async function rtGeocode(q) {
-  const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, { headers:{ 'Accept-Language':'en' } });
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=${NOM_CC}&accept-language=${lang}`);
   const j = await r.json();
   return j[0] ? { lat:+j[0].lat, lon:+j[0].lon } : null;
 }
@@ -2795,7 +3146,7 @@ function rtRate(cc) {
   const cur = metaOf[cc]?.currency || 'EUR';
   if (cur === 'EUR') return 1;
   const eur = metaCountries.find(c => c.country === cc)?.stats_eur?.[cmpKey]?.median;
-  const loc = cstat(cc)[cmpKey === 'diesel' ? 'd' : 'p95'];
+  const loc = cstat(cc)[cmpKey === 'diesel' ? 'rd' : 'rp95'];   // raw median: same price set as the published EUR median
   return eur && loc ? eur / loc : null;
 }
 function rtRank() {
@@ -2804,7 +3155,7 @@ function rtRank() {
   let hiddenOld = 0;
   const rows = [];
   for (const c of R.cands) {
-    const age = c.p.updated_at ? (Date.now() - new Date(c.p.updated_at)) / 3600000 : null;
+    const age = c.p.updated_at ? (Date.now() - tsDate(c.p.updated_at)) / 3600000 : null;
     if (age != null && age > MAX_AGE_H) { hiddenOld++; continue; }
     if (age == null && rt.hideUnknown) continue;
     const cc = c.s.country;
@@ -2882,7 +3233,8 @@ function renderLegend() {
   if (!el) return;
   const body = colorBy === 'price'
     ? `<div class="lg-ramp">${RAMP.map(c => `<i style="background:${c}"></i>`).join('')}</div>
-       <div class="lg-ends"><span>${t('lgCheap')}</span><span>${t('lgDear')}</span></div>`
+       <div class="lg-ends"><span>${t('lgCheap')}</span><span>${t('lgDear')}</span></div>
+       <div class="lg-un"><i></i>${t('lgUnverified')}</div>`
     : `<div class="lg-grades">${Object.entries(GRADE_COL).filter(([g]) => g !== 'L').map(([g,c]) => `<span><i style="background:${c}"></i>${g}</span>`).join('')}</div>`;
   el.innerHTML = `<div class="lg-top"><span class="lg-title">${t(colorBy === 'price' ? 'lgPrice' : 'lgSource')}</span>
     <span style="display:flex;gap:4px"><button class="lg-mode" aria-label="${esc(t('lgToggle'))}" title="${esc(t('lgToggle'))}" onclick="toggleColorBy()">⇄</button><button class="lg-mode" aria-label="${esc(t('gradeInfo'))}" title="${esc(t('gradeInfo'))}" onclick="openTrust()">ⓘ</button></span></div>${body}`;
@@ -3051,19 +3403,22 @@ function updStatus() {
   const z = map.getZoom();
   const cc = z >= 5 ? centerCountry() : null;
   const spin = act > 0 ? ' <i class="spin"></i>' : '';
-  let html, cls = 'ok';
+  let html, cls = 'ok', retry = false;
   if (!cc) {
-    html = `<div class="pl-row1">${FLAGS.EU} Europe${spin}</div><div class="pl-row2"><span class="pl-sub">${t('statsStations', { n: n.toLocaleString() })}</span></div>`;
+    // only the countries you have looked at are downloaded — say so, instead of presenting 29,008 as "Europe's" station count
+    html = `<div class="pl-row1">${FLAGS.EU} Europe${spin}</div><div class="pl-row2"><span class="pl-sub">${metaTotal > n ? t('statsLoaded', { n: n.toLocaleString(), tot: metaTotal.toLocaleString() }) : t('statsStations', { n: n.toLocaleString() })}</span></div>`;
   } else if (!loaded.has(cc)) {
-    html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)} <i class="spin"></i></div><div class="pl-row2"><span class="pl-sub">${t('loadingEllipsis')}</span></div>`;
-    cls = 'loading';
+    const failed = failedCC.has(cc) && !loading.has(cc);      // used to say "Loading…" with a spinner forever after a failed download
+    retry = failed;
+    html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)}${failed ? '' : ' <i class="spin"></i>'}</div><div class="pl-row2"><span class="pl-sub">${failed ? '⚠ ' + esc(t('loadFailShort')) : t('loadingEllipsis')}</span></div>`;
+    cls = failed ? 'ok' : 'loading';
   } else {
     const st = cstat(cc), sy = SYM[st.cur] || st.cur;
     const bits = [st.p95 != null && `<span>95 <b>${st.p95.toFixed(2)}</b> ${sy}</span>`, st.d != null && `<span>D <b>${st.d.toFixed(2)}</b> ${sy}</span>`].filter(Boolean).join('');
     html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)}${spin}</div><div class="pl-row2">${bits || `<span class="pl-sub">${t('noPricesShort')}</span>`}</div>`;
   }
   badge.innerHTML = html; badge.className = cls;
-  badge.onclick = () => goTab('compare');
+  badge.onclick = retry ? retryFailed : () => goTab('compare');
   updCounts();
   updProgress();
 }
@@ -3111,14 +3466,26 @@ function setTheme(v) { try { if (v === 'auto') localStorage.removeItem('efp_them
 // ════════════════════════════════════════════════════
 // 100dvh handles current iOS; this covers iOS < 15.4 and, above all, the on-screen keyboard, which iOS does not
 // resize the layout for — the search sheet would sit behind it. visualViewport tells us the real visible height.
+// Keyboard open ⇒ hide the tab bar (it rode on top of the keyboard and ate a third of the visible height on a 573 px screen).
+// iOS 26 resizes the LAYOUT viewport instead of the visual one, so the visualViewport test below never fired there; focus on a
+// text field is the signal that works everywhere. (Not for the desktop sidebar, where the tab strip is navigation.)
+const isTextField = el => !!(el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]), textarea'));
+function updKb() {
+  const vv = window.visualViewport;
+  const kb = !DESK.matches && (isTextField(document.activeElement) || (vv && window.innerHeight - vv.height > 140));
+  document.body.classList.toggle('kb', !!kb);
+}
+document.addEventListener('focusin', updKb);
+document.addEventListener('focusout', () => setTimeout(updKb, 80));
+
 (function fitViewport() {
   const vv = window.visualViewport, root = document.documentElement;
   const dvh = window.CSS && CSS.supports && CSS.supports('height', '100dvh');
   if (!vv || (dvh && !IS_IOS)) return;
   const sync = () => {
     root.style.setProperty('--app-h', Math.round(vv.height) + 'px');
-    const kb = window.innerHeight - vv.height > 140;           // keyboard open
-    document.body.classList.toggle('kb', kb);
+    const kb = window.innerHeight - vv.height > 140;           // keyboard open (iOS ≤ 25)
+    updKb();
     if (!kb && window.scrollY) window.scrollTo(0, 0);            // iOS leaves the page shifted after the keyboard closes
     if (map) map.invalidateSize({ pan:false });
   };
