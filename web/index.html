@@ -1914,7 +1914,8 @@ function renderBubbles() {
       keyboard:false,
     });
     const cc = c.country;
-    m.on('click', () => { if (CB[cc]) map.fitBounds(CB[cc], { padding:[24, 24] }); });
+    // load it explicitly: big countries (NO, ES, SE, TR) fit at zoom 4 on a phone, where the viewport loader deliberately loads nothing
+    m.on('click', () => { failedCC.delete(cc); loadCC(cc); if (CB[cc]) map.fitBounds(CB[cc], { padding:[24, 24] }); });
     bubbleLayer.addLayer(m);
   }
 }
@@ -2524,7 +2525,9 @@ function goNearby() {
   const fab = document.getElementById('fab');
   fab.textContent = '⏳ ' + t('locating'); fab.classList.add('busy');
   if (myLat == null) nearbyNote(`<p class="empty"><i class="spin"></i> ${t('locating')}</p>`);
-  const done = () => { _locating = false; fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy'); };
+  // watchdog: a browser that never answers the permission prompt (Firefox "Not now") would leave "Locating…" on and block every retry
+  let wd; const done = () => { clearTimeout(wd); _locating = false; fab.textContent = '📍 ' + t('tabNearby'); fab.classList.remove('busy'); };
+  wd = setTimeout(() => { if (_locating) done(); }, 25000);
 
   navigator.geolocation.getCurrentPosition(async pos => {
     myLat = pos.coords.latitude; myLon = pos.coords.longitude;
@@ -2946,6 +2949,7 @@ function setWorthKey(id, key) {
 let _pulse = null, _cheapBusy = false;
 // resolves true once the country's file is in (it may already be downloading for another reason)
 async function whenLoaded(cc, ms = 20000) {
+  failedCC.delete(cc);               // an earlier failure must not end the wait before the new attempt has even started
   loadCC(cc);
   const t0 = Date.now();
   while (!loaded.has(cc) && !failedCC.has(cc) && Date.now() - t0 < ms) await _sleep(150);
