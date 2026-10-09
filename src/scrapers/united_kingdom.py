@@ -18,7 +18,7 @@ shared engine (src/merge_engine.py): every retailer feed is its own SourceResult
 "company"), ANWB is priority 9 ("aggregator", GBP). One feed failing is logged and listed in
 merge_report["failed_sources"]; only all sources failing raises. Retailer prices win, ANWB fills the fuel
 buckets a retailer record lacks, ANWB-only stations are added, disagreements are exposed as
-price["alt"] / price["disagree"]. ANWB's "95" matches retailer E10 (benchmark 2026-10-09): labelled E10@95 (98 stays E5@98).
+price["alt"] / price["disagree"]. ANWB's "95" matches retailer E10 (benchmark 2026-10-09): labelled E10@95 (its 98 slot is dropped, unverified).
 Currency: ANWB delivers EUR; _anwb.py converts to GBP with the ECB rate (CURRENCY = "GBP"). ANWB prices
 still in EUR (no rate) are dropped so GBP and EUR are never mixed.
 
@@ -140,14 +140,13 @@ class UnitedKingdomScraper(ANWBScraper):
                 p["updated_at"] = None
                 # Benchmark 2026-10-09 (135 stations also priced by a retailer): ANWB's "95" slot equals the
                 # retailer E10 price (median diff 0.000; vs retailer E5 -15 p), so it is regular 95 / E10.
-                # The earlier 10-07 benchmark (E5 super) no longer holds. The "98" slot stays E5@98 (unverified:
-                # no overlap with retailer prices; plausibility flags it if it is priced below 95).
-                if p["fuel_type"] in ("E10", "E5", "95", "98"):
-                    o = octane_of(p)
-                    if p["fuel_type"] == "98" or (o or 0) >= 98:
-                        p["fuel_type"], p["octane"] = "E5", 98
-                    else:
-                        p["fuel_type"], p["octane"] = "E10", 95
+                # The earlier 10-07 benchmark (E5 super) no longer holds. The "98" slot is DROPPED: it has no
+                # same-station overlap with retailer prices and its median equals the 95 slot's (1.908), so
+                # it is probably regular fuel. shortcut: re-check with tools/analysis/e_anwb_slot_matching.py.
+                if p["fuel_type"] == "98" or (octane_of(p) or 0) >= 98:
+                    continue
+                if p["fuel_type"] in ("E10", "E5", "95"):
+                    p["fuel_type"], p["octane"] = "E10", 95
                 ps.append(p)
             best: Dict[str, Dict[str, Any]] = {}
             for p in ps:                       # E5 can appear twice (super + 98): keep the lower

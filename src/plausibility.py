@@ -12,7 +12,7 @@ Reasons
     inconsistent_fuels    the diesel/petrol ratio of one station is far from the country's usual ratio
                           and this is the price that deviates more from its own country median
 
-    octane_order          98 priced below its own station's 95 (> 0.5 %), or the whole 98 slot of one source
+    octane_order          98 priced below its own station's 95 (> 0.5 %; the older of the two when both are dated), or the whole 98 slot of one source
                           is priced < 1 % above those stations' 95 on >= 20 paired stations (a real 98 costs
                           3-10 % more: ANWB's mislabelled SE / SK / EE / GB petrol slots)
 
@@ -81,12 +81,14 @@ def mark_implausible(stations: List[Dict[str, Any]], currency: str, fx: Optional
         p95 = [p for p in s.get("prices") or [] if _station_price(p) and fuel_group(p) == "P95"]
         for p in s.get("prices") or []:
             if p95 and _station_price(p) and fuel_group(p) == "P98":
-                pairs[p.get("source")].append((min(q["price"] for q in p95), p))
+                pairs[p.get("source")].append((min(p95, key=lambda q: q["price"]), p))
     for lst in pairs.values():
-        slot_bad = len(lst) >= MIN_GROUP and statistics.median(b["price"] / a for a, b in lst) < 1.01
+        slot_bad = len(lst) >= MIN_GROUP and statistics.median(b["price"] / a["price"] for a, b in lst) < 1.01
         for a, b in lst:
-            if slot_bad or b["price"] < a * 0.995:
-                _flag(b, "octane_order", counts)
+            if slot_bad or b["price"] < a["price"] * 0.995:
+                # both timestamped and the 98 is the newer one: the 95 is the stale side
+                stale95 = not slot_bad and a.get("updated_at") and b.get("updated_at") and a["updated_at"] < b["updated_at"]
+                _flag(a if stale95 else b, "octane_order", counts)
 
     # 2 — far from the country median of the same fuel group (station prices only)
     groups: Dict[str, List[float]] = defaultdict(list)

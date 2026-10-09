@@ -22,7 +22,7 @@ async def main():
     print("alt", sum(1 for p in pr if p.get("alt")), "disagree", sum(1 for p in pr if p.get("disagree")))
     print("station sources", dict(collections.Counter(tuple(x["sources"]) for x in st).most_common(8)))
     assert {p["currency"] for p in pr} == {"GBP"}
-    assert not any(p["fuel_type"] == "95" for p in pr), "ANWB 95 must be relabelled E5@97"
+    assert not any(p["fuel_type"] == "95" for p in pr), "ANWB 95 must be relabelled E10@95"
     print("merged example", next((x for x in st if len(x["sources"]) > 1), None))
 
 asyncio.run(main())

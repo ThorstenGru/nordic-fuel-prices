@@ -22,6 +22,22 @@ def st98(i, p95, p98):
 
 
 class Plausibility(unittest.TestCase):
+    def test_octane_order_country_level_slot(self):
+        # one source's 98 has no 95 at the same station but sits below the country 95 median
+        S = crowd() + [{"id": f"x{i}", "prices": [{"fuel_type": "98", "price": 1.50, "octane": 98, "source": "a"}]}
+                       for i in range(25)]
+        self.assertEqual(mark_implausible(S, "EUR"), {"octane_order": 25})
+        S = crowd() + [{"id": f"x{i}", "prices": [{"fuel_type": "98", "price": 1.95, "octane": 98, "source": "a"}]}
+                       for i in range(25)]
+        self.assertEqual(mark_implausible(S, "EUR"), {})
+
+    def test_octane_order_flags_stale_95_when_98_newer(self):
+        ok = [st98(i, 1.80 + i % 5 * .01, 1.95 + i % 5 * .01) for i in range(30)]
+        s = st98(900, 1.95, 1.90)
+        s["prices"][0]["updated_at"], s["prices"][1]["updated_at"] = "2026-10-01T00:00:00+00:00", "2026-10-09T00:00:00+00:00"
+        mark_implausible(ok + [s], "EUR")
+        self.assertEqual([p.get("plausible") for p in s["prices"]], [False, None])
+
     def test_octane_order_station_and_slot(self):
         ok = [st98(i, 1.80 + i % 5 * .01, 1.95 + i % 5 * .01) for i in range(30)]
         self.assertEqual(mark_implausible(ok + [st98(900, 1.80, 1.70)], "EUR"), {"octane_order": 1})
