@@ -12,6 +12,10 @@ Reasons
     inconsistent_fuels    the diesel/petrol ratio of one station is far from the country's usual ratio
                           and this is the price that deviates more from its own country median
 
+    octane_order          98 priced below its own station's 95 (> 0.5 %), or the whole 98 slot of one source
+                          is priced < 1 % above those stations' 95 on >= 20 paired stations (a real 98 costs
+                          3-10 % more: ANWB's mislabelled SE / SK / EE / GB petrol slots)
+
 Regulated maxima (basis == "regulated_max") only face the absolute band: they are one number for a whole
 country, so "far from the country median" is meaningless for them.
 """
@@ -44,6 +48,10 @@ def fuel_group(p: Dict[str, Any]) -> Optional[str]:
     return ft
 
 
+def _station_price(p: Dict[str, Any]) -> bool:
+    return p.get("basis") != "regulated_max" and p.get("plausible") is not False and bool(p.get("price"))
+
+
 def _flag(p: Dict[str, Any], reason: str, counts: Dict[str, int]) -> None:
     if p.get("plausible") is False:
         return
@@ -67,6 +75,19 @@ def mark_implausible(stations: List[Dict[str, Any]], currency: str, fx: Optional
                 if band and v and not (band[0] <= v / rate <= band[1]):
                     _flag(p, "outside_eur_band", counts)
 
+    # 1b — octane order: 98 must cost more than 95 (station level, then whole source slot)
+    pairs: Dict[Any, List[tuple]] = defaultdict(list)
+    for s in stations:
+        p95 = [p for p in s.get("prices") or [] if _station_price(p) and fuel_group(p) == "P95"]
+        for p in s.get("prices") or []:
+            if p95 and _station_price(p) and fuel_group(p) == "P98":
+                pairs[p.get("source")].append((min(q["price"] for q in p95), p))
+    for lst in pairs.values():
+        slot_bad = len(lst) >= MIN_GROUP and statistics.median(b["price"] / a for a, b in lst) < 1.01
+        for a, b in lst:
+            if slot_bad or b["price"] < a * 0.995:
+                _flag(b, "octane_order", counts)
+
     # 2 — far from the country median of the same fuel group (station prices only)
     groups: Dict[str, List[float]] = defaultdict(list)
     for s in stations:
@@ -84,6 +105,18 @@ def mark_implausible(stations: List[Dict[str, Any]], currency: str, fx: Optional
             m = med.get(fuel_group(p) or "")
             if m and not (m * LOW <= p["price"] <= m * HIGH):
                 _flag(p, "far_from_country", counts)
+
+    # 2b — a source's whole 98 slot priced below the country's 95 median (too few same-station pairs for 1b)
+    if "P95" in med:
+        by_src: Dict[Any, List[Dict[str, Any]]] = defaultdict(list)
+        for s in stations:
+            for p in s.get("prices") or []:
+                if _station_price(p) and fuel_group(p) == "P98":
+                    by_src[p.get("source")].append(p)
+        for lst in by_src.values():
+            if len(lst) >= MIN_GROUP and statistics.median(p["price"] for p in lst) < med["P95"]:
+                for p in lst:
+                    _flag(p, "octane_order", counts)
 
     # 3 — a station's diesel/petrol ratio vs the country's usual ratio
     ratios = []

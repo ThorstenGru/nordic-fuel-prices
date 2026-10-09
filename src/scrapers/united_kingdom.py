@@ -18,7 +18,7 @@ shared engine (src/merge_engine.py): every retailer feed is its own SourceResult
 "company"), ANWB is priority 9 ("aggregator", GBP). One feed failing is logged and listed in
 merge_report["failed_sources"]; only all sources failing raises. Retailer prices win, ANWB fills the fuel
 buckets a retailer record lacks, ANWB-only stations are added, disagreements are exposed as
-price["alt"] / price["disagree"]. ANWB's "95" is really super-unleaded: relabelled E5@97 (98 stays 98).
+price["alt"] / price["disagree"]. ANWB's "95" matches retailer E10 (benchmark 2026-10-09): labelled E10@95 (98 stays E5@98).
 Currency: ANWB delivers EUR; _anwb.py converts to GBP with the ECB rate (CURRENCY = "GBP"). ANWB prices
 still in EUR (no rate) are dropped so GBP and EUR are never mixed.
 
@@ -138,14 +138,16 @@ class UnitedKingdomScraper(ANWBScraper):
                 if p.get("currency") != self.CURRENCY:      # unconverted EUR: never mix currencies
                     continue
                 p["updated_at"] = None
-                # Benchmark 2026-10-07: ANWB's UK "Euro 95 (E10)" price is really the E5 super-unleaded
-                # price (85% within 1 p of the retailer E5, 8% of E10; ~17 p above true E10). Label it E5.
-                # New ANWB mapping: that price arrives as fuel_type "95" (old: "E10"/"E5"); the 98 grade as
-                # "98" (old: "E5"). Both are UK super-unleaded: E5, octane 97 (98 when ANWB says 98).
+                # Benchmark 2026-10-09 (135 stations also priced by a retailer): ANWB's "95" slot equals the
+                # retailer E10 price (median diff 0.000; vs retailer E5 -15 p), so it is regular 95 / E10.
+                # The earlier 10-07 benchmark (E5 super) no longer holds. The "98" slot stays E5@98 (unverified:
+                # no overlap with retailer prices; plausibility flags it if it is priced below 95).
                 if p["fuel_type"] in ("E10", "E5", "95", "98"):
                     o = octane_of(p)
-                    p["octane"] = 98 if (p["fuel_type"] == "98" or (o or 0) >= 98) else 97
-                    p["fuel_type"] = "E5"
+                    if p["fuel_type"] == "98" or (o or 0) >= 98:
+                        p["fuel_type"], p["octane"] = "E5", 98
+                    else:
+                        p["fuel_type"], p["octane"] = "E10", 95
                 ps.append(p)
             best: Dict[str, Dict[str, Any]] = {}
             for p in ps:                       # E5 can appear twice (super + 98): keep the lower

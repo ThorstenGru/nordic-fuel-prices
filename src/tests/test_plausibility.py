@@ -15,7 +15,19 @@ def crowd(n=60):
     return [st(i, E10=1.80 + (i % 7) * 0.01, DIESEL=1.90 + (i % 5) * 0.01) for i in range(n)]
 
 
+def st98(i, p95, p98):
+    return {"id": str(i), "prices": [
+        {"fuel_type": "E10", "price": p95, "octane": 95, "source": "anwb"},
+        {"fuel_type": "98", "price": p98, "octane": 98, "source": "anwb"}]}
+
+
 class Plausibility(unittest.TestCase):
+    def test_octane_order_station_and_slot(self):
+        ok = [st98(i, 1.80 + i % 5 * .01, 1.95 + i % 5 * .01) for i in range(30)]
+        self.assertEqual(mark_implausible(ok + [st98(900, 1.80, 1.70)], "EUR"), {"octane_order": 1})
+        bad = [st98(i, 1.80 + i % 5 * .01, 1.80 + i % 5 * .01) for i in range(30)]
+        self.assertEqual(mark_implausible(bad, "EUR"), {"octane_order": 30})
+
     def test_normal_prices_untouched(self):
         S = crowd()
         self.assertEqual(mark_implausible(S, "EUR"), {})
