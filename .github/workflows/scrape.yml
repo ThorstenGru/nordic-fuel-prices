@@ -47,6 +47,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Unit tests (a failing test blocks the scrape and deploy)
+        working-directory: src
+        run: python -m unittest discover -s tests
+
       - name: Run scrapers
         env:
           TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}

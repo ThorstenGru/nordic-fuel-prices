@@ -238,9 +238,15 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         traceback.print_exc()
     stations = stations or []
 
-    clean, dropped = clean_stations(stations)
-    summ = summarize(clean, scraper_cls.CURRENCY)
-    implausible = mark_implausible(clean, summ["currency"], FX)   # flagged, never deleted — the app shows "not plausible"
+    try:
+        clean, dropped = clean_stations(stations)
+        summ = summarize(clean, scraper_cls.CURRENCY)
+        implausible = mark_implausible(clean, summ["currency"], FX)   # flagged, never deleted — the app shows "not plausible"
+    except Exception as e:  # noqa: BLE001 — one country's odd data must not stop the other countries
+        error = error or f"post-processing {type(e).__name__}: {e}"
+        traceback.print_exc()
+        clean, dropped, implausible = [], {}, {}
+        summ = summarize([], scraper_cls.CURRENCY)
     prev = prev_meta.get(cc) or {}
     prev_count = int(prev.get("station_count") or 0)
     prev_priced = int(prev.get("priced_count") or 0)
@@ -270,7 +276,11 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         **{k: summ[k] for k in ("station_count", "priced_count", "price_entries",
                                 "with_timestamp_pct", "newest_price_at", "oldest_price_at")},
     }
-    stats = price_stats(clean, summ["currency"])
+    try:
+        stats = price_stats(clean, summ["currency"])
+    except Exception as e:  # noqa: BLE001 — stats are optional
+        print(f"[{cc}] price_stats failed: {e!r}")
+        stats = None
     if stats:
         meta["stats_eur"] = stats
     health: Dict[str, Any] = {"seconds": round(time.monotonic() - started, 1), "dropped": dropped, "error": error}

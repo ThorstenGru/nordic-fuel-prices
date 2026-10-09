@@ -1,5 +1,5 @@
 import sys as _s; _s.stdout.reconfigure(encoding="utf-8")
-"""Standalone live test: python -m src.test_czechia  (run from repo root) or python test_czechia.py from src."""
+"""Standalone live test: python -m src.check_czechia  (run from repo root) or python check_czechia.py from src."""
 import asyncio, collections, json, sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import aiohttp

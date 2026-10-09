@@ -1281,11 +1281,11 @@ Object.assign(I18N.de, { retry:'Erneut versuchen', loadFail:'{c} konnte nicht ge
 Object.assign(I18N.fr, { retry:'Réessayer', loadFail:'Impossible de charger {c}', offlineNote:'Vous êtes hors ligne — données enregistrées affichées', mapBackup:'Carte de secours activée', mapDown:'La carte est indisponible — les prix restent dans la liste.', lgToggle:'Changer les couleurs : prix / note de source', gradeInfo:'Comment nous notons les sources' });
 Object.assign(I18N.es, { retry:'Reintentar', loadFail:'No se pudo cargar {c}', offlineNote:'Sin conexión — se muestran los datos guardados', mapBackup:'Mapa de respaldo activado', mapDown:'El mapa no está disponible ahora — los precios siguen en la lista.', lgToggle:'Cambiar colores: precio / calificación de fuente', gradeInfo:'Cómo calificamos las fuentes' });
 
-Object.assign(I18N.en, { notPlausible:'Not plausible', npExcluded:'Not used for rankings, colours or averages.', np_far_from_country:'far from typical prices in this country', np_outside_eur_band:'outside any realistic price range', np_inconsistent_fuels:"doesn't fit this station's other fuel prices" });
-Object.assign(I18N.sv, { notPlausible:'Inte rimligt', npExcluded:'Används inte i rankning, färger eller medelvärden.', np_far_from_country:'långt från typiska priser i landet', np_outside_eur_band:'utanför ett realistiskt prisintervall', np_inconsistent_fuels:'passar inte stationens övriga bränslepriser' });
-Object.assign(I18N.de, { notPlausible:'Nicht plausibel', npExcluded:'Wird nicht für Ranglisten, Farben oder Durchschnitte verwendet.', np_far_from_country:'weit entfernt von den üblichen Preisen im Land', np_outside_eur_band:'außerhalb jeder realistischen Preisspanne', np_inconsistent_fuels:'passt nicht zu den anderen Kraftstoffpreisen dieser Tankstelle' });
-Object.assign(I18N.fr, { notPlausible:'Non plausible', npExcluded:'Non utilisé pour les classements, couleurs ou moyennes.', np_far_from_country:'très éloigné des prix habituels du pays', np_outside_eur_band:'hors de toute fourchette de prix réaliste', np_inconsistent_fuels:"ne correspond pas aux autres carburants de cette station" });
-Object.assign(I18N.es, { notPlausible:'No plausible', npExcluded:'No se usa en clasificaciones, colores ni medias.', np_far_from_country:'muy lejos de los precios habituales del país', np_outside_eur_band:'fuera de cualquier rango de precios realista', np_inconsistent_fuels:'no encaja con los demás combustibles de esta estación' });
+Object.assign(I18N.en, { notPlausible:'Not plausible', npExcluded:'Not used for rankings, colours or averages.', np_far_from_country:'far from typical prices in this country', np_octane_order:'this 98 price is below the 95 price at the same station or for the same source', np_outside_eur_band:'outside any realistic price range', np_inconsistent_fuels:"doesn't fit this station's other fuel prices" });
+Object.assign(I18N.sv, { notPlausible:'Inte rimligt', npExcluded:'Används inte i rankning, färger eller medelvärden.', np_far_from_country:'långt från typiska priser i landet', np_octane_order:'detta 98-pris är lägre än 95-priset på samma station eller hos samma källa', np_outside_eur_band:'utanför ett realistiskt prisintervall', np_inconsistent_fuels:'passar inte stationens övriga bränslepriser' });
+Object.assign(I18N.de, { notPlausible:'Nicht plausibel', npExcluded:'Wird nicht für Ranglisten, Farben oder Durchschnitte verwendet.', np_far_from_country:'weit entfernt von den üblichen Preisen im Land', np_octane_order:'dieser 98er-Preis liegt unter dem 95er-Preis derselben Station oder Quelle', np_outside_eur_band:'außerhalb jeder realistischen Preisspanne', np_inconsistent_fuels:'passt nicht zu den anderen Kraftstoffpreisen dieser Tankstelle' });
+Object.assign(I18N.fr, { notPlausible:'Non plausible', npExcluded:'Non utilisé pour les classements, couleurs ou moyennes.', np_far_from_country:'très éloigné des prix habituels du pays', np_octane_order:'ce prix 98 est inférieur au prix 95 de la même station ou de la même source', np_outside_eur_band:'hors de toute fourchette de prix réaliste', np_inconsistent_fuels:"ne correspond pas aux autres carburants de cette station" });
+Object.assign(I18N.es, { notPlausible:'No plausible', npExcluded:'No se usa en clasificaciones, colores ni medias.', np_far_from_country:'muy lejos de los precios habituales del país', np_octane_order:'este precio 98 es inferior al precio 95 de la misma estación o fuente', np_outside_eur_band:'fuera de cualquier rango de precios realista', np_inconsistent_fuels:'no encaja con los demás combustibles de esta estación' });
 
 Object.assign(I18N.en, { labelTheme:'Appearance', themeAuto:'Auto', themeLight:'Light', themeDark:'Dark' });
 Object.assign(I18N.sv, { labelTheme:'Utseende', themeAuto:'Auto', themeLight:'Ljust', themeDark:'Mörkt' });
@@ -1294,15 +1294,15 @@ Object.assign(I18N.fr, { labelTheme:'Apparence', themeAuto:'Auto', themeLight:'C
 Object.assign(I18N.es, { labelTheme:'Apariencia', themeAuto:'Auto', themeLight:'Claro', themeDark:'Oscuro' });
 
 // v1.16 — station sheet, Near Me states, notes on headline claims
-Object.assign(I18N.en, { lgUnverified:'unverified price', suspectNote:'Unverified — well below the verified prices in this country', suspectOctane:'Unverified — this source’s 98 prices are cheaper than its own 95 prices', close:'Close', locHelp:'Allow location for this site in your browser settings, or search for a place instead.', searchPlace:'Search for a place',
+Object.assign(I18N.en, { lgUnverified:'unverified price', suspectNote:'Unverified — well below the verified prices in this country', close:'Close', locHelp:'Allow location for this site in your browser settings, or search for a place instead.', searchPlace:'Search for a place',
   cheapZooming:'Looking for the cheapest in {c}…', cheapSkipped:'unverified lower prices ignored: {n}', loadFailShort:"Couldn't load — tap to retry", statsLoaded:'{n} of {tot} stations' });
-Object.assign(I18N.sv, { lgUnverified:'overifierat pris', suspectNote:'Overifierat — långt under landets verifierade priser', suspectOctane:'Overifierat — den här källans 98-priser är lägre än dess egna 95-priser', close:'Stäng', locHelp:'Tillåt plats för den här webbplatsen i webbläsarens inställningar, eller sök efter en plats i stället.', searchPlace:'Sök efter en plats',
+Object.assign(I18N.sv, { lgUnverified:'overifierat pris', suspectNote:'Overifierat — långt under landets verifierade priser', close:'Stäng', locHelp:'Tillåt plats för den här webbplatsen i webbläsarens inställningar, eller sök efter en plats i stället.', searchPlace:'Sök efter en plats',
   cheapZooming:'Letar efter billigaste i {c}…', cheapSkipped:'overifierade lägre priser ignorerade: {n}', loadFailShort:'Kunde inte ladda — tryck för att försöka igen', statsLoaded:'{n} av {tot} stationer' });
-Object.assign(I18N.de, { lgUnverified:'nicht verifizierter Preis', suspectNote:'Nicht verifiziert — deutlich unter den verifizierten Preisen im Land', suspectOctane:'Nicht verifiziert — die 98er-Preise dieser Quelle liegen unter ihren eigenen 95er-Preisen', close:'Schließen', locHelp:'Erlaube den Standort für diese Seite in den Browsereinstellungen, oder suche stattdessen nach einem Ort.', searchPlace:'Nach einem Ort suchen',
+Object.assign(I18N.de, { lgUnverified:'nicht verifizierter Preis', suspectNote:'Nicht verifiziert — deutlich unter den verifizierten Preisen im Land', close:'Schließen', locHelp:'Erlaube den Standort für diese Seite in den Browsereinstellungen, oder suche stattdessen nach einem Ort.', searchPlace:'Nach einem Ort suchen',
   cheapZooming:'Suche den günstigsten Preis in {c}…', cheapSkipped:'nicht verifizierte niedrigere Preise ignoriert: {n}', loadFailShort:'Laden fehlgeschlagen — tippen zum Wiederholen', statsLoaded:'{n} von {tot} Tankstellen' });
-Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vérifié — bien en dessous des prix vérifiés du pays', suspectOctane:'Non vérifié — les prix 98 de cette source sont inférieurs à ses propres prix 95', close:'Fermer', locHelp:'Autorisez la localisation pour ce site dans les réglages du navigateur, ou cherchez plutôt un lieu.', searchPlace:'Rechercher un lieu',
+Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vérifié — bien en dessous des prix vérifiés du pays', close:'Fermer', locHelp:'Autorisez la localisation pour ce site dans les réglages du navigateur, ou cherchez plutôt un lieu.', searchPlace:'Rechercher un lieu',
   cheapZooming:'Recherche du moins cher en {c}…', cheapSkipped:'prix plus bas non vérifiés ignorés : {n}', loadFailShort:'Échec du chargement — touchez pour réessayer', statsLoaded:'{n} stations sur {tot}' });
-Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', suspectOctane:'Sin verificar — los precios 98 de esta fuente son más bajos que sus propios precios 95', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', searchPlace:'Buscar un lugar',
+Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', searchPlace:'Buscar un lugar',
   cheapZooming:'Buscando el más barato en {c}…', cheapSkipped:'precios más bajos sin verificar ignorados: {n}', loadFailShort:'No se pudo cargar — toca para reintentar', statsLoaded:'{n} de {tot} estaciones' });
 
 // Route planner — French and Spanish (these 29 keys were missing, so the whole Route view showed in English)
@@ -1540,38 +1540,20 @@ function priceStats(cc, key) {
   }
   return (_dm[k] = r);
 }
-// A feed whose "98" prices are, on the whole, no dearer than its own "95" prices has its fuel slots mixed up (seen: ANWB in Sweden —
-// its 98 sits at E85 level —, and the Slovak and Estonian feeds). Its 98 prices cannot win a claim.
-const _ob = {};
-function octaneBad(cc) {
-  const k = cc + '|' + (_cv[cc] | 0);
-  if (k in _ob) return _ob[k];
-  const by = {};
-  for (const s of (data[cc] || [])) for (const p of (s.prices || [])) {
-    if (!(p.price > 0) || p.plausible === false || p.basis === 'regulated_max') continue;
-    const key = fuelKeyOf(p); if (key !== 'P95' && key !== 'P98') continue;
-    const o = by[String(p.source ?? '')] || (by[String(p.source ?? '')] = { P95: [], P98: [] });
-    o[key].push(p.price);
-  }
-  const bad = new Set(), med = a => { a.sort((x, y) => x - y); return a[a.length >> 1]; };
-  for (const [src, o] of Object.entries(by)) if (o.P95.length >= MIN_DATED && o.P98.length >= MIN_DATED && med(o.P98) <= med(o.P95)) bad.add(src);
-  return (_ob[k] = bad);
-}
-// '' = fine, 'octane' = this feed's 98 slot is unreliable, 'low' = far below what verified prices / the country median say
+// '' = fine, 'low' = far below what verified prices / the country median say
 function suspectWhy(cc, p) {
   const ck = (_cv[cc] | 0) * 100000 + (Math.floor(Date.now() / 3600000) % 100000);      // verdict is cached on the price until the country reloads / the hour turns
   if (p._sk !== ck) { p._sw = suspectWhy0(cc, p); p._sk = ck; }
   return p._sw;
 }
 function suspectWhy0(cc, p) {
-  if (fuelKeyOf(p) === 'P98' && octaneBad(cc).has(String(p.source ?? ''))) return 'octane';
   const st = priceStats(cc, fuelKeyOf(p));
   if (!st) return '';
   if (p.price < st.med * MEDIAN_FLOOR) return 'low';
   return (!isFresh(p) && st.dp05 != null && st.dn >= st.n * DATED_SHARE && p.price < st.dp05 * 0.98) ? 'low' : '';
 }
 const suspectLow = (cc, p) => !!suspectWhy(cc, p);
-const suspectMsg = (cc, p) => { const w = suspectWhy(cc, p); return w === 'octane' ? t('suspectOctane') : w ? t('suspectNote') : ''; };
+const suspectMsg = (cc, p) => suspectWhy(cc, p) ? t('suspectNote') : '';
 
 // EUR per local unit, derived from the published EUR medians vs the local medians we hold (no extra FX call). Lets prices of
 // different countries be ORDERED — raw numbers are not comparable (1.2 EUR vs 785 HUF vs 17 SEK).
