@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+
+Sitemap: https://eurofuelprices.com/sitemap.xml
+Sitemap: https://eurofuelprices.com/sitemap-seo.xml
