@@ -10,7 +10,7 @@
 // Versioned CDN libraries (URL contains the version) and small static icons: cache-first — safe,
 // because a version bump changes the URL itself.
 
-const SHELL_CACHE = 'efp-shell-v8';   // v7: purges Nominatim/OSRM responses that older versions cached by mistake (see the fetch handler)
+const SHELL_CACHE = 'efp-shell-v9';   // v9 (app 2.0.0): Nordic Paper remake, self-hosted fonts + new icons precached. v7: purges Nominatim/OSRM responses that older versions cached by mistake (see the fetch handler)
 const DATA_CACHE  = 'efp-data-v3';
 const SLOW_NET_MS = 3500;   // flaky/slow connection: serve the cached copy instead of waiting
 
@@ -22,6 +22,12 @@ const SHELL_ASSETS = [
   './icon.svg',
   './logo.svg',
   './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png',
+  './fonts/bricolage-grotesque-latin-wght-normal.woff2',
+  './fonts/bricolage-grotesque-latin-ext-wght-normal.woff2',
+  './fonts/schibsted-grotesk-latin-wght-normal.woff2',
+  './fonts/schibsted-grotesk-latin-ext-wght-normal.woff2',
 ];
 
 // CDN assets — versioned URLs, safe to cache indefinitely
