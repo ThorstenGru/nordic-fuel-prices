@@ -51,7 +51,7 @@ class FranceScraper(BaseScraper):
                     return []
                 raw = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[FR] {e}")
+            print(f"[FR] {type(e).__name__}: {e}")
             return []
 
         # API may return a paginated wrapper or a bare array

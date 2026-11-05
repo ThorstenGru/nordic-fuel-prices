@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import csv
+import time
 import io
 from typing import List, Dict, Any
 from .base import BaseScraper
@@ -132,6 +133,7 @@ class ItalyScraper(BaseScraper):
             "Referer": "https://www.mimit.gov.it/",
         }
         for attempt in range(3):
+            t0 = time.monotonic()
             try:
                 async with self.session.get(
                     url,
@@ -149,8 +151,10 @@ class ItalyScraper(BaseScraper):
                             continue
                     return raw.decode("latin-1", errors="replace")
             except Exception as e:
+                msg = f"{type(e).__name__} after {time.monotonic() - t0:.0f}s (attempt {attempt + 1}/3): {e}"
                 if attempt < 2:
+                    print(f"[IT] {msg} — {url}")
                     await asyncio.sleep(4 * (attempt + 1))
                 else:
-                    print(f"[IT] {e} — {url}")
+                    print(f"[IT] giving up, {msg} — {url}")
         return ""

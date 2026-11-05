@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import aiohttp
 
 from plausibility import mark_implausible
+from source_gap import source_gap
 from scrapers import ALL_SCRAPERS
 from scrapers.geocoder import resolve_pages_base
 
@@ -199,7 +200,7 @@ async def fetch_json(session: aiohttp.ClientSession, url: str, timeout: int = 60
             if resp.status == 200:
                 return await resp.json(content_type=None)
     except Exception as e:
-        print(f"[prev] {url}: {e}")
+        print(f"[prev] {url}: {type(e).__name__}: {e}")
     return None
 
 
@@ -287,6 +288,13 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
     if implausible:
         health["implausible"] = implausible
         meta["implausible_count"] = sum(implausible.values())
+    try:
+        gap = source_gap(clean)
+    except Exception as e:  # noqa: BLE001 — report is optional
+        print(f"[{cc}] source_gap failed: {type(e).__name__}: {e}")
+        gap = None
+    if gap:
+        meta["source_gap"] = gap   # mirrored into health.countries[CC] by health.update(meta) below
     # Provenance from the merge engine (optional; scrapers not yet migrated simply have none).
     report = getattr(scraper, "merge_report", None)
     if isinstance(report, dict) and report:
@@ -313,9 +321,10 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         old_stations = (old or {}).get("stations") or []
         if old_stations:
             old_meta = old.get("meta", {})
+            meta.pop("source_gap", None)  # fresh gap describes rejected data, not what is served
             meta.update({k: v for k, v in old_meta.items() if k in (
                 "currency", "source", "grade", "confidence", "fetched_at", "station_count", "priced_count",
-                "price_entries", "with_timestamp_pct", "newest_price_at", "oldest_price_at", "stats_eur")})
+                "price_entries", "with_timestamp_pct", "newest_price_at", "oldest_price_at", "stats_eur", "source_gap")})
             meta["status"] = "stale"
             meta["stale_since"] = old_meta.get("stale_since") or old_meta.get("fetched_at") or now_iso()
             meta["last_error"] = reason
@@ -351,7 +360,7 @@ async def run_all() -> None:
             from scrapers._anwb import _ecb_rates
             FX.update(await _ecb_rates(session))
         except Exception as e:  # noqa: BLE001 — stats are optional
-            print(f"[stats] no FX rates: {e}")
+            print(f"[stats] no FX rates: {type(e).__name__}: {e}")
         results = await asyncio.gather(*(run_one(sc, session, prev_meta) for sc in ALL_SCRAPERS))
 
     generated = now_iso()

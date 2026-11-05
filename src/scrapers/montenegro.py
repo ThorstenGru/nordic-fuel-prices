@@ -173,7 +173,7 @@ class MontenegroScraper(ANWBScraper):
                         return None
                     return parse_govme_article(await r.text(errors="replace"), title)
         except Exception as e:
-            print(f"[ME] gov.me fetch failed: {e}")
+            print(f"[ME] gov.me fetch failed: {type(e).__name__}: {e}")
         return None
 
     async def _fetch_cap(self) -> Optional[Dict[str, Any]]:
@@ -189,7 +189,7 @@ class MontenegroScraper(ANWBScraper):
                     return None
                 cap = parse_cap_page(await resp.text())
         except Exception as e:
-            print(f"[ME] cap fetch failed: {e} - no cap")
+            print(f"[ME] cap fetch failed: {type(e).__name__}: {e} - no cap")
             return None
         if cap is None:
             print("[ME] cap page unparseable, implausible or stale - no cap")

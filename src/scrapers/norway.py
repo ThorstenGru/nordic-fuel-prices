@@ -124,7 +124,7 @@ class NorwayScraper(BaseScraper):
                 data = await resp.json(content_type=None)
                 return data.get("elements", [])
         except Exception as e:
-            print(f"[NO/OSM] {e}")
+            print(f"[NO/OSM] {type(e).__name__}: {e}")
             return []
 
     def _parse_osm(self, elements: list) -> List[Dict]:
@@ -181,7 +181,7 @@ class NorwayScraper(BaseScraper):
                     return []
                 data = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[NO/SSB] {e}")
+            print(f"[NO/SSB] {type(e).__name__}: {e}")
             return []
 
         values = data.get("value", [])

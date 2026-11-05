@@ -207,7 +207,7 @@ class DenmarkScraper(BaseScraper):
                     return []
                 data = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[DK/Shell] {e}")
+            print(f"[DK/Shell] {type(e).__name__}: {e}")
             return []
 
         stations = []
@@ -271,7 +271,7 @@ class DenmarkScraper(BaseScraper):
                     return []
                 data = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[DK/Q8] {e}")
+            print(f"[DK/Q8] {type(e).__name__}: {e}")
             return []
 
         raw = data.get("data", {}).get("stationsPrices", [])

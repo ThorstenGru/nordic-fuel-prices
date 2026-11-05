@@ -80,7 +80,7 @@ class AustriaScraper(BaseScraper):
                     return []
                 regions = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[AT] regions fetch: {e} — falling back to BL")
+            print(f"[AT] regions fetch: {type(e).__name__}: {e} — falling back to BL")
             return []
 
         codes = []
@@ -112,7 +112,7 @@ class AustriaScraper(BaseScraper):
                         return []
                     raw = await resp.json(content_type=None)
             except Exception as e:
-                print(f"[AT] {region_type}={code} fuel={fuel}: {e}")
+                print(f"[AT] {region_type}={code} fuel={fuel}: {type(e).__name__}: {e}")
                 return []
 
         if not isinstance(raw, list):

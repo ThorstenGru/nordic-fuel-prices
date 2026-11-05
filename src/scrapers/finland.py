@@ -151,7 +151,7 @@ class FinlandScraper(BaseScraper):
                 query_fn=_fi_query,
             )
         except Exception as e:  # noqa: BLE001 — ungeocoded stations are simply dropped by the engine
-            print(f"[FI] geocoding failed: {e}")
+            print(f"[FI] geocoding failed: {type(e).__name__}: {e}")
 
         anwb_err = str(anwb_stations) if isinstance(anwb_stations, Exception) else None
         results = [
@@ -188,7 +188,7 @@ class FinlandScraper(BaseScraper):
                     raw = await resp.read()
                     html = raw.decode(ENCODING, errors="replace")
             except Exception as e:
-                print(f"[FI/{slug}] {e}")
+                print(f"[FI/{slug}] {type(e).__name__}: {e}")
                 return []
         return self._parse_stations(html, slug)
 

@@ -110,7 +110,7 @@ class GermanyScraper(BaseScraper):
                         return []
                     data = await resp.json(content_type=None)
             except Exception as e:
-                print(f"[DE] tankerkoenig ({lat:.2f},{lon:.2f}): {e}")
+                print(f"[DE] tankerkoenig ({lat:.2f},{lon:.2f}): {type(e).__name__}: {e}")
                 return []
             await asyncio.sleep(1.0)
 

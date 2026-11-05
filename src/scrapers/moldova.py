@@ -90,7 +90,7 @@ class MoldovaScraper(BaseScraper):
         try:
             cap = await self._get(CAP_URL)
         except Exception as e:
-            print(f"[MD] cap endpoint unavailable: {e}")
+            print(f"[MD] cap endpoint unavailable: {type(e).__name__}: {e}")
 
         stations: List[Dict[str, Any]] = []
         for item in data:

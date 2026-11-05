@@ -75,7 +75,7 @@ class SloveniaScraper(BaseScraper):
                         break
                     page = await resp.json(content_type=None)
             except Exception as e:
-                print(f"[SI] {e} — {url}")
+                print(f"[SI] {type(e).__name__}: {e} — {url}")
                 break
 
             results = page.get("results") if isinstance(page, dict) else None

@@ -329,7 +329,7 @@ class SwedenScraper(BaseScraper):
                             json.dump(els, f, ensure_ascii=False, separators=(",", ":"))
                         return els
         except Exception as e:
-            print(f"[SE/OSM] cached backbone unavailable: {e}")
+            print(f"[SE/OSM] cached backbone unavailable: {type(e).__name__}: {e}")
         # Last resort: a snapshot committed to the repo itself. This is the one tier that can
         # never be wiped — gh-pages is force-orphaned every run, so if Overpass AND the published
         # cache both fail on the same run (as happened 2026-10-02: a Overpass outage hit before any
@@ -349,7 +349,7 @@ class SwedenScraper(BaseScraper):
                     print(f"[SE/OSM] snapshot save failed: {e}")
                 return els
         except Exception as e:
-            print(f"[SE/OSM] repo seed unavailable: {e}")
+            print(f"[SE/OSM] repo seed unavailable: {type(e).__name__}: {e}")
         raise RuntimeError("OSM backbone unavailable (all Overpass mirrors, cache and repo seed failed)")
 
     async def _fetch_osm_live(self) -> list:

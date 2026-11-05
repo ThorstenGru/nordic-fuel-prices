@@ -212,7 +212,7 @@ class GreeceScraper(BaseScraper):
                     if isinstance(r.get(key), (int, float)):
                         self._pref_avgs.add((ft, round(float(r[key]), 3)))
         except Exception as e:  # noqa: BLE001
-            print(f"[GR/fuelgr] prefecture averages unavailable ({e}); using repeat heuristic only")
+            print(f"[GR/fuelgr] prefecture averages unavailable ({type(e).__name__}: {e}); using repeat heuristic only")
 
         out: List[Dict] = []
         for it in data:
@@ -340,7 +340,7 @@ class GreeceScraper(BaseScraper):
                     print(f"[GR/fpeu] HTTP {status} on circle {k} - skipped")
                     continue
             except Exception as e:  # noqa: BLE001
-                print(f"[GR/fpeu] circle {k} error: {e}")
+                print(f"[GR/fpeu] circle {k} error: {type(e).__name__}: {e}")
                 continue
             if not isinstance(payload, dict) or not payload.get("ok"):
                 print(f"[GR/fpeu] circle {k} not ok: {str(payload)[:120]}")

@@ -65,7 +65,7 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
                     for m in _ECB_RE.finditer(await resp.text()):
                         _ecb_cache[m.group(1)] = float(m.group(2))
         except Exception as e:
-            print(f"[ECB] rate fetch failed: {e}")
+            print(f"[ECB] rate fetch failed: {type(e).__name__}: {e}")
         if not _ecb_cache:
             try:
                 async with session.get(_FRANKFURTER_URL, timeout=aiohttp.ClientTimeout(total=20)) as resp:
@@ -73,7 +73,7 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
                         data = await resp.json(content_type=None)
                         _ecb_cache.update({k: float(v) for k, v in (data.get("rates") or {}).items()})
             except Exception as e:
-                print(f"[ECB] frankfurter fallback failed: {e}")
+                print(f"[ECB] frankfurter fallback failed: {type(e).__name__}: {e}")
         for k, v in _FIXED_PEGS.items():
             _ecb_cache.setdefault(k, v)
         print(f"[ECB] {len(_ecb_cache)} FX rates loaded")
@@ -140,7 +140,7 @@ class ANWBScraper(BaseScraper):
                             break
                         print(f"[{self.COUNTRY}] ANWB HTTP {resp.status} (attempt {attempt + 1})")
             except Exception as e:
-                print(f"[{self.COUNTRY}] ANWB fetch error: {e} (attempt {attempt + 1})")
+                print(f"[{self.COUNTRY}] ANWB fetch error: {type(e).__name__}: {e} (attempt {attempt + 1})")
             await asyncio.sleep(2 * (attempt + 1))
         if not isinstance(data, dict):
             raise RuntimeError(f"ANWB bbox {bb} failed after retries")

@@ -72,7 +72,7 @@ class CroatiaScraper(BaseScraper):
                     return []
                 data = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[HR] {e}")
+            print(f"[HR] {type(e).__name__}: {e}")
             return []
 
         if not isinstance(data, dict):

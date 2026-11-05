@@ -84,7 +84,7 @@ class SpainScraper(BaseScraper):
                         break
                     print(f"[ES] HTTP {resp.status} from {url.split('/')[2]} (attempt {attempt + 1})")
             except Exception as e:
-                print(f"[ES] {url.split('/')[2]}: {e} (attempt {attempt + 1})")
+                print(f"[ES] {url.split('/')[2]}: {type(e).__name__}: {e} (attempt {attempt + 1})")
             await asyncio.sleep(4 * (attempt + 1))
 
         if not isinstance(data, dict) or not data.get("ListaEESSPrecio"):

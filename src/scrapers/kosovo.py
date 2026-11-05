@@ -105,7 +105,7 @@ class KosovoScraper(ANWBScraper):
                 print("[XK] MINTI post unparseable or implausible - no cap")
             return cap
         except Exception as e:
-            print(f"[XK] cap fetch failed: {e} - no cap")
+            print(f"[XK] cap fetch failed: {type(e).__name__}: {e} - no cap")
             return None
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:

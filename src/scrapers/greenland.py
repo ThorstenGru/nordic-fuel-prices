@@ -47,7 +47,7 @@ class GreenlandScraper(BaseScraper):
                         continue
                     els = (await r.json(content_type=None)).get("elements", [])
             except Exception as e:
-                print(f"[GL] overpass {url}: {e}")
+                print(f"[GL] overpass {url}: {type(e).__name__}: {e}")
                 continue
             out = []
             for e in els:

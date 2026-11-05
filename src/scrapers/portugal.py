@@ -65,7 +65,7 @@ class PortugalScraper(BaseScraper):
                         return []
                     data = await resp.json(content_type=None)
             except Exception as e:
-                print(f"[PT] fuel={fuel_id}: {e}")
+                print(f"[PT] fuel={fuel_id}: {type(e).__name__}: {e}")
                 return []
 
         if not data.get("status"):

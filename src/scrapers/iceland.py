@@ -35,7 +35,7 @@ class IcelandScraper(BaseScraper):
                     return []
                 raw = await resp.json(content_type=None)
         except Exception as e:
-            print(f"[IS] {e}")
+            print(f"[IS] {type(e).__name__}: {e}")
             return []
 
         # Accept both list-at-root and {"stations": [...]} shapes

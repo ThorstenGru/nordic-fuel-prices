@@ -261,6 +261,16 @@ body.sheet-peek #cheap-btn { bottom:calc(var(--tab-h) + var(--safe-b) + 150px); 
 .pop-act.fav-btn { padding:0; font-size:1.05rem; min-width:40px; min-height:40px; margin-right:6px; color:var(--text3); }
 .pop-act.fav-btn.on { color:var(--coral); }
 .pop-act + .pop-act { margin-left:0; }
+.car-box { margin-top:10px; border:1px solid var(--border); border-radius:12px; padding:8px 10px; }
+.car-box summary { cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text2); }
+.car-box label { display:block; margin-top:8px; font-size:0.72rem; }
+.car-box input, .car-box select { width:100%; box-sizing:border-box; font:inherit; font-size:0.9rem; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--surf); color:var(--text); }
+.car-card { margin-top:10px; padding:9px 10px; border-radius:10px; background:var(--surf2); font-size:0.78rem; color:var(--text2); }
+.car-card b { color:var(--text); font-variant-numeric:tabular-nums; }
+.no95 { margin-top:8px; padding:9px 10px; border-radius:10px; background:var(--surf2); font-size:0.78rem; color:var(--text); }
+.no95 button { margin-top:6px; }
+.cty-note { margin-top:4px; font-size:0.66rem; color:var(--text3); }
+.cty-note .stale { color:var(--warn-text); }
 .tank-row { display:flex; gap:6px; }
 .tank-row button { flex:1; background:var(--surf2); border:1px solid var(--border); border-radius:12px; padding:10px 0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--text2); cursor:pointer; }
 .tank-row button.on { background:var(--blue); border-color:var(--blue); color:var(--on-blue); }
@@ -912,7 +922,7 @@ body.kb .panel { bottom:0; max-height:calc(var(--app-h, 100dvh) - 6px); }
     <h2><span data-i18n="stationsHeader">Stations</span> <span id="mobCount">—</span></h2>
     <button class="sort-btn" onclick="cycleSort()">⇅ <span id="mob-sort-lbl" data-i18n="sortView">In view</span></button>
   </div>
-  <div class="upd-row"><button class="upd-line" id="upd-line" onclick="refreshData(true)">⟳ <span id="upd-lbl"></span></button></div>
+  <div class="upd-row"><button class="upd-line" id="upd-line" onclick="refreshData(true)">⟳ <span id="upd-lbl"></span></button><div class="cty-note" id="cty-note"></div></div>
   <div class="seg" id="list-seg">
     <button class="on" data-m="all" onclick="setListMode('all')"><span data-i18n="allSt">All</span></button>
     <button data-m="saved" onclick="setListMode('saved')">♥ <span data-i18n="saved">Saved</span> <span id="fav-n"></span></button>
@@ -960,6 +970,19 @@ body.kb .panel { bottom:0; max-height:calc(var(--app-h, 100dvh) - 6px); }
     <div class="tank-row" id="tank-row">
       <button data-l="20" onclick="setTank(20)">20 L</button><button data-l="30" onclick="setTank(30)">30 L</button><button data-l="40" onclick="setTank(40)">40 L</button><button data-l="50" onclick="setTank(50)">50 L</button><button data-l="70" onclick="setTank(70)">70 L</button>
     </div>
+    <details class="car-box" id="car-box" ontoggle="renderCarCard()"><summary data-i18n="carTitle">My car</summary>
+      <label data-i18n="carType">Vehicle type</label>
+      <select id="car-type" onchange="carSet('type',this.value)"><option value="" data-i18n="carNone">Not set</option><option value="petrol" data-i18n="carPetrol">Petrol</option><option value="diesel">Diesel</option><option value="phev" data-i18n="carPhev">Plug-in hybrid</option></select>
+      <label data-i18n="carTank">Fuel tank (litres)</label><input id="car-tank" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('tank',this.value)">
+      <label data-i18n="carCons">Fuel consumption (L/100 km)</label><input id="car-cons" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('cons',this.value)">
+      <div id="car-phev" style="display:none">
+        <label data-i18n="carBatt">Battery, usable (kWh)</label><input id="car-batt" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('batt',this.value)">
+        <label data-i18n="carRange">Electric range (km)</label><input id="car-range" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('range',this.value)">
+        <label><span data-i18n="carElec">Home electricity price per kWh</span> (<span id="car-cur">€</span>)</label><input id="car-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
+        <label data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="90" onchange="carSet('eff',this.value)">
+      </div>
+      <div class="car-card" id="car-card"></div>
+    </details>
     <button class="rbtn" onclick="resetAll()">↺ <span data-i18n="resetFilters">Reset all filters</span></button>
 
     <label data-i18n="labelLanguage">Language</label>
@@ -1305,6 +1328,23 @@ Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vé
 Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', searchPlace:'Buscar un lugar',
   cheapZooming:'Buscando el más barato en {c}…', cheapSkipped:'precios más bajos sin verificar ignorados: {n}', loadFailShort:'No se pudo cargar — toca para reintentar', statsLoaded:'{n} de {tot} estaciones' });
 
+Object.assign(I18N.en, { carTitle:'My car', carType:'Vehicle type', carNone:'Not set', carPetrol:'Petrol', carPhev:'Plug-in hybrid', carTank:'Fuel tank (litres)', carCons:'Fuel consumption (L/100 km)',
+  carBatt:'Battery, usable (kWh)', carRange:'Electric range (km)', carElec:'Home electricity price per kWh', carEff:'Charging efficiency (%)',
+  carEst:'Estimate from your own inputs: {i}.', carNeeds:'To calculate this, add: {x}.', carCurMis:'electricity price in {c}', carPriceNeed:'a petrol 95 price for {c}',
+  carElecKm:'On electricity: {v} per 100 km', carPetKm:'On petrol: {v} per 100 km', carCharge:'One full charge: {v}', carBreak:'Break-even electricity price: {v} per kWh (electric costs the same as petrol per km)',
+  carInputs:'petrol 95 {p} per litre (country median), {k} kWh/100 km electric, {e}% charging efficiency',
+  no95:'No petrol 95 price reported for this station', no95Near:'Nearest station with a petrol 95 price: {n}, {d} away, {p}',
+  gapLine:'For {f} ({n} stations), sources {o} and {p} differ by a median of {x}', gapP95:'petrol 95', gapDiesel:'diesel',
+  staleCty:'Prices for {c} were last updated {d} (source temporarily unavailable)' });
+Object.assign(I18N.sv, { carTitle:'Min bil', carType:'Fordonstyp', carNone:'Inte angiven', carPetrol:'Bensin', carPhev:'Laddhybrid', carTank:'Bränsletank (liter)', carCons:'Bränsleförbrukning (L/100 km)',
+  carBatt:'Batteri, användbart (kWh)', carRange:'Elräckvidd (km)', carElec:'Elpris hemma per kWh', carEff:'Laddverkningsgrad (%)',
+  carEst:'Uppskattning utifrån dina egna uppgifter: {i}.', carNeeds:'För att räkna ut detta, fyll i: {x}.', carCurMis:'elpris i {c}', carPriceNeed:'ett pris för bensin 95 i {c}',
+  carElecKm:'På el: {v} per 100 km', carPetKm:'På bensin: {v} per 100 km', carCharge:'En full laddning: {v}', carBreak:'Break-even-elpris: {v} per kWh (el kostar lika mycket som bensin per km)',
+  carInputs:'bensin 95 {p} per liter (landets median), {k} kWh/100 km el, {e}% laddverkningsgrad',
+  no95:'Inget pris för bensin 95 rapporterat för denna station', no95Near:'Närmaste station med pris för bensin 95: {n}, {d} bort, {p}',
+  gapLine:'För {f} ({n} stationer) skiljer sig källorna {o} och {p} med en median på {x}', gapP95:'bensin 95', gapDiesel:'diesel',
+  staleCty:'Priserna för {c} uppdaterades senast {d} (källan är tillfälligt otillgänglig)' });
+
 // Route planner — French and Spanish (these 29 keys were missing, so the whole Route view showed in English)
 Object.assign(I18N.fr, { routeTab:'Itinéraire', rtPreview:'Aperçu', rtFrom:'Départ', rtTo:'Arrivée', rtPh:'Adresse ou lieu', rtMyLoc:'Ma position', rtPickMap:'Choisir sur la carte',
   rtTapMap:'Touchez la carte pour définir le {w}', rtStart:'point de départ', rtEnd:'point d’arrivée', rtWidth:'Largeur du couloir', rtHideUnknown:'Masquer les prix d’âge inconnu',
@@ -1356,7 +1396,7 @@ function setLang(l) {
   try { localStorage.setItem('efp_lang', l); } catch (_) {}
   applyStaticI18n();
   updStatus();
-  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); }
+  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); }
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'nearby' && myLat != null) showNearby();
 }
@@ -1438,6 +1478,8 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
 };
 let   tank    = store.get('efp_tank', 40);     // litres, used for "fill-up cost"
+// no valid saved choice -> petrol 95 only for petrol/PHEV owners (the filter hides stations without that fuel); everyone else keeps All fuels
+fFuel = (v => ['', 'P95', 'P98', 'DIESEL', 'HVO100', 'LPG', 'CNG', 'E85'].includes(v) ? v : (['petrol', 'phev'].includes((store.get('efp_car', {}) || {}).type) ? 'P95' : ''))(store.get('efp_fuel', null));
 let   favs    = store.get('efp_favs', {});     // station id -> { cc, name }
 let   favOnly = false;
 let   sortMode= 'view';       // 'view'|'default'|'price'|'distance'
@@ -2055,8 +2097,8 @@ function stBody(s) {
             : (pv || sus ? `<tr><td class="pv" colspan="3">${pv}${sus ? `${pv ? '<br>' : ''}<span class="sus-note">⚠ ${sus}</span>` : ''}</td></tr>` : ''));
   }).join('');
   const noP   = !s.prices?.length ? `<div style="color:var(--text2);font-style:italic;font-size:0.75rem;margin:4px 0">${t('noPriceData')}</div>` : '';
-  return `<table class="pop-tbl">${rows}</table>${noP}
-    ${fillHtml(cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
+  return `<table class="pop-tbl">${rows}</table>${noP}${no95Html(s)}
+    ${fillHtml(car.type === 'phev' ? minOf(s, 'P95') : cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
     <div class="worth" id="worth-${esc(s.id)}">${worthHtml(s, fFuel || _worthKey || (cheapest(s) ? fuelKeyOf(cheapest(s)) : 'P95'))}</div>
     ${ageHtml(s)}`;
 }
@@ -2248,6 +2290,7 @@ function updLabel() {
   const el = document.getElementById('upd-lbl'), line = document.getElementById('upd-line');
   if (!el) return;
   const cc = centerCountry();
+  ctyNote(cc);
   const iso = (cc && metaOf[cc]?.fetched_at) || metaAt;
   if (!iso) { el.textContent = ''; return; }
   const h = (Date.now() - tsDate(iso)) / 3600000;
@@ -2312,8 +2355,8 @@ function setCountry(val) {
   if (val && !loaded.has(val)) loadCC(val);
 }
 
-function setFuel(chipEl, val) {
-  fFuel = val;
+function setFuel(chipEl, val, noSave) {
+  fFuel = val; if (!noSave) store.set('efp_fuel', val);
   document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
   if (chipEl) chipEl.classList.add('on');
   else { const c = document.querySelector(`.chip[data-f="${val}"]`); if(c) c.classList.add('on'); }
@@ -2329,7 +2372,7 @@ function applyFilters() {
 }
 
 function resetAll() {
-  fCountry=''; fFuel='';
+  fCountry=''; fFuel=''; store.set('efp_fuel', '');
   ['mobCountry','mobFuel'].forEach(id => {
     const e=document.getElementById(id); if(e) e.value='';
   });
@@ -2791,6 +2834,88 @@ function fillHtml(cp) {
   if (!cp || (cp.unit && cp.unit !== 'L') || !tank) return '';
   return `<div class="fill-line">⛽ ${t('fillLine', { l: tank, c: '<b>' + money(cp.price * tank, cp.currency) + '</b>' })}</div>`;
 }
+// ── Country notes: stale-feed notice (meta.json status + newest_price_at / fetched_at) and neutral source-gap lines (meta.json source_gap, optional) ──
+function ctyNote(cc) {
+  const el = document.getElementById('cty-note'); if (!el) return;
+  const m = (cc && metaCountries.find(c => c.country === cc)) || {};
+  let h = '';
+  const when = String(m.newest_price_at || m.fetched_at || '').slice(0, 10);
+  if (m.status === 'stale' && when) h += `<div class="stale">${esc(t('staleCty', { c: CNAMES[cc] || cc, d: when }))}</div>`;
+  if (Array.isArray(m.source_gap)) for (const g of m.source_gap) {
+    if (!g || (g.fuel !== 'p95' && g.fuel !== 'diesel') || typeof g.median_pct !== 'number' || !isFinite(g.median_pct) || !(g.n > 0) || !g.primary || !g.other) continue;
+    h += `<div>${esc(t('gapLine', { f: t(g.fuel === 'p95' ? 'gapP95' : 'gapDiesel'), n: g.n, o: g.other, p: g.primary, x: (g.median_pct > 0 ? '+' : '') + (+g.median_pct).toFixed(1) + '%' }))}</div>`;
+  }
+  el.innerHTML = h;
+}
+
+// ── My car: optional profile (nothing is pre-filled). Tank litres reuse efp_tank, consumption reuses the Trip tab's trip.cons ──
+let car = (v => v && typeof v === 'object' ? v : {})(store.get('efp_car', {}));
+const CAR_FUEL = { petrol:'P95', phev:'P95', diesel:'DIESEL' };
+function carInit() {
+  for (const k of ['type', 'cons', 'batt', 'range', 'elec', 'eff']) { const e = document.getElementById('car-' + k); if (e && car[k] != null) e.value = car[k]; }
+  const e = document.getElementById('car-tank'); if (e && car.tank) e.value = tank;
+  carUi();
+}
+function carUi() {
+  const ph = document.getElementById('car-phev'); if (ph) ph.style.display = car.type === 'phev' ? '' : 'none';
+  renderCarCard();
+}
+function carSet(k, raw) {
+  if (k === 'type') {
+    if (CAR_FUEL[raw]) { car.type = raw; setFuel(null, CAR_FUEL[raw]); } else delete car.type;
+  } else {
+    const v = String(raw).trim() === '' ? null : +String(raw).replace(',', '.');
+    if (v === null) delete car[k];
+    else if (!isFinite(v) || v <= 0 || (k === 'eff' && v > 100)) return;        // ignore NaN / negative / zero
+    else {
+      car[k] = v;
+      if (k === 'tank') setTank(v);
+      if (k === 'cons') { trip.cons = Math.min(20, Math.max(2, v)); tripSave(); }
+      if (k === 'elec') car.elecCur = ctyCur();
+    }
+  }
+  store.set('efp_car', car); carUi();
+}
+const ctyCc = () => fCountry || myCountry || centerCountry() || 'SE';
+const ctyCur = () => { const cc = ctyCc(); return metaCountries.find(c => c.country === cc)?.currency || metaOf[cc]?.currency || 'EUR'; };
+function renderCarCard() {
+  const el = document.getElementById('car-card'); if (!el) return;
+  if (car.type !== 'phev') { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const cc = ctyCc(), cur = ctyCur(), sy = SYM[cur] || cur;
+  const cu = document.getElementById('car-cur'); if (cu) cu.textContent = car.elecCur || cur;
+  const e = metaCountries.find(c => c.country === cc)?.stats_eur?.p95?.median, r = e ? fx(cc) : null;
+  const pp = e && r ? e / r : (cstat(cc).p95 || null);                               // country median petrol 95, local currency
+  const eff = (car.eff || 90) / 100, kwh100 = car.batt && car.range ? car.batt / car.range * 100 / eff : null;
+  const elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null;
+  const miss = [];
+  if (!car.cons) miss.push(t('carCons'));
+  if (!car.batt) miss.push(t('carBatt'));
+  if (!car.range) miss.push(t('carRange'));
+  if (!car.elec) miss.push(t('carElec')); else if (!elec) miss.push(t('carCurMis', { c: cur }));
+  if (!pp) miss.push(t('carPriceNeed', { c: CNAMES[cc] || cc }));
+  const L = [], b = v => '<b>' + money(v, cur) + '</b>';
+  if (kwh100 && elec) L.push(t('carElecKm', { v: b(kwh100 * elec) }));
+  if (car.cons && pp) L.push(t('carPetKm', { v: b(car.cons * pp) }));
+  if (car.batt && elec) L.push(t('carCharge', { v: b(car.batt / eff * elec) }));
+  if (kwh100 && car.cons && pp) L.push(t('carBreak', { v: b(car.cons * pp / kwh100) }));
+  el.innerHTML = L.map(x => `<div>${x}</div>`).join('') + (miss.length ? `<div>${esc(t('carNeeds', { x: miss.join(', ') }))}</div>` : '')
+    + (pp && kwh100 ? `<div style="font-size:0.66rem;margin-top:4px">${esc(t('carEst', { i: t('carInputs', { p: pp.toFixed(2) + ' ' + sy, k: kwh100.toFixed(1), e: Math.round(eff * 100) }) }))}</div>` : '');
+}
+
+// No petrol 95 price for this station: say so, and point to the nearest one that has one (never a guess)
+function no95Html(s) {
+  if (fFuel !== 'P95' || minOf(s, 'P95') || !s.lat) return '';
+  let best = null, bd = Infinity;
+  for (const o of (data[s.country] || [])) {
+    if (o.id === s.id || !o.lat) continue;
+    const q = minOf(o, 'P95'); if (!q || suspectLow(o.country, q)) continue;
+    const d = dist(s.lat, s.lon, o.lat, o.lon); if (d < bd) { bd = d; best = { o, q }; }
+  }
+  const near = best ? `<div>${esc(t('no95Near', { n: best.o.name || best.o.brand || '—', d: fmtDist(bd), p: best.q.price.toFixed(2) + ' ' + (SYM[best.q.currency] || best.q.currency) }))}</div>
+    <button class="st-go" onclick="doNav('${escId(best.o.id)}')">🧭 ${t('go')}</button>` : '';
+  return `<div class="no95"><b>${t('no95')}</b>${near}</div>`;
+}
 function setTank(n) {
   tank = n; store.set('efp_tank', n); syncTankUi();
   rebuildList();
@@ -2905,7 +3030,7 @@ function worthCalc(s, key) {
   return { from, dP, pP, alt, altD, save, brk };
 }
 function worthHtml(s, key) {
-  const keys = fuelKeysOf(s); if (!keys.length) return '';
+  const keys = fuelKeysOf(s).filter(k => car.type !== 'phev' || k === 'P95' || k === 'P98'); if (!keys.length) return '';
   if (!keys.includes(key)) key = keys.includes('P95') ? 'P95' : keys[0];
   const fl = k => k === 'P95' ? '95' : k === 'P98' ? '98+' : k === 'DIESEL' ? 'Diesel' : k;
   const w = worthCalc(s, key); if (!w) return '';
@@ -3487,6 +3612,7 @@ document.addEventListener('focusout', () => setTimeout(updKb, 80));
   applyStaticI18n(); applyTheme();
   metaReady = fetchMeta();
   await Promise.race([metaReady, _sleep(2500)]);
+  setFuel(null, fFuel, true); carInit();
   updStatus(); updPriceLbls(); renderLegend(); renderCompare(); updLabel();
   document.querySelectorAll('#p-stations .panel-scroll, #p-nearby .panel-scroll').forEach(initPTR);
 
