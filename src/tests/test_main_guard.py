@@ -35,5 +35,16 @@ class RunOneGuard(unittest.TestCase):
         self.assertIn("post-processing", r["meta"]["last_error"])
 
 
+class FxBlock(unittest.TestCase):
+    def test_only_published_non_euro_currencies(self):
+        fx = {"SEK": 10.99, "PLN": 4.22, "CHF": 0.93, "USD": 1.1}
+        b = main.fx_block(fx, "2026-11-05", ["SEK", "EUR", "PLN", "SEK", None, "XXX"])
+        self.assertEqual(b, {"rates": {"PLN": 4.22, "SEK": 10.99}, "date": "2026-11-05", "source": "ECB"})
+
+    def test_none_without_rates_or_date(self):
+        self.assertIsNone(main.fx_block({}, "2026-11-05", ["SEK"]))
+        self.assertIsNone(main.fx_block({"SEK": 10.99}, None, ["SEK"]))
+
+
 if __name__ == "__main__":
     unittest.main()

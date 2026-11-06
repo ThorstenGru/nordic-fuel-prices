@@ -130,6 +130,13 @@ def clean_stations(stations: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]]
 FX: Dict[str, float] = {}     # currency -> units per 1 EUR (filled in run_all from the ECB feed)
 
 
+def fx_block(fx: Dict[str, float], date: Optional[str], currencies) -> Optional[Dict[str, Any]]:
+    """meta.json "fx": ECB reference rates (units per 1 EUR) for the non-euro currencies we publish, so the frontend
+    converts with one official rate and can say which rate and which day. None when no rate is known."""
+    rates = {c: fx[c] for c in sorted({x for x in currencies if x}) if c != "EUR" and fx.get(c)}
+    return {"rates": rates, "date": date, "source": "ECB"} if rates and date else None
+
+
 def _median(vals: List[float]) -> float:
     v = sorted(vals)
     n = len(v)
@@ -367,14 +374,16 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
 async def run_all() -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
     t0 = time.monotonic()
+    fx_date = None
     connector = aiohttp.TCPConnector(limit=60, limit_per_host=12)
     async with aiohttp.ClientSession(connector=connector) as session:
         base = await resolve_pages_base(session)
         prev = await fetch_json(session, f"{base}/meta.json", timeout=30) or {}
         prev_meta = {c["country"]: c for c in prev.get("countries", []) if isinstance(c, dict) and "country" in c}
         try:
-            from scrapers._anwb import _ecb_rates
+            from scrapers._anwb import _ecb_rates, ecb_date
             FX.update(await _ecb_rates(session))
+            fx_date = ecb_date()
         except Exception as e:  # noqa: BLE001 — stats are optional
             print(f"[stats] no FX rates: {type(e).__name__}: {e}")
         results = await asyncio.gather(*(run_one(sc, session, prev_meta) for sc in ALL_SCRAPERS))
@@ -393,6 +402,7 @@ async def run_all() -> None:
         "total_stations": total,
         "total_priced": priced,
         "countries": metas,
+        **({"fx": fxb} if (fxb := fx_block(FX, fx_date or generated[:10], [m.get("currency") for m in metas])) else {}),
     })
     write_json(OUTPUT_DIR / "health.json", {
         "schema": SCHEMA_VERSION,

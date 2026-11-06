@@ -47,8 +47,19 @@ _FRANKFURTER_URL = "https://api.frankfurter.dev/v1/latest?base=EUR"
 # ECB XML uses SINGLE quotes: <Cube currency='USD' rate='1.1355'/>  (the old regex only matched double)
 _ECB_RE = _re.compile(r"""currency=['"]([A-Z]{3})['"]\s+rate=['"]([\d.]+)['"]""")
 _FIXED_PEGS = {"BAM": 1.95583}          # Bosnian convertible mark: legally pegged to the euro
+_ECB_DATE_RE = _re.compile(r"""time=['"](\d{4}-\d\d-\d\d)['"]""")   # <Cube time='2026-11-05'>: the reference date
 _ecb_cache: Dict[str, float] = {}       # currency_code -> units per 1 EUR
+_ecb_date: Optional[str] = None         # ISO date of the rates above (None when unknown)
 _ecb_lock: Optional[asyncio.Lock] = None
+
+
+def _set_ecb_date(d: str) -> None:
+    global _ecb_date
+    _ecb_date = d
+
+
+def ecb_date() -> Optional[str]:
+    return _ecb_date
 
 
 async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
@@ -62,8 +73,12 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
         try:
             async with session.get(_ECB_URL, timeout=aiohttp.ClientTimeout(total=20)) as resp:
                 if resp.status == 200:
-                    for m in _ECB_RE.finditer(await resp.text()):
+                    body = await resp.text()
+                    for m in _ECB_RE.finditer(body):
                         _ecb_cache[m.group(1)] = float(m.group(2))
+                    d = _ECB_DATE_RE.search(body)
+                    if d and _ecb_cache:
+                        _set_ecb_date(d.group(1))
         except Exception as e:
             print(f"[ECB] rate fetch failed: {type(e).__name__}: {e}")
         if not _ecb_cache:
@@ -72,6 +87,8 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
                     if resp.status == 200:
                         data = await resp.json(content_type=None)
                         _ecb_cache.update({k: float(v) for k, v in (data.get("rates") or {}).items()})
+                        if data.get("date"):
+                            _set_ecb_date(str(data["date"]))
             except Exception as e:
                 print(f"[ECB] frankfurter fallback failed: {type(e).__name__}: {e}")
         for k, v in _FIXED_PEGS.items():

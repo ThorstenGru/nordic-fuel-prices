@@ -163,6 +163,7 @@ h1, h2, h3, .num, .st-name, .pk-p b, .trust-title { font-family:var(--f-disp); }
 #chips-more { position:absolute; top:48px; right:0; width:max-content; max-width:calc(100vw - 20px); z-index:2; display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; padding:8px;
   background:var(--surf); border:1px solid var(--line); border-radius:var(--r-m); box-shadow:var(--shadow); }
 #chips-more[hidden] { display:none; }
+.cur-sw { display:flex; align-items:center; gap:6px; width:100%; justify-content:flex-end; font-size:.68rem; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.06em; }
 #sform { display:none; flex:1; min-width:0; align-items:center; gap:8px; height:44px; padding:0 4px 0 14px; border-radius:22px;
   background:var(--surf); border:1px solid var(--line); box-shadow:var(--shadow); }
 #sform input { flex:1; min-width:0; border:none; background:none; outline:none; font-size:16px; color:var(--ink); height:100%; }
@@ -235,6 +236,7 @@ body.sheet #peek, body.kb #peek { display:none; }
 .mk .lbl i { display:block; height:3px; border-radius:2px; background:var(--ub, var(--line)); }
 .mk .lbl em { font-style:normal; font-size:.6rem; font-weight:700; opacity:.7; margin-right:3px; }
 .mk .lbl.off { opacity:0; }
+.mk .lbl u { text-decoration:none; font-size:.56rem; font-weight:700; opacity:.7; margin-left:2px; }
 .mk.best .lbl { background:var(--inv-bg); color:var(--inv-fg); border-color:var(--inv-bg); font-size:.84rem; padding:3px 8px 4px; z-index:5; }
 .mk.best .lbl::after { background:var(--inv-bg); border-color:var(--inv-bg); }
 .mk.best { z-index:5; }
@@ -249,6 +251,9 @@ body.sheet #peek, body.kb #peek { display:none; }
 .cty-b img { height:14px; width:auto; max-width:22px; border-radius:2px; box-shadow:0 0 0 1px rgba(0,0,0,.16); }
 .cty-b b { font-family:var(--f-disp); font-size:.76rem; font-variant-numeric:tabular-nums; }
 .cty-b small { font-size:.6rem; color:var(--sub); font-variant-numeric:tabular-nums; }
+.cty-b small.al { font-size:.54rem; opacity:.8; }
+.cty-b.two img { height:11px; }
+.cty-b.two b { font-size:.7rem; }
 .loc-dot { width:14px; height:14px; border-radius:50%; background:var(--acc); border:3px solid #fff; box-shadow:0 0 0 4px rgba(11,143,110,.25); animation:pulse 1.8s infinite; }
 @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(11,143,110,.4); } 70% { box-shadow:0 0 0 12px rgba(11,143,110,0); } 100% { box-shadow:0 0 0 0 rgba(11,143,110,0); } }
 .sel-ring { width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; border:3px solid var(--acc); box-shadow:0 0 0 3px rgba(11,143,110,.25); animation:pulse 1.8s infinite; pointer-events:none; }
@@ -406,6 +411,8 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .pop-tbl .pv details { margin-top:1px; } .pop-tbl .pv summary { cursor:pointer; }
 .pop-tbl .pv .reg { color:var(--warn-t); }
 .pop-tbl .un { color:var(--sub); font-size:.7rem; }
+.pop-tbl .un small { display:block; font-size:.66rem; }
+.fx-foot { font-size:.66rem; color:var(--sub); line-height:1.35; margin-top:6px; }
 .pop-tbl tr.np .pr, .pop-tbl tr.np .ft { text-decoration:line-through; text-decoration-thickness:2px; color:var(--mute); }
 .pop-tbl .npnote { color:var(--warn-t); font-size:.68rem; }
 .sus-note { color:var(--warn-t); font-size:.68rem; display:inline-flex; align-items:center; gap:4px; }
@@ -468,7 +475,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .cmp-stat .k { font-size:.62rem; text-transform:uppercase; letter-spacing:.06em; color:var(--sub); font-weight:700; }
 .cmp-stat .v { font-family:var(--f-disp); font-size:1.25rem; font-weight:800; line-height:1.2; margin-top:1px; font-variant-numeric:tabular-nums; border-bottom:3px solid var(--sc, var(--line)); display:inline-block; }
 .cmp-stat .d { font-size:.7rem; color:var(--sub); margin-top:3px; }
-.cmp-axis, .cmp-row { display:grid; grid-template-columns:104px 1fr 42px; align-items:center; gap:8px; }
+.cmp-axis, .cmp-row { display:grid; grid-template-columns:104px 1fr 76px; align-items:center; gap:8px; }
 .cmp-axis { position:sticky; top:0; z-index:2; background:var(--surf); padding:4px 0 2px; font-size:.6rem; color:var(--sub); }
 .cmp-axis .ax { position:relative; height:12px; }
 .cmp-axis .ax span { position:absolute; transform:translateX(-50%); font-variant-numeric:tabular-nums; }
@@ -482,7 +489,8 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .cmp-track .rng { position:absolute; top:7px; height:4px; border-radius:2px; background:var(--rng); }
 .cmp-track .dot { position:absolute; top:3px; width:12px; height:12px; margin-left:-6px; border-radius:50%; border:2px solid var(--surf); box-shadow:0 0 0 1px var(--ink); }
 .cmp-row.few { opacity:.6; }
-.cmp-val { text-align:right; font-family:var(--f-disp); font-weight:800; font-variant-numeric:tabular-nums; }
+.cmp-val small { display:block; font-weight:600; font-size:.62rem; color:var(--sub); }
+.cmp-val { text-align:right; line-height:1.15; white-space:nowrap; font-family:var(--f-disp); font-weight:800; font-variant-numeric:tabular-nums; }
 .cmp-note { font-size:.68rem; color:var(--sub); line-height:1.5; margin-top:12px; }
 .cmp-key { display:flex; gap:12px; font-size:.66rem; color:var(--sub); margin:0 0 4px; align-items:center; flex-wrap:wrap; }
 .cmp-key .kd { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--ink); vertical-align:-1px; margin-right:3px; }
@@ -696,6 +704,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <button class="chip" data-f="DIESEL" type="button" onclick="chipTap(this,'DIESEL')"><span data-i18n="fuelOptDiesel">Diesel</span></button>
       <button class="chip" id="chip-more" type="button" aria-expanded="false" aria-controls="chips-more" onclick="toggleMore()"><span data-i18n="moreFuels">More</span><svg class="ic sm"><use href="#i-chev-d"/></svg></button>
     <div id="chips-more" hidden>
+      <div class="cur-sw" role="group" data-i18n-aria="curSwitch" aria-label="Show prices in"><span data-i18n="curSwitch">Show prices in</span><button class="chip cur-btn" data-m="local" type="button" onclick="setCurMode('local')"><span data-i18n="curLocal">Local</span></button><button class="chip cur-btn" data-m="eur" type="button" onclick="setCurMode('eur')">EUR</button></div>
       <button class="chip" data-f="" type="button" onclick="chipTap(this,'');toggleMore(false)"><span data-i18n="fuelAll">All fuels</span></button>
       <button class="chip" data-f="HVO100" type="button" onclick="chipTap(this,'HVO100');toggleMore(false)"><svg class="ic sm"><use href="#i-leaf"/></svg> HVO</button>
       <button class="chip" data-f="E85" type="button" onclick="chipTap(this,'E85');toggleMore(false)">E85</button>
@@ -813,6 +822,8 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
         <label for="car-elec"><span data-i18n="carElec">Home electricity price per kWh</span> (<span id="car-cur">€</span>)</label><input id="car-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
         <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="90" onchange="carSet('eff',this.value)">
       </div>
+      <label for="car-cardpct" data-i18n="cardLbl">My card adds on foreign payments (%)</label><input id="car-cardpct" type="number" inputmode="decimal" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
+      <p class="cmp-note" style="margin:4px 0 0" data-i18n="cardHint">Added to euro amounts converted from another currency.</p><p class="cmp-note fx-src" style="margin:2px 0 0"></p>
       <div class="car-card" id="car-card"></div>
     </section>
 
@@ -844,6 +855,9 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <button class="theme-btn" type="button" data-theme="dark" onclick="setTheme('dark')" data-i18n="themeDark">Dark</button>
     </div>
 
+    <label class="lbl-s" data-i18n="curSwitch">Show prices in</label>
+    <div class="lang-row" role="group" data-i18n-aria="curSwitch" aria-label="Show prices in"><button class="theme-btn cur-btn" type="button" data-m="local" onclick="setCurMode('local')" data-i18n="curLocal">Local</button><button class="theme-btn cur-btn" type="button" data-m="eur" onclick="setCurMode('eur')">EUR</button></div>
+    <p class="cmp-note fx-src" style="margin-top:6px"></p>
     <p class="cmp-note" style="margin-top:18px" data-i18n="startTip">Tip: the card at the bottom of the map shows the cheapest station in view.</p>
     <button class="btn-acc install-row" id="install-row" type="button" onclick="installApp()" style="display:none"><svg class="ic"><use href="#i-down"/></svg><span data-i18n="installApp2">Add to Home Screen</span></button>
     <button class="btn-line link trust-link" type="button" onclick="openTrust()"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="trustLinkLabel">How we grade sources</span></button>
@@ -919,6 +933,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <div class="trust-row"><span class="gb gC">C</span><span data-i18n="grade_C">Third-party data · price time unknown</span></div>
     <div class="trust-row"><span class="gb gD">D</span><span data-i18n="grade_D">Community-reported prices</span></div>
     <div class="trust-row"><span class="gb gL">L</span><span data-i18n="grade_L">Location only</span></div>
+    <p class="trust-intro fx-src"></p>
     <a class="trust-more" href="about.html"><span data-i18n="fullMethod">Full methodology</span> <svg class="ic sm"><use href="#i-chev-r"/></svg></a>
     <button class="trust-dismiss" type="button" onclick="closeTrust()"><span data-i18n="trustDismiss">Got it</span></button>
   </div>
@@ -1287,6 +1302,98 @@ Object.assign(I18N.sv, {
   rtNote:'Förhandsvisning. Rutt från {r}. Endast uppskattningar: omvägar är fågelväg × 1,3, elräckvidden antas vara 75 % av den officiella och besparingen jämförs med medianen för pumpar i närheten. Priser ändras — kontrollera vid pumpen. Start och mål skickas till OpenStreetMap (Nominatim) för att hitta platserna och till ruttservern för att beräkna rutten. Din bilprofil och dessa inställningar stannar i din webbläsare och skickas inte till oss.' });
 
 
+// Currency display + routing service strings (all five languages)
+Object.assign(I18N.en, {
+  curSwitch:'Show prices in',
+  curLocal:'Local',
+  cAbout:'about {v}',
+  cardLbl:'My card adds on foreign payments (%)',
+  cardHint:'Added to euro amounts converted from another currency and shown as approximate card cost. Stored on this device only.',
+  fxFoot:'Exchange rate: {s} reference rate, {d} (1 EUR = {r} {c}).',
+  fxFootCard:' Euro amounts include {p}% for your card on foreign-currency prices (approximate card cost).',
+  fxDerived:'Exchange rate derived from published country medians (ECB based).',
+  fxSrcLine:'Currency conversion: euro reference rates from {s}, {d}.',
+  cmpAxisNote:'(bars: ECB rate)',
+  rtProvVal:'Valhalla (FOSSGIS; car; ferries included)',
+  rtProvOsrm:'the OSRM demo server (car; ferries not considered)',
+  rtUsed:'Route by {r}.',
+  rtUsedFb:'Route by {r}. The Valhalla server did not answer, so the fallback was used.',
+  rtFerryNote:'Route includes a ferry; check timetable and fare.',
+  rtNote:'Preview. Estimates only: detours are straight line × 1.3, electric range is assumed at 75% of the official figure, and the saving is against the median of nearby pumps. Prices change, check at the pump. The place names you type are sent to OpenStreetMap (Nominatim) to find the addresses. The start and end coordinates are sent to valhalla1.openstreetmap.de (FOSSGIS) to calculate the route; if that server does not answer, to router.project-osrm.org (OSRM demo server) instead. Nothing else is sent: your car profile and these settings stay in your browser and are not sent to us.'
+});
+Object.assign(I18N.sv, {
+  curSwitch:'Visa priser i',
+  curLocal:'Lokal',
+  cAbout:'cirka {v}',
+  cardLbl:'Mitt kort lägger på vid betalning utomlands (%)',
+  cardHint:'Läggs på eurobelopp som räknats om från en annan valuta och visas som ungefärlig kortkostnad. Sparas bara på den här enheten.',
+  fxFoot:'Växelkurs: referenskurs från {s}, {d} (1 EUR = {r} {c}).',
+  fxFootCard:' Eurobelopp inkluderar {p} % för ditt kort på utländsk valuta (ungefärlig kortkostnad).',
+  fxDerived:'Växelkurs härledd från publicerade landsmedianer (ECB-baserad).',
+  fxSrcLine:'Valutaomräkning: euroreferenskurser från {s}, {d}.',
+  cmpAxisNote:'(staplar: ECB-kurs)',
+  rtProvVal:'Valhalla (FOSSGIS; bil; färjor ingår)',
+  rtProvOsrm:'OSRM-demoservern (bil; färjor beaktas inte)',
+  rtUsed:'Rutt från {r}.',
+  rtUsedFb:'Rutt från {r}. Valhalla-servern svarade inte, så reservalternativet användes.',
+  rtFerryNote:'Rutten inkluderar en färja; kontrollera tidtabell och biljettpris.',
+  rtNote:'Förhandsvisning. Endast uppskattningar: omvägar är fågelväg × 1,3, elräckvidden antas vara 75 % av den officiella och besparingen jämförs med medianen för pumpar i närheten. Priser ändras, kontrollera vid pumpen. Platsnamnen du skriver skickas till OpenStreetMap (Nominatim) för att hitta adresserna. Start- och slutkoordinaterna skickas till valhalla1.openstreetmap.de (FOSSGIS) för att beräkna rutten; svarar den servern inte skickas de i stället till router.project-osrm.org (OSRM-demoservern). Inget annat skickas: din bilprofil och dessa inställningar stannar i din webbläsare och skickas inte till oss.'
+});
+Object.assign(I18N.de, {
+  curSwitch:'Preise anzeigen in',
+  curLocal:'Lokal',
+  cAbout:'ca. {v}',
+  cardLbl:'Meine Karte berechnet bei Zahlungen im Ausland (%)',
+  cardHint:'Wird auf Euro-Beträge aufgeschlagen, die aus einer anderen Währung umgerechnet wurden, und als ungefähre Kartenkosten angezeigt. Nur auf diesem Gerät gespeichert.',
+  fxFoot:'Wechselkurs: Referenzkurs ({s}), {d} (1 EUR = {r} {c}).',
+  fxFootCard:' Euro-Beträge enthalten {p} % für deine Karte (ungefähre Kartenkosten).',
+  fxDerived:'Wechselkurs aus veröffentlichten Länder-Medianen abgeleitet (EZB-basiert).',
+  fxSrcLine:'Währungsumrechnung: Euro-Referenzkurse ({s}), {d}.',
+  cmpAxisNote:'(Balken: EZB-Kurs)',
+  rtProvVal:'Valhalla (FOSSGIS; Auto; Fähren inklusive)',
+  rtProvOsrm:'dem OSRM-Demoserver (Auto; Fähren nicht berücksichtigt)',
+  rtUsed:'Route von {r}.',
+  rtUsedFb:'Route von {r}. Der Valhalla-Server hat nicht geantwortet, daher wurde die Ersatzlösung verwendet.',
+  rtFerryNote:'Die Route enthält eine Fähre; Fahrplan und Preis prüfen.',
+  rtNote:'Vorschau. Nur Schätzungen: Umwege sind Luftlinie × 1,3, die elektrische Reichweite wird mit 75 % der offiziellen Angabe angenommen, und die Ersparnis bezieht sich auf den Median der Tankstellen in der Nähe. Preise ändern sich, bitte an der Zapfsäule prüfen. Die eingegebenen Ortsnamen werden an OpenStreetMap (Nominatim) gesendet, um die Adressen zu finden. Start- und Zielkoordinaten gehen zur Routenberechnung an valhalla1.openstreetmap.de (FOSSGIS); antwortet dieser Server nicht, stattdessen an router.project-osrm.org (OSRM-Demoserver). Sonst wird nichts gesendet: Dein Fahrzeugprofil und diese Einstellungen bleiben im Browser und werden nicht an uns übertragen.'
+});
+Object.assign(I18N.fr, {
+  curSwitch:'Afficher les prix en',
+  curLocal:'Locale',
+  cAbout:'environ {v}',
+  cardLbl:'Ma carte ajoute pour les paiements à l’étranger (%)',
+  cardHint:'Ajouté aux montants en euros convertis depuis une autre devise et affiché comme coût approximatif de la carte. Enregistré uniquement sur cet appareil.',
+  fxFoot:'Taux de change : taux de référence {s}, {d} (1 EUR = {r} {c}).',
+  fxFootCard:' Les montants en euros incluent {p} % pour votre carte (coût approximatif de la carte).',
+  fxDerived:'Taux de change déduit des médianes publiées par pays (basé sur la BCE).',
+  fxSrcLine:'Conversion de devises : taux de référence de l’euro ({s}), {d}.',
+  cmpAxisNote:'(barres : taux BCE)',
+  rtProvVal:'Valhalla (FOSSGIS ; voiture ; ferries inclus)',
+  rtProvOsrm:'le serveur de démonstration OSRM (voiture ; ferries non pris en compte)',
+  rtUsed:'Itinéraire calculé par {r}.',
+  rtUsedFb:'Itinéraire calculé par {r}. Le serveur Valhalla n’a pas répondu, la solution de secours a été utilisée.',
+  rtFerryNote:'L’itinéraire comprend un ferry ; vérifiez l’horaire et le tarif.',
+  rtNote:'Aperçu. Estimations uniquement : les détours sont à vol d’oiseau × 1,3, l’autonomie électrique est supposée égale à 75 % de la valeur officielle et l’économie est calculée par rapport à la médiane des pompes proches. Les prix changent, vérifiez à la pompe. Les noms de lieux saisis sont envoyés à OpenStreetMap (Nominatim) pour trouver les adresses. Les coordonnées de départ et d’arrivée sont envoyées à valhalla1.openstreetmap.de (FOSSGIS) pour calculer l’itinéraire ; si ce serveur ne répond pas, à router.project-osrm.org (serveur de démonstration OSRM). Rien d’autre n’est envoyé : votre profil de voiture et ces réglages restent dans votre navigateur et ne nous sont pas transmis.'
+});
+Object.assign(I18N.es, {
+  curSwitch:'Mostrar precios en',
+  curLocal:'Local',
+  cAbout:'unos {v}',
+  cardLbl:'Mi tarjeta añade en pagos en el extranjero (%)',
+  cardHint:'Se suma a los importes en euros convertidos desde otra moneda y se muestra como coste aproximado de la tarjeta. Solo se guarda en este dispositivo.',
+  fxFoot:'Tipo de cambio: tipo de referencia {s}, {d} (1 EUR = {r} {c}).',
+  fxFootCard:' Los importes en euros incluyen un {p} % por tu tarjeta (coste aproximado de la tarjeta).',
+  fxDerived:'Tipo de cambio derivado de las medianas publicadas por país (basado en el BCE).',
+  fxSrcLine:'Conversión de moneda: tipos de referencia del euro ({s}), {d}.',
+  cmpAxisNote:'(barras: tipo BCE)',
+  rtProvVal:'Valhalla (FOSSGIS; coche; ferris incluidos)',
+  rtProvOsrm:'el servidor de demostración OSRM (coche; ferris no considerados)',
+  rtUsed:'Ruta de {r}.',
+  rtUsedFb:'Ruta de {r}. El servidor Valhalla no respondió, así que se usó la alternativa.',
+  rtFerryNote:'La ruta incluye un ferri; comprueba el horario y la tarifa.',
+  rtNote:'Vista previa. Solo estimaciones: los desvíos son línea recta × 1,3, el alcance eléctrico se supone al 75 % de la cifra oficial y el ahorro se compara con la mediana de los surtidores cercanos. Los precios cambian: compruébalo en el surtidor. Los nombres de lugar que escribes se envían a OpenStreetMap (Nominatim) para encontrar las direcciones. Las coordenadas de origen y destino se envían a valhalla1.openstreetmap.de (FOSSGIS) para calcular la ruta; si ese servidor no responde, a router.project-osrm.org (servidor de demostración OSRM). No se envía nada más: tu perfil de coche y estos ajustes se quedan en tu navegador y no se envían a nosotros.'
+});
+
 // v2.0 strings (EN + SV; DE/FR/ES fall back to English until translated)
 Object.assign(I18N.en, { tabTrip:'Trip', tabCar:'My car', segPrices:'Prices', segBorder:'Border run', moreFuels:'More', locateMe:'Use my location', zoomIn:'Zoom in', zoomOut:'Zoom out',
   cheapView:'Cheapest in view', lgBands:'Price bands on the map', startPromise:'Find the cheapest fuel near you.', startSub:'Live prices from official sources across Europe. Every price shows where it came from and how old it is.',
@@ -1343,8 +1450,9 @@ function setLang(l) {
   lang = l;
   try { localStorage.setItem('efp_lang', l); } catch (_) {}
   localizeCN(); buildSelects();
-  applyStaticI18n();
+  applyStaticI18n(); curUi();
   updStatus();
+  if (typeof renderMarkers === 'function') { renderMarkers(); renderBubbles(); }
   if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); evRender(); updPeek(_peekBest); }
   if (typeof vehBuild === 'function') vehBuild();
   if (typeof rebuildList === 'function') rebuildList();
@@ -1419,6 +1527,7 @@ let   myMark  = null, myCirc = null;
 let   metaAt  = null, metaTotal = 0;
 let   fCountry= '', fFuel = '';
 let   colorBy = 'price';       // 'price' | 'source'
+let   metaFx = null;            // meta.json fx { rates: {CUR: units per 1 EUR}, date, source:'ECB' } (absent on old data: rates are then derived, see rateOf)
 let   metaCountries = [];      // meta.json countries[] (with stats_eur once the pipeline publishes it)
 let   cmpKey = 'p95';
 let   cmpView = 'countries';   // 'countries' | 'trip'
@@ -1550,15 +1659,19 @@ const suspectMsg = (cc, p) => suspectWhy(cc, p) ? t('suspectNote') : '';
 // EUR per local unit, derived from the published EUR medians vs the local medians we hold (no extra FX call). Lets prices of
 // different countries be ORDERED — raw numbers are not comparable (1.2 EUR vs 785 HUF vs 17 SEK).
 const _fx = {};
-function fx(cc) {
-  const cur = metaOf[cc]?.currency || metaCountries.find(c => c.country === cc)?.currency || 'EUR';
-  if (cur === 'EUR') return 1;
+function fxDerived(cc) {
   const key = (_cv[cc] | 0) + '|' + metaCountries.length, hit = _fx[cc];
   if (hit && hit.k === key) return hit.r;
   const e = metaCountries.find(c => c.country === cc)?.stats_eur, st = cstat(cc);
   const r = (e?.p95?.median && st.rp95) ? e.p95.median / st.rp95 : (e?.diesel?.median && st.rd) ? e.diesel.median / st.rd : null;
   _fx[cc] = { k: key, r };
   return r;
+}
+function fx(cc) {
+  const cur = metaOf[cc]?.currency || metaCountries.find(c => c.country === cc)?.currency || 'EUR';
+  if (cur === 'EUR') return 1;
+  const r = rateOf(cur);
+  return r ? 1 / r : null;
 }
 // cached headline price of a station (cheapest() loops over its prices; several calls per station per list build added up to 24 ms per pass)
 function headline(s) {
@@ -1567,7 +1680,7 @@ function headline(s) {
   return s._hp;
 }
 // sort key for "cheapest first": EUR price; unverified lows (see suspectLow) sort after everything else instead of topping the list
-function eurPrice(s) { const p = headline(s); if (!p) return Infinity; const r = fx(s.country); return (r ? p.price * r : 1e8) + (suspectLow(s.country, p) ? 1e5 : 0); }
+function eurPrice(s) { const p = headline(s); if (!p) return Infinity; const r = fxRank(s.country); return (r ? p.price * r : 1e8) + (suspectLow(s.country, p) ? 1e5 : 0); }
 // decorate–sort–undecorate: the key is computed once per item, not once per comparison (sorting 120k stations took 420–670 ms)
 function sortBy(arr, keyFn) { const d = arr.map(x => [keyFn(x), x]); d.sort((a, b) => a[0] - b[0]); return d.map(p => p[1]); }
 
@@ -1596,6 +1709,85 @@ function gradeOf(s) {
 function cleanSrc(x) { return String(x || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim(); }
 // 3 decimals only where pumps really price in tenths of a cent/penny (EUR, GBP); 2 elsewhere
 function pfmt(price, cur) { return Number(price).toFixed(cur === 'EUR' || cur === 'GBP' ? 3 : 2); }
+
+// CUR-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_currency.js)
+const CARD_MAX = 10;
+const cardClamp = v => { v = +String(v).replace(',', '.'); return isFinite(v) ? Math.min(CARD_MAX, Math.max(0, Math.round(v * 10) / 10)) : 0; };
+const curPerEur = (rates, cur) => cur === 'EUR' ? 1 : (rates && rates[cur] > 0 ? +rates[cur] : null);
+// amount in EUR from `cur` at the ECB rate; foreign amounts carry the user's card surcharge, EUR itself never does. null = no rate.
+function toEur(amt, cur, rates, card) { const r = curPerEur(rates, cur); return r == null ? null : amt / r * (cur === 'EUR' ? 1 : 1 + cardClamp(card) / 100); }
+// what to display for a local amount under the Local|EUR switch; without a rate it stays local (and says so through the returned cur)
+function curShow(amt, cur, mode, rates, card) {
+  if (mode === 'eur' && cur !== 'EUR') { const e = toEur(amt, cur, rates, card); if (e != null) return { v: e, cur: 'EUR' }; }
+  return { v: amt, cur };
+}
+// pumps price EUR and GBP in tenths of a cent/penny; converted and other currencies show 2 decimals
+const curDec = (cur, native) => native && (cur === 'EUR' || cur === 'GBP') ? 3 : 2;
+// CUR-PURE-END
+let _ro = {};
+function rateOf(cur) {                     // units of `cur` per 1 EUR: the ECB rate from meta.json fx, else derived from published medians
+  if (cur === 'EUR') return 1;
+  if (typeof cur !== 'string') return null;
+  if (cur in _ro) return _ro[cur];
+  let r = metaFx?.rates?.[cur] > 0 ? +metaFx.rates[cur] : null;
+  if (!r) { const c = metaCountries.find(m => m.currency === cur), d = c && fxDerived(c.country); r = d ? 1 / d : null; }
+  return (_ro[cur] = r);
+}
+const RATES = new Proxy({}, { get: (_, c) => rateOf(c) });
+let curMode = store.get('efp_curmode', 'local') === 'eur' ? 'eur' : 'local';
+let cardPct = cardClamp(store.get('efp_card', 0));
+// the card fee is for foreign payments: the viewer's own country currency (myCountry, once located) carries none. Unknown home = fee on every non-euro currency.
+const homeCur = () => (myCountry && metaOf[myCountry]?.currency) || null;
+const cardFor = cur => cur === homeCur() ? 0 : cardPct;
+const cShow = (p, cur) => curShow(p, cur, curMode, RATES, cardFor(cur));
+const cEur = (p, cur) => toEur(p, cur, RATES, cardFor(cur));
+// EUR per local unit incl. the card fee: the same conversion the displayed EUR prices use, so ranking and colours agree with the numbers on screen
+function fxRank(cc) {
+  const r = fx(cc); if (!r) return r;
+  const cur = metaOf[cc]?.currency || metaCountries.find(c => c.country === cc)?.currency || 'EUR';
+  return cur === 'EUR' ? r : r * (1 + cardFor(cur) / 100);
+}
+let _cl = {};
+function curLbl(cur) {                     // currency name in the UI language: 'kr' (sv) / 'SEK' (en), 'PLN', 'CHF', '€'
+  if (!cur) return '';
+  const k = lang + cur; if (k in _cl) return _cl[k];
+  let l = SYM[cur] || cur;
+  try { l = new Intl.NumberFormat(lang, { style:'currency', currency:cur }).formatToParts(0).find(x => x.type === 'currency').value; } catch (_) {}
+  return (_cl[k] = l);
+}
+const cNum = (p, cur, d = 2) => cShow(p, cur).v.toFixed(d);
+const cUn = cur => curLbl(cShow(1, cur).cur);
+const cTxt = (p, cur, d = 2) => { const x = cShow(p, cur); return `${x.v.toFixed(d)} ${curLbl(x.cur)}`; };
+const tagU = cur => cur === 'EUR' ? '' : `<u>${esc(cUn(cur))}</u>`;     // unit on map tags: euro countries stay bare
+function fxDate() { try { return new Date(metaFx.date + 'T12:00:00Z').toLocaleDateString(lang, { day:'numeric', month:'short', year:'numeric', timeZone:'UTC' }); } catch (_) { return metaFx?.date || ''; } }
+const cardNote = () => cardPct > 0 ? t('fxFootCard', { p: cardPct }) : '';
+// "Exchange rate: ECB reference rate, 5 Nov 2026 (1 EUR = 10.99 SEK)." (+ card note) for a country's currency
+function fxFoot(cur) {
+  if (!cur || cur === 'EUR') return '';
+  const r = rateOf(cur); if (!r) return '';
+  return metaFx ? t('fxFoot', { s: metaFx.source || 'ECB', d: fxDate(), r: +r.toFixed(4), c: curLbl(cur) }) + cardNote() : t('fxDerived') + cardNote();
+}
+function fxSrcUpd() {
+  const txt = metaFx ? t('fxSrcLine', { s: metaFx.source || 'ECB', d: fxDate() }) : t('fxDerived');
+  document.querySelectorAll('.fx-src').forEach(e => { e.textContent = txt; });
+}
+// station sheet: both currencies, whatever the switch says. main follows the switch, alt is the other one ("about 1.40 EUR")
+function sheetPrice(price, cur) {
+  const m = cShow(price, cur), foreign = cur !== 'EUR';
+  const o = m.cur === cur ? (foreign ? { v: cEur(price, cur), cur: 'EUR' } : null) : { v: price, cur };
+  return { n: m.v.toFixed(curDec(m.cur, m.cur === cur)), u: curLbl(m.cur),
+    alt: o && o.v != null ? t('cAbout', { v: o.v.toFixed(curDec(o.cur, o.cur === cur)) + ' ' + (o.cur === 'EUR' ? 'EUR' : curLbl(o.cur)) }) : '' };
+}
+function setCurMode(m) {
+  curMode = m === 'eur' ? 'eur' : 'local'; store.set('efp_curmode', curMode); curUi();
+  map.closePopup();
+  renderMarkers(); rebuildList(); renderBubbles(); updStatus(); renderCarCard(); renderCompare();
+  if (typeof rt !== 'undefined' && rt.res) rtRenderOut();
+  if (stId) { const s = findStation(stId), b = document.getElementById('st-body'); if (s && b) { const y = b.scrollTop; b.innerHTML = `<div class="pop">${stBody(s)}</div>`; b.scrollTop = y; } }
+  if (activeTab === 'stations' && myLat != null) showNearby();
+}
+function curUi() { document.querySelectorAll('.cur-btn').forEach(b => { const on = b.dataset.m === curMode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); const e = document.getElementById('car-cardpct'); if (e && document.activeElement !== e) e.value = cardPct || ''; fxSrcUpd(); }
+function cardSet(v) { cardPct = cardClamp(v); store.set('efp_card', cardPct); curUi(); setCurMode(curMode); }
 
 // Feeds sometimes send "2026-10-07T00:00:00" or a bare date without a zone: that is UTC. (new Date() would read it as the
 // phone's local time and make the price look 1–2 h older than it is.)
@@ -1640,7 +1832,7 @@ function provHtml(p) {
   let h = bits.join(' · ');
   if (p.disagree) h += (h ? ' · ' : '') + t('sourcesDiffer');
   if (p.alt?.length) {
-    const li = p.alt.map(a => `${pfmt(a.price, p.currency)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
+    const li = p.alt.map(a => `${sheetPrice(a.price, p.currency).n} ${esc(sheetPrice(a.price, p.currency).u)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
     h += `<details><summary>${t('otherSources', { n: p.alt.length })}</summary>${li}</details>`;
   }
   return h;
@@ -1827,7 +2019,7 @@ function mkMarker(s) {
   let lbl = '';
   if (cp) {
     const fl = fFuel ? '' : `<em>${isP95(cp) ? '95' : isP98(cp) ? '98' : cp.fuel_type === 'DIESEL' ? 'D' : esc(cp.fuel_type)}</em>`;
-    lbl = `<span class="lbl${s._sus ? ' unv' : ''}"><span>${fl}<b>${cp.price.toFixed(2)}</b></span><i style="--ub:${col}"></i></span>`;
+    lbl = `<span class="lbl${s._sus ? ' unv' : ''}"><span>${fl}<b>${cNum(cp.price, cp.currency)}</b>${tagU(cp.currency)}</span><i style="--ub:${col}"></i></span>`;
   }
   // 30 px transparent hit box around the (7–12 px) dot so it can be tapped with a thumb; the dot stays centred on the anchor
   const icon = L.divIcon({
@@ -1881,13 +2073,19 @@ function renderBubbles() {
     const p = map.latLngToContainerPoint(CPT[c.country]);
     if (placed.every(q => Math.hypot(q.x - p.x, q.y - p.y) > 62)) { placed.push(p); keep.push(c); }
   }
-  const key = z + '|' + keep.map(c => c.country + c.station_count).join(',');
+  const key = z + '|' + curMode + cardPct + homeCur() + lang + '|' + keep.map(c => c.country + c.station_count).join(',');
   if (key === bubbleKey) return;
   bubbleKey = key; bubbleLayer.clearLayers();
   for (const c of keep) {
-    const med = c.stats_eur?.p95?.median;
+    const med = c.stats_eur?.p95?.median, cur = c.currency || 'EUR', r0 = rateOf(cur);
+    // country average in the same currency as the tags; the other currency small underneath (euro countries: just the euro figure)
+    let avg = '', two = '';
+    if (med && cur !== 'EUR' && r0) {
+      const loc = med * r0, a = `${loc.toFixed(2)} ${curLbl(cur)}`, e = `€${cEur(loc, cur).toFixed(2)}`;
+      avg = curMode === 'eur' ? `<small>${e}</small><small class="al">${a}</small>` : `<small>${a}</small><small class="al">${e}</small>`; two = ' two';
+    } else if (med) avg = `<small>€${med.toFixed(2)}</small>`;
     const m = L.marker(CPT[c.country], {
-      icon: L.divIcon({ className:'', html:`<div class="cty-b" title="${esc(CNAMES[c.country] || c.country)}">${FLAGS[c.country] || ''}<b>${fmtCount(c.station_count)}</b>${med ? `<small>€${med.toFixed(2)}</small>` : ''}</div>`, iconSize:[66, 66], iconAnchor:[33, 33] }),
+      icon: L.divIcon({ className:'', html:`<div class="cty-b${two}" title="${esc(CNAMES[c.country] || c.country)}">${FLAGS[c.country] || ''}<b>${fmtCount(c.station_count)}</b>${avg}</div>`, iconSize:[66, 66], iconAnchor:[33, 33] }),
       keyboard:false,
     });
     const cc = c.country;
@@ -1924,7 +2122,7 @@ function regCells(cc, size) {
 function mkRegMarker(c, col, size) {
   const s = c.s, cp = c.cp, ub = col || 'var(--line)';
   const m = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', iconSize:[30, 30], iconAnchor:[15, 15],
-    html:`<div class="mk reg"><div class="dot" style="width:8px;height:8px;background:${ub}"></div><span class="lbl"><span><em>${isP95(cp) ? '95' : isP98(cp) ? '98' : cp.fuel_type === 'DIESEL' ? 'D' : esc(cp.fuel_type)}</em><b>${cp.price.toFixed(2)}</b></span><i style="--ub:${ub}"></i></span></div>` }), riseOnHover:false });
+    html:`<div class="mk reg"><div class="dot" style="width:8px;height:8px;background:${ub}"></div><span class="lbl"><span><em>${isP95(cp) ? '95' : isP98(cp) ? '98' : cp.fuel_type === 'DIESEL' ? 'D' : esc(cp.fuel_type)}</em><b>${cNum(cp.price, cp.currency)}</b>${tagU(cp.currency)}</span><i style="--ub:${ub}"></i></span></div>` }), riseOnHover:false });
   m.on('click', () => {
     const lat0 = Math.floor(s.lat / size) * size, lon0 = Math.floor(s.lon / size) * size, b = L.latLngBounds([lat0, lon0], [lat0 + size, lon0 + size]);
     map.setView(b.getCenter(), Math.min(Math.max(map.getBoundsZoom(b), map.getZoom() + 1), REG_ZOOM + 1));
@@ -1937,7 +2135,7 @@ function regVisible(bd, z, pk, vb) {
   for (const cc in data) {
     if (fCountry && cc !== fCountry) continue;
     const bb = CB[cc]; if (bb && !bd.intersects(bb)) continue;
-    const r = fx(cc);
+    const r = fxRank(cc);
     for (const c of regCells(cc, size).values()) {
       const s = c.s; if (!bd.contains([s.lat, s.lon])) continue;
       out.push({ c, eur: r ? c.cp.price * r : null });
@@ -1952,7 +2150,7 @@ function regVisible(bd, z, pk, vb) {
 
 function renderMarkers() {
   const _t0 = performance.now();
-  _sig = fFuel + '|' + colorBy;
+  _sig = fFuel + '|' + colorBy + '|' + curMode + cardPct + homeCur() + lang;
   renderBubbles();
   const z = map.getZoom();
   const vb = map.getBounds(), vn = vb.getNorth(), vs = vb.getSouth(), vw = vb.getWest(), ve = vb.getEast(), pk = {};   // pk: cheapest trusted price in the exact viewport, per currency
@@ -2055,10 +2253,10 @@ function updPeek(best) {
   _peekBest = best;
   const el = $id('peek'); if (!el) return;
   if (!best) { el.hidden = true; return; }
-  const s = best.s, p = best.p, sy = SYM[p.currency] || p.currency;
+  const s = best.s, p = best.p, sy = cUn(p.currency);
   const km = myLat != null && s.lat ? dist(myLat, myLon, s.lat, s.lon) : null;
   $id('pk-n').textContent = [s.name || s.brand || '—', s.city, km != null && km < 500 ? fmtDist(km) : ''].filter(Boolean).join(' · ');
-  $id('pk-v').textContent = p.price.toFixed(2);
+  $id('pk-v').textContent = cNum(p.price, p.currency);
   $id('pk-u').textContent = `${sy}${UNIT[p.unit] || '/L'} · ${fuelLabel(p)}`;
   $id('pk-p').style.setProperty('--pk-b', s._col || 'var(--line)');
   el.hidden = false;
@@ -2174,12 +2372,12 @@ function stBody(s) {
   const fk = fFuel || (cheapest(s) ? fuelKeyOf(cheapest(s)) : '');
   const missing = fFuel && (s.prices || []).length && !(s.prices || []).some(p => inFuel(p, fFuel));
   const rows = (s.prices||[]).map(p => {
-    const sym = SYM[p.currency] || p.currency || '';
+    const sp = sheetPrice(p.price, p.currency);
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
     const pv = provHtml(p);
     const np = p.plausible === false;
     const sus = np ? '' : suspectMsg(s.country, p);       // not flagged by the pipeline, but the data contradicts it: shown, marked, never ranked first
-    return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? ico('warn', 'sm') + ' ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${pfmt(p.price, p.currency)}</td><td class="un">${sym}${UNIT[p.unit]||''}</td></tr>`
+    return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? ico('warn', 'sm') + ' ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${sp.n}</td><td class="un">${esc(sp.u)}${UNIT[p.unit]||''}${sp.alt ? `<small>${esc(sp.alt)}${UNIT[p.unit]||''}</small>` : ''}</td></tr>`
       + (np ? `<tr class="np"><td class="pv npnote" colspan="3"><b>${t('notPlausible')}</b> — ${t('np_' + (p.implausible_reason || 'far_from_country'))}. ${t('npExcluded')}</td></tr>`
             : (pv || sus ? `<tr><td class="pv" colspan="3">${pv}${sus ? `${pv ? '<br>' : ''}<span class="sus-note">${ico('warn', 'sm')} ${sus}</span>` : ''}</td></tr>` : ''));
   }).join('') + (missing ? `<tr><td class="ft">${fFuel === 'P95' ? '95' : fFuel === 'P98' ? '98' : esc(fFuel)}</td><td colspan="2" style="text-align:right"><span class="nobadge">${t('noPriceRep')}</span></td></tr>` : '');
@@ -2190,8 +2388,10 @@ function stBody(s) {
     ${nearOpts(s, fk)}
     ${facHtml(s)}
     <div class="worth" id="worth-${esc(s.id)}">${worthHtml(s, fFuel || _worthKey || (fk || 'P95'))}</div>
+    ${fxFootHtml(s)}
     ${ageHtml(s)}`;
 }
+function fxFootHtml(s) { const f = fxFoot(metaOf[s.country]?.currency || (s.prices || []).find(p => p.currency)?.currency); return f ? `<div class="fx-foot">${esc(f)}</div>` : ''; }
 
 // vehicle strip: what the headline fuel costs for the profile in My car, or a quiet link to set one up
 function vehStrip(s) {
@@ -2239,12 +2439,11 @@ function nearOpts(s, key) {
   if (!c.length) return '';
   c.sort((a, b) => a.km - b.km);
   const rows = c.slice(0, 3).map(({ o, q, km }) => {
-    const sy = SYM[q.currency] || q.currency;
     let d = '', cls = '';
     if (base && base.currency === q.currency) {
       const df = q.price - base.price;
-      if (Math.abs(df) < 0.005) d = t('nbSame'); else { d = (df < 0 ? '-' : '+') + Math.abs(df).toFixed(2) + ' ' + sy; cls = df < 0 ? ' less' : ''; }
-    } else d = q.price.toFixed(2) + ' ' + sy;
+      if (Math.abs(df) < 0.005) d = t('nbSame'); else { d = (df < 0 ? '-' : '+') + cTxt(Math.abs(df), q.currency); cls = df < 0 ? ' less' : ''; }
+    } else d = cTxt(q.price, q.currency);
     return `<button type="button" class="nb-row" onclick="openStation(findStation('${escId(o.id)}'), false)"><span>${esc(o.brand || o.name || '—')} · ${fmtDist(km)}</span><span class="d${cls}">${esc(d)}</span></button>`;
   }).join('');
   return `<div class="nb-h">${t('nbTitle')}</div>${rows}`;
@@ -2320,14 +2519,14 @@ function mkCard(s, km) {
   const isSel= s.id === selId ? ' sel' : '';
   const cp   = cheapest(s);
   const chips = (s.prices||[]).map(p => {
-    const sym = SYM[p.currency] || p.currency || '';
+    const sym = cUn(p.currency);
     const sus = p.plausible === false ? '' : suspectMsg(s.country, p);
     const best = cp && p === cp && !sus;
     const tip = [p.source && srcName(p.source), p.basis === 'regulated_max' ? t('regulatedMax') : '', (p.source || p.basis === 'regulated_max') ? ageTxt(p.updated_at) : '', sus].filter(Boolean).join(' · ');
-    if (p.plausible === false) return `<span class="pc np" title="${esc(t('notPlausible') + ' — ' + t('np_' + (p.implausible_reason || 'far_from_country')))}"><span class="t">${ico('warn', 'sm')} ${fuelLabel(p)}</span><span class="v">${p.price.toFixed(2)}</span><span class="u">${sym}</span><span class="npl">${t('notPlausible')}</span></span>`;
+    if (p.plausible === false) return `<span class="pc np" title="${esc(t('notPlausible') + ' — ' + t('np_' + (p.implausible_reason || 'far_from_country')))}"><span class="t">${ico('warn', 'sm')} ${fuelLabel(p)}</span><span class="v">${cNum(p.price, p.currency)}</span><span class="u">${sym}</span><span class="npl">${t('notPlausible')}</span></span>`;
     return `<span class="pc${best?' best':''}${sus?' sus':''}"${tip ? ` title="${esc(tip)}"` : ''}>
       <span class="t">${fuelLabel(p)}</span>
-      <span class="v">${p.price.toFixed(2)}</span>
+      <span class="v">${cNum(p.price, p.currency)}</span>
       <span class="u">${sym}</span>${sus ? '<span class="q" aria-label="' + esc(sus) + '">?</span>' : ''}
     </span>`;
   }).join('');
@@ -2358,7 +2557,7 @@ let metaIdx = {};
 function fetchMeta(fresh) {
   const go = () => fetch('meta.json', fresh ? { cache:'no-store' } : {}).then(r => r.ok ? r.json() : null).catch(() => null);
   return go().then(m => m || _sleep(1500).then(go)).then(m => {
-    if (m) { metaAt = m.fetched_at; metaTotal = m.total_stations || 0; metaCountries = m.countries || []; metaIdx = Object.fromEntries(metaCountries.map(c => [c.country, c.fetched_at])); schedRender(); }
+    if (m) { metaAt = m.fetched_at; metaTotal = m.total_stations || 0; metaCountries = m.countries || []; metaFx = m.fx && m.fx.rates ? m.fx : null; _ro = {}; curUi(); metaIdx = Object.fromEntries(metaCountries.map(c => [c.country, c.fetched_at])); schedRender(); }
     return m;
   }).catch(() => null);
 }
@@ -2427,7 +2626,7 @@ async function loadCC(cc, opts) {
     prepStations(data[cc]);
     for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
     delete _cs[cc];
-    _cv[cc] = (_cv[cc] | 0) + 1; _qVer++;
+    _cv[cc] = (_cv[cc] | 0) + 1; _qVer++; _ro = {};
     if (!force) { schedRender(); onNewData(); }
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
@@ -2782,7 +2981,6 @@ function showNearby() {
     return;
   }
 
-  const SYM_LOCAL = { EUR:'€',SEK:'kr',NOK:'kr',DKK:'kr',ISK:'kr',PLN:'zł',HUF:'Ft',CZK:'Kč',RON:'lei',CHF:'Fr',BGN:'лв',RSD:'din',MKD:'ден',ALL:'lek',BAM:'BAM',MDL:'lei',GBP:'£',TRY:'₺',ILS:'₪' };
   let bestGlobal = null, bestGlobalKm = null, bestSt = null, skipped = 0;
   const seen = [];
   for (const {s,km} of cands) {
@@ -2798,8 +2996,7 @@ function showNearby() {
   const priceEl = document.getElementById('ns-price');
   const detailEl = document.getElementById('ns-detail');
   if (bestGlobal) {
-    const sym = SYM_LOCAL[bestGlobal.currency] || bestGlobal.currency;
-    priceEl.textContent = `${bestGlobal.price.toFixed(2)} ${sym}/${bestGlobal.unit||'L'} ${fuelLabel(bestGlobal)}`;
+    priceEl.textContent = `${cTxt(bestGlobal.price, bestGlobal.currency)}/${bestGlobal.unit||'L'} ${fuelLabel(bestGlobal)}`;
     detailEl.textContent = t('bestWithinDetail', { d: fmtDist(bestGlobalKm), n: cands.length, r: NEARBY_RADIUS_KM, c: CNAMES[country]||country||t('yourCountry') })
       + (skipped ? ' · ' + t('cheapSkipped', { n: skipped }) : '');
     // Compare like with like: same fuel bucket, same currency
@@ -2807,7 +3004,7 @@ function showNearby() {
     const avg = same.length >= 3 ? same.reduce((a, p) => a + p.price, 0) / same.length : null;
     const diff = avg != null ? avg - bestGlobal.price : 0;
     document.getElementById('ns-save').textContent = diff >= 0.01 && diff / avg >= 0.01      // below 1 % it is noise ("0.05 kr/L below average — saves 2 kr")
-      ? t('nearSave', { d: diff.toFixed(2) + ' ' + sym, a: avg.toFixed(2) + ' ' + sym, s: money(diff * tank, bestGlobal.currency), l: tank }) : '';
+      ? t('nearSave', { d: cTxt(diff, bestGlobal.currency), a: cTxt(avg, bestGlobal.currency), s: money(diff * tank, bestGlobal.currency), l: tank }) : '';
     document.getElementById('ns-go').innerHTML = ico('go') + '<span>' + esc(t('nearGo')) + '</span>';
     sumEl.style.display = 'flex';
   } else {
@@ -3003,8 +3200,8 @@ function toast(msg, ms = 3600) {
 }
 function buzz(ms = 18) { try { navigator.vibrate && navigator.vibrate(ms); } catch (_) {} }
 function money(v, cur) {
-  const sy = SYM[cur] || cur || '';
-  return `${v >= 100 ? Math.round(v) : v.toFixed(2)} ${sy}`.trim();
+  const x = cShow(v, cur);
+  return `${x.v >= 100 ? Math.round(x.v) : x.v.toFixed(2)} ${curLbl(x.cur)}`.trim();
 }
 function fillHtml(cp) {
   if (!cp || (cp.unit && cp.unit !== 'L') || !tank) return '';
@@ -3059,7 +3256,7 @@ function renderCarCard() {
   const el = document.getElementById('car-card'); if (!el) return;
   if (car.type !== 'phev') { el.style.display = 'none'; return; }
   el.style.display = '';
-  const cc = ctyCc(), cur = ctyCur(), sy = SYM[cur] || cur;
+  const cc = ctyCc(), cur = ctyCur();
   const cu = document.getElementById('car-cur'); if (cu) cu.textContent = car.elecCur || cur;
   const e = metaCountries.find(c => c.country === cc)?.stats_eur?.p95?.median, r = e ? fx(cc) : null;
   const pp = e && r ? e / r : (cstat(cc).p95 || null);                               // country median petrol 95, local currency
@@ -3078,7 +3275,7 @@ function renderCarCard() {
   if (kwh100 && car.cons && pp) L.push(t('carBreak', { v: b(car.cons * pp / kwh100) }));
   L.push(`<button type="button" class="ev-link" onclick="evOpen()">${esc(t('evOpen'))}</button>`);
   el.innerHTML = L.map(x => `<div>${x}</div>`).join('') + (miss.length ? `<div>${esc(t('carNeeds', { x: miss.join(', ') }))}</div>` : '')
-    + (pp && kwh100 ? `<div style="font-size:0.66rem;margin-top:4px">${esc(t('carEst', { i: t('carInputs', { p: pp.toFixed(2) + ' ' + sy, k: kwh100.toFixed(1), e: Math.round(eff * 100) }) }))}</div>` : '');
+    + (pp && kwh100 ? `<div style="font-size:0.66rem;margin-top:4px">${esc(t('carEst', { i: t('carInputs', { p: cTxt(pp, cur), k: kwh100.toFixed(1), e: Math.round(eff * 100) }) }))}</div>` : '');
 }
 
 // ── Petrol or electricity? Cost per km on electricity vs petrol 95 (average of the 5 nearest priced stations) ──
@@ -3237,7 +3434,7 @@ function no95Html(s) {
     const q = minOf(o, 'P95'); if (!q || suspectLow(o.country, q)) continue;
     const d = dist(s.lat, s.lon, o.lat, o.lon); if (d < bd) { bd = d; best = { o, q }; }
   }
-  const near = best ? `<div>${esc(t('no95Near', { n: best.o.name || best.o.brand || '—', d: fmtDist(bd), p: best.q.price.toFixed(2) + ' ' + (SYM[best.q.currency] || best.q.currency) }))}</div>
+  const near = best ? `<div>${esc(t('no95Near', { n: best.o.name || best.o.brand || '—', d: fmtDist(bd), p: cTxt(best.q.price, best.q.currency) }))}</div>
     <button class="st-go" onclick="doNav('${escId(best.o.id)}')">${ico('go')} ${t('go')}</button>` : '';
   return `<div class="no95"><b>${t('no95')}</b>${near}</div>`;
 }
@@ -3275,7 +3472,7 @@ async function shareStation(id) {
   const cp = cheapest(s);
   const name = s.name || s.brand || 'Fuel station';
   const url = `${location.origin}${location.pathname}?s=${encodeURIComponent(id)}`;
-  const text = cp ? `${fuelLabel(cp)} ${cp.price.toFixed(2)} ${SYM[cp.currency] || cp.currency} — ${name}${s.city ? ', ' + s.city : ''}` : name;
+  const text = cp ? `${fuelLabel(cp)} ${cp.price.toFixed(2)} ${curLbl(cp.currency)} — ${name}${s.city ? ', ' + s.city : ''}` : name;
   if (navigator.share) { try { await navigator.share({ title: 'EuroFuelPrices', text, url }); } catch (_) {} return; }
   try { await navigator.clipboard.writeText(`${text}\n${url}`); toast(t('copied')); } catch (_) { toast(url); }
 }
@@ -3359,7 +3556,7 @@ function worthHtml(s, key) {
   if (!keys.includes(key)) key = keys.includes('P95') ? 'P95' : keys[0];
   const fl = k => k === 'P95' ? '95' : k === 'P98' ? '98+' : k === 'DIESEL' ? 'Diesel' : k;
   const w = worthCalc(s, key); if (!w) return '';
-  const cur = w.pP.currency, sym = SYM[cur] || cur;
+  const cur = w.pP.currency;
   const chips = keys.length > 1 ? `<div class="wk">${keys.map(k => `<button class="${k === key ? 'on' : ''}" onclick="setWorthKey('${escId(s.id)}','${k}')">${fl(k)}</button>`).join('')}</div>` : '';
   let body;
   if (!w.alt) body = `<div class="tverdict same">${t('worthClosest')}</div>`;
@@ -3367,7 +3564,7 @@ function worthHtml(s, key) {
     const abs = money(Math.abs(w.save), cur), tol = 0.3;
     const cls = w.save > tol ? 'good' : w.save < -tol ? 'bad' : 'same';
     const head = cls === 'good' ? t('worthYes', { s: abs }) : cls === 'bad' ? t('worthNo', { s: abs }) : t('worthSame', { s: money(tol, cur) });
-    body = `<div class="tverdict ${cls}">${head}<small>${t('worthVs', { d: fmtDist(w.dP), w: t(w.from.you ? 'worthYou' : 'worthMap'), n: esc(w.alt.s.name || w.alt.s.brand || '—'), a: fmtDist(w.altD), p: w.alt.p.price.toFixed(2) + ' ' + sym })} · ${t('worthBreak', { k: Math.round(w.brk) })}</small></div>`;
+    body = `<div class="tverdict ${cls}">${head}<small>${t('worthVs', { d: fmtDist(w.dP), w: t(w.from.you ? 'worthYou' : 'worthMap'), n: esc(w.alt.s.name || w.alt.s.brand || '—'), a: fmtDist(w.altD), p: cTxt(w.alt.p.price, cur) })} · ${t('worthBreak', { k: Math.round(w.brk) })}</small></div>`;
   }
   return `${chips}${body}${w.from.you ? '' : `<div class="wnote">${t('worthMapNote')}</div>`}`;
 }
@@ -3418,7 +3615,7 @@ async function cheapestInView() {
     _pulse = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', html:'<div class="pulse-ring"><i></i><i></i><i></i></div>', iconSize:[0,0] }), interactive:false, zIndexOffset:900 }).addTo(map);
     setTimeout(() => { if (_pulse) { map.removeLayer(_pulse); _pulse = null; } }, 6000);
     map.once('moveend', () => { setTimeout(() => { openStation(s); buzz([30, 40, 30]); }, 150); });
-    toast(t('cheapResult', { p: `${p.price.toFixed(2)} ${SYM[p.currency] || p.currency}`, n: s.name || s.brand || '—', c: n.toLocaleString() })
+    toast(t('cheapResult', { p: cTxt(p.price, p.currency), n: s.name || s.brand || '—', c: n.toLocaleString() })
       + (skipped ? ' · ' + t('cheapSkipped', { n: skipped }) : ''), 5200);
   } finally { _cheapBusy = false; }
 }
@@ -3432,7 +3629,7 @@ async function cheapestInView() {
 const rt = { from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
-const ROUTER = 'osrm';                         // 'osrm' (demo, no ferries) | 'valhalla' (FOSSGIS public, ferries; CSP host already allowed)
+const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
 const OSRM = 'https://router.project-osrm.org/route/v1/driving/';
 const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
 function decodePoly6(str) {                    // Valhalla shape: Google polyline, 6 decimals
@@ -3441,17 +3638,26 @@ function decodePoly6(str) {                    // Valhalla shape: Google polylin
   while (i < str.length) { la += num(); lo += num(); out.push([la / 1e6, lo / 1e6]); }
   return out;
 }
-async function rtRoute(a, b) {
-  if (ROUTER === 'valhalla') {
-    const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'none' });
-    const j = await (await fetch(`${VALHALLA}?json=${encodeURIComponent(q)}`)).json();
-    const tr = j.trip; if (!tr || tr.status !== 0) throw new Error('route');
-    return { pts: tr.legs.flatMap(l => decodePoly6(l.shape)), km: tr.summary.length, min: tr.summary.time / 60, ferry: tr.legs.some(l => l.summary?.has_ferry) };
-  }
-  const j = await (await fetch(`${OSRM}${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`)).json();
+async function rtJson(url, ms) {               // fetch JSON with a hard timeout; any failure (network, HTTP, timeout, bad JSON) throws
+  const ac = new AbortController(), tm = setTimeout(() => ac.abort(), ms);
+  try { const r = await fetch(url, { signal: ac.signal }); if (!r.ok) throw new Error('http ' + r.status); return await r.json(); } finally { clearTimeout(tm); }
+}
+async function rtValhalla(a, b) {
+  const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'none' });
+  const j = await rtJson(`${VALHALLA}?json=${encodeURIComponent(q)}`, 15000);
+  const tr = j.trip; if (!tr || tr.status !== 0) throw new Error('route');
+  return { pts: tr.legs.flatMap(l => decodePoly6(l.shape)), km: tr.summary.length, min: tr.summary.time / 60, ferry: tr.legs.some(l => l.summary?.has_ferry), via:'valhalla' };
+}
+async function rtOsrm(a, b) {
+  const j = await rtJson(`${OSRM}${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`, 15000);
   if (j.code !== 'Ok' || !j.routes?.[0]) throw new Error(j.code || 'route');
   const r = j.routes[0];
-  return { pts: r.geometry.coordinates.map(([lo, la]) => [la, lo]), km: r.distance / 1000, min: r.duration / 60, ferry: false };
+  return { pts: r.geometry.coordinates.map(([lo, la]) => [la, lo]), km: r.distance / 1000, min: r.duration / 60, ferry: false, via:'osrm' };
+}
+// fb = Valhalla failed and OSRM answered (the footnote says so; OSRM does not route ferries)
+async function rtRoute(a, b) {
+  if (ROUTER === 'valhalla') { try { return await rtValhalla(a, b); } catch (_) { return { ...(await rtOsrm(a, b)), fb: true }; } }
+  return rtOsrm(a, b);
 }
 const MAX_AGE_H = 10;                          // owner decision 2026-10-07: prices known to be older are not offered
 const rtFuelKey = () => cmpKey === 'diesel' ? 'DIESEL' : 'P95';
@@ -3524,7 +3730,7 @@ function renderRoute() {
       <button class="rt-go" id="rt-go" onclick="rtGo()" ${rt.busy ? 'disabled' : ''}>${ico('search')} ${t('rtGo')}</button>
     </div>
     <div id="rt-out"></div>
-    <p class="cmp-note">${t('rtNote', { r: t(ROUTER === 'valhalla' ? 'rtProvVal' : 'rtProvOsrm') })}</p>`;
+    <p class="cmp-note">${t('rtNote')}</p>`;
   rtRenderOut();
 }
 function rtSetStatus(msg) { rt.status = msg; const o = document.getElementById('rt-out'); if (o && rt.busy) o.innerHTML = `<p class="empty" style="padding:14px 0"><i class="spin"></i> ${esc(msg)}</p>`; }
@@ -3593,7 +3799,7 @@ async function rtGo() {
       rtSetStatus(t('rtLoading', { c: todo.map(c => CNAMES[c] || c).join(', ') }));
       await Promise.all(todo.map(cc => loadCC(cc)));
     }
-    rt.res = { pts, km: rte.km, min: rte.min, ferry: rte.ferry, countries: need, fuel: rtFuelKey() };
+    rt.res = { pts, km: rte.km, min: rte.min, ferry: rte.ferry, via: rte.via, fb: !!rte.fb, countries: need, fuel: rtFuelKey() };
     rtCorridor();
     rtRank();
     rtDraw(true);
@@ -3646,14 +3852,8 @@ function rtCorridor() {
   }
   R.cands = out;
 }
-// EUR per local unit, derived from the published EUR medians vs the local medians we hold (no extra FX call)
-function rtRate(cc) {
-  const cur = metaOf[cc]?.currency || 'EUR';
-  if (cur === 'EUR') return 1;
-  const eur = metaCountries.find(c => c.country === cc)?.stats_eur?.[cmpKey]?.median;
-  const loc = cstat(cc)[cmpKey === 'diesel' ? 'rd' : 'rp95'];   // raw median: same price set as the published EUR median
-  return eur && loc ? eur / loc : null;
-}
+// EUR per local unit: ECB rate from meta.json fx (see rateOf)
+function rtRate(cc) { return fxRank(cc); }
 function rtRank() {
   const R = rt.res; if (!R || R.error) return;
   const o = rtInputs(); o.km = R.km; R.o = o; R.plan = rtPlan(o);
@@ -3699,12 +3899,13 @@ function rtRenderOut() {
   if (!R) { o.innerHTML = ''; return; }
   if (R.error) { o.innerHTML = `<p class="empty">${t('rtFail')}</p>`; return; }
   const hm = `${Math.floor(R.min / 60)} h ${Math.round(R.min % 60)} min`, P = R.plan, I = R.o, eur = v => money(v, 'EUR');
-  const sum = t('rtSummary', { d: Math.round(R.km), h: hm, n: (R.nRows || 0).toLocaleString(), w: rt.w }) + (R.ferry ? ' · ' + t('rtFerry') : '');
+  const sum = t('rtSummary', { d: Math.round(R.km), h: hm, n: (R.nRows || 0).toLocaleString(), w: rt.w });
+  const used = `<br>${t(R.fb ? 'rtUsedFb' : 'rtUsed', { r: t(R.via === 'valhalla' ? 'rtProvVal' : 'rtProvOsrm') })}${R.ferry ? ' ' + t('rtFerryNote') : ''}`;
   const clr = `<button class="upd-line" style="margin-left:6px" onclick="rtClear()">${ico('close', 'sm')} ${t('rtClear')}</button>`;
   const e = P.elecKm > 0 ? t('rtAndKwh', { k: Math.round(P.kwh) }) + (P.elecCost != null ? ' (' + eur(P.elecCost) + ')' : '') : '';
   const best = R.best ? t('rtBest', { s: eur(R.best.saving) }) : t('rtNoBest', { s: eur(RT_MIN_SAVE) });
   const verdict = `<div class="tverdict ${P.needStop ? 'same' : 'good'}">${P.needStop ? t('rtNeedStop', { r: Math.round(P.reachKm), d: Math.round(R.km) }) : t('rtNoStop', { l: Math.round(P.petrolL), e, a: Math.max(0, Math.round(P.arriveL)) })}<small>${best}</small></div>`;
-  const notes = [R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '', R.hiddenOld ? t('rtOld', { n: R.hiddenOld }) : '',
+  const notes = [used.slice(4), R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '', R.hiddenOld ? t('rtOld', { n: R.hiddenOld }) : '',
     I.withCar ? '' : t('rtNoCar', { c: I.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
   if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${sum}${notes}</p>${verdict}<p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
   const fl = cmpKey === 'diesel' ? 'Diesel' : '95';
@@ -3714,14 +3915,13 @@ function rtRenderOut() {
       const d = r.ref - r.eur, s = r.saving;
       const cmp = d >= 0.005 ? t('rtCheaper', { d: d.toFixed(2) + ' €' }) : t('rtSame');
       const net = s >= 0.1 ? t('rtNetSave', { s: eur(s) }) : s <= -0.1 ? t('rtNetCost', { s: eur(-s) }) : t('rtNetNone');
-      const sy = SYM[r.p.currency] || r.p.currency;
       const nm = r.s.name || r.s.brand || '—';
       const head = r.tier > 0 && !sep ? (sep = true, `<p class="rt-sep">${t('rtBelow')}</p>`) : '';
       return `${head}<div class="rt-stop${r.tier ? ' weak' : ''}" onclick="rtFocus(${i})"><div class="rt-n">${i + 1}</div>
         <div><div class="nm">${FLAGS[r.s.country] || ''} ${esc(nm)}</div>
           <div class="sub">${esc(r.s.city || '')} · ${t('rtAlong', { k: Math.round(r.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: r.detourKm < 1 ? '<1' : r.detourKm.toFixed(1) })}<br>${esc(srcName(r.p.source || r.s.source || ''))}${r.p.source || r.s.source ? ' · ' : ''}${ageTxt(r.p.updated_at)}${r.why ? '<br>' + t(r.why) : ''}<br>${net}</div>
           <div class="acts"><button onclick="event.stopPropagation();doNav('${escId(r.s.id)}')">${ico('go', 'sm')} ${t('go')}</button><button onclick="event.stopPropagation();rtVia(${i})">${ico('route', 'sm')} ${t('rtVia')}</button></div></div>
-        <div class="pr">${r.p.price.toFixed(2)} ${sy}<small>${cmp}</small></div></div>`;
+        <div class="pr">${cTxt(r.p.price, r.p.currency)}<small>${cmp}</small></div></div>`;
     }).join('')}`;
 }
 function rtDraw(fit) {
@@ -3870,14 +4070,20 @@ function renderCompare() {
   for (let v = Math.ceil(a0 / step) * step; v <= a1 + 1e-9; v += step) ticks.push(v);
   const spread = Math.round((hi.st.median / lo.st.median - 1) * 100);
   const nm = r => `${FLAGS[r.cc] || ''} ${CNAMES[r.cc] || r.cc}`;
+  // each country in its own currency (or EUR under the switch), the other one small underneath; bars stay on the shared ECB-EUR axis
+  const curOf = r => metaCountries.find(c => c.country === r.cc)?.currency || 'EUR';
+  const pv = (r, v) => { const cur = curOf(r), q = rateOf(cur);
+    if (cur === 'EUR' || !q) return { main: `€${v.toFixed(2)}`, alt: '' };
+    const loc = `${(v * q).toFixed(2)} ${curLbl(cur)}`, e = `€${cEur(v * q, cur).toFixed(2)}`;
+    return curMode === 'eur' ? { main: e, alt: loc } : { main: loc, alt: e }; };
   const cls = r => (r.cc === fCountry ? ' sel' : '') + (r.cc === myCountry ? ' me' : '') + (r.st.n < 30 ? ' few' : '');
 
   el.innerHTML = `
     <div class="cmp-sum">
-      <div class="cmp-stat"><div class="k">${t('cmpCheapest')}</div><div class="v" style="--sc:${RAMP_U[0]}">€${lo.st.median.toFixed(2)}</div><div class="d">${nm(lo)}</div></div>
-      <div class="cmp-stat"><div class="k">${t('cmpPriciest')}</div><div class="v" style="--sc:${RAMP_U[4]}">€${hi.st.median.toFixed(2)}</div><div class="d">${nm(hi)} · ${t('cmpSpread', { p: spread })}</div></div>
+      <div class="cmp-stat"><div class="k">${t('cmpCheapest')}</div><div class="v" style="--sc:${RAMP_U[0]}">${pv(lo, lo.st.median).main}</div><div class="d">${nm(lo)}${pv(lo, lo.st.median).alt ? ' · ' + pv(lo, lo.st.median).alt : ''}</div></div>
+      <div class="cmp-stat"><div class="k">${t('cmpPriciest')}</div><div class="v" style="--sc:${RAMP_U[4]}">${pv(hi, hi.st.median).main}</div><div class="d">${nm(hi)}${pv(hi, hi.st.median).alt ? ' · ' + pv(hi, hi.st.median).alt : ''} · ${t('cmpSpread', { p: spread })}</div></div>
     </div>
-    <div class="cmp-key"><span><i class="kd"></i>${t('cmpMedian')}</span><span><i class="kr"></i>${t('cmpRange')}</span><span>€/L</span></div>
+    <div class="cmp-key"><span><i class="kd"></i>${t('cmpMedian')}</span><span><i class="kr"></i>${t('cmpRange')}</span><span>€/L ${t('cmpAxisNote')}</span></div>
     <div class="cmp-axis"><span></span><div class="ax">${ticks.map(v => `<span style="left:${pos(v)}%">${v.toFixed(2).replace(/0$/,'')}</span>`).join('')}</div><span></span></div>
     ${rows.map((r, i) => {
       const col = RAMP_U[Math.min(4, Math.floor(i / rows.length * 5))];
@@ -3886,9 +4092,10 @@ function renderCompare() {
         <div class="cmp-track">${ticks.map(v => `<span class="gl" style="left:${pos(v)}%"></span>`).join('')}
           <span class="rng" style="left:${pos(r.st.p10)}%;width:${(pos(r.st.p90) - pos(r.st.p10)).toFixed(2)}%"></span>
           <span class="dot" style="left:${pos(r.st.median)}%;background:${col}"></span></div>
-        <div class="cmp-val">${r.st.median.toFixed(2)}</div></div>`;
+        <div class="cmp-val">${pv(r, r.st.median).main}${pv(r, r.st.median).alt ? `<small>${pv(r, r.st.median).alt}</small>` : ''}</div></div>`;
     }).join('')}
-    <p class="cmp-note">${t('cmpNote')}</p>`;
+    <p class="cmp-note">${t('cmpNote')}</p><p class="cmp-note fx-src"></p>`;
+  fxSrcUpd();
 }
 function pickCountry(cc) {
   if (fCountry === cc) { setCountry(''); renderCompare(); return; }
@@ -3936,8 +4143,8 @@ function updStatus() {
     html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)}${failed ? '' : ' <i class="spin"></i>'}</div><div class="pl-row2"><span class="pl-sub">${failed ? ico('warn', 'sm') + ' ' + esc(t('loadFailShort')) : t('loadingEllipsis')}</span></div>`;
     cls = failed ? 'ok' : 'loading';
   } else {
-    const st = cstat(cc), sy = SYM[st.cur] || st.cur;
-    const bits = [st.p95 != null && `<span>95 <b>${st.p95.toFixed(2)}</b> ${sy}</span>`, st.d != null && `<span>D <b>${st.d.toFixed(2)}</b> ${sy}</span>`].filter(Boolean).join('');
+    const st = cstat(cc);
+    const bits = [st.p95 != null && `<span>95 <b>${cNum(st.p95, st.cur)}</b> ${cUn(st.cur)}</span>`, st.d != null && `<span>D <b>${cNum(st.d, st.cur)}</b> ${cUn(st.cur)}</span>`].filter(Boolean).join('');
     html = `<div class="pl-row1">${FLAGS[cc] || ''} ${esc(CNAMES[cc] || cc)}${spin}</div><div class="pl-row2">${bits || `<span class="pl-sub">${t('noPricesShort')}</span>`}</div>`;
   }
   badge.innerHTML = html; badge.className = cls;
@@ -3977,7 +4184,7 @@ function curTheme() { try { return localStorage.getItem('efp_theme') || 'auto'; 
 function applyTheme() {
   const v = curTheme();
   if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('on', b.dataset.theme === v));
+  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => b.classList.toggle('on', b.dataset.theme === v));
   document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.content = curTheme() !== 'auto' ? (isDark() ? '#0E1A29' : '#E9EEF3') : (/dark/.test(m.media) ? '#0E1A29' : '#E9EEF3'); });
   applyBasemap();
 }
@@ -4021,7 +4228,7 @@ document.addEventListener('focusout', () => setTimeout(updKb, 80));
 // Boot
 // ════════════════════════════════════════════════════
 (async () => {
-  applyStaticI18n(); applyTheme();
+  applyStaticI18n(); applyTheme(); curUi();
   try { if (!localStorage.getItem('efp_start_seen') && !new URLSearchParams(location.search).get('s')) showStart(); } catch (_) { showStart(); }
   metaReady = fetchMeta();
   await Promise.race([metaReady, _sleep(2500)]);
