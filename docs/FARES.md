@@ -21,3 +21,10 @@ Hand-kept list of crossings, tolls and vignettes for a passenger car. Not verifi
 - Fehmarn: no toll, not open before 2031 per ROUTE_IDEAS_D (internal note, not a primary page).
 - France/Italy: "varies", no per-100 km band because no primary source was read.
 - Czech tier for the owner's PHEV (CO2 up to 50 g/km) is cheaper than the standard price; confirm eligibility on the operator page.
+
+
+## App use (route planner wave 2)
+- The app loads `web/fares.json?v=<FARES_V>` lazily (constant in `web/index.html`; bump it whenever this file changes, the service worker serves `?v=` URLs cache-first).
+- Only `trip_price` is ever counted in a trip cost, and only when `seen_on` is within 90 days; `price` min..max is never shown as a cost. Older entries are greyed in the list and treated as unknown.
+- Optional field `"open": false` (not built yet, for example the Fehmarnbelt tunnel): the entry is never matched to a route.
+- Matching: ferry entries need a ferry on the route and both endpoints within 15 km of it; bridges and tunnels both endpoints within 15 km; vignettes and toll notes match when every listed country is driven.

@@ -101,6 +101,7 @@
       "id": "fehmarnbelt-tunnel",
       "name": "Fehmarnbelt tunnel (Rodby - Puttgarden)",
       "kind": "tunnel",
+      "open": false,
       "from": "Rodby (DK)", "to": "Puttgarden (DE)", "countries": ["DK", "DE"],
       "match": { "names": ["fehmarnbelt", "fehmarn tunnel", "femern"], "endpoints": [[54.6500, 11.3500], [54.5000, 11.2300]] },
       "price": null,
