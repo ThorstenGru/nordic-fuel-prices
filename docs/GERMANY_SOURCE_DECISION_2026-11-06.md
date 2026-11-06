@@ -69,3 +69,12 @@ Do not scrape TankPuls anonymously at 15-minute full-Germany scale. It breaches 
 ## Other items from the request
 - **Italy and Romania:** this memo does not cover them. The research only noted that TomTom lists both, and that fuel-prices.eu station data covers Italy and Romania but needs its Pro plan. Quality was not checked.
 - **Vehicle:** "Santa Fe MX5" is most likely a typo. The pasted data shows a 2025 Hyundai Santa Fe plug-in hybrid (petrol 1.6 L, 72 kW electric motor, 54 km WLTP electric range, 1.7 l/100 km WLTP weighted). Route planning needs to price petrol and electricity separately for it.
+
+## Addendum 2026-11-06 (afternoon): Tankerkoenig replied
+Reply from Hermann Kurz, Tankerkoenig UG (received 2026-11-06 11:47 CET). It corrects the research above:
+- Registration is NOT paused: free keys via https://onboarding.tankerkoenig.de/ (the "paused" text on the creativecommons page was stale).
+- Free API: 25 km radius and 1 request/minute per key are imposed by the Bundeskartellamt; bulk access to master or price data for all stations is not permitted on the free API. Over the limit: HTTP 503, then a one-hour IP block. No availability guarantee.
+- Commercial API (contract, no rate limit or radius limit, ZIP and radius search, history, averages, access to a Git repository with historical data): regular EUR 200/month; first 2 months free; special low-traffic rate EUR 50/month; the regular tariff only applies above 10,000 search requests (radius < 25 km) per day; cancellable at the end of any month. A dedicated server is possible at a price depending on needs.
+- Their offer is conditional on the owner accepting and receiving a contract.
+
+Open questions to ask before signing: may prices be republished in our public per-country JSON with attribution (redistribution/caching terms); what counts as "low traffic"; does the commercial API give a full-Germany snapshot (bulk) or only many radius queries, and how many requests a 15-minute full cover needs; Bundeskartellamt VID status of Tankerkoenig for this use; data licence for the history repository.
