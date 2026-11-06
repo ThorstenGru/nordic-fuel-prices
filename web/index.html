@@ -467,6 +467,12 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .rt-stop .pr { text-align:right; font-weight:800; font-size:1.05rem; }
 .rt-stop .pr small { display:block; font-family:var(--f-body); font-weight:600; color:var(--ok-t); font-size:.68rem; }
 .rt-stop.weak { opacity:.78; }
+.rt-plan { margin-top:12px; }
+.rt-plan h3 { margin:0 0 6px; }
+.rt-fresh { font-size:.76rem; color:var(--sub); line-height:1.5; margin:10px 0 0; }
+.rt-oh { font-size:1rem; font-weight:800; margin:18px 0 0; }
+.rt-pin.plan { background:var(--ink); color:var(--surf); width:30px; height:30px; font-size:.86rem; }
+.rt-spd { color:var(--ink); }
 .rt-sep { font-size:.72rem; color:var(--warn-t); margin:12px 0 0; padding-top:8px; border-top:2px solid var(--line); }
 .rt-stop .acts { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
 .rt-stop .acts button { border:1px solid var(--line); background:var(--surf); border-radius:var(--r-s); min-height:36px; padding:0 10px; font-size:.74rem; font-weight:600; cursor:pointer; color:var(--ink); display:inline-flex; align-items:center; gap:5px; }
@@ -1340,16 +1346,14 @@ Object.assign(I18N.fr, { routeTab:'Itinéraire', rtPreview:'Aperçu', rtFrom:'D�
   rtNoPlace:'Impossible de trouver « {q} »', rtFail:'Impossible de calculer un itinéraire — le serveur gratuit est peut-être occupé. Réessayez dans un instant.',
   rtNone:'Aucune pompe avec prix à moins de {w} km de l’itinéraire.', rtSummary:'{d} km · environ {h} · {n} pompes avec prix à moins de {w} km',
   rtMedian:'Médiane sur l’itinéraire {p} par litre', rtCheaper:'{d}/L sous la médiane de l’itinéraire', rtSame:'proche de la médiane de l’itinéraire',
-  rtAlong:'km {k} sur {n}', rtDetour:'+{k} km de détour (est.)', rtVia:'Itinéraire via ici', rtOld:'{n} prix de plus de 10 h sont masqués.', rtClear:'Effacer l’itinéraire',
-  rtNote:'Aperçu. Itinéraire du serveur de démonstration OSRM gratuit (voiture ; ferries et péages non pris en compte). Les détours sont des estimations (à vol d’oiseau × 1,3). Les prix changent — vérifiez à la pompe. Votre départ et votre arrivée sont envoyés à OpenStreetMap (Nominatim) et au serveur OSRM.' });
+  rtAlong:'km {k} sur {n}', rtDetour:'+{k} km de détour (est.)', rtVia:'Itinéraire via ici', rtClear:'Effacer l’itinéraire' });
 Object.assign(I18N.es, { routeTab:'Ruta', rtPreview:'Vista previa', rtFrom:'Desde', rtTo:'Hasta', rtPh:'Dirección o lugar', rtMyLoc:'Mi ubicación', rtPickMap:'Elegir en el mapa',
   rtTapMap:'Toca el mapa para fijar el {w}', rtStart:'origen', rtEnd:'destino', rtWidth:'Ancho del corredor', rtHideUnknown:'Ocultar precios de edad desconocida',
   rtGo:'Buscar los surtidores más baratos', rtSearching:'Buscando lugares…', rtRouting:'Calculando la ruta…', rtLoading:'Cargando precios: {c}…',
   rtNoPlace:'No se encontró «{q}»', rtFail:'No se pudo calcular una ruta: el servidor gratuito puede estar ocupado. Inténtalo de nuevo en un momento.',
   rtNone:'Ningún surtidor con precio a menos de {w} km de la ruta.', rtSummary:'{d} km · unas {h} · {n} surtidores con precio a menos de {w} km',
   rtMedian:'Mediana de la ruta {p} por litro', rtCheaper:'{d}/L por debajo de la mediana de la ruta', rtSame:'cerca de la mediana de la ruta',
-  rtAlong:'km {k} de {n}', rtDetour:'+{k} km de desvío (est.)', rtVia:'Ruta por aquí', rtOld:'Se ocultan {n} precios de más de 10 h.', rtClear:'Borrar ruta',
-  rtNote:'Vista previa. Ruta del servidor de demostración OSRM gratuito (coche; no se tienen en cuenta ferris ni peajes). Los desvíos son estimaciones (línea recta × 1,3). Los precios cambian: compruébalo en el surtidor. Tu origen y destino se envían a OpenStreetMap (Nominatim) y al servidor OSRM.' });
+  rtAlong:'km {k} de {n}', rtDetour:'+{k} km de desvío (est.)', rtVia:'Ruta por aquí', rtClear:'Borrar ruta' });
 // Route planner v2 (PHEV-aware cost, range, net-of-detour saving, data-quality gate). de/fr/es fall back to English for these keys;
 // their old rtNote/rtCheaper/rtSame described the previous behaviour and the privacy text must stay accurate, so they are dropped.
 for (const l of ['de', 'fr', 'es']) { delete I18N[l].rtNote; delete I18N[l].rtCheaper; delete I18N[l].rtSame; }
@@ -1360,7 +1364,7 @@ Object.assign(I18N.en, {
   rtBest:'Best stop on the route saves about {s} after the detour.', rtNoBest:'No priced stop saves more than {s} after the detour.',
   rtNetSave:'saves about {s} after the detour', rtNetCost:'costs about {s} more after the detour', rtNetNone:'no saving after the detour',
   rtCheaper:'{d}/L below the nearby median', rtSame:'around the nearby median', rtFerry:'via ferry',
-  rtBelow:'Below the line: age unknown or not verified. These are never ranked as best.',
+  rtBelow:'Below the line: age unknown or not verified. These are never called best.',
   rtWhyPs:'not verified: price unchanged for 2+ days', rtWhySus:'not verified: far below other prices here', rtWhyCty:'not verified: this country’s data is not current',
   rtStaleCty:'Prices not current: {c}.', rtBeyond:'{n} pumps are beyond your range and are not shown.',
   rtNoCar:'Using default consumption ({c} L/100 km). Fill in My car for a plan that fits your car.',
@@ -1373,7 +1377,7 @@ Object.assign(I18N.sv, {
   rtBest:'Bästa stopp längs rutten sparar cirka {s} efter omvägen.', rtNoBest:'Inget stopp med pris sparar mer än {s} efter omvägen.',
   rtNetSave:'sparar cirka {s} efter omvägen', rtNetCost:'kostar cirka {s} mer efter omvägen', rtNetNone:'ingen besparing efter omvägen',
   rtCheaper:'{d}/L under medianen i närheten', rtSame:'runt medianen i närheten', rtFerry:'via färja',
-  rtBelow:'Under strecket: okänd ålder eller overifierade. De rankas aldrig som bäst.',
+  rtBelow:'Under strecket: okänd ålder eller overifierade. De kallas aldrig bäst.',
   rtWhyPs:'overifierat: priset oförändrat i 2+ dygn', rtWhySus:'overifierat: långt under övriga priser här', rtWhyCty:'overifierat: landets data är inte aktuell',
   rtStaleCty:'Priser inte aktuella: {c}.', rtBeyond:'{n} pumpar ligger utanför din räckvidd och visas inte.',
   rtNoCar:'Använder standardförbrukning ({c} L/100 km). Fyll i Min bil för en plan som passar din bil.',
@@ -1417,6 +1421,92 @@ Object.assign(I18N.sv, {
   rtUsedFb:'Rutt från {r}. Valhalla-servern svarade inte, så reservalternativet användes.',
   rtFerryNote:'Rutten inkluderar en färja; kontrollera tidtabell och biljettpris.',
   rtNote:'Förhandsvisning. Endast uppskattningar: omvägar är fågelväg × 1,3, elräckvidden antas vara 75 % av den officiella och besparingen jämförs med medianen för pumpar i närheten. Priser ändras, kontrollera vid pumpen. Platsnamnen du skriver skickas till OpenStreetMap (Nominatim) för att hitta adresserna. Start- och slutkoordinaterna skickas till valhalla1.openstreetmap.de (FOSSGIS) för att beräkna rutten; svarar den servern inte skickas de i stället till router.project-osrm.org (OSRM-demoservern). Inget annat skickas: din bilprofil och dessa inställningar stannar i din webbläsare och skickas inte till oss.'
+});
+
+// Route planner wave 1: plan card, assumptions panel, price-age range, energy per stretch (EN + SV written; DE/FR/ES fall back to English)
+Object.assign(I18N.en, {
+  rtBeyond:'Without refuelling, {n} pumps are beyond your range and are not listed below (the plan above can still use them after a stop).',
+  rtGo:'Plan my fuel stops', rtPlanH:'Fuel plan', rtOther:'Other cheap pumps along the route',
+  rtPlan0:'No fuel stop needed: the trip uses about {l} L of petrol{e}.',
+  rtPlan1:'One fuel stop: about {l} litres. The fill-up costs about {c}.', rtPlanN:'{n} fuel stops: about {l} litres in total. The fill-ups cost about {c}.',
+  rtPlanArrive:'You arrive with about {a} L (between {lo} and {hi} L).', rtPlanArriveOne:'You arrive with about {a} L.', rtPlan0E:'No fuel stop needed: the trip runs on the battery (about {k} kWh{c}).', rtPlanTime0:'About {h} driving time.', rtFrNoneArea:'None of the {n} priced pumps near the route has a price time.',
+  rtPlanNone:'No safe plan found: your fuel and reserve carry you about {r} km of the {d} km, and no pump with a trusted price fits in between. Add start fuel, lower the reserve or check the pumps below.',
+  rtPlanTime:'About {h} including stops (each stop assumed about {m} min).', rtPlanRelaxed:'The fill is smaller than usual because it is the only way to reach the destination.',
+  rtBuy:'Buy about {l} L, about {c}', rtTankLine:'Tank: about {a} L on arrival, about {b} L after filling.',
+  rtWhyCheap:'Why here: about {d} cents per litre below the route median ({m}).', rtWhyNeed:'Why here: you need fuel at this point, and this is the best-value pump within reach of the stretch before it.',
+  rtPlanLow:'Your start fuel ({f} L) is below your reserve ({r} L), so no plan can keep the reserve. Add start fuel or lower the reserve.',
+  rtPlanUndated:'Warning: no pump with a dated price fits this trip, so this plan relies on a price with no time stamp. Check the price at the pump.',
+  rtWhyAge:'not verified: price older than 2 days', rtWhyUndated:'Why here: the best option within reach, but its price has no time stamp.',
+  rtUndated:'price time unknown, wider range', rtFrOne:'about {a} h old', rtFrRange:'{a} to {b} h old',
+  rtFrDated:'Prices behind this plan are {h}.', rtFrArea:'Pumps near the route: {d} of {n} have a price time; {h}.',
+  rtFrUndated:'{u} of {n} stops have no price time, so their range is wider.', rtFrUndatedArea:'{u} of {n} pumps have no price time.',
+  rtFrNone:'None of the prices behind this plan has a time, so the range is wide.',
+  rtEnBatt:'Battery: about {k} km on electricity ({kwh} kWh), empty around km {x}. After that about {l} L of petrol.',
+  rtEnBattAll:'Battery: covers the whole {k} km on electricity (about {kwh} kWh); about {b} % of the charge is left on arrival.', rtEnPetrol:'Petrol: about {l} L over {d} km (about {c} L per 100 km on this route).',
+  rtNoSegs:'No per-stretch speeds this time (fallback router): energy is worked out with one average for the whole route.',
+  hq_rtWhat:'What does this plan do?', ha_rtWhat:'It starts from the fuel and battery you set, drives the route stretch by stretch, and picks the fewest, best-value fuel stops that keep your reserve at every pump and at the destination.',
+  hq_rtRange:'Why a range and not one number?', ha_rtRange:'Pump prices change and some have no time. The older or less certain a price, the wider the range around it. Energy use has a margin of 10 percent too. These are estimates, so we show a range.',
+  hq_rtMin:'Why not stop for just a few litres?', ha_rtMin:'A stop costs time. The plan stops only when it must or when it saves real money, and then buys at least about a third of the tank. Only if a small fill is the one way to reach the destination does it allow less, and it says so.',
+  rtHow:'How this plan is worked out',
+  rtH1:'Energy is worked out per stretch of the route (from the routing server), using the speed on each stretch. The battery is used first, then petrol. Ferries use no energy. Hills are not included.',
+  rtH2:'The plan assumes {m} percent more energy use than the estimate, so your reserve holds. The arrival range above shows the estimate with and without this margin.',
+  rtH3:'A stop buys at least about {l} L unless it is the only way to reach the destination. Each stop counts as about {m} minutes and {e} of hassle, which is why the plan prefers fewer stops. At most 3 stops are planned.',
+  rtH4:'Speed effect: the part of energy use caused by air drag grows with speed squared, and {v} km/h is the reference. This is a rule of thumb, not measured for your car. Slow stretches (stop and go) are counted as if driven at 70 km/h, because stopping and starting costs energy too.',
+  rtH5:'Price range: from plus or minus {a} cent per litre for a price a few hours old, up to plus or minus {b} cents when the price has no time. These widths are estimates until real price changes have been measured. Prices older than 48 hours are not used for the plan or called best.',
+  rtSegH:'Road type', rtSegSpd:'Average speed', rtSegShare:'Share of energy', rtSegFast:'Fast roads (90 km/h and up)', rtSegMid:'60 to 90 km/h', rtSegSlow:'Under 60 km/h', rtSegFerry:'Ferry',
+  rtAsmTitle:'Assumptions', rtAsmIntro:'Change these to see how the plan reacts. They are your own choices or estimates and stay in your browser.',
+  rtAsmFuel:'Start with {f} % fuel', rtAsmBatt:'and {b} % battery', rtAsmSpd:'motorways at {s} km/h', rtAsmSpdAuto:'speed as routed', rtAsmVot:'your time {v} €/h', rtAsmVotNo:'time not counted',
+  rtSpeed:'Cruise speed on motorways', rtSpeedAuto:'As routed',
+  rtSpeedH:'Faster uses more energy and saves time. This is an estimate from a physics rule of thumb (air drag grows with speed squared), not measured for your car. It only changes motorway stretches. Observe local speed limits: the figures are for comparison only.',
+  rtSpAuto:'Pick a speed to see what it saves or costs compared with the speeds on the route.',
+  rtSpSlow:'At {s} km/h on motorway stretches: about {m} min longer and about {e} less energy cost, which is about {h} per hour of time given up (estimate).',
+  rtSpFast:'At {s} km/h on motorway stretches: about {m} min shorter and about {e} more energy cost, which is about {h} per hour saved (estimate).',
+  rtSpVotYes:'You value an hour at {v}, which is less than that, so driving slower pays.', rtSpVotNo:'You value an hour at {v}, which is more than that, so driving slower does not pay.',
+  rtSpVotYesF:'You value an hour at {v}, which is more than that, so driving faster pays.', rtSpVotNoF:'You value an hour at {v}, which is less than that, so driving faster does not pay.',
+  rtSpNone:'This route has no motorway stretch, so the speed makes no difference.', rtSpNoSegs:'The speed what-if needs the route from the Valhalla server, which did not answer this time.',
+  rtVot:'What an hour of your time is worth', rtVotOff:'Not counted', rtVotH:'Used when choosing stops: a stop costs about 10 minutes plus the detour. Leave on Not counted if you only want the cheapest plan.'
+});
+Object.assign(I18N.sv, {
+  rtBeyond:'Utan tankning ligger {n} pumpar utanför din räckvidd och listas inte nedan (planen ovan kan ändå använda dem efter ett stopp).',
+  rtGo:'Planera mina tankstopp', rtPlanH:'Tankplan', rtOther:'Andra billiga pumpar längs rutten',
+  rtPlan0:'Inget tankstopp behövs: resan drar cirka {l} L bensin{e}.',
+  rtPlan1:'Ett tankstopp: cirka {l} liter. Påfyllningen kostar cirka {c}.', rtPlanN:'{n} tankstopp: cirka {l} liter totalt. Påfyllningarna kostar cirka {c}.',
+  rtPlanArrive:'Du kommer fram med cirka {a} L kvar (mellan {lo} och {hi} L).', rtPlanArriveOne:'Du kommer fram med cirka {a} L kvar.', rtPlan0E:'Inget tankstopp behövs: resan går på batteriet (cirka {k} kWh{c}).', rtPlanTime0:'Cirka {h} körtid.', rtFrNoneArea:'Ingen av de {n} pumparna med pris nära rutten har pristid.',
+  rtPlanNone:'Ingen säker plan hittades: ditt bränsle och din reserv räcker cirka {r} km av {d} km, och ingen pump med pålitligt pris ligger däremellan. Fyll på startbränsle, sänk reserven eller titta på pumparna nedan.',
+  rtPlanTime:'Cirka {h} inklusive stopp (varje stopp räknas som cirka {m} min).', rtPlanRelaxed:'Tankningen är mindre än vanligt eftersom det är enda sättet att nå målet.',
+  rtBuy:'Tanka cirka {l} L, cirka {c}', rtTankLine:'Tank: cirka {a} L vid ankomst, cirka {b} L efter tankning.',
+  rtWhyCheap:'Varför här: cirka {d} cent per liter under medianen längs rutten ({m}).', rtWhyNeed:'Varför här: du behöver bränsle just här, och det här är den mest prisvärda pumpen inom räckhåll på sträckan innan.',
+  rtPlanLow:'Ditt startbränsle ({f} L) ligger under din reserv ({r} L), så ingen plan kan hålla reserven. Fyll på startbränsle eller sänk reserven.',
+  rtPlanUndated:'Varning: ingen pump med daterat pris passar den här resan, så planen bygger på ett pris utan tidsstämpel. Kontrollera priset vid pumpen.',
+  rtWhyAge:'overifierat: priset är äldre än 2 dygn', rtWhyUndated:'Varför här: bästa alternativet inom räckhåll, men priset saknar tidsstämpel.',
+  rtUndated:'pristid okänd, bredare intervall', rtFrOne:'cirka {a} tim gamla', rtFrRange:'{a} till {b} tim gamla',
+  rtFrDated:'Priserna bakom planen är {h}.', rtFrArea:'Pumpar nära rutten: {d} av {n} har pristid; {h}.',
+  rtFrUndated:'{u} av {n} stopp saknar pristid, så deras intervall är bredare.', rtFrUndatedArea:'{u} av {n} pumpar saknar pristid.',
+  rtFrNone:'Inget av priserna bakom planen har någon tid, så intervallet är brett.',
+  rtEnBatt:'Batteri: cirka {k} km på el ({kwh} kWh), tomt vid km {x}. Därefter cirka {l} L bensin.',
+  rtEnBattAll:'Batteri: räcker hela {k} km på el (cirka {kwh} kWh); cirka {b} % av laddningen återstår vid ankomst.', rtEnPetrol:'Bensin: cirka {l} L på {d} km (cirka {c} L per 100 km på den här rutten).',
+  rtNoSegs:'Inga hastigheter per sträcka den här gången (reservrouter): energin räknas med ett genomsnitt för hela rutten.',
+  hq_rtWhat:'Vad gör den här planen?', ha_rtWhat:'Den utgår från bränslet och batteriet du anger, kör rutten sträcka för sträcka och väljer så få, prisvärda tankstopp som möjligt som ändå håller din reserv vid varje pump och vid målet.',
+  hq_rtRange:'Varför ett intervall och inte ett tal?', ha_rtRange:'Pumppriser ändras och vissa saknar tid. Ju äldre eller osäkrare ett pris är, desto bredare intervall runt det. Energiåtgången har också en marginal på 10 procent. Det här är uppskattningar, därför visar vi ett intervall.',
+  hq_rtMin:'Varför inte stanna för bara några liter?', ha_rtMin:'Ett stopp kostar tid. Planen stannar bara när den måste eller när det sparar riktiga pengar, och tankar då minst ungefär en tredjedel av tanken. Bara om en liten tankning är enda sättet att nå målet tillåts mindre, och det står då.',
+  rtHow:'Så räknas planen ut',
+  rtH1:'Energin räknas per sträcka av rutten (från ruttservern) med hastigheten på varje sträcka. Batteriet används först, sedan bensin. Färjor drar ingen energi. Backar ingår inte.',
+  rtH2:'Planen räknar med {m} procent högre energiåtgång än uppskattningen så att din reserv håller. Ankomstintervallet ovan visar uppskattningen med och utan den marginalen.',
+  rtH3:'Ett stopp tankar minst cirka {l} L om det inte är enda sättet att nå målet. Varje stopp räknas som cirka {m} minuter och {e} i besvär, därför föredrar planen färre stopp. Högst 3 stopp planeras.',
+  rtH4:'Effekt av hastighet: den del av energiåtgången som beror på luftmotstånd växer med hastigheten i kvadrat, och {v} km/h är referensen. Det är en tumregel, inte uppmätt för din bil. Långsamma sträckor (stopp och start) räknas som om de kördes i 70 km/h, eftersom stopp och start också kostar energi.',
+  rtH5:'Prisintervall: från plus eller minus {a} cent per liter för ett pris några timmar gammalt, upp till plus eller minus {b} cent när priset saknar tid. Bredderna är uppskattningar tills verkliga prisändringar har mätts. Priser äldre än 48 timmar används inte i planen och kallas aldrig bäst.',
+  rtSegH:'Vägtyp', rtSegSpd:'Medelhastighet', rtSegShare:'Andel av energin', rtSegFast:'Snabba vägar (90 km/h och uppåt)', rtSegMid:'60 till 90 km/h', rtSegSlow:'Under 60 km/h', rtSegFerry:'Färja',
+  rtAsmTitle:'Antaganden', rtAsmIntro:'Ändra dem för att se hur planen reagerar. Det är dina egna val eller uppskattningar och de stannar i din webbläsare.',
+  rtAsmFuel:'Start med {f} % bränsle', rtAsmBatt:'och {b} % batteri', rtAsmSpd:'motorväg i {s} km/h', rtAsmSpdAuto:'hastighet enligt rutten', rtAsmVot:'din tid {v} €/tim', rtAsmVotNo:'tid räknas inte',
+  rtSpeed:'Marschfart på motorväg', rtSpeedAuto:'Enligt rutten',
+  rtSpeedH:'Snabbare drar mer energi och sparar tid. Det är en uppskattning med en fysikalisk tumregel (luftmotståndet växer med hastigheten i kvadrat), inte uppmätt för din bil. Det påverkar bara motorvägssträckor. Följ gällande hastighetsgränser: siffrorna är bara till för jämförelse.',
+  rtSpAuto:'Välj en hastighet för att se vad den sparar eller kostar jämfört med hastigheterna på rutten.',
+  rtSpSlow:'Vid {s} km/h på motorvägssträckor: cirka {m} min längre och cirka {e} lägre energikostnad, alltså cirka {h} per timme du ger upp (uppskattning).',
+  rtSpFast:'Vid {s} km/h på motorvägssträckor: cirka {m} min kortare och cirka {e} högre energikostnad, alltså cirka {h} per sparad timme (uppskattning).',
+  rtSpVotYes:'Du värderar en timme till {v}, vilket är mindre än så, så det lönar sig att köra långsammare.', rtSpVotNo:'Du värderar en timme till {v}, vilket är mer än så, så det lönar sig inte att köra långsammare.',
+  rtSpVotYesF:'Du värderar en timme till {v}, vilket är mer än så, så det lönar sig att köra fortare.', rtSpVotNoF:'Du värderar en timme till {v}, vilket är mindre än så, så det lönar sig inte att köra fortare.',
+  rtSpNone:'Rutten har ingen motorvägssträcka, så hastigheten gör ingen skillnad.', rtSpNoSegs:'Hastighetsjämförelsen behöver rutten från Valhalla-servern, som inte svarade den här gången.',
+  rtVot:'Vad en timme av din tid är värd', rtVotOff:'Räknas inte', rtVotH:'Används när stopp väljs: ett stopp kostar cirka 10 minuter plus omvägen. Låt stå på Räknas inte om du bara vill ha den billigaste planen.'
 });
 Object.assign(I18N.de, {
   curSwitch:'Preise anzeigen in',
@@ -4301,7 +4391,7 @@ async function cheapestInView() {
 // A→B by the free OSRM demo (car, no ferries/tolls) · places by Nominatim on submit · corridor search over the
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
-const rt = { from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, asmOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
@@ -4318,10 +4408,12 @@ async function rtJson(url, ms) {               // fetch JSON with a hard timeout
   try { const r = await fetch(url, { signal: ac.signal }); if (!r.ok) throw new Error('http ' + r.status); return await r.json(); } finally { clearTimeout(tm); }
 }
 async function rtValhalla(a, b) {
-  const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'none' });
+  const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'maneuvers' });
   const j = await rtJson(`${VALHALLA}?json=${encodeURIComponent(q)}`, 15000);
   const tr = j.trip; if (!tr || tr.status !== 0) throw new Error('route');
-  return { pts: tr.legs.flatMap(l => decodePoly6(l.shape)), km: tr.summary.length, min: tr.summary.time / 60, ferry: tr.legs.some(l => l.summary?.has_ferry), via:'valhalla' };
+  // R7: one entry per maneuver (length, time, motorway/ferry flag): speed per stretch is length/time. No elevation (not requested), so climbs are not modelled.
+  const mv = tr.legs.flatMap(l => l.maneuvers || []), segs = mv.length ? mv.map(m => ({ km: m.length, min: m.time / 60, hw: !!m.highway, ferry: !!m.ferry })) : null;
+  return { pts: tr.legs.flatMap(l => decodePoly6(l.shape)), km: tr.summary.length, min: tr.summary.time / 60, ferry: tr.legs.some(l => l.summary?.has_ferry), via:'valhalla', segs };
 }
 async function rtOsrm(a, b) {
   const j = await rtJson(`${OSRM}${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`, 15000);
@@ -4334,7 +4426,6 @@ async function rtRoute(a, b) {
   if (ROUTER === 'valhalla') { try { return await rtValhalla(a, b); } catch (_) { return { ...(await rtOsrm(a, b)), fb: true }; } }
   return rtOsrm(a, b);
 }
-const MAX_AGE_H = 10;                          // owner decision 2026-10-07: prices known to be older are not offered
 const rtFuelKey = () => cmpKey === 'diesel' ? 'DIESEL' : 'P95';
 
 // RT-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_route_model.js)
@@ -4367,7 +4458,164 @@ function rtRef(rows, along, fallback) {
   return pool.length ? rtMedian(pool.map(r => r.eur)) : fallback;
 }
 // 0 = dated and trusted, 1 = age unknown, 2 = not verified (unchanged 48 h+ flag `ps`, price the data contradicts, or country feed stale)
-const rtTier = c => (c.ps || c.sus || c.stale) ? 2 : c.age == null ? 1 : 0;
+const rtTier = c => (c.ps || c.sus || c.stale || (c.age != null && c.age > 48)) ? 2 : c.age == null ? 1 : 0;
+
+// ── Wave 1 (R7 energy per segment, R3 price-age range, R2 stop plan, R6 speed what-if) ──
+// All constants below are estimates, shown to the user as such (see the assumptions panel); R11 data can replace the band numbers later.
+const RT_V_REF = 110, RT_AERO = 0.6;     // R7: energy per km is 1.0 at 110 km/h; 60 % of it grows with speed squared (air drag), 40 % does not (rolling, drivetrain): rule of thumb, not measured for the Santa Fe
+const RT_MARGIN = 0.1;                   // plan with 10 % more energy use than the model says, so the reserve holds
+const RT_STOP_MIN = 10, RT_STOP_EUR = 2; // one fuel stop takes about 10 min and counts as about 2 EUR of hassle (this is what makes the plan prefer fewer stops)
+const RT_MAX_STOPS = 3, RT_LITRES_SMALL = 8;
+const rtMinFill = tank => Math.min(tank, Math.max(10, Math.round(tank * 0.3)));   // a stop buys at least ~30 % of the tank (about 14 L on 47 L)
+const rtSpeedF = v => (1 - RT_AERO) + RT_AERO * Math.pow(Math.min(140, Math.max(70, v)) / RT_V_REF, 2);
+// R3: half-width of the price range in EUR/L by price age (hours); null = undated. Replaces the old 10 h cliff.
+const rtBand = age => age == null ? 0.10 : age <= 3 ? 0.01 : age <= 12 ? 0.02 : age <= 24 ? 0.04 : 0.07;
+function rtFresh(list) {                 // list of { age } -> how current the prices behind a plan are
+  const d = list.filter(x => x.age != null).map(x => x.age);
+  return { n: list.length, nDated: d.length, minH: d.length ? Math.min(...d) : null, maxH: d.length ? Math.max(...d) : null };
+}
+// raw = [{ km, min, hw, ferry, flat }] (Valhalla maneuvers) -> [{ km, min, f }]; f = relative energy per km (0 on a ferry); cruise (km/h or null = as routed) replaces the speed on motorway stretches
+function rtSegs(raw, cruise) {
+  return raw.map(s => {
+    if (s.ferry) return { km: s.km, min: s.min, f: 0, ferry: true };
+    const v = s.min > 0 ? s.km / s.min * 60 : null, fast = cruise && s.hw && !s.flat;
+    return { km: s.km, min: fast ? s.km / cruise * 60 : s.min, f: s.flat || (v == null && !fast) ? 1 : rtSpeedF(fast ? cruise : v) };
+  });
+}
+// Cumulative energy walk. pts[i] = { km, L (load in km at reference speed), min }. Electric first (e km of load), then petrol.
+function rtProfile(segs, o, scale) {
+  const pts = [{ km: 0, L: 0, min: 0 }]; let km = 0, L = 0, min = 0;
+  for (const s of segs) { km += s.km; L += s.km * s.f * (scale || 1); min += s.min; pts.push({ km, L, min }); }
+  const e = Math.max(0, o.elecKm || 0), cons = o.cons / 100, gEl = (o.gEl || 0) / 100, kw = (o.kwh100 || 0) / 100;
+  const P = x => cons * Math.max(0, x - e) + gEl * Math.min(x, e), K = x => kw * Math.min(x, e);
+  const Lat = x => {
+    if (x <= 0) return { L: 0, min: 0 };
+    for (let i = 1; i < pts.length; i++) if (x <= pts[i].km + 1e-9) { const a = pts[i - 1], b = pts[i], u = b.km > a.km ? (x - a.km) / (b.km - a.km) : 0; return { L: a.L + u * (b.L - a.L), min: a.min + u * (b.min - a.min) }; }
+    return { L: pts[pts.length - 1].L, min: pts[pts.length - 1].min };
+  };
+  let batEmpty = null;
+  if (e > 0 && pts[pts.length - 1].L > e) for (let i = 1; i < pts.length; i++) if (pts[i].L >= e) { const a = pts[i - 1], b = pts[i]; batEmpty = a.km + (e - a.L) / (b.L - a.L) * (b.km - a.km); break; }
+  return { pts, e, P, K, Lat, total: pts[pts.length - 1], batEmpty };
+}
+// How far the fuel `room` (litres above the reserve) carries: invert P (petrol for a load) to a load, then map the load back to km along the segments.
+function rtReachKm(prof, room, o) {
+  if (room < 0) return 0;
+  const cons = o.cons / 100, gEl = (o.gEl || 0) / 100, e = prof.e;
+  let L = e + (cons > 0 ? (room - gEl * e) / cons : Infinity);
+  if (room < gEl * e) L = room / gEl;
+  const pts = prof.pts;
+  if (L >= pts[pts.length - 1].L) return pts[pts.length - 1].km;
+  for (let i = 1; i < pts.length; i++) if (L <= pts[i].L) { const a = pts[i - 1], b = pts[i]; return b.L > a.L ? a.km + (L - a.L) / (b.L - a.L) * (b.km - a.km) : b.km; }
+  return pts[pts.length - 1].km;
+}
+// R2 core. nodes (sorted by along) = [{ Pc (petrol burned before it), dL (detour litres, round trip), eur (price used for ranking), x (extra cost), minq (smallest sensible fill) }]
+// g = { fuel0, tank, reserve, Ptot, maxStops, stopX (cost per stop apart from fuel), endEur }. Fuel levels in whole litres, DP over (stop, stops used, level after filling).
+// Returns { stops:[{ node, T, a }], cost } or null. Arrival fuel a includes the pessimistic energy margin; every arrival (pumps and destination) is at least `reserve`.
+function rtDP(nodes, g) {
+  const Tmax = Math.floor(g.tank), N = nodes.length, K = g.maxStops, INF = 1e18;
+  const best = Array.from({ length: N }, () => Array.from({ length: K + 1 }, () => new Float64Array(Tmax + 1).fill(INF)));
+  const prev = Array.from({ length: N }, () => Array.from({ length: K + 1 }, () => new Array(Tmax + 1).fill(null)));
+  let win = null, wc = INF;
+  const finish = (F, Pfrom, c, back) => {
+    const a = F - (g.Ptot - Pfrom);
+    if (a >= Math.min(g.reserve, F) - 1e-9) { const tot = c - (g.endEur || 0) * Math.max(0, a - g.reserve); if (tot < wc) { wc = tot; win = back; } }
+  };
+  const step = (F, Pfrom, c, i, k, back) => {
+    if (k >= K) return;
+    for (let j = i + 1; j < N; j++) {
+      const nd = nodes[j], a = F - (nd.Pc - Pfrom) - nd.dL / 2;
+      if (a < Math.min(g.reserve, F) - 1e-9) break;            // pumps further on are even harder to reach (start fuel already under the reserve: only a burn-free arrival passes)
+      for (let T = Math.max(Math.ceil(a + nd.minq - 1e-9), 0); T <= Tmax; T++) {
+        const cc = c + (T - a) * nd.eur + g.stopX + nd.x;
+        if (cc < best[j][k + 1][T]) { best[j][k + 1][T] = cc; prev[j][k + 1][T] = { j: back ? back.j : -1, k: back ? back.k : 0, T: back ? back.T : 0, a }; }
+      }
+    }
+  };
+  finish(g.fuel0, 0, 0, { j: -1, k: 0, T: 0 });
+  step(g.fuel0, 0, 0, -1, 0, null);
+  for (let j = 0; j < N; j++) for (let k = 1; k <= K; k++) for (let T = 0; T <= Tmax; T++) {
+    const c = best[j][k][T]; if (c >= INF) continue;
+    const F = T - nodes[j].dL / 2, back = { j, k, T };
+    finish(F, nodes[j].Pc, c, back); step(F, nodes[j].Pc, c, j, k, back);
+  }
+  if (!win) return null;
+  const stops = []; let cur = win;
+  while (cur && cur.j >= 0) { const p = prev[cur.j][cur.k][cur.T]; stops.unshift({ node: cur.j, T: cur.T, a: p.a }); cur = p.j >= 0 ? { j: p.j, k: p.k, T: p.T } : null; }
+  return { stops, cost: wc };
+}
+// The whole plan as ONE object (the frontend renders it; wave 2 adds fields, never reshapes).
+// inp = { o (rtInputs + km), segs (raw maneuvers or null), min (route minutes if no segs), cands:[{ id, along, eur, detourKm, age, tier, ... }], asm:{ cruise, vot, fuelPct, battPct }, ref (route reference EUR/L), endEur }
+function rtMakePlan(inp) {
+  const o = inp.o, asm = inp.asm || {}, vot = asm.vot || 0, ref = inp.ref;
+  const raw = inp.segs && inp.segs.length ? inp.segs : [{ km: o.km, min: inp.min || 0, flat: true }];
+  const segs = rtSegs(raw, asm.cruise || null);
+  const mid = rtProfile(segs, o, 1), hi = rtProfile(segs, o, 1 + RT_MARGIN), lo = rtProfile(segs, o, 1 - RT_MARGIN);
+  const minFill = rtMinFill(o.tank), tot = mid.total;
+  const stopX = RT_STOP_EUR + vot * RT_STOP_MIN / 60;
+  // candidates: dated, trusted pumps first (tier 0); undated ones (tier 1) only when no plan exists without them; unverified (tier 2) never.
+  // one per slice of the route (the cheapest incl. its band), at most ~60
+  const slice = Math.max(8, o.km / 60);
+  const build = maxTier => {
+    const bk = new Map();
+    for (const c of inp.cands || []) {
+      if (c.tier > maxTier || c.along < 0 || c.along > o.km) continue;
+      const band = rtBand(c.age), key = Math.floor(c.along / slice), eff = c.eur + band / 2 + c.detourKm * 0.02;
+      if (!bk.has(key) || eff < bk.get(key).eff) bk.set(key, { ...c, band, eff });
+    }
+    return [...bk.values()].sort((a, b) => a.along - b.along).map(c => {
+      const m = mid.Lat(c.along), h = hi.Lat(c.along), elec = m.L < mid.e;
+      return { c, m, h, elec, dL: elec ? 0 : c.detourKm * o.cons / 100, dEl: elec ? c.detourKm * (o.kwh100 || 0) / 100 * (o.elecEur || 0) : 0 };
+    });
+  };
+  const base = { v: 1, km: o.km, minFillL: minFill, asm: { cruise: asm.cruise || null, vot, fuelPct: asm.fuelPct, battPct: asm.battPct, reserveL: o.reserveL, margin: RT_MARGIN } };
+  let cs = build(0);
+  const mk = relaxed => {
+    const nodes = cs.map(x => ({ Pc: hi.P(x.h.L), dL: x.dL, eur: x.c.eur + x.c.band / 2, x: x.dEl + vot * x.c.detourKm / 60,
+      minq: relaxed ? 1 : (ref && x.c.eur <= ref * 0.88 ? Math.min(minFill, RT_LITRES_SMALL) : minFill) }));
+    return rtDP(nodes, { fuel0: o.fuelL, tank: o.tank, reserve: o.reserveL, Ptot: hi.P(hi.total.L), maxStops: RT_MAX_STOPS, stopX, endEur: inp.endEur || 0 });
+  };
+  let sol = mk(false), relaxed = false;
+  if (!sol) { sol = mk(true); relaxed = !!sol; }
+  if (!sol) { cs = build(1); sol = mk(false); if (!sol) { sol = mk(true); relaxed = !!sol; } }
+  const kwh = mid.K(tot.L);
+  const energy = { elecKm: o.elecKm > 0 ? Math.min(o.km, mid.batEmpty != null ? mid.batEmpty : o.km) : 0, batEmptyAt: mid.batEmpty, kwh, elecCost: o.elecEur && kwh ? kwh * o.elecEur : null, petrolL: mid.P(tot.L), reachKm: 0 };
+  energy.reachKm = rtReachKm(hi, o.fuelL - o.reserveL, o);   // how far the start fuel alone carries (with the margin)
+  if (!sol) return { ...base, status: 'unreachable', stops: [], nStops: 0, relaxed: false, energy, fresh: rtFresh([]), areaFresh: rtFresh(cs.map(x => x.c)), time: { driveMin: tot.min, stopMin: 0, detourMin: 0, totalMin: tot.min }, fuelCost: null, arrive: null, track: [] };
+  // walk the chosen stops with mid, pessimistic and optimistic energy to get litres, arrival fuel and the cost range
+  let leave = o.fuelL, Pfrom = 0; const stops = [];
+  sol.stops.forEach(s => {
+    const x = cs[s.node], c = x.c, aMid = leave - (mid.P(x.m.L) - Pfrom) - x.dL / 2, q = Math.max(0, Math.min(s.T - s.a, o.tank - aMid));
+    leave = aMid + q - x.dL / 2; Pfrom = mid.P(x.m.L);
+    stops.push({ ...c, litres: q, cost: { mid: q * c.eur, lo: q * (c.eur - c.band), hi: q * (c.eur + c.band) }, fuelArrive: aMid, fuelAfter: aMid + q, detourL: x.dL,
+      refDelta: ref != null ? ref - c.eur : null, reason: ref != null && c.age != null && ref - c.eur >= 0.02 ? 'cheap' : 'need' });
+  });
+  const arr = prof => {
+    let l = o.fuelL, pf = 0;
+    stops.forEach((s, i) => { const x = cs[sol.stops[i].node], pc = prof.P(prof.Lat(s.along).L); l = Math.min(o.tank, l - (pc - pf) - x.dL / 2 + sol.stops[i].T - sol.stops[i].a) - x.dL / 2; pf = pc; });   // each world buys the planned litres, a full tank stops it
+    return l - (prof.P(prof.total.L) - pf);
+  };
+  const arrive = { mid: arr(mid), lo: arr(hi), hi: arr(lo) };
+  const detourMin = stops.reduce((a, s) => a + s.detourKm, 0), n = stops.length;   // about 1 min per km of detour
+  const fc = stops.reduce((a, s) => ({ mid: a.mid + s.cost.mid, lo: a.lo + s.cost.lo, hi: a.hi + s.cost.hi }), { mid: 0, lo: 0, hi: 0 });
+  // track for the energy strip (R8): fuel (L) and battery (share of the start charge) at every segment end and around each stop
+  const track = []; let bought = 0, si = 0;
+  const batt = x => mid.e > 0 ? Math.max(0, 1 - x / mid.e) : 0, fuelAt = km => o.fuelL - mid.P(mid.Lat(km).L) + bought;
+  for (const p of mid.pts) {
+    while (si < n && stops[si].along <= p.km) { const a = stops[si].along, b = batt(mid.Lat(a).L); track.push({ km: a, fuelL: fuelAt(a), batt: b }); bought += stops[si].litres; track.push({ km: a, fuelL: fuelAt(a), batt: b }); si++; }
+    track.push({ km: p.km, fuelL: fuelAt(p.km), batt: batt(p.L) });
+  }
+  return { ...base, status: 'ok', relaxed, undated: stops.some(s => s.age == null), stops, nStops: n, energy, arrive, fuelCost: n ? fc : { mid: 0, lo: 0, hi: 0 },
+    fresh: rtFresh(stops), areaFresh: rtFresh(cs.map(x => x.c)), track,
+    time: { driveMin: tot.min, stopMin: n * RT_STOP_MIN, detourMin, totalMin: tot.min + n * RT_STOP_MIN + detourMin },
+    segs: segs.map((s, i) => ({ km: s.km, min: s.min, f: s.f, ferry: !!s.ferry, kmEnd: mid.pts[i + 1].km })) };
+}
+// R6: what does driving at `cruise` instead of "as routed" change? energy valued at the route reference price (EUR/L) and the electricity price
+function rtSpeedCmp(raw, o, ref, cruise) {
+  if (!cruise || !raw || !raw.length) return null;
+  const one = c => { const p = rtProfile(rtSegs(raw, c), o, 1), L = p.total.L; return { min: p.total.min, eur: p.P(L) * ref + p.K(L) * (o.elecEur || 0) }; };
+  const a = one(null), b = one(cruise), dMin = b.min - a.min, dEur = b.eur - a.eur;
+  return { dMin, dEur, perHour: Math.abs(dMin) >= 1 ? Math.abs(dEur) / (Math.abs(dMin) / 60) : null };
+}
 // RT-PURE-END
 function rtElecEur() {                           // car.elec is in car.elecCur (local currency per kWh) -> EUR
   if (!car.elec) return null;
@@ -4382,7 +4630,10 @@ function rtInputs() {
   return { cons: (car.cons || trip.cons) * (phev ? x.mp : 1), withCar: !!car.cons, phev: !!phev, tank, fuelL: tank * rt.fuelPct / 100, reserveL: Math.min(tank, rt.reserve ?? def), defReserve: def,
     elecKm: phev ? car.range * RT_REAL * x.f * rt.battPct / 100 : 0, kwh100: k100 * x.mEl, gEl: x.gk * k100, elecEur: phev ? rtElecEur() : null, T: tn.T, tSrc: tn.src };
 }
-function rtSet(k, v) { rt[k] = v; if (rt.res?.cands) rtRank(); renderRoute(); }
+function rtSet(k, v) {
+  rt[k] = v; if (rt.res?.cands) rtRank(); renderRoute();
+  document.querySelector(`#rt-asm button[data-k="${k}"][data-v="${v}"]`)?.focus({ preventScroll: true });   // the re-render replaced the chip: keep the keyboard place
+}
 
 function renderRoute() {
   const el = document.getElementById('cmp-body'); if (!el) return;
@@ -4398,10 +4649,17 @@ function renderRoute() {
         <button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('to')">${ico('map')}</button></div>
       <label>${t('rtWidth')}</label>
       <div class="tchips">${[2, 3, 5].map(w => `<button class="${rt.w === w ? 'on' : ''}" onclick="rt.w=${w};rt.res=null;renderRoute()">${w} km</button>`).join('')}</div>
-      ${(() => { const o = rtInputs(), chip = (k, v, on, txt) => `<button class="${on ? 'on' : ''}" onclick="rtSet('${k}',${v})">${txt}</button>`, rs = [...new Set([o.defReserve, 5, 10, 15])].sort((a, b) => a - b);
-        return `<label>${t('rtFuelNow')}</label><div class="tchips">${[25, 50, 75, 100].map(v => chip('fuelPct', v, rt.fuelPct === v, v + ' %')).join('')}</div>`
+      ${(() => { const o = rtInputs(), chip = (k, v, on, txt) => `<button class="${on ? 'on' : ''}" data-k="${k}" data-v="${v}" aria-pressed="${on}" onclick="rtSet('${k}',${v})">${txt}</button>`, rs = [...new Set([o.defReserve, 5, 10, 15])].sort((a, b) => a - b);
+        const sum = [t('rtAsmFuel', { f: rt.fuelPct }) + (o.phev ? ' ' + t('rtAsmBatt', { b: rt.battPct }) : ''), rt.cruise ? t('rtAsmSpd', { s: rt.cruise }) : t('rtAsmSpdAuto'), rt.vot ? t('rtAsmVot', { v: rt.vot }) : t('rtAsmVotNo')].join(' · ');
+        return `<details class="car-box ev-box mc-fold" id="rt-asm" ${rt.asmOpen ? 'open' : ''} ontoggle="rt.asmOpen=this.open"><summary>${t('rtAsmTitle')}<small>${esc(sum)}</small></summary>
+          <p class="mc-hint">${t('rtAsmIntro')}</p>
+          <label>${t('rtFuelNow')}</label><div class="tchips">${[25, 50, 75, 100].map(v => chip('fuelPct', v, rt.fuelPct === v, v + ' %')).join('')}</div>`
           + (o.phev ? `<label>${t('rtBattNow')}</label><div class="tchips">${[0, 50, 100].map(v => chip('battPct', v, rt.battPct === v, v + ' %')).join('')}</div>` : '')
-          + `<label>${t('rtReserve')}</label><div class="tchips">${rs.map(v => chip('reserve', v, o.reserveL === v, v + ' L')).join('')}</div>`; })()}
+          + `<label>${t('rtReserve')}</label><div class="tchips">${rs.map(v => chip('reserve', v, o.reserveL === v, v + ' L')).join('')}</div>
+          <label>${t('rtSpeed')}</label><div class="tchips">${[null, 90, 110, 130].map(v => chip('cruise', v, rt.cruise === v, v ? v + ' km/h' : t('rtSpeedAuto'))).join('')}</div>
+          <p class="mc-hint">${t('rtSpeedH')}</p><div id="rt-spd-out">${rtSpeedLine(rt.res)}</div>
+          <label>${t('rtVot')}</label><div class="tchips">${[0, 10, 20, 40].map(v => chip('vot', v, rt.vot === v, v ? v + ' €/h' : t('rtVotOff'))).join('')}</div>
+          <p class="mc-hint">${t('rtVotH')}</p></details>`; })()}
       <label class="nav-rem" style="margin-top:10px"><input type="checkbox" ${rt.hideUnknown ? 'checked' : ''} onchange="rt.hideUnknown=this.checked;if(rt.res)rtRank()"> <span>${t('rtHideUnknown')}</span></label>
       <button class="rt-go" id="rt-go" onclick="rtGo()" ${rt.busy ? 'disabled' : ''}>${ico('search')} ${t('rtGo')}</button>
     </div>
@@ -4475,7 +4733,7 @@ async function rtGo() {
       rtSetStatus(t('rtLoading', { c: todo.map(c => CNAMES[c] || c).join(', ') }));
       await Promise.all(todo.map(cc => loadCC(cc)));
     }
-    rt.res = { pts, km: rte.km, min: rte.min, ferry: rte.ferry, via: rte.via, fb: !!rte.fb, countries: need, fuel: rtFuelKey() };
+    rt.res = { pts, km: rte.km, min: rte.min, segs: rte.segs || null, ferry: rte.ferry, via: rte.via, fb: !!rte.fb, countries: need, fuel: rtFuelKey() };
     rtCorridor();
     rtRank();
     rtDraw(true);
@@ -4510,7 +4768,7 @@ function rtCorridor() {
     const len = cum[i + 1] - cum[i], n = Math.max(1, Math.ceil(len / 1.5));
     for (let k = 0; k <= n; k++) add(P[i][0] + (P[i + 1][0] - P[i][0]) * k / n, P[i][1] + (P[i + 1][1] - P[i][1]) * k / n, i);
   }
-  const fk = R.fuel, out = [];
+  const fk = R.fuel, out = [], sc = R.km / (cum[cum.length - 1] || 1);       // along = km on the router's route (the maneuver lengths add up to it)
   for (const cc of R.countries) for (const s of (data[cc] || [])) {
     if (!s.lat || !s.lon) continue;
     const segs = grid.get(key(s.lat, s.lon)); if (!segs) continue;
@@ -4524,36 +4782,43 @@ function rtCorridor() {
       const d = Math.hypot(ax + u * dx, ay + u * dy);
       if (d < best) { best = d; along = cum[i] + u * (cum[i + 1] - cum[i]); }
     }
-    if (best <= w) out.push({ s, p: pr, off: best, along });
+    if (best <= w) out.push({ s, p: pr, off: best, along: along * sc });
   }
   R.cands = out;
 }
 // EUR per local unit: ECB rate from meta.json fx (see rateOf)
 function rtRate(cc) { return fxRank(cc); }
+// The plan (ONE object, shape in rtMakePlan) from every priced pump near the route; the pure code drops unverified ones. Wave 2 reads R.plan, R.speed and rtExtras.
+function rtPlanNow(rows) {
+  const R = rt.res, o = R.o, asm = { cruise: rt.cruise, vot: rt.vot, fuelPct: rt.fuelPct, battPct: rt.battPct }, ref = R.median;
+  const cands = rows.map(r => ({ id: r.s.id, s: r.s, p: r.p, along: r.along, eur: r.eur, detourKm: r.detourKm, age: r.age,
+    tier: rtTier({ age: r.age, ps: r.s.ps, sus: suspectLow(r.s.country, r.p), stale: R.stale.includes(r.s.country) }) }));
+  R.plan = rtMakePlan({ o, segs: R.segs, min: R.min, cands, ref, asm });
+  R.speed = ref != null ? rtSpeedCmp(R.segs, o, ref, rt.cruise) : null;
+}
 function rtRank() {
   const R = rt.res; if (!R || R.error) return;
-  const o = rtInputs(); o.km = R.km; R.o = o; R.plan = rtPlan(o);
+  const o = rtInputs(); o.km = R.km; R.o = o;
   const rates = {}, stale = new Set(R.countries.filter(cc => metaOf[cc]?.status === 'stale'));
-  let hiddenOld = 0, beyond = 0;
+  let beyond = 0;
   const rows = [];
   for (const c of R.cands) {
     const age = c.p.updated_at ? (Date.now() - tsDate(c.p.updated_at)) / 3600000 : null;
-    if (age != null && age > MAX_AGE_H) { hiddenOld++; continue; }
     if (age == null && rt.hideUnknown) continue;
     const cc = c.s.country;
     if (!(cc in rates)) rates[cc] = rtRate(cc);
     const rate = rates[cc]; if (!rate) continue;
     rows.push({ ...c, eur: c.p.price * rate, age, detourKm: 2 * c.off * ROAD_FACTOR });
   }
-  R.hiddenOld = hiddenOld; R.stale = [...stale]; R.best = null;
-  if (!rows.length) { R.rows = []; R.median = null; R.nRows = 0; R.beyond = 0; rtRenderOut(); return; }
+  R.stale = [...stale]; R.best = null;
+  if (!rows.length) { R.rows = []; R.median = null; R.nRows = 0; R.beyond = 0; rtPlanNow(rows); rtRenderOut(); rtDraw(false); return; }
   R.median = rtMedian(rows.map(r => r.eur));
   const refB = {}, ok = [];                                  // shortcut: reference price per 20 km bucket (not an exact +/-100 km window per pump)
   for (const r of rows) {
     const b = Math.round(r.along / 20); refB[b] ??= rtRef(rows, b * 20, R.median);
     Object.assign(r, rtCand(o, r.along, r.detourKm, r.eur, refB[b]), { ref: refB[b] });
     r.tier = rtTier({ age: r.age, ps: r.s.ps, sus: suspectLow(r.s.country, r.p), stale: stale.has(r.s.country) });
-    r.why = r.s.ps ? 'rtWhyPs' : suspectLow(r.s.country, r.p) ? 'rtWhySus' : stale.has(r.s.country) ? 'rtWhyCty' : '';
+    r.why = r.s.ps ? 'rtWhyPs' : suspectLow(r.s.country, r.p) ? 'rtWhySus' : stale.has(r.s.country) ? 'rtWhyCty' : r.age != null && r.age > 48 ? 'rtWhyAge' : '';
     if (r.reachable) ok.push(r); else beyond++;
   }
   R.beyond = beyond;
@@ -4566,27 +4831,86 @@ function rtRank() {
   for (const r of ok) { if (top.length >= 10) break; if (!top.includes(r) && apart(r)) top.push(r); }
   top.sort(ord);
   R.rows = top; R.nRows = ok.length;
+  rtPlanNow(rows);
   R.best = top.find(r => r.tier === 0 && r.saving >= RT_MIN_SAVE) || null;     // only a dated, trusted pump may be called best
   rtRenderOut(); rtDraw(false);
+}
+// Plan card. Wave 2 plugs into the empty containers #rt-x-cost, -alts, -tank, -strip, -nav, -ac by setting rtExtras.<name> = (R, plan) => html
+const rtX = ['cost', 'alts', 'tank', 'strip', 'nav', 'ac'], rtExtras = {};
+const rtLet = i => 'ABC'[i] || String(i + 1);
+const rtL0 = v => Math.max(0, Math.round(v));
+const rtHm = m => { const h = Math.floor(Math.round(m) / 60), r = Math.round(m) % 60; return (h ? h + ' h ' : '') + r + ' min'; };
+function rtRng(lo, hi) { const a = cShow(lo, 'EUR'), b = cShow(hi, 'EUR'), x = Math.round(a.v), y = Math.round(b.v); return (x === y ? '' + x : x + '–' + y) + ' ' + curLbl(b.cur); }
+function rtSegTable(P) {
+  const cl = [['rtSegFast', v => v >= 90], ['rtSegMid', v => v >= 60 && v < 90], ['rtSegSlow', v => v < 60]].map(([k, f]) => ({ k, f, km: 0, e: 0, min: 0 }));
+  let ferry = 0, tot = 0;
+  for (const s of P.segs || []) { if (s.ferry) { ferry += s.km; continue; } const v = s.min > 0 ? s.km / s.min * 60 : 100, c = cl.find(c => c.f(v)); c.km += s.km; c.e += s.km * s.f; c.min += s.min; tot += s.km * s.f; }
+  const rows = cl.filter(c => c.km > 0.5).map(c => `<tr><td>${esc(t(c.k))}</td><td>${Math.round(c.km)} km</td><td>${c.min > 0 ? Math.round(c.km / c.min * 60) : '–'} km/h</td><td>${tot ? Math.round(c.e / tot * 100) : 0} %</td></tr>`);
+  if (ferry > 0.5) rows.push(`<tr><td>${esc(t('rtSegFerry'))}</td><td>${Math.round(ferry)} km</td><td>–</td><td>0 %</td></tr>`);
+  return rows.length ? `<table class="ev-tbl wide"><tr><th>${esc(t('rtSegH'))}</th><th>km</th><th>${esc(t('rtSegSpd'))}</th><th>${esc(t('rtSegShare'))}</th></tr>${rows.join('')}</table>` : '';
+}
+function rtPlanHtml(R) {
+  const P = R.plan, I = R.o, E = P.energy, eur = v => money(v, 'EUR'), n = P.nStops;
+  const arr = P.arrive ? ' ' + (rtL0(P.arrive.lo) === rtL0(P.arrive.hi) ? t('rtPlanArriveOne', { a: rtL0(P.arrive.mid) }) : t('rtPlanArrive', { a: rtL0(P.arrive.mid), lo: rtL0(P.arrive.lo), hi: rtL0(P.arrive.hi) })) : '';
+  const kw = E.elecKm > 0 ? t('rtAndKwh', { k: Math.round(E.kwh) }) + (E.elecCost != null ? ' (' + eur(E.elecCost) + ')' : '') : '';
+  let head, cls = 'same', sub = '';
+  if (P.status !== 'ok' && I.fuelL < I.reserveL - 1e-9 && E.reachKm <= 0) { head = t('rtPlanLow', { f: rtL0(I.fuelL), r: rtL0(I.reserveL) }); cls = 'bad'; }
+  else if (P.status !== 'ok') { head = t('rtPlanNone', { r: Math.round(E.reachKm), d: Math.round(R.km) }); cls = 'bad'; }
+  else if (!n) { head = (E.petrolL < 0.5 ? t('rtPlan0E', { k: Math.round(E.kwh), c: E.elecCost != null ? ', ' + eur(E.elecCost) : '' }) : t('rtPlan0', { l: rtL0(E.petrolL), e: kw })) + arr; cls = 'good'; }
+  else { head = t(n === 1 ? 'rtPlan1' : 'rtPlanN', { n, l: rtL0(P.stops.reduce((a, s) => a + s.litres, 0)), c: rtRng(P.fuelCost.lo, P.fuelCost.hi) }) + arr; }
+  if (P.undated) head += ' ' + t('rtPlanUndated');
+  sub = t(n ? 'rtPlanTime' : 'rtPlanTime0', { h: rtHm(P.time.totalMin), m: RT_STOP_MIN }) + (P.relaxed ? ' ' + t('rtPlanRelaxed') : '');
+  const stops = P.stops.map((s, i) => {
+    const nm = s.s.name || s.s.brand || '—', why = s.age == null ? t('rtWhyUndated') : s.reason === 'cheap' ? t('rtWhyCheap', { d: Math.round(s.refDelta * 100), m: R.median.toFixed(2) + ' €' }) : t('rtWhyNeed');
+    return `<div class="rt-stop" onclick="rtPlanFocus(${i})"><div class="rt-n">${rtLet(i)}</div>
+      <div><div class="nm">${FLAGS[s.s.country] || ''} ${esc(nm)}</div>
+        <div class="sub">${esc(s.s.city || '')} · ${t('rtAlong', { k: Math.round(s.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: s.detourKm < 1 ? '<1' : s.detourKm.toFixed(1) })}<br><b>${t('rtBuy', { l: rtL0(s.litres), c: rtRng(s.cost.lo, s.cost.hi) })}</b><br>${t('rtTankLine', { a: rtL0(s.fuelArrive), b: rtL0(s.fuelAfter) })}<br>${esc(why)}<br>${esc(srcName(s.p.source || s.s.source || ''))}${s.p.source || s.s.source ? ' · ' : ''}${ageTxt(s.p.updated_at)}${s.age == null ? ' · ' + t('rtUndated') : ''}</div>
+        <div class="acts"><button onclick="event.stopPropagation();doNav('${escId(s.s.id)}')">${ico('go', 'sm')} ${t('go')}</button><button onclick="event.stopPropagation();rtPlanVia(${i})">${ico('route', 'sm')} ${t('rtVia')}</button></div></div>
+      <div class="pr">${cTxt(s.p.price, s.p.currency)}<small>±${Math.round(s.band * 100)} ¢/L</small></div></div>`;
+  }).join('');
+  const F = n ? P.fresh : P.areaFresh, hrs = F.minH == null ? '' : Math.round(F.minH) === Math.round(F.maxH) ? t('rtFrOne', { a: Math.max(1, Math.round(F.minH)) }) : t('rtFrRange', { a: Math.round(F.minH), b: Math.round(F.maxH) });
+  const fresh = !F.n ? '' : F.nDated === 0 ? t(n ? 'rtFrNone' : 'rtFrNoneArea', { n: F.n }) : (n ? t('rtFrDated', { h: hrs }) : t('rtFrArea', { d: F.nDated, n: F.n, h: hrs })) + (F.nDated < F.n ? ' ' + t(n ? 'rtFrUndated' : 'rtFrUndatedArea', { u: F.n - F.nDated, n: F.n }) : '');
+  const en = E.elecKm > 0 ? (E.batEmptyAt != null ? t('rtEnBatt', { k: Math.round(E.elecKm), kwh: Math.round(E.kwh), x: Math.round(E.batEmptyAt), l: rtL0(E.petrolL) }) : t('rtEnBattAll', { k: Math.round(R.km), kwh: Math.round(E.kwh), b: Math.round((P.track.length ? P.track[P.track.length - 1].batt : 0) * rt.battPct) })) : t('rtEnPetrol', { l: rtL0(E.petrolL), d: Math.round(R.km), c: (E.petrolL / Math.max(1, R.km) * 100).toFixed(1) });
+  const assump = [t('rtH2', { m: Math.round(RT_MARGIN * 100) }), t('rtH3', { l: rtL0(P.minFillL), m: RT_STOP_MIN, e: eur(RT_STOP_EUR) }), t('rtH4', { v: RT_V_REF }), t('rtH5', { a: Math.round(rtBand(1) * 100), b: Math.round(rtBand(null) * 100) })];
+  return `<section class="tcard rt-plan" id="rt-plan" aria-label="${esc(t('rtPlanH'))}">
+    <h3>${ico('pump')} ${t('rtPlanH')}</h3>
+    <div class="tverdict ${cls}" id="rt-plan-head" aria-live="polite">${head}<small>${sub}</small></div>
+    <div id="rt-plan-stops">${stops}</div>
+    ${fresh ? `<p class="rt-fresh" id="rt-plan-fresh">${fresh}</p>` : ''}
+    <p class="rt-fresh" id="rt-plan-energy">${en}</p>
+    ${rtX.map(k => `<div id="rt-x-${k}">${rtExtras[k] ? rtExtras[k](R, P) : ''}</div>`).join('')}
+    ${mcQ('rtWhat')}${mcQ('rtRange')}${mcQ('rtMin')}
+    <details class="ev-how"><summary>${esc(t('rtHow'))}</summary><p>${esc(t('rtH1'))}</p>${rtSegTable(P)}${assump.map(x => `<p>${esc(x)}</p>`).join('')}</details>
+  </section>`;
+}
+function rtSpeedLine(R) {
+  if (!rt.cruise) return `<p class="mc-hint">${esc(t('rtSpAuto'))}</p>`;
+  if (!R || R.error || !R.plan) return '';
+  if (!R.segs) return `<p class="mc-hint">${esc(t('rtSpNoSegs'))}</p>`;
+  const c = R.speed; if (!c) return '';
+  if (c.perHour == null) return `<p class="mc-hint">${esc(t('rtSpNone'))}</p>`;
+  const eur = v => money(v, 'EUR'), slow = c.dMin > 0, v = rt.vot || 0;
+  const pays = v > 0 ? ' ' + t(slow ? (c.perHour >= v ? 'rtSpVotYes' : 'rtSpVotNo') : (v >= c.perHour ? 'rtSpVotYesF' : 'rtSpVotNoF'), { v: eur(v), s: rt.cruise }) : '';
+  return `<p class="mc-hint rt-spd">${esc(t(slow ? 'rtSpSlow' : 'rtSpFast', { s: rt.cruise, m: Math.round(Math.abs(c.dMin)), e: eur(Math.abs(c.dEur)), h: eur(c.perHour) }) + pays)}</p>`;
 }
 function rtRenderOut() {
   const o = document.getElementById('rt-out'); if (!o || (rt.busy && !rt.res)) return;
   const R = rt.res;
   if (!R) { o.innerHTML = ''; return; }
   if (R.error) { o.innerHTML = `<p class="empty">${t('rtFail')}</p>`; return; }
-  const hm = `${Math.floor(R.min / 60)} h ${Math.round(R.min % 60)} min`, P = R.plan, I = R.o, eur = v => money(v, 'EUR');
-  const sum = t('rtSummary', { d: Math.round(R.km), h: hm, n: (R.nRows || 0).toLocaleString(), w: rt.w });
+  const P = R.plan, I = R.o, eur = v => money(v, 'EUR');
+  const sum = t('rtSummary', { d: Math.round(R.km), h: rtHm(P.time.driveMin), n: (R.nRows || 0).toLocaleString(), w: rt.w });
   const used = `<br>${t(R.fb ? 'rtUsedFb' : 'rtUsed', { r: t(R.via === 'valhalla' ? 'rtProvVal' : 'rtProvOsrm') })}${R.ferry ? ' ' + t('rtFerryNote') : ''}`;
   const clr = `<button class="upd-line" style="margin-left:6px" onclick="rtClear()">${ico('close', 'sm')} ${t('rtClear')}</button>`;
-  const e = P.elecKm > 0 ? t('rtAndKwh', { k: Math.round(P.kwh) }) + (P.elecCost != null ? ' (' + eur(P.elecCost) + ')' : '') : '';
   const best = R.best ? t('rtBest', { s: eur(R.best.saving) }) : t('rtNoBest', { s: eur(RT_MIN_SAVE) });
-  const verdict = `<div class="tverdict ${P.needStop ? 'same' : 'good'}">${P.needStop ? t('rtNeedStop', { r: Math.round(P.reachKm), d: Math.round(R.km) }) : t('rtNoStop', { l: Math.round(P.petrolL), e, a: Math.max(0, Math.round(P.arriveL)) })}<small>${best}</small></div>`;
-  const notes = [used.slice(4), R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '', R.hiddenOld ? t('rtOld', { n: R.hiddenOld }) : '',
-    I.withCar ? '' : t('rtNoCar', { c: trip.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
-  if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${sum}${notes}</p>${verdict}<p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
+  const notes = [used.slice(4), R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '',
+    R.segs ? '' : t('rtNoSegs'), I.withCar ? '' : t('rtNoCar', { c: trip.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
+  const plan = rtPlanHtml(R);
+  if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${sum}${notes}${clr}</p>${plan}<p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
   const fl = cmpKey === 'diesel' ? 'Diesel' : '95';
   let sep = false;
-  o.innerHTML = `<p class="rt-sum">${sum}<br><b>${fl}</b> · ${t('rtMedian', { p: R.median.toFixed(2) + ' €' })}${notes}${clr}</p>${verdict}
+  o.innerHTML = `<p class="rt-sum">${sum}<br><b>${fl}</b> · ${t('rtMedian', { p: R.median.toFixed(2) + ' €' })}${notes}${clr}</p>${plan}
+    <h3 class="rt-oh">${t('rtOther')}</h3><p class="rt-sum" style="margin-top:0">${best}</p>
     ${R.rows.map((r, i) => {
       const d = r.ref - r.eur, s = r.saving;
       const cmp = d >= 0.005 ? t('rtCheaper', { d: d.toFixed(2) + ' €' }) : t('rtSame');
@@ -4609,6 +4933,8 @@ function rtDraw(fit) {
   L.circleMarker(R.pts[R.pts.length - 1], { radius:7, color:'#fff', weight:3, fillColor:'#0F2037', fillOpacity:1 }).addTo(g);
   (R.rows || []).forEach((r, i) => L.marker([r.s.lat, r.s.lon], { icon:L.divIcon({ className:'', html:`<div class="rt-pin">${i + 1}</div>`, iconSize:[26, 26], iconAnchor:[13, 13] }), zIndexOffset:700 })
     .on('click', () => rtFocus(i)).addTo(g));
+  (R.plan?.stops || []).forEach((st, i) => L.marker([st.s.lat, st.s.lon], { icon:L.divIcon({ className:'', html:`<div class="rt-pin plan">${rtLet(i)}</div>`, iconSize:[26, 26], iconAnchor:[13, 13] }), zIndexOffset:900 })
+    .on('click', () => rtPlanFocus(i)).addTo(g));
   if (fit) { map.fitBounds(L.latLngBounds(R.pts), { paddingTopLeft:[20, 70], paddingBottomRight:[20, Math.round(innerHeight * 0.5)] }); setSheet('half'); }
 }
 function rtFocus(i) {
@@ -4616,6 +4942,17 @@ function rtFocus(i) {
   map.setView([r.s.lat, r.s.lon], Math.max(map.getZoom(), 14));
   setTimeout(() => openStation(r.s), 400);
   setSheet('peek');
+}
+function rtPlanFocus(i) {
+  const st = rt.res?.plan?.stops?.[i]; if (!st) return;
+  map.setView([st.s.lat, st.s.lon], Math.max(map.getZoom(), 14));
+  setTimeout(() => openStation(st.s), 400);
+  setSheet('peek');
+}
+function rtPlanVia(i) {                 // wave 2 (R13) replaces this with the full navigation export
+  const R = rt.res, st = R?.plan?.stops?.[i]; if (!st) return;
+  const a = R.pts[0], b = R.pts[R.pts.length - 1];
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}&waypoints=${st.s.lat},${st.s.lon}&travelmode=driving`, '_blank', 'noopener');
 }
 function rtVia(i) {
   const R = rt.res, r = R?.rows?.[i]; if (!r) return;

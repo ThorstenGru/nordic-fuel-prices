@@ -69,6 +69,14 @@ jobs:
         continue-on-error: true
         run: test -f data/elpris.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/elpris.json -o data/elpris.json || rm -f data/elpris.json
 
+      - name: Price cycles (data/price_cycles.json; never fails the run, folds into the last published file)
+        continue-on-error: true
+        run: python src/price_cycles.py
+
+      - name: Keep last good price_cycles.json if this run produced none
+        continue-on-error: true
+        run: test -f data/price_cycles.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/price_cycles.json -o data/price_cycles.json || rm -f data/price_cycles.json
+
       - name: Copy web files to data dir
         run: cp -r web/* data/
 
