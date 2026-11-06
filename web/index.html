@@ -3007,7 +3007,7 @@ function renderCarCard() {
 }
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
-const VEH_V = 1;
+const VEH_V = 2;   // bump whenever web/vehicles.json changes (service worker serves ?v= URLs cache-first)
 let _veh = null, _vehTried = false;
 function vehLoad() {
   if (_vehTried) return; _vehTried = true;

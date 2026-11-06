@@ -239,6 +239,24 @@
    "notes": "Hyundai Germany MY27 press text: 13.8 kWh, up to 54 km WLTP combined, 3.8 L/100 km weighted plus 11.4 kWh/100 km (7.1 L/100 km depleted battery, used as cons_l100). Same 3.8 in SE price list. Tank 47 L from SE brochure https://dmassets.hyundai.com/is/content/hyundaiautoever/7556_HYU_MX5_SANTA_FE_digital_se_LR-2pdf-AFpdf (which also shows an older 1.7 L/100 km figure). Battery gross/usable not stated."
   },
   {
+   "id": "hyundai-santa-fe-1-6-t-gdi-plug-in-hybrid-253-hp-4wd",
+   "make": "Hyundai",
+   "model": "Santa Fe",
+   "variant": "1.6 T-GDi Plug-in Hybrid 253 hp 4WD (MY25)",
+   "type": "phev",
+   "hybrid": "plugin",
+   "year": 2025,
+   "rank": null,
+   "tank_l": 47,
+   "cons_l100": 7.5,
+   "battery_kwh": 13.8,
+   "range_km": 54,
+   "ev_kwh100": 19.2,
+   "confidence": "high",
+   "source": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/hyundai/santa-fe/5generation/336333",
+   "notes": "ADAC catalogue (Black Line 4WD, 07/24-11/25, manufacturer data): 13.8 kWh gross (usable not stated), 47 L tank, 3.6 kW AC onboard charger (1-phase, 210 min 0-100%), 54 km WLTP, 19.2 kWh/100 km (192 Wh/km), WLTP depleted battery 7.5 L/100 km (used as cons_l100), weighted 1.7 L/100 km. ADAC Ecotest 4.3-4.4 L + 12.4 kWh per 100 km; 7.8 L/100 km hybrid mode. Real-world: Motor1 Italy 4.45 L/100 km mixed with charged battery, economical driving, 920 km (https://de.motor1.com/reviews/762244/verbrauch-hyundai-santa-fe-phev/); no credible charge-sustaining real-world figure found. Not a Swedish-market spec sheet; Hyundai SE sheet not opened for this variant. The MY27 288 hp entry above has a different 7.1 L/100 km and 11.4 kWh/100 km."
+  },
+  {
    "id": "hyundai-santa-fe-1-6-t-gdi-hybrid-215-hp-2wd",
    "make": "Hyundai",
    "model": "Santa Fe",

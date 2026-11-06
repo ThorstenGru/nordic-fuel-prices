@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
+from data_checks import median_jump, quality_report, track_changes
 from plausibility import mark_implausible
 from source_gap import source_gap
 from scrapers import ALL_SCRAPERS
@@ -39,6 +40,8 @@ FORCE_REFRESH = os.environ.get("FORCE_REFRESH", "0") == "1"
 # Country codes (comma-separated) whose result may shrink once past the regression guards, e.g. after
 # deliberately dropping a source. Set for a single workflow_dispatch run only.
 ALLOW_SHRINK = {c.strip().upper() for c in os.environ.get("ALLOW_SHRINK", "").split(",") if c.strip()}
+# Countries with per-station change tracking + data checks (see docs/DATA_CHECKS.md).
+DATA_CHECKS = {c.strip().upper() for c in os.environ.get("DATA_CHECKS", "DE").split(",") if c.strip()}
 
 # Sanity band per currency (min, max) for ONE unit (litre / kg). Anything outside is a
 # currency/unit error or a parsing glitch and is dropped (and counted in health.json).
@@ -315,16 +318,29 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
             meta["sources"] = compact
         health["merge"] = report
 
-    if reason:
+    old: Optional[Dict[str, Any]] = None
+    if reason or (cc in DATA_CHECKS and clean):
         base = await resolve_pages_base(session)
         old = await fetch_json(session, f"{base}/{cc.lower()}.json")
+    if not reason and cc in DATA_CHECKS and clean:
+        try:
+            tr = track_changes(clean, (old or {}).get("stations"), int(time.time() // 60))
+            checks = quality_report(clean)
+            mj = median_jump(meta.get("stats_eur"), (prev.get("stats_eur") if prev.get("status") == "ok" else None))
+            if mj:
+                checks["median_jump"] = mj
+            meta["checks"] = checks
+            health["changes"] = tr
+        except Exception as e:  # noqa: BLE001 — checks are optional
+            print(f"[{cc}] data checks failed: {type(e).__name__}: {e}")
+    if reason:
         old_stations = (old or {}).get("stations") or []
         if old_stations:
             old_meta = old.get("meta", {})
             meta.pop("source_gap", None)  # fresh gap describes rejected data, not what is served
             meta.update({k: v for k, v in old_meta.items() if k in (
                 "currency", "source", "grade", "confidence", "fetched_at", "station_count", "priced_count",
-                "price_entries", "with_timestamp_pct", "newest_price_at", "oldest_price_at", "stats_eur", "source_gap")})
+                "price_entries", "with_timestamp_pct", "newest_price_at", "oldest_price_at", "stats_eur", "source_gap", "checks")})
             meta["status"] = "stale"
             meta["stale_since"] = old_meta.get("stale_since") or old_meta.get("fetched_at") or now_iso()
             meta["last_error"] = reason
