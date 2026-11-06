@@ -32,7 +32,7 @@
   script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
   img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems;
+  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -459,6 +459,8 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .rt-stop .sub { font-size:.72rem; color:var(--sub); line-height:1.45; margin-top:2px; }
 .rt-stop .pr { text-align:right; font-weight:800; font-size:1.05rem; }
 .rt-stop .pr small { display:block; font-family:var(--f-body); font-weight:600; color:var(--ok-t); font-size:.68rem; }
+.rt-stop.weak { opacity:.78; }
+.rt-sep { font-size:.72rem; color:var(--warn-t); margin:12px 0 0; padding-top:8px; border-top:2px solid var(--line); }
 .rt-stop .acts { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
 .rt-stop .acts button { border:1px solid var(--line); background:var(--surf); border-radius:var(--r-s); min-height:36px; padding:0 10px; font-size:.74rem; font-weight:600; cursor:pointer; color:var(--ink); display:inline-flex; align-items:center; gap:5px; }
 .cmp-sum { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
@@ -492,6 +494,24 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .car-box h3 { font-size:1rem; font-weight:800; margin:10px 0 0; }
 .car-card { margin-top:12px; padding:10px 12px; border-radius:var(--r-m); background:var(--surf); border:1px solid var(--line); font-size:.8rem; color:var(--sub); }
 .car-card b { color:var(--ink); font-family:var(--f-disp); font-variant-numeric:tabular-nums; }
+.car-card .ev-link, .ev-link { background:none; border:none; padding:0; font:inherit; color:var(--acc-t); text-decoration:underline; cursor:pointer; }
+/* petrol or electricity */
+.ev-box { margin-top:14px; }
+.ev-verdict { margin-top:12px; padding:12px 14px; border-radius:var(--r-m); background:var(--surf); border:1px solid var(--line); }
+.ev-verdict.e { background:var(--acc-soft); border-color:var(--acc); }
+.ev-verdict .ev-h { font-family:var(--f-disp); font-weight:800; font-size:1.05rem; color:var(--ink); }
+.ev-verdict .ev-s { font-size:.78rem; color:var(--sub); margin-top:2px; }
+.ev-tbl { width:100%; border-collapse:collapse; margin-top:10px; font-size:.8rem; color:var(--sub); }
+.ev-tbl th { font-size:.64rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; text-align:right; padding:4px 0; }
+.ev-tbl th:first-child, .ev-tbl td:first-child { text-align:left; }
+.ev-tbl td { padding:5px 0; text-align:right; border-top:1px solid var(--line); font-family:var(--f-disp); font-variant-numeric:tabular-nums; color:var(--ink); }
+.ev-tbl td:first-child { font-family:inherit; color:var(--sub); }
+.ev-st { list-style:none; margin:8px 0 0; padding:0; }
+.ev-st li { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid var(--line); font-size:.8rem; color:var(--sub); }
+.ev-st li b { color:var(--ink); font-family:var(--f-disp); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ev-st .ev-n { color:var(--ink); font-weight:700; }
+.ev-note { font-size:.72rem; color:var(--sub); margin-top:8px; line-height:1.45; }
+.ev-warn { color:var(--warn-t); }
 .tank-row { display:flex; gap:6px; }
 .tank-row button, .lang-btn, .theme-btn { flex:1; min-width:56px; background:var(--surf2); border:1px solid var(--line); border-radius:var(--r-s); min-height:44px; padding:0 6px; font-size:.84rem; font-weight:700; color:var(--sub); cursor:pointer; }
 .tank-row button.on, .lang-btn.on, .theme-btn.on { background:var(--ink); border-color:var(--ink); color:var(--surf); }
@@ -794,6 +814,12 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
         <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="90" onchange="carSet('eff',this.value)">
       </div>
       <div class="car-card" id="car-card"></div>
+    </section>
+
+    <section class="car-box ev-box" id="ev-card">
+      <h3 data-i18n="evTitle">Petrol or electricity?</h3>
+      <div id="ev-v" aria-live="polite"></div>
+      <div id="ev-body"><div id="ev-in"></div><div id="ev-st"></div></div>
     </section>
 
     <label class="lbl-s" data-i18n="tankLabel">Tank size</label>
@@ -1178,6 +1204,15 @@ Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vé
 Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', searchPlace:'Buscar un lugar',
   cheapZooming:'Buscando el más barato en {c}…', cheapSkipped:'precios más bajos sin verificar ignorados: {n}', loadFailShort:'No se pudo cargar — toca para reintentar', statsLoaded:'{n} de {tot} estaciones' });
 
+Object.assign(I18N.en, { evTitle:'Petrol or electricity?', evSetCar:'Choose petrol or plug-in hybrid under Vehicle type above to compare.', evDiesel:'This comparison uses petrol 95. Choose petrol or plug-in hybrid above.',
+  evNoElec:'Electric: not applicable for a petrol-only car. Choose plug-in hybrid above to compare.', evVerdictE:'Electric is {p}% cheaper per km', evVerdictP:'Petrol is cheaper per km', evSame:'About the same per km',
+  evPctE:'{p}% below petrol', evPctP:'Electric costs {p}% more than petrol', evElec:'Electric', evPet:'Petrol', evKm:'Per km', evK100:'Per 100 km', evTrip:'{k} km trip', evTripMix:'The battery covers about {k} km of this trip; the rest runs on petrol.',
+  evBreak:'Break-even: electricity at {v} per kWh or less beats petrol at the average price of the 5 nearest stations.', evMode:'Charging', evHome:'Home', evPub:'Public charger',
+  evPriceHome:'Home electricity price per kWh ({c})', evPricePub:'Public charging price per kWh ({c})', evLoss:'Charging loss factor (1.15 = 15% lost)', evDist:'Trip distance (km)',
+  evStTitle:'5 nearest petrol 95 stations', evStFrom:'Measured from {w}.', evMyPos:'your position', evMapC:'the map centre', evAvg:'Average {p} per litre',
+  evSetAside:'{n} nearer station(s) with unverified prices were set aside.', evNoSt:'No petrol 95 prices near here in {c}. Pan the map or use your location.', evFew:'Only {n} priced station(s) found nearby.',
+  evAssume:'Assumption, not a live price: {p} per kWh, typical public fast-charging list price in Sweden ({d}). Replace it with your own.', evOld:'This reference is over 90 days old.', evNoRef:'No reference price for {c}: enter your own.',
+  evNeeds:'To compare, add: {x}.', evOwnNote:'Estimate from your own inputs and nearby station prices. Charging loss is the energy lost between the wall and the battery.', evOpen:'Petrol or electricity?', evNoPrice:'no price' });
 Object.assign(I18N.en, { carTitle:'My car', carType:'Vehicle type', carNone:'Not set', carPetrol:'Petrol', carPhev:'Plug-in hybrid', carTank:'Fuel tank (litres)', carCons:'Fuel consumption (L/100 km)',
   carBatt:'Battery, usable (kWh)', carRange:'Electric range (km)', carElec:'Home electricity price per kWh', carEff:'Charging efficiency (%)',
   carEst:'Estimate from your own inputs: {i}.', carNeeds:'To calculate this, add: {x}.', carCurMis:'electricity price in {c}', carPriceNeed:'a petrol 95 price for {c}',
@@ -1186,6 +1221,15 @@ Object.assign(I18N.en, { carTitle:'My car', carType:'Vehicle type', carNone:'Not
   no95:'No petrol 95 price reported for this station', no95Near:'Nearest station with a petrol 95 price: {n}, {d} away, {p}',
   gapLine:'For {f} ({n} stations), sources {o} and {p} differ by a median of {x}', gapP95:'petrol 95', gapDiesel:'diesel',
   staleCty:'Prices for {c} were last updated {d} (source temporarily unavailable)' });
+Object.assign(I18N.sv, { evTitle:'Bensin eller el?', evSetCar:'Välj bensin eller laddhybrid under Fordonstyp ovan för att jämföra.', evDiesel:'Jämförelsen använder bensin 95. Välj bensin eller laddhybrid ovan.',
+  evNoElec:'El: gäller inte en ren bensinbil. Välj laddhybrid ovan för att jämföra.', evVerdictE:'El är {p}% billigare per km', evVerdictP:'Bensin är billigare per km', evSame:'Ungefär lika per km',
+  evPctE:'{p}% under bensin', evPctP:'El kostar {p}% mer än bensin', evElec:'El', evPet:'Bensin', evKm:'Per km', evK100:'Per 100 km', evTrip:'{k} km resa', evTripMix:'Batteriet räcker ungefär {k} km av resan; resten går på bensin.',
+  evBreak:'Break-even: el till {v} per kWh eller lägre är billigare än bensin till snittpriset hos de 5 närmaste stationerna.', evMode:'Laddning', evHome:'Hemma', evPub:'Publik laddare',
+  evPriceHome:'Elpris hemma per kWh ({c})', evPricePub:'Pris publik laddning per kWh ({c})', evLoss:'Laddförlust (1,15 = 15 % förlorat)', evDist:'Reslängd (km)',
+  evStTitle:'5 närmaste stationer med bensin 95', evStFrom:'Mätt från {w}.', evMyPos:'din position', evMapC:'kartans mitt', evAvg:'Snitt {p} per liter',
+  evSetAside:'{n} närmare station(er) med overifierade priser lämnades utanför.', evNoSt:'Inga bensin 95-priser i närheten i {c}. Panorera kartan eller använd din position.', evFew:'Bara {n} station(er) med pris hittades i närheten.',
+  evAssume:'Antagande, inte ett live-pris: {p} per kWh, typiskt listpris för publik snabbladdning i Sverige ({d}). Byt till ditt eget.', evOld:'Referensen är över 90 dagar gammal.', evNoRef:'Inget referenspris för {c}: ange ditt eget.',
+  evNeeds:'För att jämföra, fyll i: {x}.', evOwnNote:'Uppskattning utifrån dina egna uppgifter och närliggande stationspriser. Laddförlust är energin som går förlorad mellan vägguttag och batteri.', evOpen:'Bensin eller el?', evNoPrice:'inget pris' });
 Object.assign(I18N.sv, { carTitle:'Min bil', carType:'Fordonstyp', carNone:'Inte angiven', carPetrol:'Bensin', carPhev:'Laddhybrid', carTank:'Bränsletank (liter)', carCons:'Bränsleförbrukning (L/100 km)',
   carBatt:'Batteri, användbart (kWh)', carRange:'Elräckvidd (km)', carElec:'Elpris hemma per kWh', carEff:'Laddverkningsgrad (%)',
   carEst:'Uppskattning utifrån dina egna uppgifter: {i}.', carNeeds:'För att räkna ut detta, fyll i: {x}.', carCurMis:'elpris i {c}', carPriceNeed:'ett pris för bensin 95 i {c}',
@@ -1212,6 +1256,35 @@ Object.assign(I18N.es, { routeTab:'Ruta', rtPreview:'Vista previa', rtFrom:'Desd
   rtMedian:'Mediana de la ruta {p} por litro', rtCheaper:'{d}/L por debajo de la mediana de la ruta', rtSame:'cerca de la mediana de la ruta',
   rtAlong:'km {k} de {n}', rtDetour:'+{k} km de desvío (est.)', rtVia:'Ruta por aquí', rtOld:'Se ocultan {n} precios de más de 10 h.', rtClear:'Borrar ruta',
   rtNote:'Vista previa. Ruta del servidor de demostración OSRM gratuito (coche; no se tienen en cuenta ferris ni peajes). Los desvíos son estimaciones (línea recta × 1,3). Los precios cambian: compruébalo en el surtidor. Tu origen y destino se envían a OpenStreetMap (Nominatim) y al servidor OSRM.' });
+// Route planner v2 (PHEV-aware cost, range, net-of-detour saving, data-quality gate). de/fr/es fall back to English for these keys;
+// their old rtNote/rtCheaper/rtSame described the previous behaviour and the privacy text must stay accurate, so they are dropped.
+for (const l of ['de', 'fr', 'es']) { delete I18N[l].rtNote; delete I18N[l].rtCheaper; delete I18N[l].rtSame; }
+Object.assign(I18N.en, {
+  rtFuelNow:'Fuel in the tank at start', rtBattNow:'Battery at start', rtReserve:'Keep in reserve',
+  rtNoStop:'No fuel stop needed: about {l} L of petrol{e}. You arrive with about {a} L.', rtAndKwh:' and {k} kWh of electricity',
+  rtNeedStop:'You need a fuel stop: with your fuel and reserve you can drive about {r} km; the destination is {d} km away.',
+  rtBest:'Best stop on the route saves about {s} after the detour.', rtNoBest:'No priced stop saves more than {s} after the detour.',
+  rtNetSave:'saves about {s} after the detour', rtNetCost:'costs about {s} more after the detour', rtNetNone:'no saving after the detour',
+  rtCheaper:'{d}/L below the nearby median', rtSame:'around the nearby median', rtFerry:'via ferry',
+  rtBelow:'Below the line: age unknown or not verified. These are never ranked as best.',
+  rtWhyPs:'not verified: price unchanged for 2+ days', rtWhySus:'not verified: far below other prices here', rtWhyCty:'not verified: this country’s data is not current',
+  rtStaleCty:'Prices not current: {c}.', rtBeyond:'{n} pumps are beyond your range and are not shown.',
+  rtNoCar:'Using default consumption ({c} L/100 km). Fill in My car for a plan that fits your car.',
+  rtProvOsrm:'the free OSRM demo server (car; ferries and tolls not considered)', rtProvVal:'the public Valhalla server (car; ferries included)',
+  rtNote:'Preview. Route from {r}. Estimates only: detours are straight line × 1.3, electric range is assumed at 75% of the official figure, and the saving is against the median of nearby pumps. Prices change — check at the pump. Your start and end points are sent to OpenStreetMap (Nominatim) to find the places and to the routing server to calculate the route. Your car profile and these settings stay in your browser and are not sent to us.' });
+Object.assign(I18N.sv, {
+  rtFuelNow:'Bränsle i tanken vid start', rtBattNow:'Batteri vid start', rtReserve:'Behåll i reserv',
+  rtNoStop:'Inget tankstopp behövs: cirka {l} L bensin{e}. Du kommer fram med cirka {a} L kvar.', rtAndKwh:' och {k} kWh el',
+  rtNeedStop:'Du behöver tanka: med ditt bränsle och din reserv kommer du cirka {r} km; målet ligger {d} km bort.',
+  rtBest:'Bästa stopp längs rutten sparar cirka {s} efter omvägen.', rtNoBest:'Inget stopp med pris sparar mer än {s} efter omvägen.',
+  rtNetSave:'sparar cirka {s} efter omvägen', rtNetCost:'kostar cirka {s} mer efter omvägen', rtNetNone:'ingen besparing efter omvägen',
+  rtCheaper:'{d}/L under medianen i närheten', rtSame:'runt medianen i närheten', rtFerry:'via färja',
+  rtBelow:'Under strecket: okänd ålder eller overifierade. De rankas aldrig som bäst.',
+  rtWhyPs:'overifierat: priset oförändrat i 2+ dygn', rtWhySus:'overifierat: långt under övriga priser här', rtWhyCty:'overifierat: landets data är inte aktuell',
+  rtStaleCty:'Priser inte aktuella: {c}.', rtBeyond:'{n} pumpar ligger utanför din räckvidd och visas inte.',
+  rtNoCar:'Använder standardförbrukning ({c} L/100 km). Fyll i Min bil för en plan som passar din bil.',
+  rtProvOsrm:'den gratis OSRM-demoservern (bil; färjor och vägtullar beaktas inte)', rtProvVal:'den publika Valhalla-servern (bil; färjor ingår)',
+  rtNote:'Förhandsvisning. Rutt från {r}. Endast uppskattningar: omvägar är fågelväg × 1,3, elräckvidden antas vara 75 % av den officiella och besparingen jämförs med medianen för pumpar i närheten. Priser ändras — kontrollera vid pumpen. Start och mål skickas till OpenStreetMap (Nominatim) för att hitta platserna och till ruttservern för att beräkna rutten. Din bilprofil och dessa inställningar stannar i din webbläsare och skickas inte till oss.' });
 
 
 // v2.0 strings (EN + SV; DE/FR/ES fall back to English until translated)
@@ -1272,7 +1345,7 @@ function setLang(l) {
   localizeCN(); buildSelects();
   applyStaticI18n();
   updStatus();
-  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); updPeek(_peekBest); }
+  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); evRender(); updPeek(_peekBest); }
   if (typeof vehBuild === 'function') vehBuild();
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'stations' && myLat != null) showNearby();
@@ -2128,7 +2201,7 @@ function vehStrip(s) {
   const L = [];
   if (car.cons) L.push(t('vehFuel', { v: '<b>' + money(car.cons * p.price, p.currency) + '</b>' }));
   if (car.type === 'phev' && car.batt && car.range && car.elec && (car.elecCur || p.currency) === p.currency)
-    L.push(t('vehElec', { v: '<b>' + money(car.batt / car.range * 100 / ((car.eff || 90) / 100) * car.elec, p.currency) + '</b>' }));
+    L.push(t('vehElec', { v: '<b>' + money(carKwh100(100 / (car.eff || 90)) * car.elec, p.currency) + '</b>' }));
   if (!L.length) L.push(`<button type="button" onclick="goTab('car')">${t('vehMore')}</button>`);
   return `<div class="veh-strip">${L.join('<br>')}</div>`;
 }
@@ -2830,7 +2903,7 @@ function goTab(tab) {
   const pid = PANEL_MAP[tab];
   if (pid) { document.getElementById(pid)?.classList.add('open'); document.body.classList.add('sheet'); curPanel = document.getElementById(pid); setSheet(SHEET_DEFAULT[tab] || 'full'); }
 
-  if (tab === 'car') vehLoad();
+  if (tab === 'car') { vehLoad(); evRender(); }
   if (tab === 'stations') {
     rebuildList();
     if (myLat != null) showNearby();
@@ -2961,9 +3034,10 @@ function carInit() {
 }
 function carUi() {
   const ph = document.getElementById('car-phev'); if (ph) ph.style.display = car.type === 'phev' ? '' : 'none';
-  renderCarCard();
+  renderCarCard(); evRender();
 }
 function carSet(k, raw) {
+  if (k === 'batt' || k === 'range') delete car.kwh100;   // a manual edit makes the catalogue consumption stale
   if (k === 'type') {
     if (CAR_FUEL[raw]) { car.type = raw; setFuel(null, CAR_FUEL[raw]); } else delete car.type;
   } else {
@@ -2989,7 +3063,7 @@ function renderCarCard() {
   const cu = document.getElementById('car-cur'); if (cu) cu.textContent = car.elecCur || cur;
   const e = metaCountries.find(c => c.country === cc)?.stats_eur?.p95?.median, r = e ? fx(cc) : null;
   const pp = e && r ? e / r : (cstat(cc).p95 || null);                               // country median petrol 95, local currency
-  const eff = (car.eff || 90) / 100, kwh100 = car.batt && car.range ? car.batt / car.range * 100 / eff : null;
+  const eff = (car.eff || 90) / 100, kwh100 = carKwh100(1 / eff);
   const elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null;
   const miss = [];
   if (!car.cons) miss.push(t('carCons'));
@@ -3002,12 +3076,114 @@ function renderCarCard() {
   if (car.cons && pp) L.push(t('carPetKm', { v: b(car.cons * pp) }));
   if (car.batt && elec) L.push(t('carCharge', { v: b(car.batt / eff * elec) }));
   if (kwh100 && car.cons && pp) L.push(t('carBreak', { v: b(car.cons * pp / kwh100) }));
+  L.push(`<button type="button" class="ev-link" onclick="evOpen()">${esc(t('evOpen'))}</button>`);
   el.innerHTML = L.map(x => `<div>${x}</div>`).join('') + (miss.length ? `<div>${esc(t('carNeeds', { x: miss.join(', ') }))}</div>` : '')
     + (pp && kwh100 ? `<div style="font-size:0.66rem;margin-top:4px">${esc(t('carEst', { i: t('carInputs', { p: pp.toFixed(2) + ' ' + sy, k: kwh100.toFixed(1), e: Math.round(eff * 100) }) }))}</div>` : '');
 }
 
+// ── Petrol or electricity? Cost per km on electricity vs petrol 95 (average of the 5 nearest priced stations) ──
+// EV-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_ev_compare.js)
+// kwh100 = kWh from the wall per 100 km, elec = price per kWh, cons = L/100 km on petrol, petrol = price per L (same currency), km = trip, elecKm = km the battery covers (0 = no limit)
+// base = catalogue kWh/100 km (preferred: battery capacity is often gross); else battery / range, which overstates when the capacity is gross
+function evKwh100(batt, range, loss, base) { const b = base > 0 ? base : batt > 0 && range > 0 ? batt / range * 100 : 0; return b > 0 && loss > 0 ? b * loss : null; }
+function evCompare(o) {
+  const e100 = o.kwh100 > 0 && o.elec > 0 ? o.kwh100 * o.elec : null, p100 = o.cons > 0 && o.petrol > 0 ? o.cons * o.petrol : null;
+  const r = { elec100: e100, petrol100: p100, breakEven: o.kwh100 > 0 && p100 != null ? p100 / o.kwh100 : null, cheaper: null, pct: null, trip: null };
+  if (e100 == null || p100 == null) return r;
+  r.cheaper = Math.abs(e100 - p100) < p100 * 0.005 ? 'same' : e100 < p100 ? 'electric' : 'petrol';
+  r.pct = r.cheaper === 'same' ? 0 : (1 - Math.min(e100, p100) / Math.max(e100, p100)) * 100;      // how much cheaper the winner is
+  if (o.km > 0) {
+    const eKm = o.elecKm > 0 ? Math.min(o.km, o.elecKm) : o.km;
+    r.trip = { km: o.km, elec: eKm / 100 * e100 + (o.km - eKm) / 100 * p100, petrol: o.km / 100 * p100, elecKm: eKm, limited: eKm < o.km };
+  }
+  return r;
+}
+// list = [{km, price, tier}] (tier 2 = not verified, never used); the n nearest usable ones and their mean price
+function evNearest(list, n) {
+  const s = [...list].sort((a, b) => a.km - b.km), picked = s.filter(x => x.tier < 2).slice(0, n);
+  const last = picked.length ? picked[picked.length - 1].km : Infinity;
+  return { picked, avg: picked.length ? picked.reduce((a, x) => a + x.price, 0) / picked.length : null, setAside: s.filter(x => x.tier >= 2 && x.km <= last).length };
+}
+// EV-PURE-END
+const carKwh100 = loss => evKwh100(car.batt, car.range, loss, car.kwh100);
+const EV_PUB = { SE: { p: 5.8, cur: 'SEK', asof: '2026-08-26' } };      // cited reference, shown as an assumption (docs/EV_PRICE_SOURCES_2026-11-06.md): Hurbra roundup of SE public fast-charge list prices, 5.49-6.09 kr/kWh
+let ev = (v => v && typeof v === 'object' ? v : {})(store.get('efp_ev', {}));
+function evSet(k, raw) {
+  const v = String(raw).trim() === '' ? null : +String(raw).replace(',', '.');
+  if (v === null) delete ev[k]; else if (!isFinite(v) || v <= 0 || (k === 'loss' && v < 1)) { evRender(); return; } else ev[k] = v;
+  if (k === 'pub') ev.pubCur = ctyCur();
+  store.set('efp_ev', ev); evRender();
+}
+function evSetMode(m) { ev.mode = m; store.set('efp_ev', ev); evRender(); }
+function evSetHome(raw) { carSet('elec', raw); const e = $id('car-elec'); if (e) e.value = car.elec != null ? car.elec : ''; }
+function evOpen() { goTab('car'); setTimeout(() => $id('ev-card')?.scrollIntoView({ block: 'start' }), 120); }
+function evStations(cur) {
+  const c = myLat != null ? { lat: myLat, lon: myLon, mine: true } : (g => ({ lat: g.lat, lon: g.lng, mine: false }))(map.getCenter());
+  const dLat = 1.5, dLon = 1.5 / Math.max(0.2, Math.cos(c.lat * Math.PI / 180)), list = [];
+  for (const arr of Object.values(data)) for (const s of arr) {
+    if (!s.lat || !s.lon || Math.abs(s.lat - c.lat) > dLat || Math.abs(s.lon - c.lon) > dLon) continue;
+    const p = minOf(s, 'P95'); if (!p || (p.unit && p.unit !== 'L') || p.currency !== cur) continue;
+    const age = p.updated_at ? (Date.now() - tsDate(p.updated_at)) / 3600000 : null;
+    list.push({ s, p, price: p.price, km: dist(c.lat, c.lon, s.lat, s.lon), tier: age != null && age > FRESH_H ? 2 : rtTier({ age, ps: s.ps, sus: suspectLow(s.country, p), stale: metaOf[s.country]?.status === 'stale' }) });   // a dated price over 36 h old is not verified
+  }
+  return { ...evNearest(list, 5), mine: c.mine };
+}
+function evRender() {
+  const el = $id('ev-in'), stEl = $id('ev-st'), pan = $id('p-car'); if (!el || !pan?.classList.contains('open')) return;
+  const ae = document.activeElement, fid = ae && el.contains(ae) ? ae.id : '', vEl = $id('ev-v'); vEl.innerHTML = ''; stEl.innerHTML = '';   // the verdict is the only live region; inputs are patched in place below so keyboard focus survives
+  const cc = ctyCc(), cur = ctyCur(), sy = SYM[cur] || cur, phev = car.type === 'phev', note = k => `<p class="ev-note">${esc(t(k))}</p>`;
+  if (!CAR_FUEL[car.type]) { el.innerHTML = note('evSetCar'); el._sk = null; return; }
+  if (car.type === 'diesel') { el.innerHTML = note('evDiesel'); el._sk = null; return; }
+  const st = evStations(cur), loss = ev.loss || (car.eff ? 100 / car.eff : 1.15);
+  const mode = ev.mode || (car.elec ? 'home' : 'pub'), ref = EV_PUB[cc], nm = CNAMES[cc] || cc;
+  let elec = null, price = '', hint = '';
+  if (mode === 'home') { elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null; price = elec != null ? elec : ''; }
+  else {
+    const own = ev.pub && ev.pubCur === cur ? ev.pub : null, def = ref && ref.cur === cur ? ref : null;
+    elec = own || (def ? def.p : null); price = elec != null ? elec : '';
+    const old = def && (Date.now() - Date.parse(def.asof)) / 864e5 > 90;
+    hint = own ? '' : def ? `<p class="ev-note${old ? ' ev-warn' : ''}">${esc(t('evAssume', { p: money(def.p, cur), d: def.asof }) + (old ? ' ' + t('evOld') : ''))}</p>` : `<p class="ev-note">${esc(t('evNoRef', { c: nm }))}</p>`;
+  }
+  const kwh100 = phev ? carKwh100(loss) : null, km = ev.km || 100;
+  const r = evCompare({ kwh100, elec, cons: car.cons, petrol: st.avg, km, elecKm: phev && car.range ? car.range * RT_REAL : 0 });
+  const miss = []; if (phev && !car.batt) miss.push(t('carBatt')); if (phev && !car.range) miss.push(t('carRange')); if (!car.cons) miss.push(t('carCons')); if (elec == null) miss.push(t(mode === 'home' ? 'carElec' : 'evPub'));
+  const f = v => v.toFixed(v < 1 ? 3 : 2);
+  let h = '';
+  if (!phev) h += note('evNoElec');
+  else {
+    h += `<label>${esc(t('evMode'))}</label><div class="tchips">${['home', 'pub'].map(m => `<button type="button" id="ev-m-${m}" class="${mode === m ? 'on' : ''}" onclick="evSetMode('${m}')">${esc(t(m === 'home' ? 'evHome' : 'evPub'))}</button>`).join('')}</div>`
+      + `<label for="ev-price">${esc(t(mode === 'home' ? 'evPriceHome' : 'evPricePub', { c: sy }))}</label><input id="ev-price" type="number" inputmode="decimal" min="0.01" step="0.01" value="${price}" onchange="${mode === 'home' ? 'evSetHome(this.value)' : "evSet('pub',this.value)"}"><div id="ev-hint"></div>`
+      + `<label for="ev-loss">${esc(t('evLoss'))}</label><input id="ev-loss" type="number" inputmode="decimal" min="1" step="0.01" value="${(+loss).toFixed(2)}" onchange="evSet('loss',this.value)">`;
+  }
+  if (phev) h += `<label for="ev-km">${esc(t('evDist'))}</label><input id="ev-km" type="number" inputmode="decimal" min="1" step="10" value="${km}" onchange="evSet('km',this.value)">`;
+  let vd = '';      // the verdict goes first, above the inputs
+  if (r.cheaper) {
+    const hd = r.cheaper === 'electric' ? t('evVerdictE', { p: Math.round(r.pct) }) : r.cheaper === 'petrol' ? t('evVerdictP') : t('evSame');
+    const sub = r.cheaper === 'electric' ? t('evPctE', { p: r.pct.toFixed(0) }) : r.cheaper === 'petrol' ? t('evPctP', { p: ((r.elec100 / r.petrol100 - 1) * 100).toFixed(0) }) : '';
+    vd = `<div class="ev-verdict${r.cheaper === 'electric' ? ' e' : ''}"><div class="ev-h">${esc(hd)}</div>${sub ? `<div class="ev-s">${esc(sub)}</div>` : ''}
+      <table class="ev-tbl"><tr><th></th><th>${esc(t('evElec'))}</th><th>${esc(t('evPet'))}</th></tr>
+      <tr><td>${esc(t('evKm'))}</td><td>${f(r.elec100 / 100)} ${esc(sy)}</td><td>${f(r.petrol100 / 100)} ${esc(sy)}</td></tr>
+      <tr><td>${esc(t('evK100'))}</td><td>${esc(money(r.elec100, cur))}</td><td>${esc(money(r.petrol100, cur))}</td></tr>
+      <tr><td>${esc(t('evTrip', { k: km }))}</td><td>${esc(money(r.trip.elec, cur))}</td><td>${esc(money(r.trip.petrol, cur))}</td></tr></table>
+      ${r.trip.limited ? `<div class="ev-s">${esc(t('evTripMix', { k: Math.round(r.trip.elecKm) }))}</div>` : ''}</div>
+      <p class="ev-note">${esc(t('evBreak', { v: money(r.breakEven, cur) }))}</p>`;
+  } else if (phev && st.picked.length && miss.length) vd = `<p class="ev-note">${esc(t('evNeeds', { x: miss.join(', ') }))}</p>`;
+  vEl.innerHTML = vd;
+  const inH = h; h = `<label>${esc(t('evStTitle'))}</label>`;
+  if (st.picked.length) {
+    h += `<ul class="ev-st">${st.picked.map(x => `<li><span><span class="ev-n">${esc(x.s.name || x.s.brand || '–')}</span><br>${esc(fmtDist(x.km))} · ${esc(ageTxt(x.p.updated_at))}</span><b>${esc(pfmt(x.price, cur) + ' ' + sy)}</b></li>`).join('')}</ul>`
+      + `<p class="ev-note"><b>${esc(t('evAvg', { p: pfmt(st.avg, cur) + ' ' + sy }))}</b> · ${esc(t('evStFrom', { w: t(st.mine ? 'evMyPos' : 'evMapC') }))}`
+      + (st.picked.length < 5 ? ' ' + esc(t('evFew', { n: st.picked.length })) : '') + (st.setAside ? ' ' + esc(t('evSetAside', { n: st.setAside })) : '') + '</p>';
+  } else h += `<p class="ev-note">${esc(t('evNoSt', { c: nm }))}</p>`;
+  stEl.innerHTML = h + note('evOwnNote');
+  const sk = inH.replace(/ value="[^"]*"/g, '');
+  if (sk !== el._sk) { el.innerHTML = inH; el._sk = sk; if (fid) $id(fid)?.focus(); }
+  else { const tpl = document.createElement('div'); tpl.innerHTML = inH; for (const i of tpl.querySelectorAll('input')) { const o = $id(i.id); if (o && o.value !== i.value) o.value = i.value; } }
+  const hs = $id('ev-hint'); if (hs) hs.innerHTML = hint;
+}
+
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
-const VEH_V = 2;   // bump whenever web/vehicles.json changes (service worker serves ?v= URLs cache-first)
+const VEH_V = 3;   // bump whenever web/vehicles.json changes (service worker serves ?v= URLs cache-first)
 let _veh = null, _vehTried = false;
 function vehLoad() {
   if (_vehTried) return; _vehTried = true;
@@ -3047,6 +3223,7 @@ function vehPick(id) {
   if (v.tank_l) carSet('tank', v.tank_l);
   for (const [k, f] of [['cons', 'cons_l100'], ['batt', 'battery_kwh'], ['range', 'range_km']]) { if (v[f]) carSet(k, v[f]); else delete car[k]; }
   if (v.type !== 'phev') { delete car.batt; delete car.range; }
+  if (v.type === 'phev' && v.ev_kwh100 > 0) car.kwh100 = v.ev_kwh100; else delete car.kwh100;
   car.veh = id; store.set('efp_car', car);               // the electricity price is never touched
   carInit(); vehNote();
 }
@@ -3252,10 +3429,78 @@ async function cheapestInView() {
 // A→B by the free OSRM demo (car, no ferries/tolls) · places by Nominatim on submit · corridor search over the
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
-const rt = { from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, res:null, busy:false, status:'', pick:null, layer:null };
+// Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
+// Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
+const ROUTER = 'osrm';                         // 'osrm' (demo, no ferries) | 'valhalla' (FOSSGIS public, ferries; CSP host already allowed)
 const OSRM = 'https://router.project-osrm.org/route/v1/driving/';
+const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
+function decodePoly6(str) {                    // Valhalla shape: Google polyline, 6 decimals
+  const out = []; let i = 0, la = 0, lo = 0;
+  const num = () => { let b, sh = 0, r = 0; do { b = str.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32); return (r & 1) ? ~(r >> 1) : (r >> 1); };
+  while (i < str.length) { la += num(); lo += num(); out.push([la / 1e6, lo / 1e6]); }
+  return out;
+}
+async function rtRoute(a, b) {
+  if (ROUTER === 'valhalla') {
+    const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'none' });
+    const j = await (await fetch(`${VALHALLA}?json=${encodeURIComponent(q)}`)).json();
+    const tr = j.trip; if (!tr || tr.status !== 0) throw new Error('route');
+    return { pts: tr.legs.flatMap(l => decodePoly6(l.shape)), km: tr.summary.length, min: tr.summary.time / 60, ferry: tr.legs.some(l => l.summary?.has_ferry) };
+  }
+  const j = await (await fetch(`${OSRM}${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`)).json();
+  if (j.code !== 'Ok' || !j.routes?.[0]) throw new Error(j.code || 'route');
+  const r = j.routes[0];
+  return { pts: r.geometry.coordinates.map(([lo, la]) => [la, lo]), km: r.distance / 1000, min: r.duration / 60, ferry: false };
+}
 const MAX_AGE_H = 10;                          // owner decision 2026-10-07: prices known to be older are not offered
 const rtFuelKey = () => cmpKey === 'diesel' ? 'DIESEL' : 'P95';
+
+// RT-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_route_model.js)
+const RT_REAL = 0.75;       // share of the WLTP electric range assumed on a motorway start (assumption, stated in the note)
+const RT_REF_KM = 100;      // the reference price is the median of pumps within this many km along the route
+const RT_MIN_SAVE = 1;      // EUR: below this a stop is not called worth it
+const rtMedian = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[s.length >> 1] : null; };
+// Energy walk. o = { km, cons (L/100 km, petrol only), tank (L), fuelL, reserveL, elecKm (electric km available), kwh100, elecEur (EUR/kWh) }
+function rtPlan(o) {
+  const e = Math.max(0, o.elecKm || 0), usable = Math.max(0, o.fuelL - o.reserveL);
+  const ek = Math.min(o.km, e), petrolL = Math.max(0, o.km - e) * o.cons / 100;
+  const kwh = ek * (o.kwh100 || 0) / 100;
+  return { elecKm: ek, kwh, elecCost: o.elecEur ? kwh * o.elecEur : null, petrolL, arriveL: o.fuelL - petrolL,
+    needStop: petrolL > usable + 1e-9, reachKm: e + usable / o.cons * 100 };
+}
+// One pump: detour priced electric while battery remains at that point, else petrol at this pump's price; litres bought = what is
+// burned from here to the destination (capped by tank space); saving vs the reference price, net of the detour.
+function rtCand(o, along, detourKm, eur, ref) {
+  const e = Math.max(0, o.elecKm || 0), pAt = Math.max(0, along - e) * o.cons / 100, fuelAt = o.fuelL - pAt;
+  const elec = along < e;
+  const detourL = elec ? 0 : detourKm * o.cons / 100;
+  const detourCost = elec ? detourKm * (o.kwh100 || 0) / 100 * (o.elecEur || 0) : detourL * eur;
+  const restL = Math.max(0, o.km - Math.max(along, e)) * o.cons / 100;
+  const litres = Math.max(0, Math.min(o.tank - (fuelAt - detourL), restL));
+  return { detourCost, litres, fuelAt, saving: (ref - eur) * litres - detourCost, reachable: fuelAt - detourL >= o.reserveL - 1e-9 };
+}
+function rtRef(rows, along, fallback) {
+  const near = rows.filter(r => Math.abs(r.along - along) <= RT_REF_KM), dated = near.filter(r => r.age != null);
+  const pool = dated.length >= 3 ? dated : near;
+  return pool.length ? rtMedian(pool.map(r => r.eur)) : fallback;
+}
+// 0 = dated and trusted, 1 = age unknown, 2 = not verified (unchanged 48 h+ flag `ps`, price the data contradicts, or country feed stale)
+const rtTier = c => (c.ps || c.sus || c.stale) ? 2 : c.age == null ? 1 : 0;
+// RT-PURE-END
+function rtElecEur() {                           // car.elec is in car.elecCur (local currency per kWh) -> EUR
+  if (!car.elec) return null;
+  const cur = car.elecCur || ctyCur(); if (cur === 'EUR') return car.elec;
+  const c = metaCountries.find(m => m.currency === cur), r = c && fx(c.country);
+  return r ? car.elec * r : null;
+}
+function rtInputs() {
+  const phev = car.type === 'phev' && car.batt && car.range, eff = (car.eff || 90) / 100;
+  const def = Math.max(5, Math.round(tank * 0.1));
+  return { cons: car.cons || trip.cons, withCar: !!car.cons, phev: !!phev, tank, fuelL: tank * rt.fuelPct / 100, reserveL: Math.min(tank, rt.reserve ?? def), defReserve: def,
+    elecKm: phev ? car.range * RT_REAL * rt.battPct / 100 : 0, kwh100: phev ? carKwh100(1 / eff) : 0, elecEur: phev ? rtElecEur() : null };
+}
+function rtSet(k, v) { rt[k] = v; if (rt.res?.cands) rtRank(); renderRoute(); }
 
 function renderRoute() {
   const el = document.getElementById('cmp-body'); if (!el) return;
@@ -3271,11 +3516,15 @@ function renderRoute() {
         <button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('to')">${ico('map')}</button></div>
       <label>${t('rtWidth')}</label>
       <div class="tchips">${[2, 3, 5].map(w => `<button class="${rt.w === w ? 'on' : ''}" onclick="rt.w=${w};rt.res=null;renderRoute()">${w} km</button>`).join('')}</div>
+      ${(() => { const o = rtInputs(), chip = (k, v, on, txt) => `<button class="${on ? 'on' : ''}" onclick="rtSet('${k}',${v})">${txt}</button>`, rs = [...new Set([o.defReserve, 5, 10, 15])].sort((a, b) => a - b);
+        return `<label>${t('rtFuelNow')}</label><div class="tchips">${[25, 50, 75, 100].map(v => chip('fuelPct', v, rt.fuelPct === v, v + ' %')).join('')}</div>`
+          + (o.phev ? `<label>${t('rtBattNow')}</label><div class="tchips">${[0, 50, 100].map(v => chip('battPct', v, rt.battPct === v, v + ' %')).join('')}</div>` : '')
+          + `<label>${t('rtReserve')}</label><div class="tchips">${rs.map(v => chip('reserve', v, o.reserveL === v, v + ' L')).join('')}</div>`; })()}
       <label class="nav-rem" style="margin-top:10px"><input type="checkbox" ${rt.hideUnknown ? 'checked' : ''} onchange="rt.hideUnknown=this.checked;if(rt.res)rtRank()"> <span>${t('rtHideUnknown')}</span></label>
       <button class="rt-go" id="rt-go" onclick="rtGo()" ${rt.busy ? 'disabled' : ''}>${ico('search')} ${t('rtGo')}</button>
     </div>
     <div id="rt-out"></div>
-    <p class="cmp-note">${t('rtNote')}</p>`;
+    <p class="cmp-note">${t('rtNote', { r: t(ROUTER === 'valhalla' ? 'rtProvVal' : 'rtProvOsrm') })}</p>`;
   rtRenderOut();
 }
 function rtSetStatus(msg) { rt.status = msg; const o = document.getElementById('rt-out'); if (o && rt.busy) o.innerHTML = `<p class="empty" style="padding:14px 0"><i class="spin"></i> ${esc(msg)}</p>`; }
@@ -3326,11 +3575,8 @@ async function rtGo() {
     }
     rtSetStatus(t('rtRouting'));
     const a = rt.from, b = rt.to;
-    const r = await fetch(`${OSRM}${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`);
-    const j = await r.json();
-    if (j.code !== 'Ok' || !j.routes?.[0]) throw new Error(j.code || 'route');
-    const rte = j.routes[0];
-    const pts = rte.geometry.coordinates.map(([lo, la]) => [la, lo]);
+    const rte = await rtRoute(a, b);
+    const pts = rte.pts;
     // which countries does the route touch (sampled every ~15 km), in order of travel?
     const need = [];
     let acc = 1e9;
@@ -3347,7 +3593,7 @@ async function rtGo() {
       rtSetStatus(t('rtLoading', { c: todo.map(c => CNAMES[c] || c).join(', ') }));
       await Promise.all(todo.map(cc => loadCC(cc)));
     }
-    rt.res = { pts, km: rte.distance / 1000, min: rte.duration / 60, countries: need, fuel: rtFuelKey(), cons: trip.cons, L: tank };
+    rt.res = { pts, km: rte.km, min: rte.min, ferry: rte.ferry, countries: need, fuel: rtFuelKey() };
     rtCorridor();
     rtRank();
     rtDraw(true);
@@ -3410,8 +3656,9 @@ function rtRate(cc) {
 }
 function rtRank() {
   const R = rt.res; if (!R || R.error) return;
-  const L_ = R.L, burn = R.cons / 100, rates = {};
-  let hiddenOld = 0;
+  const o = rtInputs(); o.km = R.km; R.o = o; R.plan = rtPlan(o);
+  const rates = {}, stale = new Set(R.countries.filter(cc => metaOf[cc]?.status === 'stale'));
+  let hiddenOld = 0, beyond = 0;
   const rows = [];
   for (const c of R.cands) {
     const age = c.p.updated_at ? (Date.now() - tsDate(c.p.updated_at)) / 3600000 : null;
@@ -3420,22 +3667,30 @@ function rtRank() {
     const cc = c.s.country;
     if (!(cc in rates)) rates[cc] = rtRate(cc);
     const rate = rates[cc]; if (!rate) continue;
-    const eur = c.p.price * rate;
-    const detourKm = 2 * c.off * ROAD_FACTOR;
-    rows.push({ ...c, eur, detourKm, net: (L_ + detourKm * burn) * eur, age });
+    rows.push({ ...c, eur: c.p.price * rate, age, detourKm: 2 * c.off * ROAD_FACTOR });
   }
-  R.hiddenOld = hiddenOld;
-  if (!rows.length) { R.rows = []; R.median = null; rtRenderOut(); return; }
-  const sorted = rows.map(r => r.eur).sort((a, b) => a - b);
-  R.median = sorted[sorted.length >> 1];
-  // best candidates by net cost, but never two stops within 3 km of each other (they are the same choice)
-  rows.sort((a, b) => a.net - b.net || a.detourKm - b.detourKm);
+  R.hiddenOld = hiddenOld; R.stale = [...stale]; R.best = null;
+  if (!rows.length) { R.rows = []; R.median = null; R.nRows = 0; R.beyond = 0; rtRenderOut(); return; }
+  R.median = rtMedian(rows.map(r => r.eur));
+  const refB = {}, ok = [];                                  // shortcut: reference price per 20 km bucket (not an exact +/-100 km window per pump)
+  for (const r of rows) {
+    const b = Math.round(r.along / 20); refB[b] ??= rtRef(rows, b * 20, R.median);
+    Object.assign(r, rtCand(o, r.along, r.detourKm, r.eur, refB[b]), { ref: refB[b] });
+    r.tier = rtTier({ age: r.age, ps: r.s.ps, sus: suspectLow(r.s.country, r.p), stale: stale.has(r.s.country) });
+    r.why = r.s.ps ? 'rtWhyPs' : suspectLow(r.s.country, r.p) ? 'rtWhySus' : stale.has(r.s.country) ? 'rtWhyCty' : '';
+    if (r.reachable) ok.push(r); else beyond++;
+  }
+  R.beyond = beyond;
+  // trusted and dated first, then unknown age, then not verified; within a tier the biggest net saving first (detour already netted off)
+  const ord = (a, b) => a.tier - b.tier || b.saving - a.saving || a.detourKm - b.detourKm;
+  ok.sort(ord);
   const top = [], apart = r => top.every(t0 => Math.abs(t0.along - r.along) > 3 || t0.s.country !== r.s.country);
   // every country on the route gets its own best pump first (a driver fills up where the route is), then the next best overall
-  for (const cc of R.countries) { const r = rows.find(x => x.s.country === cc); if (r && apart(r)) top.push(r); }
-  for (const r of rows) { if (top.length >= 10) break; if (!top.includes(r) && apart(r)) top.push(r); }
-  top.sort((x, y) => x.net - y.net);
-  R.rows = top; R.nRows = rows.length;
+  for (const cc of R.countries) { const r = ok.find(x => x.s.country === cc); if (r && apart(r)) top.push(r); }
+  for (const r of ok) { if (top.length >= 10) break; if (!top.includes(r) && apart(r)) top.push(r); }
+  top.sort(ord);
+  R.rows = top; R.nRows = ok.length;
+  R.best = top.find(r => r.tier === 0 && r.saving >= RT_MIN_SAVE) || null;     // only a dated, trusted pump may be called best
   rtRenderOut(); rtDraw(false);
 }
 function rtRenderOut() {
@@ -3443,19 +3698,28 @@ function rtRenderOut() {
   const R = rt.res;
   if (!R) { o.innerHTML = ''; return; }
   if (R.error) { o.innerHTML = `<p class="empty">${t('rtFail')}</p>`; return; }
-  const hm = `${Math.floor(R.min / 60)} h ${Math.round(R.min % 60)} min`;
-  if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${t('rtSummary', { d: Math.round(R.km), h: hm, n: 0, w: rt.w })}</p><p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
+  const hm = `${Math.floor(R.min / 60)} h ${Math.round(R.min % 60)} min`, P = R.plan, I = R.o, eur = v => money(v, 'EUR');
+  const sum = t('rtSummary', { d: Math.round(R.km), h: hm, n: (R.nRows || 0).toLocaleString(), w: rt.w }) + (R.ferry ? ' · ' + t('rtFerry') : '');
+  const clr = `<button class="upd-line" style="margin-left:6px" onclick="rtClear()">${ico('close', 'sm')} ${t('rtClear')}</button>`;
+  const e = P.elecKm > 0 ? t('rtAndKwh', { k: Math.round(P.kwh) }) + (P.elecCost != null ? ' (' + eur(P.elecCost) + ')' : '') : '';
+  const best = R.best ? t('rtBest', { s: eur(R.best.saving) }) : t('rtNoBest', { s: eur(RT_MIN_SAVE) });
+  const verdict = `<div class="tverdict ${P.needStop ? 'same' : 'good'}">${P.needStop ? t('rtNeedStop', { r: Math.round(P.reachKm), d: Math.round(R.km) }) : t('rtNoStop', { l: Math.round(P.petrolL), e, a: Math.max(0, Math.round(P.arriveL)) })}<small>${best}</small></div>`;
+  const notes = [R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '', R.hiddenOld ? t('rtOld', { n: R.hiddenOld }) : '',
+    I.withCar ? '' : t('rtNoCar', { c: I.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
+  if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${sum}${notes}</p>${verdict}<p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
   const fl = cmpKey === 'diesel' ? 'Diesel' : '95';
-  o.innerHTML = `<p class="rt-sum">${t('rtSummary', { d: Math.round(R.km), h: hm, n: R.nRows.toLocaleString(), w: rt.w })}<br><b>${fl}</b> · ${t('rtMedian', { p: R.median.toFixed(2) + ' €' })}${R.hiddenOld ? '<br>' + t('rtOld', { n: R.hiddenOld }) : ''}
-      <button class="upd-line" style="margin-left:6px" onclick="rtClear()">${ico('close', 'sm')} ${t('rtClear')}</button></p>
+  let sep = false;
+  o.innerHTML = `<p class="rt-sum">${sum}<br><b>${fl}</b> · ${t('rtMedian', { p: R.median.toFixed(2) + ' €' })}${notes}${clr}</p>${verdict}
     ${R.rows.map((r, i) => {
-      const d = R.median - r.eur;
+      const d = r.ref - r.eur, s = r.saving;
       const cmp = d >= 0.005 ? t('rtCheaper', { d: d.toFixed(2) + ' €' }) : t('rtSame');
+      const net = s >= 0.1 ? t('rtNetSave', { s: eur(s) }) : s <= -0.1 ? t('rtNetCost', { s: eur(-s) }) : t('rtNetNone');
       const sy = SYM[r.p.currency] || r.p.currency;
       const nm = r.s.name || r.s.brand || '—';
-      return `<div class="rt-stop" onclick="rtFocus(${i})"><div class="rt-n">${i + 1}</div>
+      const head = r.tier > 0 && !sep ? (sep = true, `<p class="rt-sep">${t('rtBelow')}</p>`) : '';
+      return `${head}<div class="rt-stop${r.tier ? ' weak' : ''}" onclick="rtFocus(${i})"><div class="rt-n">${i + 1}</div>
         <div><div class="nm">${FLAGS[r.s.country] || ''} ${esc(nm)}</div>
-          <div class="sub">${esc(r.s.city || '')} · ${t('rtAlong', { k: Math.round(r.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: r.detourKm < 1 ? '<1' : r.detourKm.toFixed(1) })}<br>${esc(srcName(r.p.source || r.s.source || ''))}${r.p.source || r.s.source ? ' · ' : ''}${ageTxt(r.p.updated_at)}</div>
+          <div class="sub">${esc(r.s.city || '')} · ${t('rtAlong', { k: Math.round(r.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: r.detourKm < 1 ? '<1' : r.detourKm.toFixed(1) })}<br>${esc(srcName(r.p.source || r.s.source || ''))}${r.p.source || r.s.source ? ' · ' : ''}${ageTxt(r.p.updated_at)}${r.why ? '<br>' + t(r.why) : ''}<br>${net}</div>
           <div class="acts"><button onclick="event.stopPropagation();doNav('${escId(r.s.id)}')">${ico('go', 'sm')} ${t('go')}</button><button onclick="event.stopPropagation();rtVia(${i})">${ico('route', 'sm')} ${t('rtVia')}</button></div></div>
         <div class="pr">${r.p.price.toFixed(2)} ${sy}<small>${cmp}</small></div></div>`;
     }).join('')}`;

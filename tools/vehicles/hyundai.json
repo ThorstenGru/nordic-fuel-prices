@@ -233,7 +233,7 @@
    "cons_l100": 7.1,
    "battery_kwh": 13.8,
    "range_km": 54,
-   "ev_kwh100": 11.4,
+   "ev_kwh100": null,
    "confidence": "high",
    "source": "https://www.hyundai.news/de/modelle/alternative-antriebe/santa-fe-plug-in-hybrid/pressemappe/hyundai-santa-fe-plug-in-hybrid-pressetext-my27.html",
    "notes": "Hyundai Germany MY27 press text: 13.8 kWh, up to 54 km WLTP combined, 3.8 L/100 km weighted plus 11.4 kWh/100 km (7.1 L/100 km depleted battery, used as cons_l100). Same 3.8 in SE price list. Tank 47 L from SE brochure https://dmassets.hyundai.com/is/content/hyundaiautoever/7556_HYU_MX5_SANTA_FE_digital_se_LR-2pdf-AFpdf (which also shows an older 1.7 L/100 km figure). Battery gross/usable not stated."
