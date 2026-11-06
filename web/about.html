@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#F4F5F7">
+<meta name="theme-color" content="#E9EEF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1A29" media="(prefers-color-scheme: dark)">
 <title>Which governments force fuel stations to report prices? — EuroFuelPrices</title>
 <meta name="description" content="How EuroFuelPrices grades its data sources (A–L), and which European governments actually force petrol stations to report their prices — and how fast.">
 <link rel="canonical" href="https://eurofuelprices.com/about.html">
@@ -38,17 +39,12 @@
   "datePublished": "2026-10-06"
 }
 </script>
+<link rel="stylesheet" href="theme.css">
 <style>
-:root {
-  --bg: #F4F5F7; --surf: #FFFFFF; --surf2: #F7F8FA; --border: #E6E8EB;
-  --text: #16181D; --text2: #6B7280; --text3: #9AA1AC;
-  --blue: #0F766E; --green: #16A34A; --amber: #F59E0B; --red: #EF4444; --coral: #E8542F;
-}
 *, *::before, *::after { box-sizing:border-box; }
 body {
   margin:0; max-width:680px; margin:0 auto; padding:0 20px 60px;
-  font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:var(--bg); color:var(--text); line-height:1.65; font-size:16px;
+  line-height:1.65; font-size:16px;
 }
 header { padding:22px 0 10px; display:flex; align-items:center; justify-content:space-between; }
 .logo { font-size:1.1rem; font-weight:500; color:var(--text); text-decoration:none; display:flex; align-items:center; gap:6px; }
@@ -65,8 +61,8 @@ p { margin:0 0 14px; color:var(--text); }
 .why { color:var(--text2); font-size:0.92rem; }
 ul.grades { list-style:none; padding:0; margin:0 0 18px; }
 ul.grades li { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--border); font-size:0.92rem; }
-.gb { flex-shrink:0; display:inline-block; padding:2px 8px; border-radius:8px; font-size:0.7rem; font-weight:500; color:#16181D; }
-.gA { background:#86E8A8; } .gB { background:#93C5FD; } .gC { background:#FDD68B; } .gD { background:#F2A6A6; } .gL { background:#D7DADF; }
+.gb { flex-shrink:0; display:inline-block; padding:2px 8px; border-radius:8px; font-size:0.7rem; font-weight:500; color:var(--on-b); }
+.gA { background:var(--b-g); } .gB { background:#93C5FD; color:#0F2037; } .gC { background:var(--b-y); } .gD { background:var(--b-r); } .gL { background:var(--line); }
 footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--border); color:var(--text3); font-size:0.82rem; }
 footer a { color:var(--blue); }
 </style>

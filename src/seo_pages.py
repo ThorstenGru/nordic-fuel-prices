@@ -340,10 +340,8 @@ def assign_slugs(towns: List[Town], lang: str, near_word: str) -> None:
 # ── HTML ─────────────────────────────────────────────────────────────────────
 
 CSS = """
-:root { --bg:#F4F5F7; --surf:#FFFFFF; --border:#E6E8EB; --text:#16181D; --text2:#6B7280; --text3:#9AA1AC; --blue:#0F766E; --green:#16A34A; }
-@media (prefers-color-scheme: dark) { :root { --bg:#12151A; --surf:#1B1F26; --border:#2A2F38; --text:#ECEEF1; --text2:#A0A7B3; --text3:#7B8390; --blue:#4FD1C5; --green:#4ADE80; } }
 *, *::before, *::after { box-sizing:border-box; }
-body { margin:0 auto; max-width:760px; padding:0 16px 60px; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; font-size:16px; }
+body { margin:0 auto; max-width:760px; padding:0 16px 60px;  line-height:1.6; font-size:16px; }
 header { padding:20px 0 8px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .logo { font-size:1.1rem; font-weight:500; color:var(--text); text-decoration:none; }
 .back { font-size:.82rem; color:var(--blue); text-decoration:none; border:1px solid var(--border); border-radius:12px; padding:7px 14px; background:var(--surf); white-space:nowrap; }
@@ -395,13 +393,16 @@ def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, j
 <meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+<meta name="theme-color" content="#E9EEF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1A29" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="stylesheet" href="/theme.css">
 {ld}
 <style>{CSS}</style>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{{"token": "4266c1f5c19845839b3163f64446320f"}}'></script>
 </head>
 <body>
-<header><a class="logo" href="/">⛽ EuroFuelPrices</a><a class="back" href="/">{escape(x['map'])}</a></header>
+<header><a class="logo" href="/"><img src="/icon.svg" alt="" width="22" height="22" style="vertical-align:-4px"> EuroFuelPrices</a><a class="back" href="/">{escape(x['map'])}</a></header>
 {crumbs}
 <h1>{escape(h1)}</h1>
 {body}
@@ -425,7 +426,7 @@ def breadcrumb_ld(items: List[Tuple[str, str]]) -> Dict:
 
 
 def station_label(s: Dict) -> Tuple[str, str]:
-    name = (s.get("brand") or s.get("name") or "").strip() or "⛽"
+    name = (s.get("brand") or s.get("name") or "").strip() or "Station"
     street = (s.get("address") or "").strip()
     city = (s.get("city") or "").strip()
     if name.lower().startswith("station-service") and street:     # FR feed has no brand: "Station-service · Lyon"

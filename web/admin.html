@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#F4F5F7">
+<meta name="theme-color" content="#E9EEF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1A29" media="(prefers-color-scheme: dark)">
 <title>EuroFuelPrices — Data Health Dashboard</title>
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="Content-Security-Policy" content="
@@ -23,25 +24,10 @@
      placeholder below with the real one to activate. -->
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
+<link rel="stylesheet" href="theme.css">
 <style>
-:root {
-  --bg:    #F4F5F7;
-  --surf:  #FFFFFF;
-  --surf2: #F7F8FA;
-  --b:     #E6E8EB;
-  --text:  #16181D;
-  --t2:    #6B7280;
-  --t3:    #9AA1AC;
-  --blue:  #0F766E;
-  --green: #16A34A;
-  --amber: #F59E0B;
-  --red:   #EF4444;
-  --purple:#9333EA;
-  --coral: #E8542F;
-}
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 body {
-  font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px;
   font-size:14px;
 }
@@ -160,7 +146,7 @@ a:hover { text-decoration:underline; }
   margin-bottom:8px;
 }
 .analytics-card .tag {
-  display:inline-block; background:rgba(15,118,110,0.08); border:1px solid rgba(15,118,110,0.25);
+  display:inline-block; background:var(--acc-soft); border:1px solid var(--acc);
   color:var(--blue); font-size:0.65rem; font-weight:500; padding:2px 8px; border-radius:10px;
   margin-right:4px; margin-bottom:4px;
 }
@@ -209,7 +195,7 @@ a:hover { text-decoration:underline; }
 
 <header class="hd">
   <div class="hd-left">
-    <div class="hd-logo">⛽ <span>EuroFuelPrices</span></div>
+    <div class="hd-logo"><img src="icon.svg" alt="" width="22" height="22"> <span>EuroFuelPrices</span></div>
     <div class="hd-sub">Data Health Dashboard</div>
   </div>
   <div class="hd-right">
@@ -268,7 +254,7 @@ a:hover { text-decoration:underline; }
   </p>
   <div class="analytics-grid">
     <div class="analytics-card">
-      <h3>📊 GoatCounter <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free · Privacy-first</span></h3>
+      <h3>GoatCounter <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free · Privacy-first</span></h3>
       <p>Simple, open-source, GDPR-compliant. No cookies. Free for public sites. Shows page views, countries, referrers, device types. Takes 2 minutes to set up.</p>
       <div class="tag">No cookies</div><div class="tag">GDPR OK</div><div class="tag">Open source</div>
       <br><br>
@@ -282,7 +268,7 @@ window.goatcounter?.count({ path:'nearby-used', title:'Near Me tapped' });</code
     </div>
 
     <div class="analytics-card">
-      <h3>🌐 Plausible Analytics <span style="font-size:0.65rem;color:var(--amber);font-weight:500">€9/mo · Best UX</span></h3>
+      <h3>Plausible Analytics <span style="font-size:0.65rem;color:var(--amber);font-weight:500">€9/mo · Best UX</span></h3>
       <p>Best-in-class privacy-friendly analytics. Beautiful dashboard. Custom events for fuel types, Near Me, country filters. EU-hosted (Estonia). GDPR/CCPA compliant out of the box.</p>
       <div class="tag">EU-hosted</div><div class="tag">Custom events</div><div class="tag">Best dashboard</div>
       <br><br>
@@ -301,7 +287,7 @@ window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
     </div>
 
     <div class="analytics-card">
-      <h3>☁️ Cloudflare Web Analytics <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free forever</span></h3>
+      <h3>Cloudflare Web Analytics <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free forever</span></h3>
       <p>100% free, requires a Cloudflare account (free). Works without proxying the site. Cookie-less. Shows Core Web Vitals, pages, countries, referrers. No custom events on free plan.</p>
       <div class="tag">Free</div><div class="tag">Core Web Vitals</div><div class="tag">No config</div>
       <br><br>
@@ -320,37 +306,37 @@ window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
   <div style="background:var(--surf);border:1px solid var(--b);border-radius:16px;padding:20px;font-size:0.78rem;line-height:1.8;color:var(--t2)">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
       <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">🗺 Map interactions</strong>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Map interactions</strong>
         Zoom level when station is tapped<br>
         Country that was browsed most<br>
         Cluster vs individual pin clicks
       </div>
       <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">⛽ Fuel type preference</strong>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Fuel type preference</strong>
         Which fuel type filter is most used<br>
         E10 vs Diesel vs HVO split by country<br>
         "All fuels" vs specific type ratio
       </div>
       <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">📍 Near Me usage</strong>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Near Me usage</strong>
         How often Near Me is triggered<br>
         How many stations shown (radius)<br>
         Navigation button (Go) click rate
       </div>
       <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">🔍 Search behaviour</strong>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Search behaviour</strong>
         Top searched cities / addresses<br>
         Search-to-navigate conversion rate<br>
         Station name vs address search ratio
       </div>
       <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">📱 Device & platform</strong>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Device & platform</strong>
         Mobile vs desktop split<br>
         iOS vs Android (for navigation link)<br>
         PWA install rate (beforeinstallprompt)
       </div>
       <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">🌍 Geographic</strong>
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Geographic</strong>
         Top countries of origin<br>
         Most viewed country on map<br>
         Cross-border browsing patterns
@@ -441,7 +427,7 @@ async function load() {
     render(meta, health);
   } catch (e) {
     const err = document.getElementById('err-box');
-    err.textContent = `⚠ Could not load meta.json: ${e.message}. Are you viewing this from the deployed site?`;
+    err.textContent = `Could not load meta.json: ${e.message}. Are you viewing this from the deployed site?`;
     err.style.display = 'block';
     document.getElementById('last-run').textContent = 'Failed to load';
   } finally {
