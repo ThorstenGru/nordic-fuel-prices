@@ -11,7 +11,7 @@ State = the previous published `<cc>.json` (already fetched from Pages as the la
 
 ## 2. Sanity checks (`meta.countries[].checks`, mirrored to health.json)
 - `band_out`: count of P95/P98/DIESEL prices outside 1.0-3.5 EUR (report-only; `plausibility.py` still flags the wider 0.8-3.4 band; LPG/CNG/E85 exempt).
-- `e10_gt_e5`: `{n, pct}` share of stations with E10 > E5 x 1.005, only with >= 30 paired stations. ANWB-DE publishes `95`/`98` slots, not E5/E10, so this stays absent until Tankerkonig (MTS-K) is on.
+- `e10_gt_e5`: `{n, pct}` share of stations with E10 > E5 x 1.005, only with >= 30 paired stations. ANWB-DE publishes `95`/`98` slots, not E5/E10, so this stays absent until Tankerkoenig (MTS-K) is on (see TANKERKOENIG_SETUP.md; test mode covers too few stations to reach 30 pairs reliably).
 - `dup_n`: extra stations sharing lat/lon (4 decimals, about 11 m) and brand.
 - `stale48_n` / `stale48_pct`: stations with `ps` among priced stations.
 
