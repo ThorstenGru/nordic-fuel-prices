@@ -515,7 +515,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .ev-tbl.wide th:first-child, .ev-tbl.wide td:first-child { padding-left:0; }
 .op-bars { list-style:none; margin:8px 0 0; padding:0; }
 .op-bars li { margin:0; }
-.op-bars button { display:grid; grid-template-columns:3.6rem 1fr auto; gap:8px; align-items:center; width:100%; background:none; border:0; border-top:1px solid var(--line); padding:7px 0; min-height:40px; cursor:pointer; text-align:left; color:var(--sub); font:inherit; font-size:.76rem; }
+.op-bars button { display:grid; grid-template-columns:4.8rem 1fr auto; gap:8px; align-items:center; width:100%; background:none; border:0; border-top:1px solid var(--line); padding:7px 0; min-height:40px; cursor:pointer; text-align:left; color:var(--sub); font:inherit; font-size:.76rem; }
 .op-bars button[aria-pressed=true] { color:var(--ink); font-weight:700; }
 .op-bars button[aria-pressed=true] .op-m { text-decoration:underline; text-decoration-color:var(--acc); text-underline-offset:3px; }
 .op-bar { position:relative; height:12px; background:var(--surf); border-radius:3px; }
@@ -539,6 +539,32 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .ev-st .ev-n { color:var(--ink); font-weight:700; }
 .ev-note { font-size:.72rem; color:var(--sub); margin-top:8px; line-height:1.45; }
 .ev-warn { color:var(--warn-t); }
+/* My car clarity pass: intro, answer card, numbered steps, tap-to-open help */
+.mc-intro { font-size:.9rem; line-height:1.5; color:var(--ink); margin:2px 0 12px; }
+.mc-sum { border:1px solid var(--acc); background:var(--acc-soft); border-radius:var(--r-m); padding:14px; margin-bottom:12px; }
+.mc-sum.wait { border-color:var(--line); background:var(--surf2); }
+.mc-sum p { margin:0; font-size:.95rem; line-height:1.5; color:var(--ink); }
+.mc-sum p + p { margin-top:8px; }
+.mc-sum .mc-fine { font-size:.72rem; color:var(--sub); margin-top:10px; line-height:1.45; }
+.mc-btn { margin-top:12px; min-height:44px; padding:0 18px; border-radius:var(--r-s); background:var(--ink); color:var(--surf); border:0; font:inherit; font-size:.88rem; font-weight:700; cursor:pointer; }
+.mc-h { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.mc-n { width:26px; height:26px; border-radius:50%; background:var(--ink); color:var(--surf); display:inline-flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; flex:none; }
+.mc-st { margin-left:auto; font-size:.68rem; font-weight:700; color:var(--sub); }
+.mc-st.done { color:var(--ok-t); } .mc-st.todo { color:var(--warn-t); }
+.mc-step label, .mc-step .mc-lbl { text-transform:none; letter-spacing:0; font-size:.84rem; font-weight:700; color:var(--ink); margin:14px 0 4px; display:block; }
+.mc-step .tchips { margin-top:2px; }
+.mc-hint { font-size:.72rem; color:var(--sub); margin:4px 0 0; line-height:1.45; }
+.mc-step details.car-box { background:var(--surf); margin-top:14px; }
+.mc-q { background:none; border:0; padding:0; min-height:44px; font:inherit; font-size:.76rem; font-weight:700; color:var(--acc-t); text-decoration:underline; cursor:pointer; text-align:left; }
+.mc-a { font-size:.76rem; color:var(--sub); line-height:1.5; margin:0 0 6px; padding:8px 10px; border-left:3px solid var(--acc); background:var(--surf); border-radius:0 var(--r-s) var(--r-s) 0; }
+.mc-pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.mc-pair div { background:var(--surf); border:1px solid var(--line); border-radius:var(--r-s); padding:8px 10px; }
+.mc-pair b { display:block; font-family:var(--f-disp); font-size:1.15rem; color:var(--ink); font-variant-numeric:tabular-nums; }
+.mc-pair span { font-size:.68rem; color:var(--sub); }
+.mc-fold > summary { cursor:pointer; font-size:.95rem; font-weight:800; padding:14px 0; min-height:44px; font-family:var(--f-disp); color:var(--ink); }
+.mc-fold > summary small { display:block; font-family:var(--f-body); font-weight:500; font-size:.72rem; color:var(--sub); margin-top:2px; }
+.mc-def { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.72rem; color:var(--sub); margin-top:4px; }
+.mc-def .ev-link { min-height:44px; }
 .tank-row { display:flex; gap:6px; }
 .tank-row button, .lang-btn, .theme-btn { flex:1; min-width:56px; background:var(--surf2); border:1px solid var(--line); border-radius:var(--r-s); min-height:44px; padding:0 6px; font-size:.84rem; font-weight:700; color:var(--sub); cursor:pointer; }
 .tank-row button.on, .lang-btn.on, .theme-btn.on { background:var(--ink); border-color:var(--ink); color:var(--surf); }
@@ -819,74 +845,101 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
   <div class="panel-scroll" id="cmp-body"><p class="empty" data-i18n="loadingEllipsis">Loading…</p></div>
 </div>
 
-<!-- My car: vehicle profile + settings -->
+<!-- My car: answer card, four steps, advanced + app settings -->
 <div class="panel" id="p-car" role="region" data-i18n-aria="tabCar">
   <div class="drag-handle"></div>
   <div class="phead"><h2 data-i18n="tabCar">My car</h2></div>
   <div class="panel-scroll">
-    <section class="car-box" id="car-box">
+    <p class="mc-intro" data-i18n="mcIntro">Tell us about your car and what you pay for electricity. We then show whether charging or filling up is cheaper, and what a trip costs.</p>
+    <section class="mc-sum" id="mc-summary" aria-live="polite" data-i18n-aria="mcSumAria" aria-label="Summary"></section>
+
+    <section class="car-box mc-step" id="car-box" aria-labelledby="mc-h1">
+      <h3 class="mc-h" id="mc-h1"><span class="mc-n" aria-hidden="true">1</span><span data-i18n="mcS1">Your car</span><span class="mc-st" id="mc-st1"></span></h3>
+      <p class="ev-note" id="mc-s1i" data-i18n="mcS1i">Pick your model and we fill in the details. Or type your own.</p>
       <div id="veh" hidden>
-        <label for="veh-q" data-i18n="vehFind">Find your car</label>
-        <input id="veh-q" class="veh-q" type="search" autocomplete="off" data-i18n-ph="vehSearch" placeholder="Search make or model" oninput="vehBuild()">
-        <select id="veh-sel" aria-label="Vehicle" onchange="vehPick(this.value)"></select>
+        <label for="veh-q" data-i18n="vehFind">Pick your car model</label>
+        <input id="veh-q" class="veh-q" type="search" aria-describedby="mc-s1i" autocomplete="off" data-i18n-ph="vehSearch" placeholder="Type a make or model, e.g. Santa Fe" oninput="vehBuild()">
+        <select id="veh-sel" aria-describedby="veh-note" data-i18n-aria="vehFind" aria-label="Pick your car model" onchange="vehPick(this.value)"></select>
         <div class="veh-note" id="veh-note" aria-live="polite"></div>
       </div>
-      <label for="car-type" data-i18n="carType">Vehicle type</label>
-      <select id="car-type" onchange="carSet('type',this.value)"><option value="" data-i18n="carNone">Not set</option><option value="petrol" data-i18n="carPetrol">Petrol</option><option value="diesel" data-i18n="fuelOptDiesel">Diesel</option><option value="phev" data-i18n="carPhev">Plug-in hybrid</option></select>
-      <label for="car-tank" data-i18n="carTank">Fuel tank (litres)</label><input id="car-tank" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('tank',this.value)">
-      <label for="car-cons" data-i18n="carCons">Fuel consumption (L/100 km)</label><input id="car-cons" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('cons',this.value)">
-      <div id="car-phev" style="display:none">
-        <label for="car-batt" data-i18n="carBatt">Battery, usable (kWh)</label><input id="car-batt" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('batt',this.value)">
-        <label for="car-range" data-i18n="carRange">Electric range (km)</label><input id="car-range" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('range',this.value)">
-        <label for="car-elec"><span data-i18n="carElec">Home electricity price per kWh</span> (<span id="car-cur">€</span>)</label><input id="car-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
-        <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="90" onchange="carSet('eff',this.value)">
+      <label for="car-type" data-i18n="carType">What does your car run on?</label>
+      <select id="car-type" aria-describedby="h-type" onchange="carSet('type',this.value)"><option value="" data-i18n="carNone">Choose...</option><option value="petrol" data-i18n="carPetrol">Petrol</option><option value="diesel" data-i18n="fuelOptDiesel">Diesel</option><option value="phev" data-i18n="carPhev">Plug-in hybrid</option></select>
+      <p class="mc-hint" id="h-type" data-i18n="mcTypeH">Only plug-in hybrids can be compared with electricity.</p>
+      <label for="car-tank" data-i18n="carTank">Fuel tank size (litres)</label><input id="car-tank" aria-describedby="h-tank" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('tank',this.value)">
+      <p class="mc-hint" id="h-tank" data-i18n="mcTankH">Most cars: 40 to 60 litres. Or tap a quick pick:</p>
+      <div class="tank-row" id="tank-row" role="group" data-i18n-aria="carTank" aria-label="Fuel tank size">
+        <button type="button" data-l="20" onclick="tankPick(20)">20 L</button><button type="button" data-l="30" onclick="tankPick(30)">30 L</button><button type="button" data-l="40" onclick="tankPick(40)">40 L</button><button type="button" data-l="50" onclick="tankPick(50)">50 L</button><button type="button" data-l="70" onclick="tankPick(70)">70 L</button>
       </div>
-      <label for="car-cardpct" data-i18n="cardLbl">My card adds on foreign payments (%)</label><input id="car-cardpct" type="number" inputmode="decimal" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
-      <p class="cmp-note" style="margin:4px 0 0" data-i18n="cardHint">Added to euro amounts converted from another currency.</p><p class="cmp-note fx-src" style="margin:2px 0 0"></p>
-      <div class="car-card" id="car-card"></div>
+      <label for="car-cons" data-i18n="carCons">Petrol use (litres per 100 km)</label><input id="car-cons" aria-describedby="h-cons" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('cons',this.value)">
+      <p class="mc-hint" id="h-cons" data-i18n="mcConsH">Example: 7 means the car uses 7 litres of petrol to drive 100 km. For a plug-in hybrid, use the figure for when the battery is empty.</p>
+      <div id="car-phev" style="display:none">
+        <label for="car-batt" data-i18n="carBatt">Battery size (kWh)</label><input id="car-batt" aria-describedby="h-batt" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('batt',this.value)">
+        <p class="mc-hint" id="h-batt" data-i18n="mcBattH">kWh is a unit of energy, like litres for fuel. Plug-in hybrids have about 10 to 25 kWh.</p>
+        <div data-hq="kwh"></div>
+        <label for="car-range" data-i18n="carRange">Range on a full battery (km)</label><input id="car-range" aria-describedby="h-range" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('range',this.value)">
+        <p class="mc-hint" id="h-range" data-i18n="mcRangeH">The official figure. In daily driving you get less, and in winter much less; the results below take that into account.</p>
+        <div data-hq="range"></div>
+      </div>
     </section>
 
-    <section class="car-box ev-box" id="ev-card">
-      <h3 data-i18n="evTitle">Petrol or electricity?</h3>
-      <div id="ev-v" aria-live="polite"></div>
+    <section class="car-box mc-step" id="mc-s2" aria-labelledby="mc-h2" hidden>
+      <h3 class="mc-h" id="mc-h2"><span class="mc-n" aria-hidden="true">2</span><span data-i18n="mcS2">Your electricity price</span><span class="mc-st" id="mc-st2"></span></h3>
+      <p class="ev-note" data-i18n="mcS2i">This is the number that decides the result. Find it on your bill.</p>
+      <label for="car-elec"><span data-i18n="carElec">What you pay for electricity at home (per kWh, including VAT)</span> <span id="car-cur">€</span></label><input id="car-elec" aria-describedby="h-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
+      <p class="mc-hint" id="h-elec" data-i18n="mcElecH">Find it on your electricity bill. Sweden is roughly 1.50 to 3.50 kr per kWh including grid fees and tax. Not sure? Work it out below.</p>
+      <div data-hq="price"></div>
+      <span class="mc-lbl" id="ev-mode-l" data-i18n="evMode">Where do you charge?</span>
+      <div id="ev-in" role="group" aria-labelledby="ev-mode-l"></div>
+      <details class="car-box ev-box" id="tf-card" hidden>
+        <summary data-i18n="tfTitle">Work out my real electricity price (optional)</summary>
+        <div id="tf-form"></div><div id="tf-out" aria-live="polite"></div>
+      </details>
+    </section>
+
+    <section class="car-box ev-box mc-step" id="ev-card" aria-labelledby="mc-h3" hidden>
+      <h3 class="mc-h" id="mc-h3"><span class="mc-n" aria-hidden="true">3</span><span data-i18n="mcS3">Result: charging or filling up?</span><span class="mc-st" id="mc-st3"></span></h3>
+      <p class="ev-note" data-i18n="mcS3i">What 100 km costs on electricity and on petrol, and what a trip costs.</p>
+      <div id="ev-v"></div>
       <div id="ev-mix"></div>
-      <div id="ev-body"><div id="ev-in"></div><div id="ev-st"></div></div>
+      <div id="ev-body"><div id="ev-st"></div></div>
     </section>
 
-    <section class="car-box ev-box" id="op-card" hidden></section>
-    <details class="car-box ev-box" id="tf-card" hidden>
-      <summary data-i18n="tfTitle">My home electricity</summary>
-      <div id="tf-form"></div><div id="tf-out" aria-live="polite"></div>
+    <section class="car-box ev-box mc-step" id="op-card" aria-labelledby="mc-h4" hidden></section>
+
+    <details class="car-box ev-box mc-step mc-fold" id="mc-adv">
+      <summary><span data-i18n="mcAdv">Advanced settings</span><small id="mc-adv-sum"></small></summary>
+      <div id="ev-in2"></div>
+      <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" aria-describedby="h-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="87" onchange="carSet('eff',this.value)">
+      <p class="mc-hint" id="h-eff" data-i18n="mcEffH">Default: 90. Some electricity is lost as heat when charging, so 90 means 10 percent is lost.</p>
+      <div data-hq="loss"></div>
+      <label for="car-cardpct" data-i18n="cardLbl">Card currency fee (%)</label><input id="car-cardpct" aria-describedby="h-card" type="number" inputmode="decimal" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
+      <p class="mc-hint" id="h-card" data-i18n="cardHint">Only matters when you buy abroad. Check your bank; 0 to 3 percent is common. Stored on this device only.</p><p class="cmp-note fx-src" style="margin:2px 0 0"></p>
     </details>
 
-    <label class="lbl-s" data-i18n="tankLabel">Tank size</label>
-    <div class="tank-row" id="tank-row">
-      <button type="button" data-l="20" onclick="setTank(20)">20 L</button><button type="button" data-l="30" onclick="setTank(30)">30 L</button><button type="button" data-l="40" onclick="setTank(40)">40 L</button><button type="button" data-l="50" onclick="setTank(50)">50 L</button><button type="button" data-l="70" onclick="setTank(70)">70 L</button>
-    </div>
-    <label class="lbl-s" for="navPref" data-i18n="navPrefLabel">Navigation app</label>
-    <select id="navPref" class="nav-sel" onchange="setNavPref(this.value)"></select>
-
-    <label class="lbl-s" data-i18n="labelLanguage">Language</label>
-    <div class="lang-row">
-      <button class="lang-btn" type="button" data-lang="en" onclick="setLang('en')"><img class="flg" src="flags/gb.png" alt=""> EN</button>
-      <button class="lang-btn" type="button" data-lang="sv" onclick="setLang('sv')"><img class="flg" src="flags/se.png" alt=""> SV</button>
-      <button class="lang-btn" type="button" data-lang="de" onclick="setLang('de')"><img class="flg" src="flags/de.png" alt=""> DE</button>
-      <button class="lang-btn" type="button" data-lang="fr" onclick="setLang('fr')"><img class="flg" src="flags/fr.png" alt=""> FR</button>
-      <button class="lang-btn" type="button" data-lang="es" onclick="setLang('es')"><img class="flg" src="flags/es.png" alt=""> ES</button>
-    </div>
-    <label class="lbl-s" data-i18n="labelTheme">Appearance</label>
-    <div class="lang-row">
-      <button class="theme-btn" type="button" data-theme="auto" onclick="setTheme('auto')" data-i18n="themeAuto">Auto</button>
-      <button class="theme-btn" type="button" data-theme="light" onclick="setTheme('light')" data-i18n="themeLight">Light</button>
-      <button class="theme-btn" type="button" data-theme="dark" onclick="setTheme('dark')" data-i18n="themeDark">Dark</button>
-    </div>
-
-    <label class="lbl-s" data-i18n="curSwitch">Show prices in</label>
-    <div class="lang-row" role="group" data-i18n-aria="curSwitch" aria-label="Show prices in"><button class="theme-btn cur-btn" type="button" data-m="local" onclick="setCurMode('local')" data-i18n="curLocal">Local</button><button class="theme-btn cur-btn" type="button" data-m="eur" onclick="setCurMode('eur')">EUR</button></div>
-    <p class="cmp-note fx-src" style="margin-top:6px"></p>
-    <p class="cmp-note" style="margin-top:18px" data-i18n="startTip">Tip: the card at the bottom of the map shows the cheapest station in view.</p>
-    <button class="btn-acc install-row" id="install-row" type="button" onclick="installApp()" style="display:none"><svg class="ic"><use href="#i-down"/></svg><span data-i18n="installApp2">Add to Home Screen</span></button>
-    <button class="btn-line link trust-link" type="button" onclick="openTrust()"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="trustLinkLabel">How we grade sources</span></button>
+    <details class="car-box ev-box mc-step mc-fold" id="mc-app">
+      <summary><span data-i18n="mcApp">App settings</span><small data-i18n="mcAppS">Language, appearance, currency, navigation app</small></summary>
+      <label for="navPref" data-i18n="navPrefLabel">Navigation app</label>
+      <select id="navPref" class="nav-sel" onchange="setNavPref(this.value)"></select>
+      <span class="mc-lbl" data-i18n="labelLanguage">Language</span>
+      <div class="lang-row">
+        <button class="lang-btn" type="button" data-lang="en" onclick="setLang('en')"><img class="flg" src="flags/gb.png" alt=""> EN</button>
+        <button class="lang-btn" type="button" data-lang="sv" onclick="setLang('sv')"><img class="flg" src="flags/se.png" alt=""> SV</button>
+        <button class="lang-btn" type="button" data-lang="de" onclick="setLang('de')"><img class="flg" src="flags/de.png" alt=""> DE</button>
+        <button class="lang-btn" type="button" data-lang="fr" onclick="setLang('fr')"><img class="flg" src="flags/fr.png" alt=""> FR</button>
+        <button class="lang-btn" type="button" data-lang="es" onclick="setLang('es')"><img class="flg" src="flags/es.png" alt=""> ES</button>
+      </div>
+      <span class="mc-lbl" data-i18n="labelTheme">Appearance</span>
+      <div class="lang-row">
+        <button class="theme-btn" type="button" data-theme="auto" onclick="setTheme('auto')" data-i18n="themeAuto">Auto</button>
+        <button class="theme-btn" type="button" data-theme="light" onclick="setTheme('light')" data-i18n="themeLight">Light</button>
+        <button class="theme-btn" type="button" data-theme="dark" onclick="setTheme('dark')" data-i18n="themeDark">Dark</button>
+      </div>
+      <span class="mc-lbl" data-i18n="curSwitch">Show prices in</span>
+      <div class="lang-row" role="group" data-i18n-aria="curSwitch" aria-label="Show prices in"><button class="theme-btn cur-btn" type="button" data-m="local" onclick="setCurMode('local')" data-i18n="curLocal">Local</button><button class="theme-btn cur-btn" type="button" data-m="eur" onclick="setCurMode('eur')">EUR</button></div>
+      <p class="cmp-note fx-src" style="margin-top:6px"></p>
+      <button class="btn-acc install-row" id="install-row" type="button" onclick="installApp()" style="display:none"><svg class="ic"><use href="#i-down"/></svg><span data-i18n="installApp2">Add to Home Screen</span></button>
+      <button class="btn-line link trust-link" type="button" onclick="openTrust()"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="trustLinkLabel">How we grade sources</span></button>
+    </details>
     <div class="brand-card" style="margin-top:14px"><img src="logo.svg" alt="EuroFuelPrices" width="220" height="36"><p data-i18n="brandTag">Live fuel prices at every station across Europe.</p></div>
   </div>
 </div>
@@ -1490,11 +1543,11 @@ Object.assign(I18N.sv, {
   rtTemp:'Temperaturjustering: {t} °C ({s}). Elräckvidd, kWh och bensinförbrukning följer samma kurva som i Min bil.'
 });
 const TMP_PRIV = {
-  en:'Outside temperature comes from Open-Meteo (open-meteo.com, CC BY 4.0). The only data we send is your position, rounded to 0.1 degree (about 11 km); if your position is not shared, the centre of the map is used. Like any web request, it also shows your IP address and browser type to Open-Meteo, so the rounding does not hide where you are from them. Nothing is fetched until you tap Fetch the temperature; choose Manual and nothing is sent. The rounded position stays on this device until you tap Use current position. Results are kept on this device. Electricity prices come from our own data file, without your position.',
-  sv:'Utetemperaturen kommer från Open-Meteo (open-meteo.com, CC BY 4.0). Det enda vi skickar är din position avrundad till 0,1 grad (cirka 11 km); delas ingen position används kartans mitt. Som vid alla webbanrop ser Open-Meteo också din IP-adress och webbläsartyp, så avrundningen döljer inte var du är för dem. Inget hämtas förrän du trycker på Hämta temperaturen; välj Manuell så skickas ingenting. Den avrundade positionen sparas på enheten tills du trycker på Använd aktuell position. Resultaten sparas på den här enheten. Elpriserna kommer från vår egen datafil, utan din position.',
-  de:'Die Außentemperatur kommt von Open-Meteo (open-meteo.com, CC BY 4.0). Gesendet wird nur deine auf 0,1 Grad (etwa 11 km) gerundete Position (ohne geteilte Position der Kartenmittelpunkt); wie bei jeder Webanfrage sieht Open-Meteo außerdem deine IP-Adresse, die Rundung verbirgt also nicht, wo du bist. Abgerufen wird erst nach Tippen auf die Temperatur-Schaltfläche (Englisch: Fetch the temperature). Wähle Manuell, dann wird nichts gesendet. Die Ergebnisse bleiben auf diesem Gerät. Strompreise stammen aus unserer eigenen Datei, ohne deine Position.',
-  fr:'La température extérieure vient d’Open-Meteo (open-meteo.com, CC BY 4.0). Seule votre position, arrondie à 0,1 degré (environ 11 km), est envoyée (le centre de la carte si elle n’est pas partagée) ; comme pour toute requête web, Open-Meteo voit aussi votre adresse IP, l’arrondi ne masque donc pas où vous êtes. Rien n’est demandé avant d’appuyer sur le bouton de température (en anglais : Fetch the temperature). Choisissez Manuel et rien n’est envoyé. Les résultats restent sur cet appareil. Les prix de l’électricité viennent de notre propre fichier, sans votre position.',
-  es:'La temperatura exterior procede de Open-Meteo (open-meteo.com, CC BY 4.0). Solo se envía tu posición, redondeada a 0,1 grado (unos 11 km; el centro del mapa si no la compartes); como en cualquier petición web, Open-Meteo también ve tu dirección IP, así que el redondeo no oculta dónde estás. No se pide nada hasta pulsar el botón de temperatura (en inglés: Fetch the temperature). Elige Manual y no se envía nada. Los resultados se guardan en este dispositivo. Los precios de la electricidad vienen de nuestro propio archivo, sin tu posición.'
+  en:'Outside temperature comes from Open-Meteo (open-meteo.com, CC BY 4.0). The only data we send is your position, rounded to 0.1 degree (about 11 km); if your position is not shared, the centre of the map is used. Like any web request, it also shows your IP address and browser type to Open-Meteo, so the rounding does not hide where you are from them. Nothing is fetched until you tap Get today\'s weather; choose I type a temperature and nothing is sent. The rounded position stays on this device until you tap Use current position. Results are kept on this device. Electricity prices come from our own data file, without your position.',
+  sv:'Utetemperaturen kommer från Open-Meteo (open-meteo.com, CC BY 4.0). Det enda vi skickar är din position avrundad till 0,1 grad (cirka 11 km); delas ingen position används kartans mitt. Som vid alla webbanrop ser Open-Meteo också din IP-adress och webbläsartyp, så avrundningen döljer inte var du är för dem. Inget hämtas förrän du trycker på Hämta dagens väder; välj Jag skriver in själv så skickas ingenting. Den avrundade positionen sparas på enheten tills du trycker på Använd aktuell position. Resultaten sparas på den här enheten. Elpriserna kommer från vår egen datafil, utan din position.',
+  de:'Die Außentemperatur kommt von Open-Meteo (open-meteo.com, CC BY 4.0). Gesendet wird nur deine auf 0,1 Grad (etwa 11 km) gerundete Position (ohne geteilte Position der Kartenmittelpunkt); wie bei jeder Webanfrage sieht Open-Meteo außerdem deine IP-Adresse, die Rundung verbirgt also nicht, wo du bist. Abgerufen wird erst nach Tippen auf die Temperatur-Schaltfläche (Englisch: Get today\'s weather). Wähle „I type a temperature“, dann wird nichts gesendet. Die Ergebnisse bleiben auf diesem Gerät. Strompreise stammen aus unserer eigenen Datei, ohne deine Position.',
+  fr:'La température extérieure vient d’Open-Meteo (open-meteo.com, CC BY 4.0). Seule votre position, arrondie à 0,1 degré (environ 11 km), est envoyée (le centre de la carte si elle n’est pas partagée) ; comme pour toute requête web, Open-Meteo voit aussi votre adresse IP, l’arrondi ne masque donc pas où vous êtes. Rien n’est demandé avant d’appuyer sur le bouton de température (en anglais : Get today\'s weather). Choisissez « I type a temperature » et rien n’est envoyé. Les résultats restent sur cet appareil. Les prix de l’électricité viennent de notre propre fichier, sans votre position.',
+  es:'La temperatura exterior procede de Open-Meteo (open-meteo.com, CC BY 4.0). Solo se envía tu posición, redondeada a 0,1 grado (unos 11 km; el centro del mapa si no la compartes); como en cualquier petición web, Open-Meteo también ve tu dirección IP, así que el redondeo no oculta dónde estás. No se pide nada hasta pulsar el botón de temperatura (en inglés: Get today\'s weather). Elige «I type a temperature» y no se envía nada. Los resultados se guardan en este dispositivo. Los precios de la electricidad vienen de nuestro propio archivo, sin tu posición.'
 };
 for (const l of Object.keys(TMP_PRIV)) I18N[l].mxPriv = TMP_PRIV[l];
 
@@ -1509,12 +1562,162 @@ Object.assign(I18N.en, { noPriceRep:'No price reported', vehSet:'Set your car fo
   actReport:'Report', nbTitle:'Other options nearby', nbSame:'same price', facTitle:'Nearby facilities', facErr:'Could not load facilities: the map data service is slow or busy.', facRetry:'Try again', facNone:'Nothing found within 200 m.', fac_food:'Food & drink', fac_shops:'Shops', fac_toilets:'Toilets',
   fk_cafe:'Cafe', fk_restaurant:'Restaurant', fk_fast_food:'Fast food', fk_convenience:'Convenience store', fk_supermarket:'Supermarket', fk_kiosk:'Kiosk', fk_toilets:'Toilets',
   vehFind:'Find your car', vehSearch:'Search make or model', vehCustom:'Custom (enter values below)', vehNone:'No match - clear the search', vehPetrol:'Best sellers in Europe: Petrol (incl. hybrids)', vehDiesel:'Best sellers in Europe: Diesel', vehPhev:'Best sellers in Europe: Plug-in hybrid',
-  vehHyundai:'Hyundai (all models)', vehElec2:'Electric: support planned', vehExample:'Example values (typical WLTP figures) from {s}: please adjust to your car.', vehApprox:'Some figures are approximate.' });
+  vehHyundai:'Hyundai (all models)', vehElec2:'Electric only (cannot be compared)', vehExample:'Example values (typical WLTP figures) from {s}: please adjust to your car.', vehApprox:'Some figures are approximate.' });
 Object.assign(I18N.sv, { noPriceRep:'Inget pris rapporterat', vehSet:'Ange din bil för kostnadsuppskattning', vehNoPrice:'Inget pris för ditt bränsle på den här stationen.', vehFuel:'100 km på bränsle här: {v}', vehElec:'100 km på el: {v}', vehMore:'Ange förbrukning under Min bil för kostnadsuppskattning',
   actReport:'Rapportera', nbTitle:'Andra alternativ i närheten', nbSame:'samma pris', facTitle:'Faciliteter i närheten', facErr:'Det gick inte att hämta faciliteter: korttjänsten är långsam eller upptagen.', facRetry:'Försök igen', facNone:'Inget hittades inom 200 m.', fac_food:'Mat & dryck', fac_shops:'Butiker', fac_toilets:'Toaletter',
   fk_cafe:'Kafé', fk_restaurant:'Restaurang', fk_fast_food:'Snabbmat', fk_convenience:'Närbutik', fk_supermarket:'Stormarknad', fk_kiosk:'Kiosk', fk_toilets:'Toalett',
   vehFind:'Hitta din bil', vehSearch:'Sök märke eller modell', vehCustom:'Egen (ange värden nedan)', vehNone:'Ingen träff - rensa sökningen', vehPetrol:'Storsäljare i Europa: Bensin (inkl. hybrider)', vehDiesel:'Storsäljare i Europa: Diesel', vehPhev:'Storsäljare i Europa: Laddhybrid',
-  vehHyundai:'Hyundai (alla modeller)', vehElec2:'Elbil: stöd planeras', vehExample:'Exempelvärden (typiska WLTP-siffror) från {s}: justera efter din bil.', vehApprox:'Vissa uppgifter är ungefärliga.' });
+  vehHyundai:'Hyundai (alla modeller)', vehElec2:'Endast el (kan inte jämföras)', vehExample:'Exempelvärden (typiska WLTP-siffror) från {s}: justera efter din bil.', vehApprox:'Vissa uppgifter är ungefärliga.' });
+
+// My car clarity pass (EN + SV written in full; DE/FR/ES fall back to English for these keys). Loaded after every older block so these texts win.
+Object.assign(I18N.en, {
+  mcIntro:'Tell us about your car and what you pay for electricity. We then show whether charging or filling up is cheaper, and what a trip costs.', mcSumAria:'Summary',
+  mcS1:'Your car', mcS1i:'Pick your model and we fill in the details. If your car is not listed, type the values yourself.', mcS2:'Your electricity price', mcS2i:'This is the number that decides the result. Find it on your bill.',
+  mcS3:'Result: charging or filling up?', mcS3i:'What 100 km costs on electricity and on petrol, and what a trip costs.', mcS3wait:'Waiting for steps 1 and 2.',
+  mcS4i:'Plan your charging: the cheapest hours in the next days and a rough 12-month view.',
+  mcTypeH:'A plug-in hybrid runs on petrol and on a battery you charge from a socket. Only plug-in hybrids can be compared with electricity.', mcTankH:'Most cars: 40 to 60 litres. Or tap a quick pick:',
+  mcConsH:'Example: 7 means the car uses 7 litres of petrol to drive 100 km. For a plug-in hybrid, use the figure for when the battery is empty.',
+  mcBattH:'kWh is a unit of energy, like litres for fuel. Plug-in hybrids have about 10 to 25 kWh.', mcRangeH:'The official figure. In daily driving you get less, and in winter much less; the results below take that into account.',
+  mcElecH:'Find it on your electricity bill. Sweden is roughly 1.50 to 3.50 SEK per kWh including grid fees and tax. Not sure? Work it out below.',
+  mcEffH:'Default: 87. Some electricity is lost as heat when charging, so 87 means about 13 percent is lost.',
+  vehFind:'Pick your car model', vehSearch:'Type a make or model, e.g. Santa Fe', vehCustom:'My car is not listed',
+  vehExample:'We filled in the fields below with the manufacturer\'s official figures. Check them against your car\'s papers; official figures are usually a bit better than real life.', vehSrc:'Source: {s}.',
+  carType:'What does your car run on?', carNone:'Choose...', carPhev:'Plug-in hybrid (rechargeable)', carTank:'Fuel tank size (litres)', carCons:'Petrol use (litres per 100 km)',
+  carBatt:'Battery size (kWh)', carRange:'Range on a full battery (km)', carElec:'Your electricity price at home, per kWh including VAT, in', carEff:'Charging efficiency (%)',
+  cardLbl:'Card currency fee (%)', cardHint:'Only matters when you buy abroad. Check your bank; 0 to 3 percent is common. Stored on this device only.', curLocal:'Local currency',
+  mcMissBatt:'battery size', mcMissRange:'range on a full battery', mcMissCons:'petrol use', mcMissElec:'your electricity price (step 2)', mcMissPub:'a public charging price', mcMissFc:'forecast prices', mcMissPet:'petrol prices near you',
+  evMode:'Where do you charge?', evHome:'At home', evPub:'At a public charger', evFc:'Home, forecast price', evFcMonth:'Which month?', evPricePub:'Price at the public charger (per kWh, {c})', evDist:'Trip length for the comparison (km)',
+  mcDefKm:'Default: 100 km', mcDefDkm:'Default: 40 km', mcReset:'Reset', mcHomeUse:'Using your home price from step 2: {p} per kWh.', mcHomeNone:'Enter what you pay at home in the field above to see the result.',
+  evAssume:'We assume {p} per kWh, a typical public fast-charging price in Sweden ({d}). Change it to your own price.', evOld:'This reference is over 90 days old.', evNoRef:'We have no typical price for {c}. Enter your own.',
+  evFcNote:'Forecast for {m}: {p} per kWh including VAT. An estimate based on past years.', evNeeds:'To see the result, add: {x}.',
+  mcVerE:'Charging is cheaper. Over 100 km you save about {s}.', mcVerP:'Filling up is cheaper right now. Over 100 km petrol saves you about {s}.', mcVerS:'Charging and filling up cost about the same.',
+  mcPer100:'per 100 km', evElec:'Electricity', evPet:'Petrol', evAtT:'These figures are for {t} °C outside.',
+  mcTripLine:'A {k} km trip costs about {e} in your car (battery first, then petrol), against {p} on petrol only.', evTripMix:'The battery lasts about {k} km of the trip; the rest runs on petrol.',
+  evBreak:'Charging stays cheaper as long as you pay less than {v} per kWh.', mcYouPay:'You pay {u} per kWh.',
+  evStTitle:'Petrol price we compared with', evAvg:'Average of the 5 closest stations: {p} per litre', evStFrom:'Measured from {w}. Move the map, or tap Use my location on the map, to change this.',
+  evMyPos:'your position', evMapC:'where the map is centred', evSetAside:'{n} closer station(s) were skipped because their prices could not be verified.',
+  evNoSt:'No petrol prices nearby in {c}. Move the map or use your position.', evFew:'Only {n} station(s) with a price were found nearby.', evOwnNote:'An estimate from the figures you entered and nearby petrol prices.',
+  mxTitle:'Weather: cold makes electric driving shorter', mxIntro:'In cold weather the battery lasts fewer km, so more of a trip runs on petrol.', mxTemp:'Which temperature should we use?', mxAuto:'Weather near me', mxManual:'I type a temperature',
+  mxTempIn:'Temperature (°C)', mxT:'Using {t} °C ({s}).', mxSrc_forecast:'today\'s forecast at your position', mxSrc_normal:'typical for this month at your position', mxSrc_manual:'typed by you', mxSrc_none:'unknown',
+  mxNone:'No weather yet, so the figures assume mild weather (about 20 degrees).', mxNoneM:'Type a temperature, otherwise the figures assume mild weather (about 20 degrees).',
+  mxPos:'Position used: {p} (rounded to 0.1 degree).', mxPosUpd:'Use my current position', mxPrivShort:'To get the weather we send your position, rounded to 0.1 degree, to the weather service Open-Meteo. Nothing is sent until you tap the button.', mxAllow:'Get today\'s weather',
+  mxTripH:'What does a trip cost?', mxTripI:'Short trips run mostly on the battery. On longer trips the petrol engine covers the rest.', mxTrip:'Trip', mxEl:'On battery', mxPet:'Petrol used', mxCostT:'Cost', mxCost100:'Cost of 100 km',
+  mxBand:'For 100 km the likely cost is {lo} to {hi}.', mxDaily:'How far do you drive on a normal day (km)?',
+  mxDay:'At {d} km a day the battery covers about {s} percent of your driving at {t} °C, and fuel and electricity together cost about {m} per month.',
+  mxDay0:'At {d} km a day the battery covers about {s} percent of your driving, and fuel and electricity together cost about {m} per month.',
+  mxNeed:'To see trip costs, add: {x}.', mxHow:'How this is calculated (technical)',
+  hq_kwh:'What is a kWh?', ha_kwh:'A kWh (kilowatt-hour) is the unit electricity is sold in, like a litre of petrol. Example: a Santa Fe battery holds about 14 kWh. At 2.50 SEK per kWh a full charge costs about 35 SEK.',
+  hq_range:'What is the range, and what is WLTP?', ha_range:'The range is how far the car drives on a full battery before the petrol engine helps. WLTP is the official test behind the figure; real life is usually a bit worse. Example: Santa Fe plug-in hybrid, 54 km officially, about 41 km in everyday use.',
+  hq_price:'Where do I find my electricity price?', ha_price:'On your electricity bill, or from your electricity company. Use the total per kWh including grid fee, tax and VAT. If you only know the price of the electricity itself, open "Work out my real electricity price" below. Example: 2.50 SEK per kWh.',
+  hq_loss:'What is charging efficiency?', ha_loss:'Some electricity is lost as heat when charging. If you buy 10 kWh from the wall, about 8.7 kWh reach the battery at the default of 87 percent.',
+  hq_break:'What is the break-even price?', ha_break:'It is the electricity price at which charging and filling up cost the same per km. Below it, charging is cheaper. Example: a Santa Fe with petrol at about 16 SEK per litre breaks even at about 5.4 SEK per kWh.',
+  hq_weather:'What data is sent?', hq_spot:'What is the exchange price (spot price)?', ha_spot:'The spot price is the hourly price on the power exchange, before grid fee, tax and VAT. The prices shown here add the grid fee, tax and VAT from your tariff (the example tariff until you change it in step 2), so they can be higher than the price you entered.',
+  hq_area:'What is a price area?', ha_area:'Sweden has four electricity price areas, SE1 (north) to SE4 (south). Your electricity bill shows yours.', hq_95:'What is petrol 95?', ha_95:'Normal petrol with 95 octane, the most common grade. The comparison uses the price of this grade.',
+  hq_cold:'How cold weather changes the cost', hq_whatif:'What if the electricity price changes?', hq_formula:'Show the formula',
+  tfTitle:'Work out my real electricity price (optional)', tfIntro:'Not sure what you pay per kWh? Fill in the amounts from your electricity bill and we calculate it. The boxes hold an example; change what differs. Saved on this device only.',
+  tfArea:'Your price area (SE1 to SE4)', tfFieldsNote:'Amounts are per kWh and excluding VAT unless stated.', tfVar:'Extra cost per kWh from your electricity company', tfMarkup:'Electricity company markup per kWh', tfDisc:'Your discount per kWh',
+  tfRetFee:'Electricity company monthly fee (when not waived)', tfDiscUntil:'Discount valid until', tfFeeUntil:'Monthly fee waived until', tfTransfer:'Grid fee per kWh (electricity transfer)', tfTax:'Energy tax per kWh', tfGrid:'Grid subscription per month',
+  tfVat:'VAT (%)', tfKwh:'Electricity used per month (kWh)', tfReset:'Reset to example', tfHead:'Your next kWh costs about {v} including VAT right now.', tfAll2:'Averaged over a month with all fixed fees (at {k} kWh a month) you pay about {a} per kWh.',
+  tfUse:'Use {v} as my price', tfMarg:'Based on a spot price of {s} excluding VAT ({w}).', tfEx:'These boxes still hold the example tariff, so this price is an example too.', tfSpotNext:'the average of the days published', tfSpotMonth:'the average of {m}',
+  opTitle:'When is electricity cheap?', opNone:'No price data yet. This section fills in when the electricity price file is published.', opNoArea:'The price data has nothing for area {a}. Pick another area in step 2.',
+  opDays:'The next days', opDaysI:'Prices for the next days come from the power exchange. Charging in the cheapest hours saves money.', opWin:'cheapest time to charge is {a} to {b}, about {p} per kWh. A full charge (about {k} kWh) then costs about {c}.',
+  opMonths:'Roughly what electricity may cost over the next 12 months', opEst:'An estimate from the same month in up to {n} past years, run through your tariff. It is not a promise. The line marks the average; the framed part is the usual range.',
+  opSel:'{a} per kWh including VAT (usually {l} to {h}).', opSpot:'If the exchange price is', opPerKwh:'You pay per kWh', opPer100:'100 km costs',
+  opBreak:'With petrol at {p} per litre, driving on the battery is cheaper than petrol as long as the exchange price stays below {s} per kWh.', opSrc:'Exchange prices from {s}, area {a}, updated {d}.',
+  mcYour:'your {m}', mcYourCar:'your car',
+  mcSum_nocar:'Start by picking your car. It takes about a minute, and then we can tell you whether charging or filling up is cheaper.', mcBtn_car:'Pick my car',
+  mcSum_needcar:'Your car is almost set. Still missing: {x}.', mcBtn_fill:'Fill in what is missing', mcSum_needelec:'Your car is set. One thing is missing: what you pay for electricity at home.', mcBtn_elec:'Enter electricity price',
+  mcSum_needpet:'We cannot see any petrol prices near you yet, so we cannot compare. Move the map to a place with stations, or tap Use my location on the map.',
+  mcSum_notphev:'Electricity can only be compared for plug-in hybrids. Choose plug-in hybrid under "What does your car run on?" if that is your car.', mcSum_petrolOnly:'Your petrol car costs about {p} per 100 km at nearby prices.',
+  mcSum_e:'Right now, driving {car} on electricity costs about {e} per 100 km. On petrol it costs about {p}. Charging is cheaper as long as you pay less than {b} per kWh.',
+  mcSum_p:'Right now, petrol is cheaper: about {p} per 100 km against {e} on electricity. Electricity would win below {b} per kWh.',
+  mcSum_s:'Right now, electricity and petrol cost about the same for {car}: about {e} per 100 km. Charging is cheaper below {b} per kWh.',
+  mcSum_cold:'These figures are for {t} °C outside: in the cold the battery covers fewer km.', mcSum_trust:'Based on petrol prices at the 5 closest stations and the charging price used in this answer.',
+  mcProg:'Step {n} of 4: {x}', mcProgX1:'pick your car', mcProgX2:'enter your electricity price', mcProgX3:'get petrol prices near you',
+  mcSt_done:'Done', mcSt_todo:'Needs input', mcSt_wait:'Waiting', mcSt_ready:'Ready', mcAdv:'Advanced settings', mcAdvStd:'Everything is standard', mcAdvChg:'You changed: {x}', mcNmKm:'trip length', mcNmEff:'charging efficiency', mcNmCard:'card fee',
+  mcApp:'App settings', mcAppS:'Language, appearance, currency, navigation app',
+  mcBev:'{m} runs only on electricity or hydrogen, so there is no petrol to compare with. This tab is for plug-in hybrids.', mcSt_assumed:'Assumed',
+  mcPayPub:'You pay {u} per kWh at the public charger.', mcPayAssume:'We assume {u} per kWh (typical public fast charging). Enter your own price in step 2 for a precise answer.', mcPayFc:'Forecast price: {u} per kWh.',
+  opWhy:'These prices are the exchange price of each hour plus grid fee, tax and VAT from the tariff in step 2, so they can differ a lot from the single price you typed in.',
+  opYouLess:'Your own price is {u} per kWh. The cheapest hours above are about {d} per kWh less than that.', opYouMore:'Your own price is {u} per kWh. The cheapest hours above are about {d} per kWh more than that.',
+  opAbove:'Even in the cheapest hours charging costs more than the break-even price of {b} per kWh, so petrol is cheaper in these hours.',
+  opEstWhy:'Calculated from the exchange price and the tariff in step 2, so the figures can differ from the price you typed in.'
+});
+Object.assign(I18N.sv, {
+  mcIntro:'Berätta om din bil och vad du betalar för el. Då visar vi om det är billigast att ladda eller tanka, och vad en resa kostar.', mcSumAria:'Sammanfattning',
+  mcS1:'Din bil', mcS1i:'Välj din modell så fyller vi i detaljerna. Finns din bil inte med fyller du i värdena själv.', mcS2:'Ditt elpris', mcS2i:'Det här är siffran som avgör resultatet. Du hittar den på elfakturan.',
+  mcS3:'Resultat: ladda eller tanka?', mcS3i:'Vad 100 km kostar på el och på bensin, och vad en resa kostar.', mcS3wait:'Väntar på steg 1 och 2.',
+  mcS4i:'Planera laddningen: billigaste timmarna de närmaste dagarna och en grov bild av de kommande 12 månaderna.',
+  mcTypeH:'En laddhybrid går på bensin och på ett batteri du laddar i ett vägguttag. Bara laddhybrider kan jämföras med el.', mcTankH:'De flesta bilar: 40 till 60 liter. Eller tryck på ett snabbval:',
+  mcConsH:'Exempel: 7 betyder att bilen drar 7 liter bensin på 100 km. För en laddhybrid: ange värdet när batteriet är slut.',
+  mcBattH:'kWh är energi, ungefär som liter för bensin. Laddhybrider har ca 10 till 25 kWh.', mcRangeH:'Det officiella värdet. I vardagen får du mindre, och på vintern mycket mindre; resultaten nedan räknar med det.',
+  mcElecH:'Hittar du på elfakturan. I Sverige ligger det ofta på 1,50 till 3,50 kr per kWh inklusive nätavgift och skatt. Osäker? Räkna ut det längre ner.',
+  mcEffH:'Standard: 87. En del av elen blir värme vid laddning, så 87 betyder att ungefär 13 procent går förlorat.',
+  vehFind:'Välj din bil', vehSearch:'Skriv märke eller modell, t.ex. Santa Fe', vehCustom:'Min bil finns inte med',
+  vehExample:'Vi har fyllt i fälten nedan med tillverkarens officiella siffror. Jämför med bilens handlingar; de officiella siffrorna är oftast lite bättre än verkligheten.', vehSrc:'Källa: {s}.',
+  carType:'Vad drivs din bil med?', carNone:'Välj...', carPhev:'Laddhybrid (kan laddas)', carTank:'Tankens storlek (liter)', carCons:'Bensinförbrukning (liter per 100 km)',
+  carBatt:'Batteriets storlek (kWh)', carRange:'Räckvidd på fullt batteri (km)', carElec:'Ditt elpris hemma, per kWh inklusive moms, i', carEff:'Laddverkningsgrad (%)',
+  cardLbl:'Kortets valutapåslag (%)', cardHint:'Spelar bara roll när du handlar utomlands. Fråga din bank; 0 till 3 procent är vanligt. Sparas bara på den här enheten.', curLocal:'Landets valuta',
+  mcMissBatt:'batteriets storlek', mcMissRange:'räckvidd på fullt batteri', mcMissCons:'bensinförbrukning', mcMissElec:'ditt elpris (steg 2)', mcMissPub:'ett pris för publik laddning', mcMissFc:'prognospriser', mcMissPet:'bensinpriser nära dig',
+  evMode:'Var laddar du?', evHome:'Hemma', evPub:'Vid publik laddare', evFc:'Hemma, prognospris', evFcMonth:'Vilken månad?', evPricePub:'Pris vid publik laddare (per kWh, {c})', evDist:'Reslängd för jämförelsen (km)',
+  mcDefKm:'Standard: 100 km', mcDefDkm:'Standard: 40 km', mcReset:'Återställ', mcHomeUse:'Använder ditt elpris hemma från steg 2: {p} per kWh.', mcHomeNone:'Ange vad du betalar hemma i fältet ovan för att se resultatet.',
+  evAssume:'Vi antar {p} per kWh, ett typiskt pris för publik snabbladdning i Sverige ({d}). Byt till ditt eget pris.', evOld:'Referensen är över 90 dagar gammal.', evNoRef:'Vi har inget typiskt pris för {c}. Ange ditt eget.',
+  evFcNote:'Prognos för {m}: {p} per kWh inklusive moms. En uppskattning utifrån tidigare år.', evNeeds:'För att se resultatet, fyll i: {x}.',
+  mcVerE:'Det är billigare att ladda. På 100 km sparar du ca {s}.', mcVerP:'Just nu är det billigare att tanka. På 100 km sparar du ca {s} med bensin.', mcVerS:'Det kostar ungefär lika mycket att ladda som att tanka.',
+  mcPer100:'per 100 km', evElec:'El', evPet:'Bensin', evAtT:'Siffrorna gäller vid {t} °C ute.',
+  mcTripLine:'En resa på {k} km kostar ca {e} med din bil (batteri först, sedan bensin), mot {p} med enbart bensin.', evTripMix:'Batteriet räcker ungefär {k} km av resan; resten går på bensin.',
+  evBreak:'Det är billigare att ladda så länge du betalar under {v} per kWh.', mcYouPay:'Du betalar {u} per kWh.',
+  evStTitle:'Bensinpriset vi jämförde med', evAvg:'Snitt för de 5 närmaste stationerna: {p} per liter', evStFrom:'Mätt från {w}. Flytta kartan, eller tryck på Använd min plats på kartan, för att ändra.',
+  evMyPos:'din position', evMapC:'kartans mitt', evSetAside:'{n} närmare station(er) hoppades över eftersom priserna inte kunde bekräftas.',
+  evNoSt:'Inga bensinpriser i närheten i {c}. Flytta kartan eller använd din position.', evFew:'Bara {n} station(er) med pris hittades i närheten.', evOwnNote:'En uppskattning utifrån dina uppgifter och bensinpriser i närheten.',
+  mxTitle:'Väder: kyla gör att elen räcker kortare', mxIntro:'När det är kallt räcker batteriet färre km, så mer av resan går på bensin.', mxTemp:'Vilken temperatur ska vi använda?', mxAuto:'Väder där jag är', mxManual:'Jag skriver in själv',
+  mxTempIn:'Temperatur (°C)', mxT:'Använder {t} °C ({s}).', mxSrc_forecast:'dagens prognos där du är', mxSrc_normal:'normalt för månaden där du är', mxSrc_manual:'skriven av dig', mxSrc_none:'okänd',
+  mxNone:'Inget väder än, så siffrorna räknar med milt väder (ca 20 grader).', mxNoneM:'Skriv in en temperatur, annars räknar siffrorna med milt väder (ca 20 grader).',
+  mxPos:'Position som används: {p} (avrundad till 0,1 grad).', mxPosUpd:'Använd min nuvarande position', mxPrivShort:'För att hämta vädret skickar vi din position, avrundad till 0,1 grad, till vädertjänsten Open-Meteo. Inget skickas förrän du trycker på knappen.', mxAllow:'Hämta dagens väder',
+  mxTripH:'Vad kostar en resa?', mxTripI:'Korta resor går mest på batteriet. På längre resor tar bensinmotorn över resten.', mxTrip:'Resa', mxEl:'På batteri', mxPet:'Bensin', mxCostT:'Kostnad', mxCost100:'Kostnad för 100 km',
+  mxBand:'För 100 km är den troliga kostnaden {lo} till {hi}.', mxDaily:'Hur långt kör du en vanlig dag (km)?',
+  mxDay:'Vid {d} km om dagen räcker batteriet till ca {s} procent av din körning vid {t} °C, och bränsle och el kostar tillsammans ca {m} per månad.',
+  mxDay0:'Vid {d} km om dagen räcker batteriet till ca {s} procent av din körning, och bränsle och el kostar tillsammans ca {m} per månad.',
+  mxNeed:'För att se reskostnaderna, fyll i: {x}.', mxHow:'Så räknas det (tekniskt)',
+  hq_kwh:'Vad är en kWh?', ha_kwh:'En kWh (kilowattimme) är enheten som el säljs i, ungefär som en liter bensin. Exempel: batteriet i en Santa Fe rymmer ca 14 kWh. Med 2,50 kr per kWh kostar en full laddning ca 35 kr.',
+  hq_range:'Vad är räckvidd och vad är WLTP?', ha_range:'Räckvidden är hur långt bilen kör på fullt batteri innan bensinmotorn hjälper till. WLTP är det officiella testet bakom siffran; i verkligheten blir det oftast lite sämre. Exempel: Santa Fe laddhybrid, 54 km officiellt, ca 41 km i vardagen.',
+  hq_price:'Var hittar jag mitt elpris?', ha_price:'På elfakturan, eller hos ditt elbolag. Ange totalen per kWh inklusive nätavgift, skatt och moms. Känner du bara priset på själva elen, öppna "Räkna ut mitt verkliga elpris" längre ner. Exempel: 2,50 kr per kWh.',
+  hq_loss:'Vad är laddverkningsgrad?', ha_loss:'En del av elen blir värme vid laddning. Köper du 10 kWh från vägguttaget når ca 8,7 kWh batteriet vid standardvärdet 87 procent.',
+  hq_break:'Vad betyder break-even-priset?', ha_break:'Det är elpriset där det kostar lika mycket att ladda som att tanka per km. Under det är det billigare att ladda. Exempel: en Santa Fe med bensin för ca 16 kr per liter går jämnt upp vid ca 5,4 kr per kWh.',
+  hq_weather:'Vilka uppgifter skickas?', hq_spot:'Vad är spotpris (börspris)?', ha_spot:'Spotpriset är timpriset på elbörsen, före nätavgift, skatt och moms. Priserna här lägger på nätavgift, skatt och moms från ditt elavtal (exempelavtalet tills du ändrar det i steg 2), så de kan vara högre än priset du angav.',
+  hq_area:'Vad är ett elområde?', ha_area:'Sverige har fyra elområden, SE1 (norr) till SE4 (söder). Din elfaktura visar vilket du har.', hq_95:'Vad är bensin 95?', ha_95:'Vanlig bensin med 95 oktan, den vanligaste sorten. Jämförelsen använder priset på den sorten.',
+  hq_cold:'Så påverkar kyla kostnaden', hq_whatif:'Vad händer om elpriset ändras?', hq_formula:'Visa formeln',
+  tfTitle:'Räkna ut mitt verkliga elpris (valfritt)', tfIntro:'Osäker på vad du betalar per kWh? Fyll i beloppen från elfakturan så räknar vi ut det. Rutorna innehåller ett exempel; ändra det som skiljer sig. Sparas bara på den här enheten.',
+  tfArea:'Ditt elområde (SE1 till SE4)', tfFieldsNote:'Belopp är per kWh och exklusive moms om inget annat anges.', tfVar:'Rörlig kostnad per kWh hos elhandlaren', tfMarkup:'Elhandlarens påslag per kWh', tfDisc:'Din rabatt per kWh',
+  tfRetFee:'Elhandlarens månadsavgift (när den inte är efterskänkt)', tfDiscUntil:'Rabatten gäller till', tfFeeUntil:'Månadsavgiften efterskänkt till', tfTransfer:'Nätavgift per kWh (elöverföring)', tfTax:'Energiskatt per kWh', tfGrid:'Elnätsabonnemang per månad',
+  tfVat:'Moms (%)', tfKwh:'Förbrukning per månad (kWh)', tfReset:'Återställ till exemplet', tfHead:'Din nästa kWh kostar just nu ca {v} inklusive moms.', tfAll2:'Som månadssnitt med alla fasta avgifter (vid {k} kWh i månaden) betalar du ca {a} per kWh.',
+  tfUse:'Använd {v} som mitt pris', tfMarg:'Baserat på ett spotpris på {s} exklusive moms ({w}).', tfEx:'Rutorna innehåller fortfarande exempelavtalet, så det här priset är också ett exempel.', tfSpotNext:'snittet av de publicerade dagarna', tfSpotMonth:'snittet för {m}',
+  opTitle:'När är elen billig?', opNone:'Inga prisdata ännu. Den här delen fylls i när filen med elpriser publiceras.', opNoArea:'Prisdatan saknar elområde {a}. Välj ett annat område i steg 2.',
+  opDays:'De närmaste dagarna', opDaysI:'Priserna för de närmaste dagarna kommer från elbörsen. Att ladda när det är billigast sparar pengar.', opWin:'billigast att ladda är kl. {a} till {b}, ca {p} per kWh. En full laddning (ca {k} kWh) kostar då ca {c}.',
+  opMonths:'Ungefär vad elen kan kosta de kommande 12 månaderna', opEst:'En uppskattning från samma månad under upp till {n} tidigare år, räknad genom ditt elavtal. Inget löfte. Strecket visar snittet; den inramade delen är det vanliga spannet.',
+  opSel:'{a} per kWh inklusive moms (vanligtvis {l} till {h}).', opSpot:'Om börspriset är', opPerKwh:'Du betalar per kWh', opPer100:'100 km kostar',
+  opBreak:'Med bensin för {p} per liter är det billigare att köra på batteriet än på bensin så länge börspriset ligger under {s} per kWh.', opSrc:'Börspriser från {s}, område {a}, uppdaterad {d}.',
+  mcYour:'din {m}', mcYourCar:'din bil',
+  mcSum_nocar:'Börja med att välja din bil. Det tar ungefär en minut, sedan kan vi säga om det är billigare att ladda eller tanka.', mcBtn_car:'Välj min bil',
+  mcSum_needcar:'Din bil är nästan klar. Det som saknas: {x}.', mcBtn_fill:'Fyll i det som saknas', mcSum_needelec:'Din bil är angiven. En sak saknas: vad du betalar för el hemma.', mcBtn_elec:'Ange elpris',
+  mcSum_needpet:'Vi hittar inga bensinpriser nära dig än, så vi kan inte jämföra. Flytta kartan till ett ställe med stationer, eller tryck på Använd min plats på kartan.',
+  mcSum_notphev:'El kan bara jämföras för laddhybrider. Välj laddhybrid under "Vad drivs din bil med?" om det är din bil.', mcSum_petrolOnly:'Din bensinbil kostar ca {p} per 100 km med priserna i närheten.',
+  mcSum_e:'Just nu kostar det ca {e} per 100 km att köra {car} på el. På bensin kostar det ca {p}. Det är billigare att ladda så länge du betalar under {b} per kWh.',
+  mcSum_p:'Just nu är bensin billigare: ca {p} per 100 km mot {e} på el. El vinner under {b} per kWh.',
+  mcSum_s:'Just nu kostar el och bensin ungefär lika mycket för {car}: ca {e} per 100 km. Det är billigare att ladda under {b} per kWh.',
+  mcSum_cold:'Siffrorna gäller vid {t} °C ute: när det är kallt räcker batteriet färre km.', mcSum_trust:'Baserat på bensinpriser vid de 5 närmaste stationerna och det laddpris som används i svaret.',
+  mcProg:'Steg {n} av 4: {x}', mcProgX1:'välj din bil', mcProgX2:'ange ditt elpris', mcProgX3:'hämta bensinpriser nära dig',
+  mcSt_done:'Klart', mcSt_todo:'Behöver uppgift', mcSt_wait:'Väntar', mcSt_ready:'Klart', mcAdv:'Avancerade inställningar', mcAdvStd:'Allt är standard', mcAdvChg:'Du har ändrat: {x}', mcNmKm:'reslängd', mcNmEff:'laddverkningsgrad', mcNmCard:'kortavgift',
+  mcApp:'Appinställningar', mcAppS:'Språk, utseende, valuta, navigeringsapp',
+  mcBev:'{m} går bara på el eller vätgas, så det finns ingen bensin att jämföra med. Den här fliken är till för laddhybrider.', mcSt_assumed:'Antaget',
+  mcPayPub:'Du betalar {u} per kWh vid den publika laddaren.', mcPayAssume:'Vi utgår från {u} per kWh (typiskt pris för publik snabbladdning). Ange ditt eget pris i steg 2 för ett exakt svar.', mcPayFc:'Prognospris: {u} per kWh.',
+  opWhy:'Priserna är börspriset för varje timme plus elnätsavgift, skatt och moms enligt tariffen i steg 2, så de kan skilja sig mycket från det enda pris du angav.',
+  opYouLess:'Ditt eget pris är {u} per kWh. De billigaste timmarna ovan är ungefär {d} per kWh billigare än så.', opYouMore:'Ditt eget pris är {u} per kWh. De billigaste timmarna ovan är ungefär {d} per kWh dyrare än så.',
+  opAbove:'Även under de billigaste timmarna kostar laddning mer än break-even-priset {b} per kWh, så bensin är billigare dessa timmar.',
+  opEstWhy:'Beräknat från börspriset och tariffen i steg 2, så siffrorna kan skilja sig från det pris du angav.'
+});
+for (const l of Object.keys(TMP_PRIV)) I18N[l].ha_weather = TMP_PRIV[l];
+for (const l of ['en', 'sv']) I18N[l].ha_formula = I18N[l].tfFormula;
 
 let lang = (function () {
   try {
@@ -1794,7 +1997,7 @@ function dist(a, b, c, d) {
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
-function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(1)} km`; }
+function fmtDist(km) { return km < 1 ? `${Math.round(km*1000)} m` : `${dec(km.toFixed(1))} km`; }
 
 // Source grade: A official statutory feed · B official periodic/regulated · C third-party aggregator
 // (no price timestamps) · D community-reported · L location only. Set per country in meta.json,
@@ -1861,7 +2064,8 @@ function curLbl(cur) {                     // currency name in the UI language: 
 }
 const cNum = (p, cur, d = 2) => cShow(p, cur).v.toFixed(d);
 const cUn = cur => curLbl(cShow(1, cur).cur);
-const cTxt = (p, cur, d = 2) => { const x = cShow(p, cur); return `${x.v.toFixed(d)} ${curLbl(x.cur)}`; };
+const dec = s => lang === 'en' ? s : s.replace('.', ',');           // decimal comma outside English
+const cTxt = (p, cur, d = 2) => { const x = cShow(p, cur); return `${dec(x.v.toFixed(d))} ${curLbl(x.cur)}`; };
 const tagU = cur => cur === 'EUR' ? '' : `<u>${esc(cUn(cur))}</u>`;     // unit on map tags: euro countries stay bare
 function fxDate() { try { return new Date(metaFx.date + 'T12:00:00Z').toLocaleDateString(lang, { day:'numeric', month:'short', year:'numeric', timeZone:'UTC' }); } catch (_) { return metaFx?.date || ''; } }
 const cardNote = () => cardPct > 0 ? t('fxFootCard', { p: cardPct }) : '';
@@ -3305,7 +3509,7 @@ function toast(msg, ms = 3600) {
 function buzz(ms = 18) { try { navigator.vibrate && navigator.vibrate(ms); } catch (_) {} }
 function money(v, cur) {
   const x = cShow(v, cur);
-  return `${x.v >= 100 ? Math.round(x.v) : x.v.toFixed(2)} ${curLbl(x.cur)}`.trim();
+  return `${x.v >= 100 ? Math.round(x.v) : dec(x.v.toFixed(2))} ${curLbl(x.cur)}`.trim();
 }
 function fillHtml(cp) {
   if (!cp || (cp.unit && cp.unit !== 'L') || !tank) return '';
@@ -3342,6 +3546,7 @@ function carSet(k, raw) {
   if (k === 'type') {
     if (CAR_FUEL[raw]) { car.type = raw; setFuel(null, CAR_FUEL[raw]); } else delete car.type;
   } else {
+    if (k === 'eff') { delete ev.loss; store.set('efp_ev', ev); }      // one place for charging loss: the efficiency field wins over an older loss factor
     const v = String(raw).trim() === '' ? null : +String(raw).replace(',', '.');
     if (v === null) delete car[k];
     else if (!isFinite(v) || v <= 0 || (k === 'eff' && v > 100)) return;        // ignore NaN / negative / zero
@@ -3355,32 +3560,9 @@ function carSet(k, raw) {
   store.set('efp_car', car); carUi();
 }
 const ctyCc = () => fCountry || myCountry || centerCountry() || 'SE';
-const ctyCur = () => { const cc = ctyCc(); return metaCountries.find(c => c.country === cc)?.currency || metaOf[cc]?.currency || 'EUR'; };
-function renderCarCard() {
-  const el = document.getElementById('car-card'); if (!el) return;
-  if (car.type !== 'phev') { el.style.display = 'none'; return; }
-  el.style.display = '';
-  const cc = ctyCc(), cur = ctyCur();
-  const cu = document.getElementById('car-cur'); if (cu) cu.textContent = car.elecCur || cur;
-  const e = metaCountries.find(c => c.country === cc)?.stats_eur?.p95?.median, r = e ? fx(cc) : null;
-  const pp = e && r ? e / r : (cstat(cc).p95 || null);                               // country median petrol 95, local currency
-  const eff = (car.eff || 90) / 100, kwh100 = carKwh100(1 / eff);
-  const elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null;
-  const miss = [];
-  if (!car.cons) miss.push(t('carCons'));
-  if (!car.batt) miss.push(t('carBatt'));
-  if (!car.range) miss.push(t('carRange'));
-  if (!car.elec) miss.push(t('carElec')); else if (!elec) miss.push(t('carCurMis', { c: cur }));
-  if (!pp) miss.push(t('carPriceNeed', { c: CNAMES[cc] || cc }));
-  const L = [], b = v => '<b>' + money(v, cur) + '</b>';
-  if (kwh100 && elec) L.push(t('carElecKm', { v: b(kwh100 * elec) }));
-  if (car.cons && pp) L.push(t('carPetKm', { v: b(car.cons * pp) }));
-  if (car.batt && elec) L.push(t('carCharge', { v: b(car.batt / eff * elec) }));
-  if (kwh100 && car.cons && pp) L.push(t('carBreak', { v: b(car.cons * pp / kwh100) }));
-  L.push(`<button type="button" class="ev-link" onclick="evOpen()">${esc(t('evOpen'))}</button>`);
-  el.innerHTML = L.map(x => `<div>${x}</div>`).join('') + (miss.length ? `<div>${esc(t('carNeeds', { x: miss.join(', ') }))}</div>` : '')
-    + (pp && kwh100 ? `<div style="font-size:0.66rem;margin-top:4px">${esc(t('carEst', { i: t('carInputs', { p: cTxt(pp, cur), k: kwh100.toFixed(1), e: Math.round(eff * 100) }) }))}</div>` : '');
-}
+const CUR_DEF = { SE:'SEK', NO:'NOK', DK:'DKK', IS:'ISK', PL:'PLN', CZ:'CZK', HU:'HUF', RO:'RON', BG:'BGN', CH:'CHF', GB:'GBP', UK:'GBP' };   // used until meta.json has loaded, so a Swede never stores EUR
+const ctyCur = () => { const cc = ctyCc(); return metaCountries.find(c => c.country === cc)?.currency || metaOf[cc]?.currency || CUR_DEF[cc] || 'EUR'; };
+function renderCarCard() { mcStaticHelps(); mcSummary(); }
 
 // ── Petrol or electricity? Cost per km on electricity vs petrol 95 (average of the 5 nearest priced stations) ──
 // EV-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_ev_compare.js)
@@ -3531,7 +3713,6 @@ function evSet(k, raw) {
 }
 function evSetMode(m) { ev.mode = m; store.set('efp_ev', ev); evAll(); }
 function evSetHome(raw) { carSet('elec', raw); const e = $id('car-elec'); if (e) e.value = car.elec != null ? car.elec : ''; }
-function evOpen() { goTab('car'); setTimeout(() => $id('ev-card')?.scrollIntoView({ block: 'start' }), 120); }
 function evStations(cur) {
   const c = myLat != null ? { lat: myLat, lon: myLon, mine: true } : (g => ({ lat: g.lat, lon: g.lng, mine: false }))(map.getCenter());
   const dLat = 1.5, dLon = 1.5 / Math.max(0.2, Math.cos(c.lat * Math.PI / 180)), list = [];
@@ -3543,68 +3724,134 @@ function evStations(cur) {
   }
   return { ...evNearest(list, 5), mine: c.mine };
 }
-function evRender() {
-  const el = $id('ev-in'), stEl = $id('ev-st'), pan = $id('p-car'); if (!el || !pan?.classList.contains('open')) return;
-  const ae = document.activeElement, fid = ae && el.contains(ae) ? ae.id : '', vEl = $id('ev-v'), mxEl = $id('ev-mix'), mxFid = ae && mxEl.contains(ae) ? ae.id : '', mxVal = mxFid && ae.tagName === 'INPUT' ? ae.value : null; vEl.innerHTML = ''; stEl.innerHTML = '';   // the verdict is the only live region; the inputs of the card are patched in place below so keyboard focus survives, the mix block is rebuilt and its focus restored by id
-  const cc = ctyCc(), cur = ctyCur(), sy = SYM[cur] || cur, phev = car.type === 'phev', note = k => `<p class="ev-note">${esc(t(k))}</p>`;
-  if (!CAR_FUEL[car.type]) { el.innerHTML = note('evSetCar'); el._sk = null; return; }
-  if (car.type === 'diesel') { el.innerHTML = note('evDiesel'); el._sk = null; return; }
-  if (phev) tmpEnsure();
+// ── My car clarity layer: tap-to-open help, the answer card and step status (display only: every number comes from the functions above and below) ──
+const mcOpen = new Set();
+function mcQ(k, body) {
+  const o = mcOpen.has(k);
+  return `<div class="mc-hq"><button type="button" class="mc-q" aria-expanded="${o}" aria-controls="hq-${k}" data-hq="${k}">${esc(t('hq_' + k))}</button><div class="mc-a" id="hq-${k}"${o ? '' : ' hidden'}>${body != null ? body : esc(t('ha_' + k))}</div></div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.mc-q'); if (!b) return;
+  const k = b.dataset.hq, p = document.getElementById('hq-' + k), o = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', String(o)); if (p) p.hidden = !o; o ? mcOpen.add(k) : mcOpen.delete(k);
+});
+function mcStaticHelps() { document.querySelectorAll('div[data-hq]').forEach(s => { if (s._l !== lang) { s.innerHTML = mcQ(s.dataset.hq); s._l = lang; } }); }
+function mcGo(id) { let e = $id(id); if (!e || e.closest('[hidden]') || e.offsetParent === null) e = $id('car-type'); if (!e) return; e.scrollIntoView({ block: 'center' }); e.focus(); }
+function tankPick(n) { const e = $id('car-tank'); if (e) e.value = n; carSet('tank', n); }
+function evReset(k) { delete ev[k]; store.set('efp_ev', ev); evAll(); }
+function tfUse(v) { carSet('elec', v); const e = $id('car-elec'); if (e) e.value = car.elec != null ? car.elec : ''; }
+// MC-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_mycar_summary.js)
+// o = { type: 'petrol'|'diesel'|'phev'|undefined, missCar: [missing car fields], missElec: bool, cheaper: 'electric'|'petrol'|'same'|null }  ->  which sentence the answer card shows
+function mcState(o) {
+  if (!o.type) return 'nocar';
+  if (o.type !== 'phev') return 'notphev';
+  if (o.cheaper) return o.cheaper;
+  if (o.missCar && o.missCar.length) return 'needcar';
+  return o.missElec ? 'needelec' : 'needpet';
+}
+// the step the driver should do next: 1 car, 2 electricity price, 3 petrol prices, 0 = nothing to do
+function mcNext(o) { const s = mcState(o); return s === 'nocar' || s === 'needcar' ? 1 : s === 'needelec' ? 2 : s === 'needpet' ? 3 : 0; }
+// MC-PURE-END
+let _mcAns = null;       // set by evRender0: the already computed figures the answer card reads
+const mcPay = (a, u) => t(a.mode === 'home' ? 'mcYouPay' : a.mode === 'fc' ? 'mcPayFc' : a.assumed ? 'mcPayAssume' : 'mcPayPub', { u });   // says where the per-kWh price comes from
+function mcSummary() {
+  const el = $id('mc-summary'); if (!el || !carPanelOpen()) return;
+  const a = _mcAns || {}, phev = car.type === 'phev', cur = a.cur || ctyCur(), r = a.r || {};
+  for (const id of ['mc-s2', 'ev-card']) { const e = $id(id); if (e) e.hidden = !phev; }
+  const cu = $id('car-cur'); if (cu) cu.textContent = curLbl(car.elecCur || ctyCur());
+  const ef = $id('car-eff'); if (ef) ef.placeholder = Math.round(100 / evLoss());
+  const o = { type: car.type, missCar: a.missCar || [], missElec: !!a.missElec, cheaper: r.cheaper || null };
+  const s = mcState(o), v = car.veh && _veh?.by[car.veh], nx = mcNext(o);
+  const my = v ? t('mcYour', { m: v.model || vehName(v) }) : t('mcYourCar');
+  const c0 = x => cTxt(x, cur, cShow(1, cur).cur === 'EUR' ? 1 : 0), P = k => `<p>${esc(k)}</p>`;
+  const FLD = { Batt: 'car-batt', Range: 'car-range', Cons: 'car-cons' };
+  let h = '', btn = '', fine = '', res = false;
+  if (s === 'nocar' && _vehNo) h = P(t('mcBev', { m: vehName(_vehNo) }));
+  else if (s === 'nocar') { h = P(t('mcSum_nocar')); btn = ['veh-q', 'mcBtn_car']; }
+  else if (s === 'needcar') { h = P(t('mcSum_needcar', { x: o.missCar.map(k => t('mcMiss' + k)).join(', ') })); btn = [FLD[o.missCar[0]], 'mcBtn_fill']; }
+  else if (s === 'needelec') { h = P(t('mcSum_needelec')); btn = ['car-elec', 'mcBtn_elec']; }
+  else if (s === 'needpet') h = P(t('mcSum_needpet'));
+  else if (s === 'notphev') h = P(t('mcSum_notphev') + (car.type === 'petrol' && a.petrolOnly != null ? ' ' + t('mcSum_petrolOnly', { p: c0(a.petrolOnly) }) : ''));
+  else {
+    res = true;
+    const vars = { car: my, e: c0(r.elec100), p: c0(r.petrol100), b: money(r.breakEven, cur) };
+    h = P(t(s === 'electric' ? 'mcSum_e' : s === 'petrol' ? 'mcSum_p' : 'mcSum_s', vars) + ' ' + mcPay(a, money(a.elec, cur))) + (a.T != null ? P(t('mcSum_cold', { t: Math.round(a.T) })) : '');
+    fine = t('mcSum_trust');
+  }
+  if (_vehNo && s !== 'nocar') h = P(t('mcBev', { m: vehName(_vehNo) })) + h;
+  if (nx && nx < 4 && s !== 'notphev' && !(_vehNo && s === 'nocar')) fine = t('mcProg', { n: nx, x: t('mcProgX' + nx) });
+  el.className = 'mc-sum' + (res ? '' : ' wait');
+  el.innerHTML = h + (btn ? `<button type="button" class="mc-btn" onclick="mcGo('${btn[0]}')">${esc(t(btn[1]))}</button>` : '') + (fine ? `<p class="mc-fine">${esc(fine)}</p>` : '');
+  const stt = (id, cls, key) => { const e = $id(id); if (e) { e.className = 'mc-st ' + cls; e.textContent = key ? t(key) : ''; } };
+  const car1 = !!car.type && !o.missCar.length;
+  stt('mc-st1', car1 ? 'done' : 'todo', car1 ? 'mcSt_done' : 'mcSt_todo');
+  stt('mc-st2', o.missElec || a.assumed ? 'todo' : 'done', o.missElec ? 'mcSt_todo' : a.assumed ? 'mcSt_assumed' : 'mcSt_done');
+  stt('mc-st3', res ? 'done' : '', res ? 'mcSt_ready' : 'mcSt_wait');
+  const ch = []; if (ev.km) ch.push(t('mcNmKm')); if (car.eff) ch.push(t('mcNmEff')); if (cardPct > 0) ch.push(t('mcNmCard'));
+  const as = $id('mc-adv-sum'); if (as) as.textContent = ch.length ? t('mcAdvChg', { x: ch.join(', ') }) : t('mcAdvStd');
+}
+function evPatch(el, html, fid) {         // inputs are patched in place so keyboard focus survives; the skeleton (html without values) decides when to rebuild
+  if (!el) return;
+  const sk = html.replace(/ value="[^"]*"/g, '');
+  if (sk !== el._sk) { el.innerHTML = html; el._sk = sk; if (fid) $id(fid)?.focus(); }
+  else { const tpl = document.createElement('div'); tpl.innerHTML = html; for (const i of tpl.querySelectorAll('input')) { const o = $id(i.id); if (o && o.value !== i.value) o.value = i.value; } }
+}
+function evRender() { _mcAns = null; evRender0(); mcSummary(); }
+function evRender0() {
+  const el = $id('ev-in'), el2 = $id('ev-in2'), stEl = $id('ev-st'), pan = $id('p-car'); if (!el || !pan?.classList.contains('open')) return;
+  const ae = document.activeElement, fid = ae && el.contains(ae) ? ae.id : '', fid2 = ae && el2?.contains(ae) ? ae.id : '', vEl = $id('ev-v'), mxEl = $id('ev-mix'), mxFid = ae && mxEl.contains(ae) ? ae.id : '', mxVal = mxFid && ae.tagName === 'INPUT' ? ae.value : null; vEl.innerHTML = ''; stEl.innerHTML = '';   // the answer card is the only live region; the inputs are patched in place, the mix block is rebuilt and its focus restored by id
+  const cc = ctyCc(), cur = ctyCur(), phev = car.type === 'phev', nm = CNAMES[cc] || cc, c0 = x => cTxt(x, cur, cShow(1, cur).cur === 'EUR' ? 1 : 0);
+  if (!phev) {
+    el.innerHTML = ''; el._sk = null; if (el2) { el2.innerHTML = ''; el2._sk = null; } mxEl.innerHTML = '';
+    if (car.type === 'petrol') { const s0 = evStations(cur); _mcAns = { cur, petrolOnly: car.cons > 0 && s0.avg != null ? car.cons * s0.avg : null }; }
+    return;
+  }
+  tmpEnsure();
   const st = evStations(cur), loss = evLoss(); _evP = st.avg != null ? { avg: st.avg, cur } : null;
-  const fcOk = phev && cur === TF_CUR && !!fcPrice(), mode = ev.mode === 'fc' && !fcOk ? (car.elec ? 'home' : 'pub') : ev.mode || (car.elec ? 'home' : 'pub'), ref = EV_PUB[cc], nm = CNAMES[cc] || cc;
-  let elec = null, price = '', hint = '';
-  if (mode === 'home') { elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null; price = elec != null ? elec : ''; }
+  const fcOk = cur === TF_CUR && !!fcPrice(), mode = ev.mode === 'fc' && !fcOk ? (car.elec ? 'home' : 'pub') : ev.mode || (car.elec ? 'home' : 'pub'), ref = EV_PUB[cc];
+  let elec = null, price = '', hint = '', assumed = false;
+  if (mode === 'home') { elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null; }
   else if (mode === 'fc') { const fp = fcPrice(); elec = fp.p; hint = `<p class="ev-note">${esc(t('evFcNote', { m: monLabel(fp.ym, true), p: money(fp.p, TF_CUR) }))}</p>`; }
   else {
     const own = ev.pub && ev.pubCur === cur ? ev.pub : null, def = ref && ref.cur === cur ? ref : null;
-    elec = own || (def ? def.p : null); price = elec != null ? elec : '';
+    elec = own || (def ? def.p : null); assumed = !own && !!def; price = elec != null ? elec : '';
     const old = def && (Date.now() - Date.parse(def.asof)) / 864e5 > 90;
     hint = own ? '' : def ? `<p class="ev-note${old ? ' ev-warn' : ''}">${esc(t('evAssume', { p: money(def.p, cur), d: def.asof }) + (old ? ' ' + t('evOld') : ''))}</p>` : `<p class="ev-note">${esc(t('evNoRef', { c: nm }))}</p>`;
   }
-  const kwh100 = phev ? carKwh100(loss) : null, km = ev.km || 100, tn = phev ? tmpNow() : { T: null };
+  const kwh100 = carKwh100(loss), km = ev.km || 100, tn = tmpNow();
   const px = phevF(tn.T), rng = car.range * RT_REAL;      // one electric-range base everywhere: RT_REAL of the WLTP figure, times the temperature factor
   // both sides at the same temperature: battery side with its kWh multiplier and heating petrol, petrol side with its cold multiplier
-  const r = evCompare({ kwh100: phev ? kwh100 * px.mEl : kwh100, elec, cons: phev ? car.cons * px.mp : car.cons, petrol: st.avg, km, heat: phev && kwh100 ? px.gk * kwh100 * (st.avg || 0) : 0, elecKm: phev && car.range ? rng * px.f : 0 });
-  if (r.trip && phev) { const bl = phevBlend({ range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg, d: km, T: tn.T }); if (bl) { r.trip.elec = bl.cost; r.trip.elecKm = bl.e; r.trip.limited = bl.e < km - 1e-9; } }   // the trip row is the realistic mix at this temperature
-  const miss = []; if (phev && !car.batt) miss.push(t('carBatt')); if (phev && !car.range) miss.push(t('carRange')); if (!car.cons) miss.push(t('carCons')); if (elec == null) miss.push(t(mode === 'home' ? 'carElec' : 'evPub')); if (st.avg == null) miss.push(t('carPriceNeed', { c: nm }));
-  const f = v => v.toFixed(v < 1 ? 3 : 2);
-  let h = '';
-  if (!phev) h += note('evNoElec');
-  else {
-    h += `<label>${esc(t('evMode'))}</label><div class="tchips">${['home', 'pub', ...(fcOk ? ['fc'] : [])].map(m => `<button type="button" id="ev-m-${m}" class="${mode === m ? 'on' : ''}" onclick="evSetMode('${m}')">${esc(t(m === 'home' ? 'evHome' : m === 'pub' ? 'evPub' : 'evFc'))}</button>`).join('')}</div>`
-      + (mode === 'fc' ? `<label for="ev-fcm">${esc(t('evFcMonth'))}</label><select id="ev-fcm" onchange="evFcSel(this.value)">${(epRows() || []).map((x, i) => `<option value="${i}"${i === fcSel() ? ' selected' : ''}${x.p ? '' : ' disabled'}>${esc(monLabel(x.ym, true))}</option>`).join('')}</select><div id="ev-hint"></div>`
-        : `<label for="ev-price">${esc(t(mode === 'home' ? 'evPriceHome' : 'evPricePub', { c: sy }))}</label><input id="ev-price" type="number" inputmode="decimal" min="0.01" step="0.01" value="${price}" onchange="${mode === 'home' ? 'evSetHome(this.value)' : "evSet('pub',this.value)"}"><div id="ev-hint"></div>`)
-      + `<label for="ev-loss">${esc(t('evLoss'))}</label><input id="ev-loss" type="number" inputmode="decimal" min="1" step="0.01" value="${(+loss).toFixed(2)}" onchange="evSet('loss',this.value)">`;
-  }
-  if (phev) h += `<label for="ev-km">${esc(t('evDist'))}</label><input id="ev-km" type="number" inputmode="decimal" min="1" step="10" value="${km}" onchange="evSet('km',this.value)">`;
-  let vd = '';      // the verdict goes first, above the inputs
+  const r = evCompare({ kwh100: kwh100 * px.mEl, elec, cons: car.cons * px.mp, petrol: st.avg, km, heat: kwh100 ? px.gk * kwh100 * (st.avg || 0) : 0, elecKm: car.range ? rng * px.f : 0 });
+  if (r.trip) { const bl = phevBlend({ range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg, d: km, T: tn.T }); if (bl) { r.trip.elec = bl.cost; r.trip.elecKm = bl.e; r.trip.limited = bl.e < km - 1e-9; } }   // the trip row is the realistic mix at this temperature
+  const missCar = []; if (!car.batt) missCar.push('Batt'); if (!car.range) missCar.push('Range'); if (!car.cons) missCar.push('Cons');
+  const miss = missCar.map(k => t('mcMiss' + k)); if (elec == null) miss.push(t(mode === 'home' ? 'mcMissElec' : mode === 'pub' ? 'mcMissPub' : 'mcMissFc')); if (st.avg == null) miss.push(t('mcMissPet'));
+  _mcAns = { cur, r, elec, missCar, missElec: elec == null, T: tn.T, mode, assumed };
+  const chips = ['home', 'pub', ...(fcOk ? ['fc'] : [])].map(m => `<button type="button" id="ev-m-${m}" aria-pressed="${mode === m}" class="${mode === m ? 'on' : ''}" onclick="evSetMode('${m}')">${esc(t(m === 'home' ? 'evHome' : m === 'pub' ? 'evPub' : 'evFc'))}</button>`).join('');
+  const inH = `<div class="tchips">${chips}</div>` + (mode === 'fc' ? `<label for="ev-fcm">${esc(t('evFcMonth'))}</label><select id="ev-fcm" onchange="evFcSel(this.value)">${(epRows() || []).map((x, i) => `<option value="${i}"${i === fcSel() ? ' selected' : ''}${x.p ? '' : ' disabled'}>${esc(monLabel(x.ym, true))}</option>`).join('')}</select><div id="ev-hint"></div>`
+    : mode === 'pub' ? `<label for="ev-price">${esc(t('evPricePub', { c: curLbl(cur) }))}</label><input id="ev-price" aria-describedby="ev-hint" type="number" inputmode="decimal" min="0.01" step="0.01" value="${price}" onchange="evSet('pub',this.value)"><div id="ev-hint"></div>`
+    : `<p class="mc-hint">${esc(elec != null ? t('mcHomeUse', { p: money(elec, cur) }) : t('mcHomeNone'))}</p>`);
+  const inH2 = `<label for="ev-km">${esc(t('evDist'))}</label><input id="ev-km" aria-describedby="ev-km-d" type="number" inputmode="decimal" min="1" step="10" value="${km}" onchange="evSet('km',this.value)"><div class="mc-def" id="ev-km-d">${esc(t('mcDefKm'))}${ev.km ? ` <button type="button" id="ev-km-r" class="ev-link" onclick="evReset('km')">${esc(t('mcReset'))}</button>` : ''}</div>`;
+  let vd = '';      // the conclusion in words first, then the two numbers
   if (r.cheaper) {
-    const hd = r.cheaper === 'electric' ? t('evVerdictE', { p: Math.round(r.pct) }) : r.cheaper === 'petrol' ? t('evVerdictP') : t('evSame');
-    const sub = r.cheaper === 'electric' ? t('evPctE', { p: r.pct.toFixed(0) }) : r.cheaper === 'petrol' ? t('evPctP', { p: ((r.elec100 / r.petrol100 - 1) * 100).toFixed(0) }) : '';
-    vd = `<div class="ev-verdict${r.cheaper === 'electric' ? ' e' : ''}"><div class="ev-h">${esc(hd)}</div>${sub ? `<div class="ev-s">${esc(sub)}</div>` : ''}${phev && tn.T != null ? `<div class="ev-s">${esc(t('evAtT', { t: Math.round(tn.T) }))}</div>` : ''}
-      <table class="ev-tbl"><tr><th></th><th>${esc(t('evElec'))}</th><th>${esc(t('evPet'))}</th></tr>
-      <tr><td>${esc(t('evKm'))}</td><td>${f(r.elec100 / 100)} ${esc(sy)}</td><td>${f(r.petrol100 / 100)} ${esc(sy)}</td></tr>
-      <tr><td>${esc(t('evK100'))}</td><td>${esc(money(r.elec100, cur))}</td><td>${esc(money(r.petrol100, cur))}</td></tr>
-      <tr><td>${esc(t('evTrip', { k: km }))}</td><td>${esc(money(r.trip.elec, cur))}</td><td>${esc(money(r.trip.petrol, cur))}</td></tr></table>
-      ${r.trip.limited ? `<div class="ev-s">${esc(t('evTripMix', { k: Math.round(r.trip.elecKm) }))}</div>` : ''}</div>
-      <p class="ev-note">${esc(t('evBreak', { v: money(r.breakEven, cur) }))}</p>`;
-  } else if (phev && st.picked.length && miss.length) vd = `<p class="ev-note">${esc(t('evNeeds', { x: miss.join(', ') }))}</p>`;
+    const diff = Math.abs(r.petrol100 - r.elec100);
+    const hd = r.cheaper === 'electric' ? t('mcVerE', { s: c0(diff) }) : r.cheaper === 'petrol' ? t('mcVerP', { s: c0(diff) }) : t('mcVerS');
+    const pair = (l, v) => `<div><span>${esc(l)}</span><b>${esc(c0(v))}</b><span>${esc(t('mcPer100'))}</span></div>`;
+    vd = `<div class="ev-verdict${r.cheaper === 'electric' ? ' e' : ''}"><div class="ev-h">${esc(hd)}</div><div class="mc-pair">${pair(t('evElec'), r.elec100)}${pair(t('evPet'), r.petrol100)}</div>${tn.T != null ? `<div class="ev-s">${esc(t('evAtT', { t: Math.round(tn.T) }))}</div>` : ''}</div>
+      <p class="ev-note">${esc(t('mcTripLine', { k: km, e: c0(r.trip.elec), p: c0(r.trip.petrol) }))}${r.trip.limited ? ' ' + esc(t('evTripMix', { k: Math.round(r.trip.elecKm) })) : ''}</p>
+      <p class="ev-note"><b>${esc(t('evBreak', { v: money(r.breakEven, cur) }))}</b> ${esc(mcPay(_mcAns, money(elec, cur)))}</p>` + mcQ('break');
+  } else vd = `<p class="ev-note">${esc(miss.length ? t('evNeeds', { x: miss.join(', ') }) : t('mcS3wait'))}</p>`;
   vEl.innerHTML = vd;
-  if (phev) {
-    mxEl.innerHTML = evMixHtml({ cur, tn, ok: !!(car.range > 0 && kwh100 > 0 && car.cons > 0 && elec != null && st.avg != null), miss,
-      base: { range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg } });
-    const fe = mxFid && $id(mxFid); if (fe) { if (mxVal != null) fe.value = mxVal; fe.focus(); }
-  } else mxEl.innerHTML = '';
-  const inH = h; h = `<label>${esc(t('evStTitle'))}</label>`;
+  mxEl.innerHTML = evMixHtml({ cur, tn, ok: !!(car.range > 0 && kwh100 > 0 && car.cons > 0 && elec != null && st.avg != null), miss,
+    base: { range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg } });
+  const fe = mxFid && $id(mxFid); if (fe) { if (mxVal != null) fe.value = mxVal; fe.focus(); }
+  let h = `<h4 class="ev-sub">${esc(t('evStTitle'))}</h4>` + mcQ('95');
   if (st.picked.length) {
-    h += `<ul class="ev-st">${st.picked.map(x => `<li><span><span class="ev-n">${esc(x.s.name || x.s.brand || '–')}</span><br>${esc(fmtDist(x.km))} · ${esc(ageTxt(x.p.updated_at))}</span><b>${esc(pfmt(x.price, cur) + ' ' + sy)}</b></li>`).join('')}</ul>`
-      + `<p class="ev-note"><b>${esc(t('evAvg', { p: pfmt(st.avg, cur) + ' ' + sy }))}</b> · ${esc(t('evStFrom', { w: t(st.mine ? 'evMyPos' : 'evMapC') }))}`
+    h += `<ul class="ev-st">${st.picked.map(x => `<li><span><span class="ev-n">${esc(x.s.name || x.s.brand || '–')}</span><br>${esc(fmtDist(x.km))}${x.p.updated_at ? ' · ' + esc(ageTxt(x.p.updated_at)) : ''}</span><b>${esc(cTxt(x.price, cur, 2))}</b></li>`).join('')}</ul>`
+      + `<p class="ev-note"><b>${esc(t('evAvg', { p: cTxt(st.avg, cur, 2) }))}</b> · ${esc(t('evStFrom', { w: t(st.mine ? 'evMyPos' : 'evMapC') }))}`
       + (st.picked.length < 5 ? ' ' + esc(t('evFew', { n: st.picked.length })) : '') + (st.setAside ? ' ' + esc(t('evSetAside', { n: st.setAside })) : '') + '</p>';
   } else h += `<p class="ev-note">${esc(t('evNoSt', { c: nm }))}</p>`;
-  stEl.innerHTML = h + note('evOwnNote');
-  const sk = inH.replace(/ value="[^"]*"/g, '');
-  if (sk !== el._sk) { el.innerHTML = inH; el._sk = sk; if (fid) $id(fid)?.focus(); }
-  else { const tpl = document.createElement('div'); tpl.innerHTML = inH; for (const i of tpl.querySelectorAll('input')) { const o = $id(i.id); if (o && o.value !== i.value) o.value = i.value; } }
+  stEl.innerHTML = h + `<p class="ev-note">${esc(t('evOwnNote'))}</p>`;
+  evPatch(el, inH, fid); evPatch(el2, inH2, fid2);
   const hs = $id('ev-hint'); if (hs) hs.innerHTML = hint;
 }
 
@@ -3618,11 +3865,11 @@ let tmp = (v => v && typeof v === 'object' ? v : {})(store.get('efp_tmp', {})); 
 const ep = { st: 'idle', j: null, at: 0 };
 let _evP = null;                          // petrol price used by the last petrol-vs-electricity render { avg, cur }
 const carPanelOpen = () => !!$id('p-car')?.classList.contains('open');
-function evAll() { evRender(); tfRender(); opRender(); }
+function evAll() { mcStaticHelps(); evRender(); tfRender(); opRender(); }
 const evLoss = () => ev.loss || (car.eff ? 100 / car.eff : 1.15);
 const nowYM = () => todayStr().slice(0, 7);
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-const monLabel = (ym, long) => new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1, 1).toLocaleDateString(lang, { month: long ? 'long' : 'short', year: long ? 'numeric' : '2-digit' });
+const monLabel = (ym, long) => new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1, 1).toLocaleDateString(lang, { month: long ? 'long' : 'short', year: 'numeric' });
 
 // price file: schema in the comment above elHourly (TF-PURE). Missing or malformed = 'none' (clear "no data yet" state), retried after 10 minutes, refreshed hourly.
 function epLoad() {
@@ -3693,33 +3940,34 @@ function tmpMode(m) { ev.tMode = m; if (m === 'manual' && typeof ev.tOvr !== 'nu
 function tmpSetT(raw) { const s = String(raw).trim().replace(',', '.'), v = +s; if (s !== '' && isFinite(v) && v >= -50 && v <= 50) ev.tOvr = v; store.set('efp_ev', ev); evAll(); }
 function evFcSel(i) { ev.fcm = +i; store.set('efp_ev', ev); evAll(); }
 
-// the blended cost block inside the petrol-vs-electricity card: per trip length, by temperature, and a typical day
+// the weather + trip cost block inside step 3: temperature choice, what trips cost, how cold changes it, a typical day
 function evMixHtml(o) {
-  const { cur, tn, base, ok, miss } = o, nt = k => `<p class="ev-note">${esc(t(k))}</p>`, D = ev.dkm || 40;
-  const man = ev.tMode === 'manual', chip = (m, txt) => `<button type="button" id="mx-c-${m}" class="${(man ? 'manual' : 'auto') === m ? 'on' : ''}" onclick="tmpMode('${m}')">${esc(txt)}</button>`;
-  let h = `<h4 class="ev-sub">${esc(t('mxTitle'))}</h4><label>${esc(t('mxTemp'))}</label><div class="tchips">${chip('auto', t('mxAuto'))}${chip('manual', t('mxManual'))}</div>`;
-  if (!man) h += `<p class="ev-note">${esc(t('mxPrivShort'))}${ev.tOk ? '' : ` <button type="button" id="mx-allow" class="ev-link" onclick="tmpAllow()">${esc(t('mxAllow'))}</button>`}</p>`;
+  const { cur, tn, base, ok, miss } = o, nt = k => `<p class="ev-note">${esc(t(k))}</p>`, D = ev.dkm || 40, c0 = x => cTxt(x, cur, cShow(1, cur).cur === 'EUR' ? 1 : 0);
+  const man = ev.tMode === 'manual', chip = (m, txt) => `<button type="button" id="mx-c-${m}" aria-pressed="${(man ? 'manual' : 'auto') === m}" class="${(man ? 'manual' : 'auto') === m ? 'on' : ''}" onclick="tmpMode('${m}')">${esc(txt)}</button>`;
+  let h = `<h4 class="ev-sub">${esc(t('mxTitle'))}</h4>${nt('mxIntro')}<span class="mc-lbl" id="mx-tl">${esc(t('mxTemp'))}</span><div class="tchips" role="group" aria-labelledby="mx-tl">${chip('auto', t('mxAuto'))}${chip('manual', t('mxManual'))}</div>`;
+  if (!man && !ev.tOk) h += `<p class="ev-note">${esc(t('mxPrivShort'))}</p><button type="button" id="mx-allow" class="mc-btn" onclick="tmpAllow()">${esc(t('mxAllow'))}</button>`;
   if (man) h += `<div class="ev-in2"><label for="mx-t" style="margin:0">${esc(t('mxTempIn'))}</label><input id="mx-t" type="number" inputmode="decimal" step="1" min="-50" max="50" value="${tmpManual() ? ev.tOvr : ''}" onchange="tmpSetT(this.value)"></div>`;
   else if (tn.T != null) h += `<p class="ev-note">${esc(t('mxT', { t: Math.round(tn.T), s: t('mxSrc_' + tn.src) }))}${tmp.pos ? '<br>' + esc(t('mxPos', { p: tmp.pos[0].toFixed(1) + ', ' + tmp.pos[1].toFixed(1) })) + ` <button type="button" id="mx-posupd" class="ev-link" onclick="tmpPosUpdate()">${esc(t('mxPosUpd'))}</button>` : ''}</p>`;
-  if (tn.T == null) h += nt('mxNone');
+  if (tn.T == null) h += nt(man ? 'mxNoneM' : 'mxNone');
+  if (!man) h += mcQ('weather');
   if (!ok) return h + (miss.length ? `<p class="ev-note">${esc(t('mxNeed', { x: miss.join(', ') }))}</p>` : '') + evHowHtml();
   const b = (d, T, v) => phevBlend({ ...base, d, T, v });
-  h += `<table class="ev-tbl wide"><tr><th>${esc(t('mxTrip'))}</th><th>${esc(t('mxEl'))}</th><th>${esc(t('mxPet'))}</th><th>${esc(t('mxCost'))}</th></tr>`
-    + [20, 50, 100, 300].map(d => { const r = b(d, tn.T); return `<tr><td>${esc(t('mxKm', { k: d }))}</td><td>${esc(t('mxKm', { k: Math.round(r.e) }))}</td><td>${esc(t('mxL', { l: r.litres.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }))}</td><td>${esc(cTxt(r.per100, cur, 0))}</td></tr>`; }).join('') + '</table>';
+  h += `<span class="mc-lbl">${esc(t('mxTripH'))}</span>${nt('mxTripI')}<table class="ev-tbl wide"><tr><th>${esc(t('mxTrip'))}</th><th>${esc(t('mxEl'))}</th><th>${esc(t('mxPet'))}</th><th>${esc(t('mxCostT'))}</th></tr>`
+    + [20, 50, 100, 300].map(d => { const r = b(d, tn.T); return `<tr><td>${esc(t('mxKm', { k: d }))}</td><td>${esc(t('mxKm', { k: Math.round(r.e) }))}</td><td>${esc(t('mxL', { l: r.litres.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }))}</td><td>${esc(c0(r.cost))}</td></tr>`; }).join('') + '</table>';
   if (tn.T != null) {
     const c = [b(100, tn.T).per100, b(100, tn.T, 'pess').per100, b(100, tn.T, 'opt').per100], lo = Math.min(...c), hi = Math.max(...c);
-    if (hi - lo > 0.005 * hi) h += `<p class="ev-note">${esc(t('mxBand', { lo: cTxt(lo, cur, 0), hi: cTxt(hi, cur, 0) }))}</p>`;
+    if (hi - lo > 0.005 * hi) h += `<p class="ev-note">${esc(t('mxBand', { lo: c0(lo), hi: c0(hi) }))}</p>`;
   }
-  h += `<label>${esc(t('mxByT'))}</label><table class="ev-tbl wide"><tr><th></th>${[-10, 0, 10, 20].map(T => `<th>${T} °C</th>`).join('')}</tr><tr><td>${esc(t('mxCost'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(cTxt(b(100, T).per100, cur, 0))}</td>`).join('')}</tr>`
-    + `<tr><td>${esc(t('mxEl'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(t('mxKm', { k: Math.round(b(100, T).e) }))}</td>`).join('')}</tr></table>`;
+  h += mcQ('cold', `<table class="ev-tbl wide"><tr><th></th>${[-10, 0, 10, 20].map(T => `<th>${T} °C</th>`).join('')}</tr><tr><td>${esc(t('mxCost100'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(c0(b(100, T).per100))}</td>`).join('')}</tr>`
+    + `<tr><td>${esc(t('mxEl'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(t('mxKm', { k: Math.round(b(100, T).e) }))}</td>`).join('')}</tr></table>`);
   const dd = phevDay({ ...base, D, T: tn.T });
-  h += `<label for="ev-dkm">${esc(t('mxDaily'))}</label><input id="ev-dkm" type="number" inputmode="decimal" min="1" step="5" value="${D}" onchange="evSet('dkm',this.value)">`
-    + `<p class="ev-note">${esc(t('mxDay', { d: D, s: Math.round(dd.share * 100), t: tn.T == null ? '–' : Math.round(tn.T), m: cTxt(dd.day * 30.4, cur, 0) }))}</p>`;
+  h += `<label for="ev-dkm">${esc(t('mxDaily'))}</label><input id="ev-dkm" aria-describedby="ev-dkm-d" type="number" inputmode="decimal" min="1" step="5" value="${D}" onchange="evSet('dkm',this.value)"><div class="mc-def" id="ev-dkm-d">${esc(t('mcDefDkm'))}${ev.dkm ? ` <button type="button" id="ev-dkm-r" class="ev-link" onclick="evReset('dkm')">${esc(t('mcReset'))}</button>` : ''}</div>`
+    + `<p class="ev-note">${esc(t(tn.T == null ? 'mxDay0' : 'mxDay', { d: D, s: Math.round(dd.share * 100), t: tn.T == null ? '' : Math.round(tn.T), m: c0(dd.day * 30.4) }))}</p>`;
   return h + evHowHtml();
 }
-const evHowHtml = () => `<details class="ev-how"><summary>${esc(t('mxHow'))}</summary>${['mxH1', 'mxH2', 'mxH3', 'mxH4', 'mxPriv'].map(k => `<p>${esc(t(k))}</p>`).join('')}</details>`;
+const evHowHtml = () => `<details class="ev-how"><summary>${esc(t('mxHow'))}</summary>${['mxH1', 'mxH2', 'mxH3', 'mxH4'].map(k => `<p>${esc(t(k))}</p>`).join('')}</details>`;
 
-// My home electricity: the form is built once per language (so tabbing between fields keeps focus), only the result below it is refreshed
+// Work out my real electricity price: the form is built once per language (so tabbing between fields keeps focus), only the result below it is refreshed
 const TF_FLD = [['varCost', 'tfVar'], ['markup', 'tfMarkup'], ['discount', 'tfDisc'], ['discUntil', 'tfDiscUntil'], ['retailFee', 'tfRetFee'], ['feeUntil', 'tfFeeUntil'], ['transfer', 'tfTransfer'], ['tax', 'tfTax'], ['gridFee', 'tfGrid'], ['vat', 'tfVat'], ['kwh', 'tfKwh']];
 function tfRender() {
   const box = $id('tf-card'), op = $id('op-card'); if (!box || !carPanelOpen()) return;
@@ -3727,7 +3975,7 @@ function tfRender() {
   const f = $id('tf-form');
   if (f._k !== lang + tf.area) {
     f._k = lang + tf.area;
-    f.innerHTML = `<p class="ev-note">${esc(t('tfIntro'))}</p><label for="tf-area">${esc(t('tfArea'))}</label><select id="tf-area" onchange="tfSet('area',this.value)">${[...new Set([...TF_AREAS, tf.area])].map(a => `<option${a === tf.area ? ' selected' : ''}>${a}</option>`).join('')}</select>`
+    f.innerHTML = `<p class="ev-note">${esc(t('tfIntro'))}</p><label for="tf-area">${esc(t('tfArea'))}</label><select id="tf-area" onchange="tfSet('area',this.value)">${[...new Set([...TF_AREAS, tf.area])].map(a => `<option${a === tf.area ? ' selected' : ''}>${a}</option>`).join('')}</select>` + mcQ('area') + `<p class="ev-note">${esc(t('tfFieldsNote'))}</p>`
       + `<div class="tf-grid">${TF_FLD.map(([k, l]) => `<div><label for="tf-${k}">${esc(t(l))}</label><input id="tf-${k}" ${k.endsWith('Until') ? 'type="date"' : 'type="number" inputmode="decimal" min="0" step="any"'} value="${tf[k]}" onchange="tfSet('${k}',this.value)"></div>`).join('')}</div>`
       + `<button type="button" class="btn-line" style="margin-top:12px" onclick="tfReset()">${esc(t('tfReset'))}</button>`;
   }
@@ -3742,23 +3990,25 @@ function tfSet(k, raw) {
 function tfReset() { tf = { ...TF_DEFAULT }; store.set('efp_tariff', tf); const f = $id('tf-form'); if (f) f._k = null; evAll(); }
 function tfOut() {
   const el = $id('tf-out'); if (!el) return;
-  const sp = epSpot(), fx1 = v => money(v, TF_CUR) + '/kWh';
+  const sp = epSpot(), ex = JSON.stringify(tf) === JSON.stringify(tfClean(TF_DEFAULT));
   let h = '';
   if (sp) {
-    h += `<div class="ev-verdict e"><div class="ev-h">${esc(fx1(tfMarginal(tf, sp.v, sp.ym)))}</div><div class="ev-s">${esc(t('tfMarg', { s: money(sp.v, TF_CUR), w: sp.k === 'days' ? t('tfSpotNext') : t('tfSpotMonth', { m: monLabel(sp.ym, true) }) }))}</div></div>`
-      + `<p class="ev-note">${esc(t('tfAll', { k: Math.round(tf.kwh), v: money(tfAllIn(tf, sp.v, tf.kwh, sp.ym), TF_CUR) }))}</p>`;
+    const m = tfMarginal(tf, sp.v, sp.ym), all = tfAllIn(tf, sp.v, tf.kwh, sp.ym);
+    h += `<div class="ev-verdict e"><div class="ev-h">${esc(t('tfHead', { v: money(m, TF_CUR) }))}</div><div class="ev-s">${esc(t('tfAll2', { k: Math.round(tf.kwh), a: money(all, TF_CUR) }))}</div></div>`
+      + (ctyCur() === TF_CUR ? `<button type="button" class="mc-btn" onclick="tfUse(${m.toFixed(2)})">${esc(t('tfUse', { v: money(m, TF_CUR) }))}</button>` : '')
+      + `<p class="ev-note">${esc(t('tfMarg', { s: money(sp.v, TF_CUR), w: sp.k === 'days' ? t('tfSpotNext') : t('tfSpotMonth', { m: monLabel(sp.ym, true) }) }))}${ex ? ' ' + esc(t('tfEx')) : ''}</p>`;
   } else h += `<p class="ev-note">${esc(t('tfFixed', { v: money(tfFixedKwh(tf, nowYM()), TF_CUR) }))}</p>`;
   const ends = [tf.discUntil, tf.feeUntil].filter(Boolean).sort()[0];
-  el.innerHTML = h + `<p class="ev-note">${esc(t('tfFormula'))}</p>` + (ends ? `<p class="ev-note">${esc(t('tfEnds', { d: ends }))}</p>` : '');
+  el.innerHTML = h + mcQ('formula', esc(t('tfFormula'))) + (ends ? `<p class="ev-note">${esc(t('tfEnds', { d: ends }))}</p>` : '');
 }
 
-// Electricity price outlook: next days exact, 12 months as an estimate, marginal price against petrol
+// Step 4: next days exact, 12 months as an estimate, marginal price against petrol
 function opSel(i) { ev.fcm = +i; store.set('efp_ev', ev); evAll(); $id('op-b' + i)?.focus(); }
 function opRender() {
   const el = $id('op-card'); if (!el || !carPanelOpen() || car.type !== 'phev') return;
   epLoad();
-  const nt = k => `<p class="ev-note">${esc(t(k))}</p>`;
-  let h = `<h3>${esc(t('opTitle'))}</h3>`;
+  const nt = k => `<p class="ev-note">${esc(t(k))}</p>`, rdy = ep.st === 'ok' && !!epArea();
+  let h = `<h3 class="mc-h" id="mc-h4"><span class="mc-n" aria-hidden="true">4</span><span>${esc(t('opTitle'))}</span><span class="mc-st ${rdy ? 'done' : ''}">${esc(t(rdy ? 'mcSt_ready' : 'mcSt_wait'))}</span></h3>${nt('mcS4i')}`;
   if (ep.st === 'idle' || ep.st === 'loading') h += nt('opLoading');
   else if (ep.st === 'none') h += nt('opNone');
   else if (!epArea()) h += `<p class="ev-note">${esc(t('opNoArea', { a: tf.area }))}</p>`;
@@ -3766,9 +4016,14 @@ function opRender() {
     const days = epDays(), kwh100 = carKwh100(evLoss()), ok = _evP && _evP.cur === TF_CUR && kwh100 > 0 && car.range > 0 && car.cons > 0;
     if (days.length) {
       const nH = Math.min(12, Math.max(1, Math.ceil((car.batt || 10) / ((car.eff || 90) / 100) / CHG_KW))), kwh = (car.batt || 10) / ((car.eff || 90) / 100), td = todayStr(), hh = i => String(i % 24).padStart(2, '0') + ':00';
-      const rows = days.map(d => { const w = elCheap(d.h, nH, d.date === td ? new Date().getHours() + 1 : 0); if (!w) return ''; const p = tfMarginal(tf, w.mean, d.date.slice(0, 7)), avg = d.h.reduce((s, x) => s + x, 0) / d.h.length;
-        return `<tr><td>${esc(new Date(d.date + 'T12:00:00').toLocaleDateString(lang, { weekday: 'short', day: 'numeric', month: 'short' }))}<br><span class="ev-note" style="margin:0">${esc(hh(w.start) + '-' + hh(w.end))}</span></td><td>${esc(money(p, TF_CUR))}</td><td>${esc(cTxt(p * kwh, TF_CUR, 0))}</td></tr>`; }).join('');
-      if (rows) h += `<label>${esc(t('opDays'))}</label><p class="ev-note" style="margin-top:2px">${esc(t('opCheap', { h: nH }))}</p><table class="ev-tbl wide"><tr><th></th><th>${esc(t('opPerKwh'))}</th><th>${esc(t('opFull', { k: Math.round(kwh) }))}</th></tr>${rows}</table>`;
+      const pm = [], rows = days.map(d => { const w = elCheap(d.h, nH, d.date === td ? new Date().getHours() + 1 : 0); if (!w) return ''; const p = tfMarginal(tf, w.mean, d.date.slice(0, 7)); pm.push(p);
+        return `<p class="ev-note"><b>${esc(new Date(d.date + 'T12:00:00').toLocaleDateString(lang, { weekday: 'long', day: 'numeric', month: 'short' }))}</b>: ${esc(t('opWin', { a: hh(w.start), b: hh(w.end), p: money(p, TF_CUR), k: Math.round(kwh), c: cTxt(p * kwh, TF_CUR, 0) }))}</p>`; }).join('');
+      if (rows) {
+        const own = car.elec > 0 && (car.elecCur || TF_CUR) === TF_CUR ? car.elec : null, lo = Math.min(...pm), be = ok ? car.cons * _evP.avg / kwh100 : null;
+        h += `<span class="mc-lbl">${esc(t('opDays'))}</span>${nt('opDaysI')}${rows}${nt('opWhy')}`
+          + (own != null && Math.abs(lo - own) >= 0.005 ? `<p class="ev-note">${esc(t(lo > own ? 'opYouMore' : 'opYouLess', { u: money(own, TF_CUR), d: money(Math.abs(lo - own), TF_CUR) }))}</p>` : '')
+          + (be != null && lo > be ? `<p class="ev-note ev-warn">${esc(t('opAbove', { b: money(be, TF_CUR) }))}</p>` : '') + mcQ('spot');
+      }
     }
     const rs = epRows();
     if (rs) {
@@ -3779,19 +4034,19 @@ function opRender() {
         if (ok && r.p) { const mo = +r.ym.slice(5), b = phevBand({ range: car.range * RT_REAL, kwh100, cons: car.cons, pKwh: r.p.mean, pL: _evP.avg, D }, tmpYears(mo)); if (b) { r.drive = b.day * new Date(+r.ym.slice(0, 4), mo, 0).getDate(); yr += r.drive; } }
         if (r.drive == null) yrOk = false;
       }
-      h += `<label>${esc(t('opMonths'))}</label><ul class="op-bars">${rs.map((r, i) => `<li><button type="button" id="op-b${i}" aria-pressed="${i === sel}" onclick="opSel(${i})"><span class="op-m">${esc(monLabel(r.ym))}</span>`
-        + (r.p ? `<span class="op-bar" title="${esc(money(r.p.low, TF_CUR) + ' - ' + money(r.p.high, TF_CUR))}"><i style="left:${(r.p.low / mx * 100).toFixed(1)}%;width:${Math.max(1, (r.p.high - r.p.low) / mx * 100).toFixed(1)}%"></i><b style="left:${(r.p.mean / mx * 100).toFixed(1)}%"></b></span><span class="op-v">${esc(money(r.p.mean, TF_CUR))}</span>`
+      h += `<span class="mc-lbl">${esc(t('opMonths'))}</span><ul class="op-bars">${rs.map((r, i) => `<li><button type="button" id="op-b${i}" aria-pressed="${i === sel}" onclick="opSel(${i})"><span class="op-m">${esc(monLabel(r.ym))}</span>`
+        + (r.p ? `<span class="op-bar" aria-hidden="true"><i style="left:${(r.p.low / mx * 100).toFixed(1)}%;width:${Math.max(1, (r.p.high - r.p.low) / mx * 100).toFixed(1)}%"></i><b style="left:${(r.p.mean / mx * 100).toFixed(1)}%"></b></span><span class="op-v">${esc(money(r.p.mean, TF_CUR))}</span>`
           : `<span class="ev-note" style="margin:0">${esc(t('opMonthsNo'))}</span><span></span>`) + '</button></li>').join('')}</ul>`
-        + `<p class="ev-note">${esc(t('opEst', { n: Math.max(...rs.map(r => r.n)) }))}</p>`;
+        + `<p class="ev-note">${esc(t('opEst', { n: Math.max(...rs.map(r => r.n)) }) + ' ' + t('opEstWhy'))}</p>`;
       const s = rs[sel];
-      if (s?.p) h += `<p class="ev-note"><b>${esc(monLabel(s.ym, true))}</b>: ${esc(money(s.p.mean, TF_CUR))} (${esc(money(s.p.low, TF_CUR))} - ${esc(money(s.p.high, TF_CUR))}) / kWh incl. VAT.` + (s.known ? ' ' + esc(t('opPart', { k: s.known, n: s.dim })) : '')
+      if (s?.p) h += `<p class="ev-note"><b>${esc(monLabel(s.ym, true))}</b>: ${esc(t('opSel', { a: money(s.p.mean, TF_CUR), l: money(s.p.low, TF_CUR), h: money(s.p.high, TF_CUR) }))}` + (s.known ? ' ' + esc(t('opPart', { k: s.known, n: s.dim })) : '')
         + (s.drive != null ? ' ' + esc(t('opDrive', { d: D, c: cTxt(s.drive, TF_CUR, 0), m: monLabel(s.ym, true) })) : '') + '</p>';
       if (yrOk) h += `<p class="ev-note"><b>${esc(t('opYear', { c: cTxt(yr, TF_CUR, 0), d: D }))}</b></p>`;
     }
-    h += `<label>${esc(t('opTbl'))}</label><table class="ev-tbl wide"><tr><th>${esc(t('opSpot'))}</th><th>${esc(t('opPerKwh'))}</th>${kwh100 > 0 ? `<th>${esc(t('opPer100'))}</th>` : ''}</tr>`
+    h += mcQ('whatif', `<table class="ev-tbl wide"><tr><th>${esc(t('opSpot'))}</th><th>${esc(t('opPerKwh'))}</th>${kwh100 > 0 ? `<th>${esc(t('opPer100'))}</th>` : ''}</tr>`
       + [0.3, 0.6, 1, 1.5, 2].map(sp => { const p = tfMarginal(tf, sp, nowYM()), c = kwh100 > 0 ? p * kwh100 : null, pet = ok ? car.cons * _evP.avg : null;
-        return `<tr><td>${esc(money(sp, TF_CUR))}</td><td>${esc(money(p, TF_CUR))}</td>${c != null ? `<td${pet != null ? ` style="color:${c < pet ? 'var(--ok-t)' : 'var(--bad-t)'}"` : ''}>${esc(cTxt(c, TF_CUR, 0))}</td>` : ''}</tr>`; }).join('') + '</table>';
-    if (ok) h += `<p class="ev-note">${esc(t('opBreak', { p: money(_evP.avg, TF_CUR), s: money(tfSpotFor(tf, car.cons * _evP.avg / kwh100, nowYM()), TF_CUR) }))}</p>`;
+        return `<tr><td>${esc(money(sp, TF_CUR))}</td><td>${esc(money(p, TF_CUR))}</td>${c != null ? `<td${pet != null ? ` style="color:${c < pet ? 'var(--ok-t)' : 'var(--bad-t)'}"` : ''}>${esc(cTxt(c, TF_CUR, 0))}</td>` : ''}</tr>`; }).join('') + '</table>'
+      + (ok ? `<p>${esc(t('opBreak', { p: money(_evP.avg, TF_CUR), s: money(tfSpotFor(tf, car.cons * _evP.avg / kwh100, nowYM()), TF_CUR) }))}</p>` : ''));
     h += `<p class="ev-note">${esc(t('opSrc', { s: String(ep.j.source || 'elprisetjustnu.se').slice(0, 60), a: tf.area, d: String(ep.j.updated || '').slice(0, 10) || '-' }))}</p>`;
   }
   el.innerHTML = h;
@@ -3819,21 +4074,23 @@ function vehBuild() {
   const hy = j.hyundai || [], on = v => v.type === 'ev' || v.type === 'hydrogen';
   sel.innerHTML = `<option value="">${esc(t('vehCustom'))}</option>`
     + grp(t('vehPetrol'), j.categories?.petrol || []) + grp(t('vehDiesel'), j.categories?.diesel || []) + grp(t('vehPhev'), j.categories?.phev || [])
-    + grp(t('vehHyundai'), hy.filter(v => !on(v))) + grp(t('vehElec2'), hy.filter(on), true);
+    + grp(t('vehHyundai'), hy.filter(v => !on(v))) + grp(t('vehElec2'), hy.filter(on));
   if (q && !sel.querySelector('optgroup')) sel.innerHTML += `<option value="" disabled>${esc(t('vehNone'))}</option>`;
   sel.value = car.veh && _veh.by[car.veh] && ok(_veh.by[car.veh]) ? car.veh : '';
   vehNote();
 }
+let _vehNo = null;       // electric-only / fuel-cell model the driver picked: nothing is applied, the note and the answer card say why
 function vehNote() {
   const v = car.veh && _veh?.by[car.veh], el = $id('veh-note'); if (!el) return;
+  if (_vehNo) { el.textContent = t('mcBev', { m: vehName(_vehNo) }); return; }
   if (!v) { el.textContent = ''; return; }
   let host = ''; try { host = new URL(v.source).hostname.replace(/^www\./, ''); } catch (_) {}
-  el.textContent = t('vehExample', { s: host || '—' }) + (v.confidence === 'low' ? ' ' + t('vehApprox') : '');
+  el.textContent = t('vehExample') + (host ? ' ' + t('vehSrc', { s: host }) : '') + (v.confidence === 'low' ? ' ' + t('vehApprox') : '');
 }
 function vehPick(id) {
-  const v = _veh?.by[id];
-  if (!v) { delete car.veh; store.set('efp_car', car); vehNote(); return; }
-  if (v.type !== 'petrol' && v.type !== 'diesel' && v.type !== 'phev') return;
+  const v = _veh?.by[id]; _vehNo = null;
+  if (!v) { delete car.veh; store.set('efp_car', car); vehNote(); mcSummary(); return; }
+  if (v.type !== 'petrol' && v.type !== 'diesel' && v.type !== 'phev') { _vehNo = v; vehBuild(); mcSummary(); return; }   // vehBuild puts the select back on the saved car
   carSet('type', v.type);
   if (v.tank_l) carSet('tank', v.tank_l);
   for (const [k, f] of [['cons', 'cons_l100'], ['batt', 'battery_kwh'], ['range', 'range_km']]) { if (v[f]) carSet(k, v[f]); else delete car[k]; }
@@ -3861,7 +4118,7 @@ function setTank(n) {
   rebuildList();
   if (activeTab === 'stations' && myLat != null) showNearby();
 }
-function syncTankUi() { document.querySelectorAll('#tank-row button').forEach(b => b.classList.toggle('on', +b.dataset.l === tank)); }
+function syncTankUi() { document.querySelectorAll('#tank-row button').forEach(b => { const on = !!car.tank && +b.dataset.l === tank; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); }
 
 function findStation(id) {
   const cc = String(id).slice(0, 2).toUpperCase();
