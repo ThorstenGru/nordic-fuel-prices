@@ -1,4 +1,6 @@
-# Germany source outreach: drafts (NOT sent)
+# Germany source outreach
+
+Status: all three emails SENT by the owner on 2026-11-06 (MTS-K, Tankerkönig, TankPuls). Awaiting replies; paste them into the session to update the plan. Texts below are the drafts as sent (approximately).
 
 Send from the owner's own address. Tone: professional and polite. Edit before sending.
 
