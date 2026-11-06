@@ -32,7 +32,7 @@
   script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
   img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de;
+  connect-src 'self' https://router.project-osrm.org https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -499,8 +499,9 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .brand-card { background:var(--surf2); border:1px solid var(--line); border-radius:var(--r-l); padding:14px 16px; margin:2px 0 6px; }
 .brand-card img { display:block; height:36px; width:auto; max-width:100%; }
 .brand-card p { margin-top:8px; font-size:.78rem; color:var(--sub); line-height:1.45; }
-:root[data-theme="dark"] .brand-card img, :root[data-theme="dark"] .trust-logo, :root[data-theme="dark"] #brandbar img, :root[data-theme="dark"] #start .st-logo { background:#F8FAFC; padding:6px 10px; border-radius:var(--r-s); box-sizing:content-box; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .brand-card img, :root:not([data-theme="light"]) .trust-logo, :root:not([data-theme="light"]) #brandbar img, :root:not([data-theme="light"]) #start .st-logo { background:#F8FAFC; padding:6px 10px; border-radius:var(--r-s); box-sizing:content-box; } }
+/* dark mode: swap to the light-ink logo variant (same size, no white box) */
+:root[data-theme="dark"] .brand-card img, :root[data-theme="dark"] .trust-logo, :root[data-theme="dark"] #brandbar img, :root[data-theme="dark"] #start .st-logo { content:url(logo-dark.svg); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .brand-card img, :root:not([data-theme="light"]) .trust-logo, :root:not([data-theme="light"]) #brandbar img, :root:not([data-theme="light"]) #start .st-logo { content:url(logo-dark.svg); } }
 .flg { display:inline-block; height:15px; width:auto; max-width:22px; border-radius:2px; vertical-align:-2px; box-shadow:0 0 0 1px rgba(0,0,0,.16); object-fit:cover; }
 .lang-btn .flg { vertical-align:-3px; margin-right:3px; }
 .install-row { width:100%; margin-top:14px; }
@@ -1221,12 +1222,12 @@ Object.assign(I18N.sv, { tabTrip:'Resa', tabCar:'Min bil', segPrices:'Priser', s
   cheapView:'Billigast i vyn', lgBands:'Prisband på kartan', startPromise:'Hitta billigaste bränslet nära dig.', startSub:'Livepriser från officiella källor i hela Europa. Varje pris visar varifrån det kommer och hur gammalt det är.',
   startNearby:'Nära mig', startSkip:'Hoppa över', startTip:'Tips: kortet längst ner på kartan visar billigaste stationen i vyn.', fullMethod:'Fullständig metod', distAway:'{d} bort' });
 Object.assign(I18N.en, { noPriceRep:'No price reported', vehSet:'Set your car for cost estimates', vehNoPrice:'No price for your fuel at this station.', vehFuel:'100 km on fuel here: {v}', vehElec:'100 km electric: {v}', vehMore:'Add consumption in My car for cost estimates',
-  actReport:'Report', nbTitle:'Other options nearby', nbSame:'same price', facTitle:'Nearby facilities', facErr:'Could not load facilities right now.', facNone:'Nothing found within 200 m.', fac_food:'Food & drink', fac_shops:'Shops', fac_toilets:'Toilets',
+  actReport:'Report', nbTitle:'Other options nearby', nbSame:'same price', facTitle:'Nearby facilities', facErr:'Could not load facilities: the map data service is slow or busy.', facRetry:'Try again', facNone:'Nothing found within 200 m.', fac_food:'Food & drink', fac_shops:'Shops', fac_toilets:'Toilets',
   fk_cafe:'Cafe', fk_restaurant:'Restaurant', fk_fast_food:'Fast food', fk_convenience:'Convenience store', fk_supermarket:'Supermarket', fk_kiosk:'Kiosk', fk_toilets:'Toilets',
   vehFind:'Find your car', vehSearch:'Search make or model', vehCustom:'Custom (enter values below)', vehNone:'No match - clear the search', vehPetrol:'Best sellers in Europe: Petrol (incl. hybrids)', vehDiesel:'Best sellers in Europe: Diesel', vehPhev:'Best sellers in Europe: Plug-in hybrid',
   vehHyundai:'Hyundai (all models)', vehElec2:'Electric: support planned', vehExample:'Example values (typical WLTP figures) from {s}: please adjust to your car.', vehApprox:'Some figures are approximate.' });
 Object.assign(I18N.sv, { noPriceRep:'Inget pris rapporterat', vehSet:'Ange din bil för kostnadsuppskattning', vehNoPrice:'Inget pris för ditt bränsle på den här stationen.', vehFuel:'100 km på bränsle här: {v}', vehElec:'100 km på el: {v}', vehMore:'Ange förbrukning under Min bil för kostnadsuppskattning',
-  actReport:'Rapportera', nbTitle:'Andra alternativ i närheten', nbSame:'samma pris', facTitle:'Faciliteter i närheten', facErr:'Det gick inte att hämta faciliteter just nu.', facNone:'Inget hittades inom 200 m.', fac_food:'Mat & dryck', fac_shops:'Butiker', fac_toilets:'Toaletter',
+  actReport:'Rapportera', nbTitle:'Andra alternativ i närheten', nbSame:'samma pris', facTitle:'Faciliteter i närheten', facErr:'Det gick inte att hämta faciliteter: korttjänsten är långsam eller upptagen.', facRetry:'Försök igen', facNone:'Inget hittades inom 200 m.', fac_food:'Mat & dryck', fac_shops:'Butiker', fac_toilets:'Toaletter',
   fk_cafe:'Kafé', fk_restaurant:'Restaurang', fk_fast_food:'Snabbmat', fk_convenience:'Närbutik', fk_supermarket:'Stormarknad', fk_kiosk:'Kiosk', fk_toilets:'Toalett',
   vehFind:'Hitta din bil', vehSearch:'Sök märke eller modell', vehCustom:'Egen (ange värden nedan)', vehNone:'Ingen träff - rensa sökningen', vehPetrol:'Storsäljare i Europa: Bensin (inkl. hybrider)', vehDiesel:'Storsäljare i Europa: Diesel', vehPhev:'Storsäljare i Europa: Laddhybrid',
   vehHyundai:'Hyundai (alla modeller)', vehElec2:'Elbil: stöd planeras', vehExample:'Exempelvärden (typiska WLTP-siffror) från {s}: justera efter din bil.', vehApprox:'Vissa uppgifter är ungefärliga.' });
@@ -1239,6 +1240,14 @@ let lang = (function () {
   const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
   return I18N[nav] ? nav : 'en';
 })();
+
+const CN_EN = { ...CNAMES };
+function localizeCN() {   // country names in the UI language (Intl.DisplayNames); English table is the fallback
+  Object.assign(CNAMES, CN_EN);
+  if (lang === 'en') return;
+  try { const dn = new Intl.DisplayNames([lang], { type:'region', fallback:'none' }); for (const c in CN_EN) CNAMES[c] = dn.of(c) || CN_EN[c]; } catch (_) {}
+}
+localizeCN();
 
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
@@ -1260,9 +1269,11 @@ function setLang(l) {
   if (!I18N[l]) return;
   lang = l;
   try { localStorage.setItem('efp_lang', l); } catch (_) {}
+  localizeCN(); buildSelects();
   applyStaticI18n();
   updStatus();
   if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); updPeek(_peekBest); }
+  if (typeof vehBuild === 'function') vehBuild();
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'stations' && myLat != null) showNearby();
 }
@@ -1355,15 +1366,16 @@ let   activeTab = 'map';
 // ════════════════════════════════════════════════════
 // Country select builder
 // ════════════════════════════════════════════════════
-(function buildSelects() {
+function buildSelects() {
   const opts = `<option value="" data-i18n="allCountries">${t('allCountries')}</option>` +
     Object.entries(CNAMES).sort(([,a],[,b]) => a.localeCompare(b))
       .map(([cc,n]) => `<option value="${cc}">${FLAGE[cc]||''} ${n}</option>`).join('');
   ['mobCountry'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = opts;
+    if (el) { const v = el.value; el.innerHTML = opts; el.value = v; }
   });
-})();
+}
+buildSelects();
 
 // ════════════════════════════════════════════════════
 // Helpers
@@ -1817,26 +1829,29 @@ function renderBubbles() {
 const REG_ZOOM = 9;
 const regSize = z => z <= 4 ? 3 : z === 5 ? 1.5 : z === 6 ? 1 : z === 7 ? 0.5 : 0.25;
 const _reg = new Map();
+// one fuel for every region tag: the active chip, else the car profile's fuel, else petrol 95
+const regFuel = () => fFuel || ({ diesel:'DIESEL', petrol:'P95', phev:'P95' })[(store.get('efp_car', {}) || {}).type] || 'P95';
 function regCells(cc, size) {
-  const cv = _cv[cc] | 0, k = cc + '|' + size + '|' + _sig + '|' + cv;
+  const rf = regFuel(), cv = _cv[cc] | 0, k = cc + '|' + size + '|' + _sig + '|' + rf + '|' + cv;
   let g = _reg.get(k); if (g) return g;
   for (const [kk, v] of _reg) if (v.cc === cc && (v.sig !== _sig || v.cv !== cv)) _reg.delete(kk);
   g = new Map(); g.cc = cc; g.sig = _sig; g.cv = cv;
   for (const s of data[cc]) {
     if (!s.lat || !s.lon) continue;
     lvl(s);
-    if (!s._cp || s._sus) continue;
+    const cp = minOf(s, rf);
+    if (!cp || suspectLow(s.country, cp)) continue;
     const key = (Math.floor(s.lat / size) + 1000) * 100000 + Math.floor(s.lon / size) + 1000;
     const c = g.get(key);
-    if (!c) g.set(key, { s, n:1 }); else { c.n++; if (s._cp.price < c.s._cp.price) c.s = s; }
+    if (!c) g.set(key, { s, cp, n:1 }); else { c.n++; if (cp.price < c.cp.price) { c.s = s; c.cp = cp; } }
   }
   _reg.set(k, g);
   return g;
 }
 function mkRegMarker(c, col, size) {
-  const s = c.s, cp = s._cp, ub = col || 'var(--line)';
+  const s = c.s, cp = c.cp, ub = col || 'var(--line)';
   const m = L.marker([s.lat, s.lon], { icon: L.divIcon({ className:'', iconSize:[30, 30], iconAnchor:[15, 15],
-    html:`<div class="mk reg"><div class="dot" style="width:8px;height:8px;background:${ub}"></div><span class="lbl"><span>${fFuel ? '' : `<em>${isP95(cp) ? '95' : isP98(cp) ? '98' : cp.fuel_type === 'DIESEL' ? 'D' : esc(cp.fuel_type)}</em>`}<b>${cp.price.toFixed(2)}</b></span><i style="--ub:${ub}"></i></span></div>` }), riseOnHover:false });
+    html:`<div class="mk reg"><div class="dot" style="width:8px;height:8px;background:${ub}"></div><span class="lbl"><span><em>${isP95(cp) ? '95' : isP98(cp) ? '98' : cp.fuel_type === 'DIESEL' ? 'D' : esc(cp.fuel_type)}</em><b>${cp.price.toFixed(2)}</b></span><i style="--ub:${ub}"></i></span></div>` }), riseOnHover:false });
   m.on('click', () => {
     const lat0 = Math.floor(s.lat / size) * size, lon0 = Math.floor(s.lon / size) * size, b = L.latLngBounds([lat0, lon0], [lat0 + size, lon0 + size]);
     map.setView(b.getCenter(), Math.min(Math.max(map.getBoundsZoom(b), map.getZoom() + 1), REG_ZOOM + 1));
@@ -1852,8 +1867,8 @@ function regVisible(bd, z, pk, vb) {
     const r = fx(cc);
     for (const c of regCells(cc, size).values()) {
       const s = c.s; if (!bd.contains([s.lat, s.lon])) continue;
-      out.push({ c, eur: r ? s._cp.price * r : null });
-      if (vb.contains([s.lat, s.lon])) { const o = pk[s._cp.currency] || (pk[s._cp.currency] = { n:0, s:null, p:Infinity }); o.n += c.n; if (s._cp.price < o.p) { o.p = s._cp.price; o.s = s; } }
+      out.push({ c, eur: r ? c.cp.price * r : null });
+      if (vb.contains([s.lat, s.lon])) { const o = pk[c.cp.currency] || (pk[c.cp.currency] = { n:0, s:null, p:Infinity }); o.n += c.n; if (c.cp.price < o.p) { o.p = c.cp.price; o.s = s; o.cp = c.cp; } }
     }
   }
   const v = out.filter(x => x.eur != null).map(x => x.eur).sort((a, b) => a - b);
@@ -1872,14 +1887,14 @@ function renderMarkers() {
   const n = bd.getNorth(), so = bd.getSouth(), w = bd.getWest(), e = bd.getEast();
   const cell = z >= NOCLUSTER_ZOOM ? 0 : z >= CLUSTER_ZOOM ? CELL_PX_NEAR : CELL_PX;
   const world = 256 * Math.pow(2, z);
-  const cells = new Map(), singles = [], reg = z < REG_ZOOM;
+  const cells = new Map(), singles = [], muted = [], reg = z < REG_ZOOM;
   if (!reg) for (const cc in data) {
     if (fCountry && cc !== fCountry) continue;
     const bb = CB[cc]; if (bb && !bd.intersects(bb)) continue;
     for (const s of data[cc]) {
       const la = s.lat, lo = s.lon;
       if (!la || !lo || la > n || la < so || lo < w || lo > e) continue;
-      if (fFuel && !matches(s)) continue;
+      if (fFuel && !s.prices?.some(p => inFuel(p, fFuel))) { if (z >= 12) muted.push(lvl(s)); continue; }   // no price for the chosen fuel: not ranked or clustered, but findable as a muted dot when zoomed in
       lvl(s);
       if (s._cp && !s._sus && la <= vn && la >= vs && lo >= vw && lo <= ve) { const o = pk[s._cp.currency] || (pk[s._cp.currency] = { n:0, s:null, p:Infinity }); o.n++; if (s._cp.price < o.p) { o.p = s._cp.price; o.s = s; } }
       if (!cell) { singles.push(s); continue; }
@@ -1899,7 +1914,7 @@ function renderMarkers() {
   if (reg) {
     const { out, size } = regVisible(bd, z, pk, vb);
     for (const { c, col } of out) {
-      const k = 'r|' + c.s.id + '|' + size + '|' + _sig + '|' + (_cv[c.s.country] | 0) + '|' + col + '|' + c.s._cp.price;
+      const k = 'r|' + c.s.id + '|' + size + '|' + _sig + '|' + (_cv[c.s.country] | 0) + '|' + col + '|' + c.cp.price + '|' + regFuel();
       regKey.set(c.s.id, k); add(k, () => mkRegMarker(c, col, size));
     }
   } else if (cell) {
@@ -1915,6 +1930,7 @@ function renderMarkers() {
     }
     for (const s of list) add(sk(s), () => mkMarker(s));
   }
+  if (!reg) for (const s of muted.slice(0, 400)) add(sk(s), () => mkMarker(s));
   for (const [k, m] of shown) if (!want.has(k)) viewLayer.removeLayer(m);
   for (const [k, m] of want) if (!shown.has(k)) viewLayer.addLayer(m);
   shown = want;
@@ -1959,7 +1975,7 @@ function pickBest(pk) {
   const cur = cc && (metaOf[cc]?.currency || metaCountries.find(c => c.country === cc)?.currency);
   let o = cur ? pk[cur] : null;
   if (!o) for (const k in pk) if (!o || pk[k].n > o.n) o = pk[k];
-  return o && o.s ? { s:o.s, p:o.s._cp, n:o.n } : null;
+  return o && o.s ? { s:o.s, p:o.cp || o.s._cp, n:o.n } : null;
 }
 // ONE peek card: "Cheapest in view" (hidden while a sheet is open or nothing is priced in view)
 function updPeek(best) {
@@ -2173,23 +2189,29 @@ function toggleFac(btn, id) {
   body.hidden = !open; btn.setAttribute('aria-expanded', String(open));
   if (open && !body.dataset.done && !body.dataset.busy) loadFac(findStation(id), body);
 }
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
 const FAC_G = [['food', ['cafe', 'restaurant', 'fast_food']], ['shops', ['convenience', 'supermarket', 'kiosk']], ['toilets', ['toilets']]];
 async function loadFac(s, body) {
   if (!s) return;
   if (!_fac.has(s.id)) {
     body.innerHTML = `<p class="empty">${esc(t('loadingEllipsis'))}</p>`; body.dataset.busy = '1';
-    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 8000);
+    const t0 = Date.now();
     try {
       const q = `[out:json][timeout:6];(nwr(around:200,${s.lat},${s.lon})[amenity~"^(cafe|restaurant|fast_food|toilets)$"];nwr(around:200,${s.lat},${s.lon})[shop~"^(convenience|supermarket|kiosk)$"];);out center tags 60;`;
-      const r = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:ac.signal });
-      if (!r.ok) throw new Error(r.status);
+      let r = null;
+      for (let i = 0; i < OVERPASS.length && !(r && r.ok); i++) {   // 8 s budget in total: first mirror gets 4.5 s, the second the rest
+        const left = 8000 - (Date.now() - t0); if (left < 800) break;
+        const ac = new AbortController(), to = setTimeout(() => ac.abort(), i ? left : Math.min(left, 4500));
+        try { r = await fetch(OVERPASS[i], { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:ac.signal }); } catch (_) { r = null; } finally { clearTimeout(to); }
+      }
+      if (!r || !r.ok) throw new Error('overpass');
       const j = await r.json();
       _fac.set(s.id, (j.elements || []).map(e => {
         const la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon, tg = e.tags || {};
         return la == null ? null : { n: tg.name || '', k: tg.amenity || tg.shop, d: dist(s.lat, s.lon, la, lo) };
       }).filter(Boolean).sort((a, b) => a.d - b.d));
-    } catch (_) { body.innerHTML = `<p class="empty">${esc(t('facErr'))}</p>${ATTR_OSM}`; return; }
-    finally { clearTimeout(to); delete body.dataset.busy; }
+    } catch (_) { body.innerHTML = `<p class="empty">${esc(t('facErr'))}</p><button type="button" class="st-go" style="width:100%" onclick="loadFac(findStation('${escId(s.id)}'), this.parentNode)">${esc(t('facRetry'))}</button>${ATTR_OSM}`; return; }
+    finally { delete body.dataset.busy; }
   }
   const items = _fac.get(s.id);
   const h = FAC_G.map(([g, ks]) => {

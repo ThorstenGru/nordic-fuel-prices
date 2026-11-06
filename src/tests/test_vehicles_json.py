@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 
 PATH = Path(__file__).resolve().parents[2] / "web" / "vehicles.json"
-# Shortfall: no public Europe-wide source gives 20 PHEVs (only 16 candidates found, 10 ranked).
-EXPECTED = {"petrol": 20, "diesel": 20, "phev": 16}
+# PHEV list: 10 ranked (Europe 2025) + 10 candidates without a published rank.
+EXPECTED = {"petrol": 20, "diesel": 20, "phev": 20}
 FIELDS = {"id", "make", "model", "variant", "type", "hybrid", "rank", "tank_l", "cons_l100",
           "battery_kwh", "range_km", "ev_kwh100", "confidence", "source", "notes"}
 
