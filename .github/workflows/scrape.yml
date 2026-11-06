@@ -59,6 +59,14 @@ jobs:
           ALLOW_SHRINK: ${{ inputs.allow_shrink }}
         run: python src/main.py
 
+      - name: Electricity prices (data/elpris.json; never fails the run, keeps last good file)
+        continue-on-error: true
+        run: python src/elpris.py
+
+      - name: Keep last good elpris.json if this run produced none
+        continue-on-error: true
+        run: test -f data/elpris.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/elpris.json -o data/elpris.json || rm -f data/elpris.json
+
       - name: Copy web files to data dir
         run: cp -r web/* data/
 

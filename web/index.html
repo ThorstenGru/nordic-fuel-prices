@@ -32,7 +32,7 @@
   script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
   img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems;
+  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com https://archive-api.open-meteo.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -505,6 +505,25 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .car-card .ev-link, .ev-link { background:none; border:none; padding:0; font:inherit; color:var(--acc-t); text-decoration:underline; cursor:pointer; }
 /* petrol or electricity */
 .ev-box { margin-top:14px; }
+#tf-card > summary { cursor:pointer; font-size:1rem; font-weight:800; padding:12px 0 8px; font-family:var(--f-disp); color:var(--ink); }
+#tf-card[open] > summary { padding-bottom:0; }
+.ev-sub { font-family:var(--f-disp); font-weight:800; font-size:.9rem; color:var(--ink); margin:14px 0 2px; }
+.ev-how { margin-top:10px; font-size:.74rem; color:var(--sub); line-height:1.5; }
+.ev-how summary { cursor:pointer; font-weight:700; color:var(--ink); padding:6px 0; min-height:24px; }
+.ev-how p { margin:6px 0 0; }
+.ev-tbl.wide th, .ev-tbl.wide td { padding-left:6px; }
+.ev-tbl.wide th:first-child, .ev-tbl.wide td:first-child { padding-left:0; }
+.op-bars { list-style:none; margin:8px 0 0; padding:0; }
+.op-bars li { margin:0; }
+.op-bars button { display:grid; grid-template-columns:3.6rem 1fr auto; gap:8px; align-items:center; width:100%; background:none; border:0; border-top:1px solid var(--line); padding:7px 0; min-height:40px; cursor:pointer; text-align:left; color:var(--sub); font:inherit; font-size:.76rem; }
+.op-bars button[aria-pressed=true] { color:var(--ink); font-weight:700; }
+.op-bars button[aria-pressed=true] .op-m { text-decoration:underline; text-decoration-color:var(--acc); text-underline-offset:3px; }
+.op-bar { position:relative; height:12px; background:var(--surf); border-radius:3px; }
+.op-bar i { position:absolute; top:0; bottom:0; border-radius:3px; background:var(--acc-soft); border:1px solid var(--acc); box-sizing:border-box; }
+.op-bar b { position:absolute; top:-2px; bottom:-2px; width:3px; margin-left:-1px; background:var(--acc-t); border-radius:2px; }
+.op-v { font-family:var(--f-disp); font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap; }
+.ev-in2 { display:flex; gap:8px; align-items:center; margin-top:6px; }
+.ev-in2 input { max-width:7.5rem; }
 .ev-verdict { margin-top:12px; padding:12px 14px; border-radius:var(--r-m); background:var(--surf); border:1px solid var(--line); }
 .ev-verdict.e { background:var(--acc-soft); border-color:var(--acc); }
 .ev-verdict .ev-h { font-family:var(--f-disp); font-weight:800; font-size:1.05rem; color:var(--ink); }
@@ -830,8 +849,15 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <section class="car-box ev-box" id="ev-card">
       <h3 data-i18n="evTitle">Petrol or electricity?</h3>
       <div id="ev-v" aria-live="polite"></div>
+      <div id="ev-mix"></div>
       <div id="ev-body"><div id="ev-in"></div><div id="ev-st"></div></div>
     </section>
+
+    <section class="car-box ev-box" id="op-card" hidden></section>
+    <details class="car-box ev-box" id="tf-card" hidden>
+      <summary data-i18n="tfTitle">My home electricity</summary>
+      <div id="tf-form"></div><div id="tf-out" aria-live="polite"></div>
+    </details>
 
     <label class="lbl-s" data-i18n="tankLabel">Tank size</label>
     <div class="tank-row" id="tank-row">
@@ -1394,6 +1420,84 @@ Object.assign(I18N.es, {
   rtNote:'Vista previa. Solo estimaciones: los desvíos son línea recta × 1,3, el alcance eléctrico se supone al 75 % de la cifra oficial y el ahorro se compara con la mediana de los surtidores cercanos. Los precios cambian: compruébalo en el surtidor. Los nombres de lugar que escribes se envían a OpenStreetMap (Nominatim) para encontrar las direcciones. Las coordenadas de origen y destino se envían a valhalla1.openstreetmap.de (FOSSGIS) para calcular la ruta; si ese servidor no responde, a router.project-osrm.org (servidor de demostración OSRM). No se envía nada más: tu perfil de coche y estos ajustes se quedan en tu navegador y no se envían a nosotros.'
 });
 
+// Home electricity tariff, price outlook, temperature + blended consumption (EN + SV written; privacy line in all five, the rest falls back to English)
+Object.assign(I18N.en, {
+  tfTitle:'My home electricity', tfIntro:'This is an example tariff (spot-price contract plus grid, price area SE4). Replace every number with the values from your own invoice. Saved on this device only.',
+  tfArea:'Price area', tfVar:'Retail variable costs (per kWh, ex VAT)', tfMarkup:'Retail markup (per kWh, ex VAT)', tfDisc:'Retail discount (per kWh, ex VAT)',
+  tfRetFee:'Retail monthly fee (ex VAT, when not waived)', tfDiscUntil:'Discount runs until', tfFeeUntil:'Retail fee waived until', tfTransfer:'Grid transfer (per kWh, ex VAT)', tfTax:'Energy tax (per kWh, ex VAT)', tfGrid:'Grid subscription (per month, ex VAT)',
+  tfVat:'VAT (%)', tfKwh:'Typical use at home (kWh per month)', tfReset:'Reset to example',
+  tfMarg:'One more kWh incl. VAT, at a spot price of {s} ex VAT ({w})', tfAll:'All-in average at {k} kWh a month: {v} per kWh incl. VAT and fixed fees.',
+  tfFixed:'Without spot price data only the fixed part is known: {v} per kWh incl. VAT on top of (spot + variable costs) × VAT.',
+  tfFormula:'Price of one more kWh = (spot + variable costs) × (1 + VAT) + (markup − discount + transfer + tax) × (1 + VAT). Monthly fees are not part of it; they only enter the all-in average.',
+  tfSpotNext:'average of the days published', tfSpotMonth:'average of {m}',
+  tfEnds:'The discount and the waived retail fee end after {d}: later months in the outlook are priced without them.', opPart:'Partly known: {k} of {n} days of this month are already priced and are blended with the estimate.',
+  evAtT:'Both sides at {t} °C.',
+  opTitle:'Electricity price outlook', opNone:'No price data yet. The file with Nord Pool based prices has not been published yet; this section fills in as soon as it is.',
+  opNoArea:'The price data has nothing for area {a}. Pick another area in My home electricity.', opLoading:'Loading prices…',
+  opDays:'Next days (exact day-ahead prices)', opCheap:'Cheapest {h} h window for a full charge', opFull:'Full charge ({k} kWh)',
+  opMonths:'Coming 12 months (estimate)', opEst:'Estimate, not a forecast of the market: the same calendar month over up to {n} past years, run through your tariff. The bar marks the average; the framed part is the usual range (the middle half of those years when there are four or more, otherwise cheapest to dearest).',
+  opMonthsNo:'no past data', opSrc:'Spot prices: {s}, area {a}, updated {d}.',
+  opTbl:'Price per kWh against petrol', opSpot:'Spot', opPerKwh:'Per kWh', opPer100:'Per 100 km',
+  opBreak:'With petrol at {p} per litre, driving on the battery only is cheaper than petrol up to a spot price of {s} per kWh.',
+  opDrive:'Driving {d} km a day: about {c} per month in {m}.', opYear:'Next 12 months: about {c} for driving {d} km a day (battery first, then petrol).',
+  evFc:'Forecast', evFcMonth:'Month', evFcNote:'Forecast for {m}: {p} per kWh incl. VAT. An estimate from past years.', evFcNone:'Forecast not available yet.',
+  mxTitle:'Realistic cost for your plug-in hybrid', mxTemp:'Outside temperature', mxAuto:'Automatic', mxManual:'Manual', mxTempIn:'Temperature (°C)', mxT:'{t} °C, {s}',
+  mxSrc_forecast:'forecast for today at your position', mxSrc_normal:'normal for this month at your position', mxSrc_manual:'set by you', mxSrc_none:'unknown',
+  mxNone:'No temperature yet, so no adjustment is applied.', mxPos:'Position used: {p} (rounded to 0.1 degree).', mxPosUpd:'Use current position',
+  mxPrivShort:'Automatic asks the weather service Open-Meteo. It receives your position rounded to 0.1 degree (the map centre if your position is not shared) and, like any web request, your IP address.', mxAllow:'Fetch the temperature',
+  mxTrip:'Trip', mxEl:'Electric', mxPet:'Petrol', mxCost:'Per 100 km', mxKm:'{k} km', mxL:'{l} L',
+  mxBand:'For 100 km the likely range is {lo} to {hi}.', mxByT:'A 100 km trip by outside temperature', mxDaily:'Typical km per day',
+  mxDay:'With {d} km a day the battery covers about {s} % of your km at {t} °C. About {m} per month now.', mxNeed:'To work out the mix, add: {x}.',
+  mxHow:'How this is calculated',
+  mxH1:'The electric range is taken as 75 % of the official (WLTP) figure at 20 °C, the same assumption as in the trip planner. Electric km are the smaller of the trip length and the electric range at the outside temperature. The rest is driven with the engine at the charge-sustaining consumption. The cost per 100 km is always the mix of both, never pure electric. Electricity is counted at the wall, charging loss included.',
+  mxH2:'Temperature: relative to that, the electric range is about 80 % at 0 °C and 75 % at -10 °C (the engine helps to heat the cabin and burns some petrol while the battery is still in use), and 100 % at 20 °C. Above 25 °C the air conditioning costs up to 18 % of the range. Once the battery is empty, petrol use is up to 20 % higher in deep cold.',
+  mxH3:'Uncertainty: the curve is an engineering estimate built from electric-car and plug-in tests, not measured on your car. Expect about ±5 % of range in mild weather and ±15 % below -10 °C. Speed, driving style, pre-heating while plugged in and seat heating are not included. Pre-heating from the grid is the biggest saving in winter.',
+  mxH4:'Typical day: if daily distances vary and you charge every night, the share of km driven on battery is 1 − exp(−range ÷ km per day). For the months ahead each day of the last 5 years goes through the curve and the days are then averaged. Where no history is available, one temperature is used for all months.',
+  rtTemp:'Temperature adjustment: {t} °C ({s}). Electric range, kWh and petrol use follow the same curve as in My car.'
+});
+Object.assign(I18N.sv, {
+  tfTitle:'Min el hemma', tfIntro:'Detta är ett exempelavtal (rörligt elpris plus nät, elområde SE4). Byt ut varje siffra mot värdena från din egen faktura. Sparas bara på den här enheten.',
+  tfArea:'Elområde', tfVar:'Rörliga kostnader hos elhandlaren (per kWh, exkl. moms)', tfMarkup:'Påslag hos elhandlaren (per kWh, exkl. moms)', tfDisc:'Rabatt hos elhandlaren (per kWh, exkl. moms)',
+  tfRetFee:'Månadsavgift elhandel (exkl. moms, när den inte är efterskänkt)', tfDiscUntil:'Rabatten gäller till', tfFeeUntil:'Månadsavgiften efterskänkt till', tfTransfer:'Elöverföring (per kWh, exkl. moms)', tfTax:'Energiskatt (per kWh, exkl. moms)', tfGrid:'Elnätsabonnemang (per månad, exkl. moms)',
+  tfVat:'Moms (%)', tfKwh:'Typisk förbrukning hemma (kWh per månad)', tfReset:'Återställ till exempel',
+  tfMarg:'En kWh till inkl. moms, vid ett spotpris på {s} exkl. moms ({w})', tfAll:'Snittpris all-in vid {k} kWh i månaden: {v} per kWh inkl. moms och fasta avgifter.',
+  tfFixed:'Utan spotprisdata är bara den fasta delen känd: {v} per kWh inkl. moms utöver (spot + rörliga kostnader) × moms.',
+  tfFormula:'Pris för en kWh till = (spot + rörliga kostnader) × (1 + moms) + (påslag − rabatt + överföring + skatt) × (1 + moms). Månadsavgifter ingår inte; de påverkar bara all-in-snittet.',
+  tfSpotNext:'snitt av de publicerade dagarna', tfSpotMonth:'snitt för {m}',
+  tfEnds:'Rabatten och den efterskänkta månadsavgiften upphör efter {d}: senare månader i utblicken prissätts utan dem.', opPart:'Delvis känd: {k} av {n} dagar i den här månaden är redan prissatta och vägs ihop med uppskattningen.',
+  evAtT:'Båda sidor vid {t} °C.',
+  opTitle:'Elprisutblick', opNone:'Inga prisdata ännu. Filen med Nord Pool-baserade priser är inte publicerad än; den här delen fylls i så fort den finns.',
+  opNoArea:'Prisdatan saknar elområde {a}. Välj ett annat område under Min el hemma.', opLoading:'Hämtar priser…',
+  opDays:'Kommande dagar (exakta priser för dagen före)', opCheap:'Billigaste fönstret på {h} h för full laddning', opFull:'Full laddning ({k} kWh)',
+  opMonths:'Kommande 12 månader (uppskattning)', opEst:'Uppskattning, ingen marknadsprognos: samma kalendermånad över upp till {n} tidigare år, räknad genom ditt avtal. Strecket visar snittet; den inramade delen är det vanliga spannet (mellersta hälften av åren när det finns fyra eller fler, annars billigaste till dyraste).',
+  opMonthsNo:'inga tidigare data', opSrc:'Spotpriser: {s}, område {a}, uppdaterad {d}.',
+  opTbl:'Pris per kWh jämfört med bensin', opSpot:'Spot', opPerKwh:'Per kWh', opPer100:'Per 100 km',
+  opBreak:'Med bensin för {p} per liter är det billigare att köra enbart på batteriet än på bensin upp till ett spotpris på {s} per kWh.',
+  opDrive:'Kör du {d} km om dagen: cirka {c} per månad i {m}.', opYear:'Kommande 12 månader: cirka {c} för {d} km om dagen (batteri först, sedan bensin).',
+  evFc:'Prognos', evFcMonth:'Månad', evFcNote:'Prognos för {m}: {p} per kWh inkl. moms. En uppskattning från tidigare år.', evFcNone:'Prognos finns inte ännu.',
+  mxTitle:'Realistisk kostnad för din laddhybrid', mxTemp:'Utetemperatur', mxAuto:'Automatisk', mxManual:'Manuell', mxTempIn:'Temperatur (°C)', mxT:'{t} °C, {s}',
+  mxSrc_forecast:'prognos för idag vid din position', mxSrc_normal:'normalt för månaden vid din position', mxSrc_manual:'angiven av dig', mxSrc_none:'okänd',
+  mxNone:'Ingen temperatur ännu, så ingen justering görs.', mxPos:'Position som används: {p} (avrundad till 0,1 grad).', mxPosUpd:'Använd aktuell position',
+  mxPrivShort:'Automatisk frågar vädertjänsten Open-Meteo. Den får din position avrundad till 0,1 grad (kartans mitt om din position inte delas) och, som vid alla webbanrop, din IP-adress.', mxAllow:'Hämta temperaturen',
+  mxTrip:'Resa', mxEl:'El', mxPet:'Bensin', mxCost:'Per 100 km', mxKm:'{k} km', mxL:'{l} L',
+  mxBand:'För 100 km är det troliga spannet {lo} till {hi}.', mxByT:'En resa på 100 km per utetemperatur', mxDaily:'Typisk körsträcka per dag',
+  mxDay:'Med {d} km om dagen täcker batteriet cirka {s} % av dina km vid {t} °C. Cirka {m} per månad just nu.', mxNeed:'För att räkna ut blandningen, fyll i: {x}.',
+  mxHow:'Så räknas det',
+  mxH1:'Elräckvidden räknas som 75 % av den officiella (WLTP) siffran vid 20 °C, samma antagande som i reseplaneraren. Elkilometer är det minsta av reslängden och elräckvidden vid utetemperaturen. Resten körs med motorn på förbrukningen utan laddning. Kostnaden per 100 km är alltid blandningen av båda, aldrig ren el. El räknas vid vägguttaget, laddförlust inräknad.',
+  mxH2:'Temperatur: i förhållande till det är elräckvidden cirka 80 % vid 0 °C och 75 % vid -10 °C (motorn hjälper till att värma kupén och drar lite bensin medan batteriet används) och 100 % vid 20 °C. Över 25 °C kostar luftkonditioneringen upp till 18 % av räckvidden. När batteriet är slut drar motorn upp till 20 % mer bensin i djup kyla.',
+  mxH3:'Osäkerhet: kurvan är en teknisk uppskattning byggd på tester av elbilar och laddhybrider, inte uppmätt på din bil. Räkna med cirka ±5 % av räckvidden i milt väder och ±15 % under -10 °C. Hastighet, körstil, förvärmning vid laddning och sätesvärme ingår inte. Förvärmning från nätet är den största besparingen på vintern.',
+  mxH4:'Typisk dag: om körsträckorna varierar och du laddar varje natt är andelen km på batteri 1 − exp(−räckvidd ÷ km per dag). För kommande månader går varje dag de senaste 5 åren genom kurvan och dagarna medelvärdesbildas. Finns ingen historik används en temperatur för alla månader.',
+  rtTemp:'Temperaturjustering: {t} °C ({s}). Elräckvidd, kWh och bensinförbrukning följer samma kurva som i Min bil.'
+});
+const TMP_PRIV = {
+  en:'Outside temperature comes from Open-Meteo (open-meteo.com, CC BY 4.0). The only data we send is your position, rounded to 0.1 degree (about 11 km); if your position is not shared, the centre of the map is used. Like any web request, it also shows your IP address and browser type to Open-Meteo, so the rounding does not hide where you are from them. Nothing is fetched until you tap Fetch the temperature; choose Manual and nothing is sent. The rounded position stays on this device until you tap Use current position. Results are kept on this device. Electricity prices come from our own data file, without your position.',
+  sv:'Utetemperaturen kommer från Open-Meteo (open-meteo.com, CC BY 4.0). Det enda vi skickar är din position avrundad till 0,1 grad (cirka 11 km); delas ingen position används kartans mitt. Som vid alla webbanrop ser Open-Meteo också din IP-adress och webbläsartyp, så avrundningen döljer inte var du är för dem. Inget hämtas förrän du trycker på Hämta temperaturen; välj Manuell så skickas ingenting. Den avrundade positionen sparas på enheten tills du trycker på Använd aktuell position. Resultaten sparas på den här enheten. Elpriserna kommer från vår egen datafil, utan din position.',
+  de:'Die Außentemperatur kommt von Open-Meteo (open-meteo.com, CC BY 4.0). Gesendet wird nur deine auf 0,1 Grad (etwa 11 km) gerundete Position (ohne geteilte Position der Kartenmittelpunkt); wie bei jeder Webanfrage sieht Open-Meteo außerdem deine IP-Adresse, die Rundung verbirgt also nicht, wo du bist. Abgerufen wird erst nach Tippen auf die Temperatur-Schaltfläche (Englisch: Fetch the temperature). Wähle Manuell, dann wird nichts gesendet. Die Ergebnisse bleiben auf diesem Gerät. Strompreise stammen aus unserer eigenen Datei, ohne deine Position.',
+  fr:'La température extérieure vient d’Open-Meteo (open-meteo.com, CC BY 4.0). Seule votre position, arrondie à 0,1 degré (environ 11 km), est envoyée (le centre de la carte si elle n’est pas partagée) ; comme pour toute requête web, Open-Meteo voit aussi votre adresse IP, l’arrondi ne masque donc pas où vous êtes. Rien n’est demandé avant d’appuyer sur le bouton de température (en anglais : Fetch the temperature). Choisissez Manuel et rien n’est envoyé. Les résultats restent sur cet appareil. Les prix de l’électricité viennent de notre propre fichier, sans votre position.',
+  es:'La temperatura exterior procede de Open-Meteo (open-meteo.com, CC BY 4.0). Solo se envía tu posición, redondeada a 0,1 grado (unos 11 km; el centro del mapa si no la compartes); como en cualquier petición web, Open-Meteo también ve tu dirección IP, así que el redondeo no oculta dónde estás. No se pide nada hasta pulsar el botón de temperatura (en inglés: Fetch the temperature). Elige Manual y no se envía nada. Los resultados se guardan en este dispositivo. Los precios de la electricidad vienen de nuestro propio archivo, sin tu posición.'
+};
+for (const l of Object.keys(TMP_PRIV)) I18N[l].mxPriv = TMP_PRIV[l];
+
 // v2.0 strings (EN + SV; DE/FR/ES fall back to English until translated)
 Object.assign(I18N.en, { tabTrip:'Trip', tabCar:'My car', segPrices:'Prices', segBorder:'Border run', moreFuels:'More', locateMe:'Use my location', zoomIn:'Zoom in', zoomOut:'Zoom out',
   cheapView:'Cheapest in view', lgBands:'Price bands on the map', startPromise:'Find the cheapest fuel near you.', startSub:'Live prices from official sources across Europe. Every price shows where it came from and how old it is.',
@@ -1453,7 +1557,7 @@ function setLang(l) {
   applyStaticI18n(); curUi();
   updStatus();
   if (typeof renderMarkers === 'function') { renderMarkers(); renderBubbles(); }
-  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); evRender(); updPeek(_peekBest); }
+  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); evAll(); updPeek(_peekBest); }
   if (typeof vehBuild === 'function') vehBuild();
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'stations' && myLat != null) showNearby();
@@ -3100,7 +3204,7 @@ function goTab(tab) {
   const pid = PANEL_MAP[tab];
   if (pid) { document.getElementById(pid)?.classList.add('open'); document.body.classList.add('sheet'); curPanel = document.getElementById(pid); setSheet(SHEET_DEFAULT[tab] || 'full'); }
 
-  if (tab === 'car') { vehLoad(); evRender(); }
+  if (tab === 'car') { vehLoad(); evAll(); }
   if (tab === 'stations') {
     rebuildList();
     if (myLat != null) showNearby();
@@ -3231,7 +3335,7 @@ function carInit() {
 }
 function carUi() {
   const ph = document.getElementById('car-phev'); if (ph) ph.style.display = car.type === 'phev' ? '' : 'none';
-  renderCarCard(); evRender();
+  renderCarCard(); evAll();
 }
 function carSet(k, raw) {
   if (k === 'batt' || k === 'range') delete car.kwh100;   // a manual edit makes the catalogue consumption stale
@@ -3284,8 +3388,9 @@ function renderCarCard() {
 // base = catalogue kWh/100 km (preferred: battery capacity is often gross); else battery / range, which overstates when the capacity is gross
 function evKwh100(batt, range, loss, base) { const b = base > 0 ? base : batt > 0 && range > 0 ? batt / range * 100 : 0; return b > 0 && loss > 0 ? b * loss : null; }
 function evCompare(o) {
-  const e100 = o.kwh100 > 0 && o.elec > 0 ? o.kwh100 * o.elec : null, p100 = o.cons > 0 && o.petrol > 0 ? o.cons * o.petrol : null;
-  const r = { elec100: e100, petrol100: p100, breakEven: o.kwh100 > 0 && p100 != null ? p100 / o.kwh100 : null, cheaper: null, pct: null, trip: null };
+  const heat = o.heat > 0 ? o.heat : 0;      // optional: cost per 100 km of the petrol the engine burns to heat the cabin while the battery is in use
+  const e100 = o.kwh100 > 0 && o.elec > 0 ? o.kwh100 * o.elec + heat : null, p100 = o.cons > 0 && o.petrol > 0 ? o.cons * o.petrol : null;
+  const r = { elec100: e100, petrol100: p100, breakEven: o.kwh100 > 0 && p100 != null ? Math.max(0, p100 - heat) / o.kwh100 : null, cheaper: null, pct: null, trip: null };
   if (e100 == null || p100 == null) return r;
   r.cheaper = Math.abs(e100 - p100) < p100 * 0.005 ? 'same' : e100 < p100 ? 'electric' : 'petrol';
   r.pct = r.cheaper === 'same' ? 0 : (1 - Math.min(e100, p100) / Math.max(e100, p100)) * 100;      // how much cheaper the winner is
@@ -3302,6 +3407,119 @@ function evNearest(list, n) {
   return { picked, avg: picked.length ? picked.reduce((a, x) => a + x.price, 0) / picked.length : null, setAside: s.filter(x => x.tier >= 2 && x.km <= last).length };
 }
 // EV-PURE-END
+// TF-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_tariff.js)
+// Home tariff, SEK per kWh EXCLUDING VAT unless a name says inc. Invoice structure: retail = spot + variable costs + markup - discount; grid = transfer + energy tax; monthly fees; VAT on all of it.
+// The defaults are an example tariff until the owner replaces every number (the form says so).
+// discUntil / feeUntil (YYYY-MM-DD, '' = never ends): discount and the waived retail fee apply to every month up to and including the month of that date (month granularity). retailFee = the fee once it is no longer waived.
+const TF_DEFAULT = { area:'SE4', varCost:0.07, markup:0.06, discount:0.06, discUntil:'2027-05-31', retailFee:39.2, feeUntil:'2027-05-31', transfer:0.2584, tax:0.36, gridFee:656, vat:25, kwh:500 };
+function tfClean(raw) {
+  const o = { ...TF_DEFAULT }; if (!raw || typeof raw !== 'object') return o;
+  for (const k of Object.keys(TF_DEFAULT)) {
+    if (k === 'area') { if (/^[A-Z]{2}[1-9]?$/.test(raw.area)) o.area = raw.area; continue; }
+    if (k === 'discUntil' || k === 'feeUntil') { if (raw[k] === '' || /^\d{4}-(0[1-9]|1[0-2])-\d{2}$/.test(raw[k])) o[k] = raw[k]; continue; }
+    const v = Number(raw[k]); if (raw[k] != null && raw[k] !== '' && isFinite(v) && v >= 0 && (k !== 'vat' || v <= 100) && (k !== 'kwh' || v > 0)) o[k] = v;
+  }
+  return o;
+}
+// ym = 'YYYY-MM' of the month the price is for; without it the discount and the fee waiver are assumed to still apply
+const tfOn = (until, ym) => !until || !ym || ym <= until.slice(0, 7);
+const tfFixedKwh = (tf, ym) => (tf.markup - (tfOn(tf.discUntil, ym) ? tf.discount : 0) + tf.transfer + tf.tax) * (1 + tf.vat / 100);   // the part of one more kWh that does not depend on spot, inc VAT
+const tfMarginal = (tf, spot, ym) => (spot + tf.varCost) * (1 + tf.vat / 100) + tfFixedKwh(tf, ym);        // inc VAT
+const tfSpotFor = (tf, price, ym) => (price - tfFixedKwh(tf, ym)) / (1 + tf.vat / 100) - tf.varCost;       // inverse: the spot price that gives this marginal price
+const tfMonthlyFee = (tf, ym) => ((tfOn(tf.feeUntil, ym) ? 0 : tf.retailFee) + tf.gridFee) * (1 + tf.vat / 100);   // inc VAT
+const tfAllIn = (tf, spot, kwh, ym) => kwh > 0 ? tfMarginal(tf, spot, ym) + tfMonthlyFee(tf, ym) / kwh : null;
+// Price file data/elpris.json (src/elpris.py, docs/ELPRIS_PIPELINE.md), schema 1, SEK/kWh ex VAT:
+// { "schema":1, "updated":ISO, "source":"...", "areas": { "SE4": {
+//     "today":{"date":"2026-11-06","sek":[24 hourly means, 23/25 on DST days]}, "tomorrow":{"date":..,"sek":[..]} | null,
+//     "monthly":{"2022":[12 means or null], ..., "2026":[...]}, "partial":{"month":"2026-11","days":6} | null,
+//     "seasonal":{"1":{"mean":..,"lo":..,"hi":..,"n":4}, ... "12":{..}} } } }      // seasonal = same calendar month over the latest complete years (pipeline computes mean and band)
+// Anything else is treated as "no data". DST days (23/25 hours) are shown but their hour labels are approximate.
+function elHourly(a) {
+  if (!Array.isArray(a) || !a.length || a.some(x => typeof x !== 'number' || !isFinite(x))) return null;
+  if (a.length % 24) return a; const k = a.length / 24, h = [];
+  for (let i = 0; i < 24; i++) h.push(a.slice(i * k, (i + 1) * k).reduce((s, x) => s + x, 0) / k);
+  return h;
+}
+// cheapest run of n consecutive hours starting at hour >= from
+function elCheap(h, n, from = 0) {
+  let best = null;
+  for (let i = Math.max(0, from); i + n <= h.length; i++) { const m = h.slice(i, i + n).reduce((s, x) => s + x, 0) / n; if (!best || m < best.mean - 1e-12) best = { start: i, end: i + n, mean: m }; }
+  return best;
+}
+// The n months from curYM ('YYYY-MM') on, from the pipeline's seasonal block: { ym, n (years behind it), mean, low, high } in spot SEK/kWh ex VAT (nulls where there is no history)
+// part = { ym, mean, days } | null: the current month so far (mean of the days published). The first row then blends it with the seasonal estimate by days known / days in month (band shifts with it) and carries known = days.
+function elOutlook(seasonal, curYM, n, part) {
+  const out = []; let y = +curYM.slice(0, 4), m = +curYM.slice(5, 7);
+  for (let i = 0; i < n; i++, m++) {
+    if (m > 12) { m = 1; y++; }
+    const ym = `${y}-${String(m).padStart(2, '0')}`, q = seasonal && seasonal[m], ok = q && isFinite(q.mean) && isFinite(q.lo) && isFinite(q.hi);
+    const r = { ym, n: ok ? q.n | 0 : 0, mean: ok ? q.mean : null, low: ok ? q.lo : null, high: ok ? q.hi : null };
+    if (ok && i === 0 && part && part.ym === ym && isFinite(part.mean) && part.days > 0) {
+      const dim = new Date(y, m, 0).getDate(), w = Math.min(1, part.days / dim);
+      r.mean = w * part.mean + (1 - w) * r.mean; r.low = w * part.mean + (1 - w) * r.low; r.high = w * part.mean + (1 - w) * r.high; r.known = Math.min(part.days, dim); r.dim = dim;
+    }
+    out.push(r);
+  }
+  return out;
+}
+// latest complete month with a value: monthly = { "2026": [12 means or null] }, partial = { month: 'YYYY-MM' } | null  ->  { ym, v } | null
+function elLastMonth(monthly, partial) {
+  const ys = Object.keys(monthly || {}).filter(k => /^\d{4}$/.test(k) && Array.isArray(monthly[k])).sort().reverse();
+  for (const y of ys) for (let m = 11; m >= 0; m--) {
+    const v = monthly[y][m], ym = `${y}-${String(m + 1).padStart(2, '0')}`;
+    if (typeof v === 'number' && isFinite(v) && !(partial && partial.month === ym)) return { ym, v };
+  }
+  return null;
+}
+// TF-PURE-END
+// PH-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_phev_blend.js)
+// Plug-in hybrid: outside temperature and the blend of battery and petrol. Curve = docs/PHEV_TEMPERATURE_MODEL_2026-11-06.md (engineering synthesis, not Santa Fe measurements).
+const PH_T = [-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35];
+const PH_FE = [.45, .50, .58, .66, .74, .84, .92, .98, 1, .97, .90, .82];     // electric range factor if the heater is all electric
+const PH_S = [.65, .60, .55, .45, .35, .20, 0, 0, 0, 0, 0, 0];                // share of the cold excess the engine heats instead of the battery
+const PH_MPX = [-20, -10, 0, 10, 20, 30, 35], PH_MP = [1.20, 1.13, 1.08, 1.03, 1, 1.04, 1.07];   // petrol multiplier once the battery is empty
+const PH_KHEAT = 0.2;                                                          // litres of petrol per kWh of heat the engine supplies
+function phLerp(xs, ys, x) {
+  if (x <= xs[0]) return ys[0]; if (x >= xs[xs.length - 1]) return ys[ys.length - 1];
+  let i = 0; while (x > xs[i + 1]) i++; return ys[i] + (ys[i + 1] - ys[i]) * (x - xs[i]) / (xs[i + 1] - xs[i]);
+}
+// T in C (null = unknown: no adjustment). v = 'pess' (engine never helps heating) | 'opt' (range factor +0.05) | undefined.
+// f = electric-range factor, mEl = kWh multiplier while on battery, gk = extra litres/100 km per (kWh/100 km) while on battery, mp = petrol multiplier
+function phevF(T, v) {
+  if (T == null || !isFinite(T)) return { f: 1, mEl: 1, gk: 0, mp: 1 };
+  const fe = phLerp(PH_T, PH_FE, T), s = phLerp(PH_T, PH_S, T), mE = 1 / fe, mp = phLerp(PH_MPX, PH_MP, T);
+  if (v === 'pess') return { f: fe, mEl: mE, gk: 0, mp };
+  const mEl = 1 + (mE - 1) * (1 - s), gk = (mE - 1) * s * PH_KHEAT;
+  if (v === 'opt') { const f = Math.min(1, 1 / mEl + 0.05); return { f, mEl: 1 / f, gk, mp }; }
+  return { f: 1 / mEl, mEl, gk, mp };
+}
+// One trip of d km from a full (or soc-share) battery. range = WLTP electric km, kwh100 = kWh/100 km at the wall, cons = L/100 km charge-sustaining, pKwh/pL = prices.
+function phevBlend(o) {
+  if (!(o.d > 0) || !(o.range > 0) || !(o.kwh100 > 0) || !(o.cons > 0)) return null;
+  const x = phevF(o.T, o.v), R = o.range * x.f * (o.soc == null ? 1 : o.soc), e = Math.min(o.d, R), p = o.d - e;
+  const kwh = e * o.kwh100 / 100 * x.mEl, litres = e * x.gk * o.kwh100 / 100 + p * o.cons * x.mp / 100;
+  const cost = kwh * (o.pKwh || 0) + litres * (o.pL || 0);
+  return { R, e, p, kwh, litres, cost, per100: cost / o.d * 100, share: e / o.d };
+}
+// A typical day of D km (daily distance exponential with mean D, charged every night): electric share = 1 - exp(-R/D)
+function phevDay(o) {
+  if (!(o.D > 0) || !(o.range > 0) || !(o.kwh100 > 0) || !(o.cons > 0)) return null;
+  const x = phevF(o.T, o.v), R = o.range * x.f, share = 1 - Math.exp(-R / o.D);
+  const ce = o.kwh100 * x.mEl / 100 * (o.pKwh || 0) + x.gk * o.kwh100 / 100 * (o.pL || 0), cp = o.cons * x.mp / 100 * (o.pL || 0);
+  return { share, perKm: share * ce + (1 - share) * cp, day: o.D * (share * ce + (1 - share) * cp) };
+}
+// years = [[daily T...], ...] for one calendar month: mean cost per day over all days, and the cheapest/dearest single year (the curve is applied per day, then averaged)
+function phevBand(o, years) {
+  const ys = []; let n = 0, tot = 0;
+  for (const a of years || []) {
+    if (!a || !a.length) continue;
+    let s = 0, sh = 0; for (const T of a) { const r = phevDay({ ...o, T }); if (!r) return null; s += r.day; sh += r.share; }
+    ys.push({ day: s / a.length, share: sh / a.length }); n += a.length; tot += s;
+  }
+  if (!ys.length) return null;
+  return { day: tot / n, low: Math.min(...ys.map(y => y.day)), high: Math.max(...ys.map(y => y.day)), share: ys.reduce((s, y) => s + y.share, 0) / ys.length };
+}
+// PH-PURE-END
 const carKwh100 = loss => evKwh100(car.batt, car.range, loss, car.kwh100);
 const EV_PUB = { SE: { p: 5.8, cur: 'SEK', asof: '2026-08-26' } };      // cited reference, shown as an assumption (docs/EV_PRICE_SOURCES_2026-11-06.md): Hurbra roundup of SE public fast-charge list prices, 5.49-6.09 kr/kWh
 let ev = (v => v && typeof v === 'object' ? v : {})(store.get('efp_ev', {}));
@@ -3309,9 +3527,9 @@ function evSet(k, raw) {
   const v = String(raw).trim() === '' ? null : +String(raw).replace(',', '.');
   if (v === null) delete ev[k]; else if (!isFinite(v) || v <= 0 || (k === 'loss' && v < 1)) { evRender(); return; } else ev[k] = v;
   if (k === 'pub') ev.pubCur = ctyCur();
-  store.set('efp_ev', ev); evRender();
+  store.set('efp_ev', ev); evAll();
 }
-function evSetMode(m) { ev.mode = m; store.set('efp_ev', ev); evRender(); }
+function evSetMode(m) { ev.mode = m; store.set('efp_ev', ev); evAll(); }
 function evSetHome(raw) { carSet('elec', raw); const e = $id('car-elec'); if (e) e.value = car.elec != null ? car.elec : ''; }
 function evOpen() { goTab('car'); setTimeout(() => $id('ev-card')?.scrollIntoView({ block: 'start' }), 120); }
 function evStations(cur) {
@@ -3327,29 +3545,35 @@ function evStations(cur) {
 }
 function evRender() {
   const el = $id('ev-in'), stEl = $id('ev-st'), pan = $id('p-car'); if (!el || !pan?.classList.contains('open')) return;
-  const ae = document.activeElement, fid = ae && el.contains(ae) ? ae.id : '', vEl = $id('ev-v'); vEl.innerHTML = ''; stEl.innerHTML = '';   // the verdict is the only live region; inputs are patched in place below so keyboard focus survives
+  const ae = document.activeElement, fid = ae && el.contains(ae) ? ae.id : '', vEl = $id('ev-v'), mxEl = $id('ev-mix'), mxFid = ae && mxEl.contains(ae) ? ae.id : '', mxVal = mxFid && ae.tagName === 'INPUT' ? ae.value : null; vEl.innerHTML = ''; stEl.innerHTML = '';   // the verdict is the only live region; the inputs of the card are patched in place below so keyboard focus survives, the mix block is rebuilt and its focus restored by id
   const cc = ctyCc(), cur = ctyCur(), sy = SYM[cur] || cur, phev = car.type === 'phev', note = k => `<p class="ev-note">${esc(t(k))}</p>`;
   if (!CAR_FUEL[car.type]) { el.innerHTML = note('evSetCar'); el._sk = null; return; }
   if (car.type === 'diesel') { el.innerHTML = note('evDiesel'); el._sk = null; return; }
-  const st = evStations(cur), loss = ev.loss || (car.eff ? 100 / car.eff : 1.15);
-  const mode = ev.mode || (car.elec ? 'home' : 'pub'), ref = EV_PUB[cc], nm = CNAMES[cc] || cc;
+  if (phev) tmpEnsure();
+  const st = evStations(cur), loss = evLoss(); _evP = st.avg != null ? { avg: st.avg, cur } : null;
+  const fcOk = phev && cur === TF_CUR && !!fcPrice(), mode = ev.mode === 'fc' && !fcOk ? (car.elec ? 'home' : 'pub') : ev.mode || (car.elec ? 'home' : 'pub'), ref = EV_PUB[cc], nm = CNAMES[cc] || cc;
   let elec = null, price = '', hint = '';
   if (mode === 'home') { elec = car.elec && (car.elecCur || cur) === cur ? car.elec : null; price = elec != null ? elec : ''; }
+  else if (mode === 'fc') { const fp = fcPrice(); elec = fp.p; hint = `<p class="ev-note">${esc(t('evFcNote', { m: monLabel(fp.ym, true), p: money(fp.p, TF_CUR) }))}</p>`; }
   else {
     const own = ev.pub && ev.pubCur === cur ? ev.pub : null, def = ref && ref.cur === cur ? ref : null;
     elec = own || (def ? def.p : null); price = elec != null ? elec : '';
     const old = def && (Date.now() - Date.parse(def.asof)) / 864e5 > 90;
     hint = own ? '' : def ? `<p class="ev-note${old ? ' ev-warn' : ''}">${esc(t('evAssume', { p: money(def.p, cur), d: def.asof }) + (old ? ' ' + t('evOld') : ''))}</p>` : `<p class="ev-note">${esc(t('evNoRef', { c: nm }))}</p>`;
   }
-  const kwh100 = phev ? carKwh100(loss) : null, km = ev.km || 100;
-  const r = evCompare({ kwh100, elec, cons: car.cons, petrol: st.avg, km, elecKm: phev && car.range ? car.range * RT_REAL : 0 });
-  const miss = []; if (phev && !car.batt) miss.push(t('carBatt')); if (phev && !car.range) miss.push(t('carRange')); if (!car.cons) miss.push(t('carCons')); if (elec == null) miss.push(t(mode === 'home' ? 'carElec' : 'evPub'));
+  const kwh100 = phev ? carKwh100(loss) : null, km = ev.km || 100, tn = phev ? tmpNow() : { T: null };
+  const px = phevF(tn.T), rng = car.range * RT_REAL;      // one electric-range base everywhere: RT_REAL of the WLTP figure, times the temperature factor
+  // both sides at the same temperature: battery side with its kWh multiplier and heating petrol, petrol side with its cold multiplier
+  const r = evCompare({ kwh100: phev ? kwh100 * px.mEl : kwh100, elec, cons: phev ? car.cons * px.mp : car.cons, petrol: st.avg, km, heat: phev && kwh100 ? px.gk * kwh100 * (st.avg || 0) : 0, elecKm: phev && car.range ? rng * px.f : 0 });
+  if (r.trip && phev) { const bl = phevBlend({ range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg, d: km, T: tn.T }); if (bl) { r.trip.elec = bl.cost; r.trip.elecKm = bl.e; r.trip.limited = bl.e < km - 1e-9; } }   // the trip row is the realistic mix at this temperature
+  const miss = []; if (phev && !car.batt) miss.push(t('carBatt')); if (phev && !car.range) miss.push(t('carRange')); if (!car.cons) miss.push(t('carCons')); if (elec == null) miss.push(t(mode === 'home' ? 'carElec' : 'evPub')); if (st.avg == null) miss.push(t('carPriceNeed', { c: nm }));
   const f = v => v.toFixed(v < 1 ? 3 : 2);
   let h = '';
   if (!phev) h += note('evNoElec');
   else {
-    h += `<label>${esc(t('evMode'))}</label><div class="tchips">${['home', 'pub'].map(m => `<button type="button" id="ev-m-${m}" class="${mode === m ? 'on' : ''}" onclick="evSetMode('${m}')">${esc(t(m === 'home' ? 'evHome' : 'evPub'))}</button>`).join('')}</div>`
-      + `<label for="ev-price">${esc(t(mode === 'home' ? 'evPriceHome' : 'evPricePub', { c: sy }))}</label><input id="ev-price" type="number" inputmode="decimal" min="0.01" step="0.01" value="${price}" onchange="${mode === 'home' ? 'evSetHome(this.value)' : "evSet('pub',this.value)"}"><div id="ev-hint"></div>`
+    h += `<label>${esc(t('evMode'))}</label><div class="tchips">${['home', 'pub', ...(fcOk ? ['fc'] : [])].map(m => `<button type="button" id="ev-m-${m}" class="${mode === m ? 'on' : ''}" onclick="evSetMode('${m}')">${esc(t(m === 'home' ? 'evHome' : m === 'pub' ? 'evPub' : 'evFc'))}</button>`).join('')}</div>`
+      + (mode === 'fc' ? `<label for="ev-fcm">${esc(t('evFcMonth'))}</label><select id="ev-fcm" onchange="evFcSel(this.value)">${(epRows() || []).map((x, i) => `<option value="${i}"${i === fcSel() ? ' selected' : ''}${x.p ? '' : ' disabled'}>${esc(monLabel(x.ym, true))}</option>`).join('')}</select><div id="ev-hint"></div>`
+        : `<label for="ev-price">${esc(t(mode === 'home' ? 'evPriceHome' : 'evPricePub', { c: sy }))}</label><input id="ev-price" type="number" inputmode="decimal" min="0.01" step="0.01" value="${price}" onchange="${mode === 'home' ? 'evSetHome(this.value)' : "evSet('pub',this.value)"}"><div id="ev-hint"></div>`)
       + `<label for="ev-loss">${esc(t('evLoss'))}</label><input id="ev-loss" type="number" inputmode="decimal" min="1" step="0.01" value="${(+loss).toFixed(2)}" onchange="evSet('loss',this.value)">`;
   }
   if (phev) h += `<label for="ev-km">${esc(t('evDist'))}</label><input id="ev-km" type="number" inputmode="decimal" min="1" step="10" value="${km}" onchange="evSet('km',this.value)">`;
@@ -3357,7 +3581,7 @@ function evRender() {
   if (r.cheaper) {
     const hd = r.cheaper === 'electric' ? t('evVerdictE', { p: Math.round(r.pct) }) : r.cheaper === 'petrol' ? t('evVerdictP') : t('evSame');
     const sub = r.cheaper === 'electric' ? t('evPctE', { p: r.pct.toFixed(0) }) : r.cheaper === 'petrol' ? t('evPctP', { p: ((r.elec100 / r.petrol100 - 1) * 100).toFixed(0) }) : '';
-    vd = `<div class="ev-verdict${r.cheaper === 'electric' ? ' e' : ''}"><div class="ev-h">${esc(hd)}</div>${sub ? `<div class="ev-s">${esc(sub)}</div>` : ''}
+    vd = `<div class="ev-verdict${r.cheaper === 'electric' ? ' e' : ''}"><div class="ev-h">${esc(hd)}</div>${sub ? `<div class="ev-s">${esc(sub)}</div>` : ''}${phev && tn.T != null ? `<div class="ev-s">${esc(t('evAtT', { t: Math.round(tn.T) }))}</div>` : ''}
       <table class="ev-tbl"><tr><th></th><th>${esc(t('evElec'))}</th><th>${esc(t('evPet'))}</th></tr>
       <tr><td>${esc(t('evKm'))}</td><td>${f(r.elec100 / 100)} ${esc(sy)}</td><td>${f(r.petrol100 / 100)} ${esc(sy)}</td></tr>
       <tr><td>${esc(t('evK100'))}</td><td>${esc(money(r.elec100, cur))}</td><td>${esc(money(r.petrol100, cur))}</td></tr>
@@ -3366,6 +3590,11 @@ function evRender() {
       <p class="ev-note">${esc(t('evBreak', { v: money(r.breakEven, cur) }))}</p>`;
   } else if (phev && st.picked.length && miss.length) vd = `<p class="ev-note">${esc(t('evNeeds', { x: miss.join(', ') }))}</p>`;
   vEl.innerHTML = vd;
+  if (phev) {
+    mxEl.innerHTML = evMixHtml({ cur, tn, ok: !!(car.range > 0 && kwh100 > 0 && car.cons > 0 && elec != null && st.avg != null), miss,
+      base: { range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg } });
+    const fe = mxFid && $id(mxFid); if (fe) { if (mxVal != null) fe.value = mxVal; fe.focus(); }
+  } else mxEl.innerHTML = '';
   const inH = h; h = `<label>${esc(t('evStTitle'))}</label>`;
   if (st.picked.length) {
     h += `<ul class="ev-st">${st.picked.map(x => `<li><span><span class="ev-n">${esc(x.s.name || x.s.brand || '–')}</span><br>${esc(fmtDist(x.km))} · ${esc(ageTxt(x.p.updated_at))}</span><b>${esc(pfmt(x.price, cur) + ' ' + sy)}</b></li>`).join('')}</ul>`
@@ -3377,6 +3606,195 @@ function evRender() {
   if (sk !== el._sk) { el.innerHTML = inH; el._sk = sk; if (fid) $id(fid)?.focus(); }
   else { const tpl = document.createElement('div'); tpl.innerHTML = inH; for (const i of tpl.querySelectorAll('input')) { const o = $id(i.id); if (o && o.value !== i.value) o.value = i.value; } }
   const hs = $id('ev-hint'); if (hs) hs.innerHTML = hint;
+}
+
+
+// ── Home electricity tariff, electricity price outlook, outside temperature and the blended cost (pure parts: TF-PURE and PH-PURE above) ──
+const TMP_ON = true;                      // false = never contact Open-Meteo (its free tier is for non-commercial use only, see docs/PHEV_TEMPERATURE_MODEL_2026-11-06.md)
+const OM_FC = 'https://api.open-meteo.com/v1/forecast', OM_AR = 'https://archive-api.open-meteo.com/v1/archive';
+const TF_CUR = 'SEK', CHG_KW = 3.6, TF_AREAS = ['SE1', 'SE2', 'SE3', 'SE4'];   // CHG_KW: single-phase 16 A Type 2, typical for this class of PHEV; the profile has no charger power
+let tf = tfClean(store.get('efp_tariff', null));
+let tmp = (v => v && typeof v === 'object' ? v : {})(store.get('efp_tmp', {}));   // { pos:[lat,lon] rounded to 0.1, fc:{at,today}, ar:{at,m:{1..12:[[daily C per year]...]}} }
+const ep = { st: 'idle', j: null, at: 0 };
+let _evP = null;                          // petrol price used by the last petrol-vs-electricity render { avg, cur }
+const carPanelOpen = () => !!$id('p-car')?.classList.contains('open');
+function evAll() { evRender(); tfRender(); opRender(); }
+const evLoss = () => ev.loss || (car.eff ? 100 / car.eff : 1.15);
+const nowYM = () => todayStr().slice(0, 7);
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const monLabel = (ym, long) => new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1, 1).toLocaleDateString(lang, { month: long ? 'long' : 'short', year: long ? 'numeric' : '2-digit' });
+
+// price file: schema in the comment above elHourly (TF-PURE). Missing or malformed = 'none' (clear "no data yet" state), retried after 10 minutes, refreshed hourly.
+function epLoad() {
+  if (ep.st === 'loading' || (ep.st !== 'idle' && Date.now() - ep.at < (ep.st === 'ok' ? 36e5 : 6e5))) return;
+  ep.st = 'loading';
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 15000);
+  fetch('elpris.json', { signal: ac.signal }).then(r => r.ok ? r.json() : Promise.reject()).then(j => { ep.j = j && typeof j === 'object' && j.areas && typeof j.areas === 'object' ? j : null; ep.st = ep.j ? 'ok' : 'none'; })
+    .catch(() => { ep.st = 'none'; }).finally(() => { clearTimeout(to); ep.at = Date.now(); if (carPanelOpen()) evAll(); });
+}
+const epArea = () => { const a = ep.j?.areas?.[tf.area]; return a && typeof a === 'object' ? a : null; };
+function epDays() {                       // today and tomorrow when still current: [{date, h:[hourly prices ex VAT]}]
+  const a = epArea(), td = todayStr(), out = [];
+  for (const k of ['today', 'tomorrow']) { const d = a?.[k]; if (d && typeof d.date === 'string' && d.date >= td) { const h = elHourly(d.sek); if (h) out.push({ date: d.date, h }); } }
+  return out;
+}
+function epSpot() {                       // spot price (ex VAT) behind the headline marginal price: the published days, else the latest complete month
+  const d = epDays(); if (d.length) { const all = d.flatMap(x => x.h); return { v: all.reduce((s, x) => s + x, 0) / all.length, k: 'days', ym: nowYM() }; }
+  const m = elLastMonth(epArea()?.monthly, epArea()?.partial); return m ? { v: m.v, k: 'month', ym: m.ym } : null;
+}
+function epRows() {                       // 12 months of marginal prices incl VAT from the seasonal average
+  const a = epArea(), sn = a?.seasonal; if (!sn || typeof sn !== 'object') return null;
+  const cy = nowYM(), pm = a.partial && a.partial.month === cy ? a.monthly?.[cy.slice(0, 4)]?.[+cy.slice(5) - 1] : null;   // current month so far: published day files, blended with the estimate
+  return elOutlook(sn, cy, 12, typeof pm === 'number' ? { ym: cy, mean: pm, days: +a.partial.days || 0 } : null).map(r => ({ ...r, p: r.mean == null ? null : { mean: tfMarginal(tf, r.mean, r.ym), low: tfMarginal(tf, r.low, r.ym), high: tfMarginal(tf, r.high, r.ym) } }));
+}
+const fcSel = () => Math.min(11, Math.max(0, ev.fcm | 0));
+function fcPrice() { const x = epRows()?.[fcSel()]; return x?.p ? { p: x.p.mean, ym: x.ym } : null; }
+
+// outside temperature: manual override sends nothing; auto sends only the position rounded to 0.1 degree, once per 30 days (5-year history) and 3 hours (today)
+const r1 = x => Math.round(x * 10) / 10;
+function tmpPos() {
+  if (!tmp.pos) { const c = myLat != null ? [myLat, myLon] : (g => [g.lat, g.lng])(map.getCenter()); tmp.pos = [r1(c[0]), r1(c[1])]; store.set('efp_tmp', tmp); }
+  return tmp.pos;
+}
+function tmpPosUpdate() { ev.tOk = true; store.set('efp_ev', ev); delete tmp.pos; delete tmp.fc; delete tmp.ar; _tmpTry = 0; store.set('efp_tmp', tmp); evAll(); }
+let _tmpBusy = false, _tmpTry = 0;
+async function omJson(url) { const ac = new AbortController(), to = setTimeout(() => ac.abort(), 12000); try { const r = await fetch(url, { signal: ac.signal }); if (!r.ok) throw new Error('http ' + r.status); return await r.json(); } finally { clearTimeout(to); } }
+async function tmpEnsure() {
+  const now = Date.now();
+  if (!TMP_ON || !ev.tOk || _tmpBusy || ev.tMode === 'manual' || car.type !== 'phev' || navigator.onLine === false || now - _tmpTry < 3e5) return;
+  const needFc = !(tmp.fc && now - tmp.fc.at < 3 * 36e5), needAr = !(tmp.ar && now - tmp.ar.at < 30 * 864e5);
+  if (!needFc && !needAr) return;
+  _tmpBusy = true; _tmpTry = now;
+  try {
+    const [la, lo] = tmpPos(), q = `latitude=${la}&longitude=${lo}`;
+    if (needFc) try { const v = (await omJson(`${OM_FC}?${q}&daily=temperature_2m_mean&forecast_days=3&timezone=auto`))?.daily?.temperature_2m_mean?.[0]; if (typeof v === 'number' && isFinite(v)) tmp.fc = { at: now, today: v }; } catch (_) {}
+    if (needAr) try {
+      const y = new Date().getFullYear(), j = await omJson(`${OM_AR}?${q}&start_date=${y - 5}-01-01&end_date=${y - 1}-12-31&daily=temperature_2m_mean&timezone=auto`), tm = j?.daily?.time, tv = j?.daily?.temperature_2m_mean, by = {};
+      if (Array.isArray(tm) && Array.isArray(tv)) {
+        tm.forEach((d, i) => { const v = tv[i]; if (typeof v === 'number' && isFinite(v)) ((by[+d.slice(5, 7)] ||= {})[d.slice(0, 4)] ||= []).push(r1(v)); });
+        const m = {}; for (const k in by) m[k] = Object.values(by[k]);
+        if (Object.keys(m).length === 12) tmp.ar = { at: now, m };
+      }
+    } catch (_) {}
+    store.set('efp_tmp', tmp);
+  } finally { _tmpBusy = false; }
+  if (carPanelOpen()) evAll();
+}
+const tmpManual = () => ev.tMode === 'manual' && typeof ev.tOvr === 'number' && isFinite(ev.tOvr);
+function tmpYears(mo) { return tmpManual() ? [[ev.tOvr]] : ev.tMode === 'manual' ? null : tmp.ar?.m?.[mo] || null; }   // daily temperatures of calendar month mo, one array per past year
+function tmpNow() {                       // { T (C or null), src }; null = no adjustment anywhere
+  if (ev.tMode === 'manual') return tmpManual() ? { T: ev.tOvr, src: 'manual' } : { T: null, src: 'none' };
+  if (tmp.fc && typeof tmp.fc.today === 'number' && Date.now() - tmp.fc.at < 48 * 36e5) return { T: tmp.fc.today, src: 'forecast' };
+  const y = tmpYears(new Date().getMonth() + 1); if (y) { const a = y.flat(); if (a.length) return { T: a.reduce((s, x) => s + x, 0) / a.length, src: 'normal' }; }
+  return { T: null, src: 'none' };
+}
+function tmpAllow() { ev.tOk = true; store.set('efp_ev', ev); _tmpTry = 0; tmpEnsure(); evAll(); }
+function tmpMode(m) { ev.tMode = m; if (m === 'manual' && typeof ev.tOvr !== 'number') ev.tOvr = Math.round(tmpNow().T ?? 10); store.set('efp_ev', ev); if (m !== 'manual') { _tmpTry = 0; tmpEnsure(); } evAll(); }
+function tmpSetT(raw) { const s = String(raw).trim().replace(',', '.'), v = +s; if (s !== '' && isFinite(v) && v >= -50 && v <= 50) ev.tOvr = v; store.set('efp_ev', ev); evAll(); }
+function evFcSel(i) { ev.fcm = +i; store.set('efp_ev', ev); evAll(); }
+
+// the blended cost block inside the petrol-vs-electricity card: per trip length, by temperature, and a typical day
+function evMixHtml(o) {
+  const { cur, tn, base, ok, miss } = o, nt = k => `<p class="ev-note">${esc(t(k))}</p>`, D = ev.dkm || 40;
+  const man = ev.tMode === 'manual', chip = (m, txt) => `<button type="button" id="mx-c-${m}" class="${(man ? 'manual' : 'auto') === m ? 'on' : ''}" onclick="tmpMode('${m}')">${esc(txt)}</button>`;
+  let h = `<h4 class="ev-sub">${esc(t('mxTitle'))}</h4><label>${esc(t('mxTemp'))}</label><div class="tchips">${chip('auto', t('mxAuto'))}${chip('manual', t('mxManual'))}</div>`;
+  if (!man) h += `<p class="ev-note">${esc(t('mxPrivShort'))}${ev.tOk ? '' : ` <button type="button" id="mx-allow" class="ev-link" onclick="tmpAllow()">${esc(t('mxAllow'))}</button>`}</p>`;
+  if (man) h += `<div class="ev-in2"><label for="mx-t" style="margin:0">${esc(t('mxTempIn'))}</label><input id="mx-t" type="number" inputmode="decimal" step="1" min="-50" max="50" value="${tmpManual() ? ev.tOvr : ''}" onchange="tmpSetT(this.value)"></div>`;
+  else if (tn.T != null) h += `<p class="ev-note">${esc(t('mxT', { t: Math.round(tn.T), s: t('mxSrc_' + tn.src) }))}${tmp.pos ? '<br>' + esc(t('mxPos', { p: tmp.pos[0].toFixed(1) + ', ' + tmp.pos[1].toFixed(1) })) + ` <button type="button" id="mx-posupd" class="ev-link" onclick="tmpPosUpdate()">${esc(t('mxPosUpd'))}</button>` : ''}</p>`;
+  if (tn.T == null) h += nt('mxNone');
+  if (!ok) return h + (miss.length ? `<p class="ev-note">${esc(t('mxNeed', { x: miss.join(', ') }))}</p>` : '') + evHowHtml();
+  const b = (d, T, v) => phevBlend({ ...base, d, T, v });
+  h += `<table class="ev-tbl wide"><tr><th>${esc(t('mxTrip'))}</th><th>${esc(t('mxEl'))}</th><th>${esc(t('mxPet'))}</th><th>${esc(t('mxCost'))}</th></tr>`
+    + [20, 50, 100, 300].map(d => { const r = b(d, tn.T); return `<tr><td>${esc(t('mxKm', { k: d }))}</td><td>${esc(t('mxKm', { k: Math.round(r.e) }))}</td><td>${esc(t('mxL', { l: r.litres.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }))}</td><td>${esc(cTxt(r.per100, cur, 0))}</td></tr>`; }).join('') + '</table>';
+  if (tn.T != null) {
+    const c = [b(100, tn.T).per100, b(100, tn.T, 'pess').per100, b(100, tn.T, 'opt').per100], lo = Math.min(...c), hi = Math.max(...c);
+    if (hi - lo > 0.005 * hi) h += `<p class="ev-note">${esc(t('mxBand', { lo: cTxt(lo, cur, 0), hi: cTxt(hi, cur, 0) }))}</p>`;
+  }
+  h += `<label>${esc(t('mxByT'))}</label><table class="ev-tbl wide"><tr><th></th>${[-10, 0, 10, 20].map(T => `<th>${T} °C</th>`).join('')}</tr><tr><td>${esc(t('mxCost'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(cTxt(b(100, T).per100, cur, 0))}</td>`).join('')}</tr>`
+    + `<tr><td>${esc(t('mxEl'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(t('mxKm', { k: Math.round(b(100, T).e) }))}</td>`).join('')}</tr></table>`;
+  const dd = phevDay({ ...base, D, T: tn.T });
+  h += `<label for="ev-dkm">${esc(t('mxDaily'))}</label><input id="ev-dkm" type="number" inputmode="decimal" min="1" step="5" value="${D}" onchange="evSet('dkm',this.value)">`
+    + `<p class="ev-note">${esc(t('mxDay', { d: D, s: Math.round(dd.share * 100), t: tn.T == null ? '–' : Math.round(tn.T), m: cTxt(dd.day * 30.4, cur, 0) }))}</p>`;
+  return h + evHowHtml();
+}
+const evHowHtml = () => `<details class="ev-how"><summary>${esc(t('mxHow'))}</summary>${['mxH1', 'mxH2', 'mxH3', 'mxH4', 'mxPriv'].map(k => `<p>${esc(t(k))}</p>`).join('')}</details>`;
+
+// My home electricity: the form is built once per language (so tabbing between fields keeps focus), only the result below it is refreshed
+const TF_FLD = [['varCost', 'tfVar'], ['markup', 'tfMarkup'], ['discount', 'tfDisc'], ['discUntil', 'tfDiscUntil'], ['retailFee', 'tfRetFee'], ['feeUntil', 'tfFeeUntil'], ['transfer', 'tfTransfer'], ['tax', 'tfTax'], ['gridFee', 'tfGrid'], ['vat', 'tfVat'], ['kwh', 'tfKwh']];
+function tfRender() {
+  const box = $id('tf-card'), op = $id('op-card'); if (!box || !carPanelOpen()) return;
+  const show = car.type === 'phev'; box.hidden = op.hidden = !show; if (!show) return;
+  const f = $id('tf-form');
+  if (f._k !== lang + tf.area) {
+    f._k = lang + tf.area;
+    f.innerHTML = `<p class="ev-note">${esc(t('tfIntro'))}</p><label for="tf-area">${esc(t('tfArea'))}</label><select id="tf-area" onchange="tfSet('area',this.value)">${[...new Set([...TF_AREAS, tf.area])].map(a => `<option${a === tf.area ? ' selected' : ''}>${a}</option>`).join('')}</select>`
+      + `<div class="tf-grid">${TF_FLD.map(([k, l]) => `<div><label for="tf-${k}">${esc(t(l))}</label><input id="tf-${k}" ${k.endsWith('Until') ? 'type="date"' : 'type="number" inputmode="decimal" min="0" step="any"'} value="${tf[k]}" onchange="tfSet('${k}',this.value)"></div>`).join('')}</div>`
+      + `<button type="button" class="btn-line" style="margin-top:12px" onclick="tfReset()">${esc(t('tfReset'))}</button>`;
+  }
+  tfOut();
+}
+function tfSet(k, raw) {
+  tf = tfClean({ ...tf, [k]: String(raw).replace(',', '.') }); store.set('efp_tariff', tf);
+  const e = $id('tf-' + k); if (e && k !== 'area') e.value = tf[k];
+  if (k === 'area') { const f = $id('tf-form'); if (f) f._k = null; }
+  evAll();
+}
+function tfReset() { tf = { ...TF_DEFAULT }; store.set('efp_tariff', tf); const f = $id('tf-form'); if (f) f._k = null; evAll(); }
+function tfOut() {
+  const el = $id('tf-out'); if (!el) return;
+  const sp = epSpot(), fx1 = v => money(v, TF_CUR) + '/kWh';
+  let h = '';
+  if (sp) {
+    h += `<div class="ev-verdict e"><div class="ev-h">${esc(fx1(tfMarginal(tf, sp.v, sp.ym)))}</div><div class="ev-s">${esc(t('tfMarg', { s: money(sp.v, TF_CUR), w: sp.k === 'days' ? t('tfSpotNext') : t('tfSpotMonth', { m: monLabel(sp.ym, true) }) }))}</div></div>`
+      + `<p class="ev-note">${esc(t('tfAll', { k: Math.round(tf.kwh), v: money(tfAllIn(tf, sp.v, tf.kwh, sp.ym), TF_CUR) }))}</p>`;
+  } else h += `<p class="ev-note">${esc(t('tfFixed', { v: money(tfFixedKwh(tf, nowYM()), TF_CUR) }))}</p>`;
+  const ends = [tf.discUntil, tf.feeUntil].filter(Boolean).sort()[0];
+  el.innerHTML = h + `<p class="ev-note">${esc(t('tfFormula'))}</p>` + (ends ? `<p class="ev-note">${esc(t('tfEnds', { d: ends }))}</p>` : '');
+}
+
+// Electricity price outlook: next days exact, 12 months as an estimate, marginal price against petrol
+function opSel(i) { ev.fcm = +i; store.set('efp_ev', ev); evAll(); $id('op-b' + i)?.focus(); }
+function opRender() {
+  const el = $id('op-card'); if (!el || !carPanelOpen() || car.type !== 'phev') return;
+  epLoad();
+  const nt = k => `<p class="ev-note">${esc(t(k))}</p>`;
+  let h = `<h3>${esc(t('opTitle'))}</h3>`;
+  if (ep.st === 'idle' || ep.st === 'loading') h += nt('opLoading');
+  else if (ep.st === 'none') h += nt('opNone');
+  else if (!epArea()) h += `<p class="ev-note">${esc(t('opNoArea', { a: tf.area }))}</p>`;
+  else {
+    const days = epDays(), kwh100 = carKwh100(evLoss()), ok = _evP && _evP.cur === TF_CUR && kwh100 > 0 && car.range > 0 && car.cons > 0;
+    if (days.length) {
+      const nH = Math.min(12, Math.max(1, Math.ceil((car.batt || 10) / ((car.eff || 90) / 100) / CHG_KW))), kwh = (car.batt || 10) / ((car.eff || 90) / 100), td = todayStr(), hh = i => String(i % 24).padStart(2, '0') + ':00';
+      const rows = days.map(d => { const w = elCheap(d.h, nH, d.date === td ? new Date().getHours() + 1 : 0); if (!w) return ''; const p = tfMarginal(tf, w.mean, d.date.slice(0, 7)), avg = d.h.reduce((s, x) => s + x, 0) / d.h.length;
+        return `<tr><td>${esc(new Date(d.date + 'T12:00:00').toLocaleDateString(lang, { weekday: 'short', day: 'numeric', month: 'short' }))}<br><span class="ev-note" style="margin:0">${esc(hh(w.start) + '-' + hh(w.end))}</span></td><td>${esc(money(p, TF_CUR))}</td><td>${esc(cTxt(p * kwh, TF_CUR, 0))}</td></tr>`; }).join('');
+      if (rows) h += `<label>${esc(t('opDays'))}</label><p class="ev-note" style="margin-top:2px">${esc(t('opCheap', { h: nH }))}</p><table class="ev-tbl wide"><tr><th></th><th>${esc(t('opPerKwh'))}</th><th>${esc(t('opFull', { k: Math.round(kwh) }))}</th></tr>${rows}</table>`;
+    }
+    const rs = epRows();
+    if (rs) {
+      const mx = Math.max(...rs.map(r => r.p ? r.p.high : 0), 0.01), sel = fcSel(), D = ev.dkm || 40;
+      let yr = 0, yrOk = ok;
+      for (const r of rs) {
+        r.drive = null;
+        if (ok && r.p) { const mo = +r.ym.slice(5), b = phevBand({ range: car.range * RT_REAL, kwh100, cons: car.cons, pKwh: r.p.mean, pL: _evP.avg, D }, tmpYears(mo)); if (b) { r.drive = b.day * new Date(+r.ym.slice(0, 4), mo, 0).getDate(); yr += r.drive; } }
+        if (r.drive == null) yrOk = false;
+      }
+      h += `<label>${esc(t('opMonths'))}</label><ul class="op-bars">${rs.map((r, i) => `<li><button type="button" id="op-b${i}" aria-pressed="${i === sel}" onclick="opSel(${i})"><span class="op-m">${esc(monLabel(r.ym))}</span>`
+        + (r.p ? `<span class="op-bar" title="${esc(money(r.p.low, TF_CUR) + ' - ' + money(r.p.high, TF_CUR))}"><i style="left:${(r.p.low / mx * 100).toFixed(1)}%;width:${Math.max(1, (r.p.high - r.p.low) / mx * 100).toFixed(1)}%"></i><b style="left:${(r.p.mean / mx * 100).toFixed(1)}%"></b></span><span class="op-v">${esc(money(r.p.mean, TF_CUR))}</span>`
+          : `<span class="ev-note" style="margin:0">${esc(t('opMonthsNo'))}</span><span></span>`) + '</button></li>').join('')}</ul>`
+        + `<p class="ev-note">${esc(t('opEst', { n: Math.max(...rs.map(r => r.n)) }))}</p>`;
+      const s = rs[sel];
+      if (s?.p) h += `<p class="ev-note"><b>${esc(monLabel(s.ym, true))}</b>: ${esc(money(s.p.mean, TF_CUR))} (${esc(money(s.p.low, TF_CUR))} - ${esc(money(s.p.high, TF_CUR))}) / kWh incl. VAT.` + (s.known ? ' ' + esc(t('opPart', { k: s.known, n: s.dim })) : '')
+        + (s.drive != null ? ' ' + esc(t('opDrive', { d: D, c: cTxt(s.drive, TF_CUR, 0), m: monLabel(s.ym, true) })) : '') + '</p>';
+      if (yrOk) h += `<p class="ev-note"><b>${esc(t('opYear', { c: cTxt(yr, TF_CUR, 0), d: D }))}</b></p>`;
+    }
+    h += `<label>${esc(t('opTbl'))}</label><table class="ev-tbl wide"><tr><th>${esc(t('opSpot'))}</th><th>${esc(t('opPerKwh'))}</th>${kwh100 > 0 ? `<th>${esc(t('opPer100'))}</th>` : ''}</tr>`
+      + [0.3, 0.6, 1, 1.5, 2].map(sp => { const p = tfMarginal(tf, sp, nowYM()), c = kwh100 > 0 ? p * kwh100 : null, pet = ok ? car.cons * _evP.avg : null;
+        return `<tr><td>${esc(money(sp, TF_CUR))}</td><td>${esc(money(p, TF_CUR))}</td>${c != null ? `<td${pet != null ? ` style="color:${c < pet ? 'var(--ok-t)' : 'var(--bad-t)'}"` : ''}>${esc(cTxt(c, TF_CUR, 0))}</td>` : ''}</tr>`; }).join('') + '</table>';
+    if (ok) h += `<p class="ev-note">${esc(t('opBreak', { p: money(_evP.avg, TF_CUR), s: money(tfSpotFor(tf, car.cons * _evP.avg / kwh100, nowYM()), TF_CUR) }))}</p>`;
+    h += `<p class="ev-note">${esc(t('opSrc', { s: String(ep.j.source || 'elprisetjustnu.se').slice(0, 60), a: tf.area, d: String(ep.j.updated || '').slice(0, 10) || '-' }))}</p>`;
+  }
+  el.innerHTML = h;
 }
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
@@ -3667,10 +4085,10 @@ const RT_REAL = 0.75;       // share of the WLTP electric range assumed on a mot
 const RT_REF_KM = 100;      // the reference price is the median of pumps within this many km along the route
 const RT_MIN_SAVE = 1;      // EUR: below this a stop is not called worth it
 const rtMedian = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[s.length >> 1] : null; };
-// Energy walk. o = { km, cons (L/100 km, petrol only), tank (L), fuelL, reserveL, elecKm (electric km available), kwh100, elecEur (EUR/kWh) }
+// Energy walk. o = { km, cons (L/100 km, petrol only), tank (L), fuelL, reserveL, elecKm (electric km available), kwh100, elecEur (EUR/kWh), gEl (optional: L/100 km burnt for cabin heat while on battery) }
 function rtPlan(o) {
   const e = Math.max(0, o.elecKm || 0), usable = Math.max(0, o.fuelL - o.reserveL);
-  const ek = Math.min(o.km, e), petrolL = Math.max(0, o.km - e) * o.cons / 100;
+  const ek = Math.min(o.km, e), petrolL = Math.max(0, o.km - e) * o.cons / 100 + ek * (o.gEl || 0) / 100;
   const kwh = ek * (o.kwh100 || 0) / 100;
   return { elecKm: ek, kwh, elecCost: o.elecEur ? kwh * o.elecEur : null, petrolL, arriveL: o.fuelL - petrolL,
     needStop: petrolL > usable + 1e-9, reachKm: e + usable / o.cons * 100 };
@@ -3703,8 +4121,9 @@ function rtElecEur() {                           // car.elec is in car.elecCur (
 function rtInputs() {
   const phev = car.type === 'phev' && car.batt && car.range, eff = (car.eff || 90) / 100;
   const def = Math.max(5, Math.round(tank * 0.1));
-  return { cons: car.cons || trip.cons, withCar: !!car.cons, phev: !!phev, tank, fuelL: tank * rt.fuelPct / 100, reserveL: Math.min(tank, rt.reserve ?? def), defReserve: def,
-    elecKm: phev ? car.range * RT_REAL * rt.battPct / 100 : 0, kwh100: phev ? carKwh100(1 / eff) : 0, elecEur: phev ? rtElecEur() : null };
+  const tn = phev ? tmpNow() : { T: null }, x = phevF(tn.T), k100 = phev ? carKwh100(1 / eff) : 0;   // temperature known: range, kWh and petrol follow the My car curve; unknown: unchanged
+  return { cons: (car.cons || trip.cons) * (phev ? x.mp : 1), withCar: !!car.cons, phev: !!phev, tank, fuelL: tank * rt.fuelPct / 100, reserveL: Math.min(tank, rt.reserve ?? def), defReserve: def,
+    elecKm: phev ? car.range * RT_REAL * x.f * rt.battPct / 100 : 0, kwh100: k100 * x.mEl, gEl: x.gk * k100, elecEur: phev ? rtElecEur() : null, T: tn.T, tSrc: tn.src };
 }
 function rtSet(k, v) { rt[k] = v; if (rt.res?.cands) rtRank(); renderRoute(); }
 
@@ -3730,7 +4149,7 @@ function renderRoute() {
       <button class="rt-go" id="rt-go" onclick="rtGo()" ${rt.busy ? 'disabled' : ''}>${ico('search')} ${t('rtGo')}</button>
     </div>
     <div id="rt-out"></div>
-    <p class="cmp-note">${t('rtNote')}</p>`;
+    <p class="cmp-note">${t('rtNote')}</p>${(o => o.phev && o.T != null ? `<p class="cmp-note">${esc(t('rtTemp', { t: Math.round(o.T), s: t('mxSrc_' + o.tSrc) }))}</p>` : '')(rtInputs())}`;
   rtRenderOut();
 }
 function rtSetStatus(msg) { rt.status = msg; const o = document.getElementById('rt-out'); if (o && rt.busy) o.innerHTML = `<p class="empty" style="padding:14px 0"><i class="spin"></i> ${esc(msg)}</p>`; }
@@ -3906,7 +4325,7 @@ function rtRenderOut() {
   const best = R.best ? t('rtBest', { s: eur(R.best.saving) }) : t('rtNoBest', { s: eur(RT_MIN_SAVE) });
   const verdict = `<div class="tverdict ${P.needStop ? 'same' : 'good'}">${P.needStop ? t('rtNeedStop', { r: Math.round(P.reachKm), d: Math.round(R.km) }) : t('rtNoStop', { l: Math.round(P.petrolL), e, a: Math.max(0, Math.round(P.arriveL)) })}<small>${best}</small></div>`;
   const notes = [used.slice(4), R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '', R.hiddenOld ? t('rtOld', { n: R.hiddenOld }) : '',
-    I.withCar ? '' : t('rtNoCar', { c: I.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
+    I.withCar ? '' : t('rtNoCar', { c: trip.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
   if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${sum}${notes}</p>${verdict}<p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
   const fl = cmpKey === 'diesel' ? 'Diesel' : '95';
   let sep = false;

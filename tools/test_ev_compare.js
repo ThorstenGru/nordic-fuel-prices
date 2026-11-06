@@ -29,4 +29,8 @@ const n = evNearest(L, 5);
 assert.deepStrictEqual(n.picked.map(x => x.km), [1, 3, 4, 5, 6]); assert.strictEqual(n.setAside, 1);
 near(n.avg, n.picked.reduce((a, x) => a + x.price, 0) / 5, 1e-9);
 assert.strictEqual(evNearest([], 5).avg, null); assert.strictEqual(evNearest([{ km: 1, price: 1, tier: 2 }], 5).picked.length, 0);
+// heating petrol: cost per 100 km added to the electric side, break-even electricity price falls by heat / kwh100; the petrol side takes its own (cold) cons
+let h = evCompare({ kwh100: 20, elec: 2, cons: 8.475, petrol: 15, km: 100, heat: 10 });
+near(h.elec100, 50); near(h.petrol100, 127.125); near(h.breakEven, (127.125 - 10) / 20); near(h.trip.petrol, 127.125);
+near(evCompare({ kwh100: 20, elec: 2, cons: 7.5, petrol: 15, km: 100 }).elec100, 40);   // no heat = unchanged
 console.log('ev compare: all tests passed');

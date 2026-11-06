@@ -10,6 +10,8 @@ const car = { cons: 7, tank: 47, fuelL: 47, reserveL: 4.7, elecKm: 54 * 0.75, kw
 let p = rtPlan({ ...car, km: 503 });
 near(p.elecKm, 40.5); near(p.petrolL, (503 - 40.5) * 0.07); near(p.petrolL, 32.4, 0.1); near(p.arriveL, 14.6, 0.1);
 assert.strictEqual(p.needStop, false);
+// winter: engine heats the cabin while the battery lasts (gEl L/100 km on the electric km) -> a little more petrol, nothing when gEl is absent
+near(rtPlan({ ...car, km: 503, gEl: 3 }).petrolL, 32.4 + 40.5 * 0.03, 0.1); near(rtPlan({ ...car, km: 20, gEl: 3 }).petrolL, 0.6, 0.01); near(rtPlan({ ...car, km: 20 }).petrolL, 0, 1e-9);
 // petrol-only car: no electric part at all
 p = rtPlan({ ...car, elecKm: 0, kwh100: 0, elecEur: null, km: 503 });
 near(p.petrolL, 35.21, 0.01); assert.strictEqual(p.elecCost, null);
