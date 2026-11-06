@@ -94,8 +94,14 @@ assert.strictEqual(F.rtDepartHint(file(series(() => enc(-1.5, 11))), 'SE', 'p95'
 assert.strictEqual(F.rtDepartHint(file(series(() => enc(0, 0))), 'SE', 'p95'), null);                        // the collector's EMPTY series
 assert.strictEqual(F.rtDepartHint(file(series((wd, hr) => enc(hr === 3 ? -0.1 : 0.2, 20))), 'SE', 'p95'), null);   // a dip smaller than 0.3 %: no claim
 // wraps inside the day: 23:00 + 00:00
-c = series((wd, hr) => wd === 4 && hr === 23 ? enc(-1.2, 20) : wd === 4 && hr === 0 ? enc(-1, 20) : enc(0, 20));
+c = series((wd, hr) => wd === 4 && hr === 23 ? enc(-1.2, 20) : wd === 5 && hr === 0 ? enc(-1, 20) : enc(0, 20));
 h = F.rtDepartHint(file(c), 'SE', 'p95'); assert.strictEqual(h.wd, 4); assert.strictEqual(h.hr, 23); near(h.lvl, -1.1);
+// Monday 23:00 pairs with Tuesday 00:00, not Monday 00:00
+c = series((wd, hr) => wd === 0 && hr === 23 ? enc(-0.8, 20) : wd === 1 && hr === 0 ? enc(-0.7, 20) : wd === 0 && hr === 0 ? enc(0.1, 20) : enc(0, 20));
+h = F.rtDepartHint(file(c), 'SE', 'p95'); assert.strictEqual(h.wd, 0); assert.strictEqual(h.hr, 23); near(h.lvl, -0.75);
+// Sunday 23:00 wraps to Monday 00:00
+c = series((wd, hr) => wd === 6 && hr === 23 ? enc(-0.8, 20) : wd === 0 && hr === 0 ? enc(-0.8, 20) : enc(0, 20));
+h = F.rtDepartHint(file(c), 'SE', 'p95'); assert.strictEqual(h.wd, 6); assert.strictEqual(h.hr, 23);
 // country or fuel missing, wrong schema, damaged data: nothing, never throws
 assert.strictEqual(F.rtDepartHint(file(c), 'NO', 'p95'), null); assert.strictEqual(F.rtDepartHint(file(c), 'SE', 'diesel'), null);
 assert.strictEqual(F.rtDepartHint({ ...file(c), schema: 2 }, 'SE', 'p95'), null);

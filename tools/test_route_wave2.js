@@ -54,7 +54,11 @@ const cs = [mk(500, 330, false), mk(480, 360, false), mk(520, 300, false)].map(x
 let pk = F.rtPick(cs, 0); assert.strictEqual(pk.cheap, 1); assert.strictEqual(pk.fast, 2); assert.strictEqual(pk.bal, null);
 pk = F.rtPick(cs.map(x => F.rtTripCost({ ...mk(x.km, x.min - 10, false) }, { ...base, vot: 200 })), 200);   // time is expensive: the fast one is the balanced one
 assert.strictEqual(pk.bal, 2);
-assert.deepStrictEqual(F.rtPick([{ mid: null, min: 5, value: null }], 20), { cheap: null, fast: 0, bal: null });
+assert.deepStrictEqual(F.rtPick([{ mid: null, min: 5, value: null }], 20), { cheap: null, fast: 0, bal: null, skipped: false });
+// an unknown fare is not free: Cheapest and Balanced go to the route whose fares are all known
+pk = F.rtPick([{ mid: 50, min: 90, value: 60, fareUnknown: true }, { mid: 120, min: 80, value: 125, fareUnknown: false }], 20);
+assert.strictEqual(pk.cheap, 1); assert.strictEqual(pk.bal, 1); assert.strictEqual(pk.fast, 1); assert.strictEqual(pk.skipped, true);
+pk = F.rtPick([{ mid: 50, min: 90, value: 60, fareUnknown: true }, { mid: 40, min: 80, value: 55, fareUnknown: true }], 20); assert.strictEqual(pk.cheap, 1); assert.strictEqual(pk.skipped, false);
 
 // --- fuel unit: plan stops -> litres-weighted price with its range; no stops -> median
 const P0 = { stops: [{ litres: 20, cost: { mid: 36, lo: 35, hi: 37 } }, { litres: 20, cost: { mid: 40, lo: 38, hi: 42 } }] };
@@ -65,18 +69,25 @@ u = F.rtFuelUnit({ stops: [] }, 1.7); near(u.u, 1.7); assert(u.h > 0); assert.st
 const o2 = { cons: 7, tank: 47, fuelL: 14, reserveL: 4.7, elecKm: 0, kwh100: 0, elecEur: null, km: 700 };
 const cand = (id, cc, along, eur, extra = {}) => ({ id, s: { country: cc, name: id }, along, eur, detourKm: 1, age: 2, tier: 0, ...extra });
 const cands = [cand('a1', 'SE', 60, 1.80), cand('a2', 'SE', 120, 1.55), cand('a3', 'SE', 180, 1.60), cand('b1', 'DE', 400, 1.85), cand('b2', 'DE', 520, 1.90)];
-const plan = F.rtMakePlan({ o: o2, segs: null, min: 420, cands, ref: 1.75, asm: { vot: 0 } });
+const o3 = { ...o2, km: 1000 }, cands3 = [...cands, cand('b3', 'DE', 700, 1.88), cand('b4', 'DE', 850, 1.90)];   // long enough that the plan must also buy in DE
+const plan = F.rtMakePlan({ o: o3, segs: null, min: 600, cands: cands3, ref: 1.75, asm: { vot: 0 } });
 assert.strictEqual(plan.status, 'ok');
 const bs = F.rtBorders(cands); assert.strictEqual(bs.length, 1); assert.strictEqual(bs[0].from, 'SE'); assert.strictEqual(bs[0].to, 'DE'); near(bs[0].along, (180 + 400) / 2, 0.1);
-let tips = F.rtTank(cands, plan, o2, 700);
+let tips = F.rtTank(cands3, plan, o3, 1000);
 assert(plan.stops.some(s => s.s.country === 'SE'), 'plan fills in the cheap country');
 // A is the cheap side and the tank has room: tip is "before"; litres capped by tank space and by the burn after the border
 assert(tips.length === 1 && tips[0].dir === 'before', JSON.stringify(tips.map(x => x.dir)));
 assert(tips[0].litres > 0 && tips[0].litres <= 47); near(tips[0].save, tips[0].diff * tips[0].litres, 1e-6); assert.strictEqual(tips[0].pump.id, 'a3');   // a2 (1.55) is cheaper but not reachable with the plan's 10 % energy margin from 14 L
+// the plan already buys at the border-side pump and nothing after the border: no tip. Plan from the review: SE pumps, DE pumps far ahead.
+{ const o = { cons: 7, tank: 47, fuelL: 20, reserveL: 4.7, elecKm: 0, kwh100: 0, elecEur: null, km: 600 };
+  const cs = [cand('s1', 'SE', 100, 1.70), cand('s2', 'SE', 200, 1.60), cand('s3', 'SE', 250, 1.65), cand('d1', 'DE', 350, 1.90), cand('d2', 'DE', 450, 1.92), cand('d3', 'DE', 520, 1.95)];
+  const pl = F.rtMakePlan({ o, segs: null, min: 400, cands: cs, ref: 1.8, asm: { vot: 0 } });
+  assert(pl.status === 'ok' && !pl.stops.some(s => s.s.country === 'DE'));
+  assert.deepStrictEqual(F.rtTank(cs, pl, o, 600), []); }
 // same prices on both sides (within 3 cents): nothing
-assert.deepStrictEqual(F.rtTank(cands.map(x => ({ ...x, eur: 1.7 })), plan, o2, 700), []);
+assert.deepStrictEqual(F.rtTank(cands3.map(x => ({ ...x, eur: 1.7 })), plan, o3, 1000), []);
 // unverified or undated pumps are not used: tier 1 and 2 dropped, so one side is empty
-assert.deepStrictEqual(F.rtTank(cands.map(x => x.s.country === 'DE' ? { ...x, tier: 2 } : x), plan, o2, 700), []);
+assert.deepStrictEqual(F.rtTank(cands3.map(x => x.s.country === "DE" ? { ...x, tier: 2 } : x), plan, o3, 1000), []);
 // a single pump per country is not enough to place a border
 assert.deepStrictEqual(F.rtBorders([cand('a', 'SE', 10, 1), cand('b', 'DE', 300, 1)]), []);
 // B cheaper and the plan stops in A: tip is "after" (skip the stop), only when the fuel reaches the pump without those litres. Hand-made plan: start 40 L, buys 15 L at km 120.

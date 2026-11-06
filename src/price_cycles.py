@@ -91,7 +91,7 @@ def fold(st: Optional[Dict[str, Any]], median: Any, now_utc: datetime, slot: tup
 
 
 def cheapest_windows(st: Optional[Dict[str, Any]], min_n: int = 8, width: int = 1, top: int = 3) -> List[Dict[str, Any]]:
-    """Cheapest weekday/hour windows of one series: `width` consecutive local hours (wrapping inside the day),
+    """Cheapest weekday/hour windows of one series: `width` consecutive local hours (hour 23 runs on into hour 0 of the next weekday),
     ranked by mean level (percent vs baseline, lower = cheaper). Windows with any cell below min_n samples are
     skipped, so a fresh file returns [] instead of noise. Each item: wd, hr, width, lvl, n (smallest cell count)."""
     c = st.get("c") if st else None
@@ -100,7 +100,7 @@ def cheapest_windows(st: Optional[Dict[str, Any]], min_n: int = 8, width: int = 
     out = []
     for wd in range(7):
         for hr in range(24):
-            cells = [dec(c, wd * 24 + (hr + k) % 24) for k in range(width)]
+            cells = [dec(c, ((wd + (hr + k) // 24) % 7) * 24 + (hr + k) % 24) for k in range(width)]
             n = min(n for _, n in cells)
             if n < min_n:
                 continue
