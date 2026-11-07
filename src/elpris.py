@@ -154,20 +154,23 @@ async def fetch_prev(session: aiohttp.ClientSession) -> Optional[Dict[str, Any]]
         return json.loads(OUT.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         pass
-    from scrapers.geocoder import resolve_pages_base
+    from scrapers.geocoder import PAGES_BASES
+    # 404 only means "none exists yet" when EVERY base says 404 on EVERY pass; a failed GET or deploy gap must not rebuild from the seed.
+    clean_404 = True
     for attempt in range(3):
-        try:
-            base = await resolve_pages_base(session)
-            async with session.get(f"{base}/elpris.json", headers={**UA, "Cache-Control": "no-cache"},
-                                   timeout=aiohttp.ClientTimeout(total=30)) as r:
-                if r.status == 404:
-                    return {}
-                if r.status == 200:
-                    return await r.json(content_type=None)
-        except Exception as e:  # noqa: BLE001
-            print(f"[elpris] no previous file (try {attempt + 1}): {type(e).__name__}: {e}")
+        for base in PAGES_BASES:
+            try:
+                async with session.get(f"{base}/elpris.json", headers={**UA, "Cache-Control": "no-cache"},
+                                       timeout=aiohttp.ClientTimeout(total=30)) as r:
+                    if r.status == 200:
+                        return await r.json(content_type=None)
+                    if r.status != 404:
+                        clean_404 = False
+            except Exception as e:  # noqa: BLE001
+                clean_404 = False
+                print(f"[elpris] no previous file ({base}, try {attempt + 1}): {type(e).__name__}: {e}")
         await asyncio.sleep(1 + attempt * 2)
-    return None
+    return {} if clean_404 else None
 
 
 def load_seed() -> Dict[str, Dict[str, List[Optional[float]]]]:

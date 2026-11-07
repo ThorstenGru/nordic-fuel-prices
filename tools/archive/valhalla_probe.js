@@ -1,5 +1,5 @@
 // One-off probe of the public Valhalla (FOSSGIS) used by web/index.html. ~35 GET requests, >=1.1 s apart.
-// Usage: node tools/analysis/valhalla_probe.js [out.json]   (raw results are written to out.json)
+// Usage: node tools/archive/valhalla_probe.js [out.json]   (raw results are written to out.json)
 const H = 'https://valhalla1.openstreetmap.de/route';
 const P = { malmo:[55.605,13.000], hamburg:[53.551,9.994], berlin:[52.520,13.405], sthlm:[59.329,18.069], oslo:[59.913,10.752], bille:[55.917,13.083], cph:[55.676,12.568] };
 const loc = k => ({ lat:P[k][0], lon:P[k][1] });

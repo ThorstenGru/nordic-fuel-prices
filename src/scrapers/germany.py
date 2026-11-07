@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import aiohttp
 
 from merge_engine import MergeConfig, bucket_of
-from .base import BaseScraper
+from .base import BaseScraper, dist_m
 from ._anwb import ANWBScraper
 
 
@@ -72,14 +72,6 @@ _APIKEY_RE = re.compile(r"apikey=[^&\s'\"]+")
 FUEL_MAP = {"e5": ("E5", "L"), "e10": ("E10", "L"), "diesel": ("DIESEL", "L")}
 
 
-def _dist_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    r = 6371000.0
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp, dl = p2 - p1, math.radians(lon2 - lon1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * r * math.asin(math.sqrt(a))
-
-
 def _cover_circles(stations: List[Dict], r_km: float) -> List[Tuple[float, float]]:
     """Hex lattice of radius-``r_km`` circles that covers Germany. The footprint is taken from the
     ANWB stations (circles with no station within r are dropped); densest circles first so a request
@@ -104,7 +96,7 @@ def _cover_circles(stations: List[Dict], r_km: float) -> List[Tuple[float, float
             cx, cy = math.floor(lat / cell), math.floor(lon / cell)
             n = sum(1 for dx in range(-reach, reach + 1) for dy in range(-reach, reach + 1)
                     for (a, b) in buckets.get((cx + dx, cy + dy), ())
-                    if _dist_m(lat, lon, a, b) <= r_km * 1000)
+                    if dist_m(lat, lon, a, b) <= r_km * 1000)
             if n:
                 out.append((n, round(lat, 4), round(lon, 4)))
             lon += lon_step
@@ -356,7 +348,7 @@ class GermanyScraper(BaseScraper):
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     for s in index.get((cx + dx, cy + dy), []):
-                        d = _dist_m(t["lat"], t["lon"], s["lat"], s["lon"])
+                        d = dist_m(t["lat"], t["lon"], s["lat"], s["lon"])
                         if d < best_d:
                             best, best_d = s, d
             if best is None or best_d > 150:

@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+import aiohttp
+
 from .base import BaseScraper
 
 _UA = "EuroFuelPrices/1.0 (+https://eurofuelprices.com)"
@@ -42,7 +44,7 @@ class GreenlandScraper(BaseScraper):
         for url in _MIRRORS:
             try:
                 async with self.session.post(url, data={"data": _QUERY}, headers={"User-Agent": _UA},
-                                             timeout=__import__("aiohttp").ClientTimeout(total=100)) as r:
+                                             timeout=aiohttp.ClientTimeout(total=100)) as r:
                     if r.status != 200:
                         continue
                     els = (await r.json(content_type=None)).get("elements", [])

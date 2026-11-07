@@ -1,7 +1,7 @@
 # Data accuracy findings — 2026-10-08 (frontend stress test, v1.16.0)
 
 Found while stress-testing the frontend against the live data (snapshot of all 45 country files, meta v1.15.0, 123,169 stations).
-Reproduce with the scripts in `tools/analysis/` (each takes the folder with the downloaded `<cc>.json` + `meta.json`).
+Reproduce with the scripts in `tools/archive/` (each takes the folder with the downloaded `<cc>.json` + `meta.json`).
 
 ## 1. ANWB petrol slots are mislabelled for some countries (pipeline: `src/scrapers/_anwb.py`, `src/plausibility.py`)
 

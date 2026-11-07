@@ -53,4 +53,4 @@ National cost (estimate, not run): tiles of 5 km radius at 7 km spacing need rou
 3. Accept that the 12:00 daily price-increase rule makes a refresh just after noon local time worthwhile.
 
 ## Prototype
-`tools/analysis/ro_monitorul_probe.py` (not wired into the pipeline): tile scan, per-fuel, de-duplicates by station id, prints how many tiles hit the 50 cap and the update-date histogram. Run for Cluj in 6 min 44 s sequential at 0.25 s pacing (about 600 calls). Known shortcut: fixed grid, no auto-subdivision.
+`tools/archive/ro_monitorul_probe.py` (not wired into the pipeline): tile scan, per-fuel, de-duplicates by station id, prints how many tiles hit the 50 cap and the update-date histogram. Run for Cluj in 6 min 44 s sequential at 0.25 s pacing (about 600 calls). Known shortcut: fixed grid, no auto-subdivision.

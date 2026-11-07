@@ -11,10 +11,9 @@ Why per-station prices are unavailable:
   confirmed 0 Norwegian stations (tested 2026-06-18). Drivstoffappen went
   commercial. No equivalent to Denmark's mandatory reporting.
 
-  National monthly average from SSB (Statistics Norway, table 09654) is still
-  fetched and stored in meta, but it is NOT attached to individual stations
-  because it is a country-wide average and would be misleading as a per-station
-  price. All station markers show with empty prices.
+  The SSB national monthly average is deliberately not used (a country-wide
+  average would be a fake per-station price). Station markers without an ANWB
+  price show with empty prices.
 """
 
 import aiohttp
@@ -50,19 +49,6 @@ OVERPASS_HEADERS = {
 }
 
 
-# ── Statistics Norway (SSB) — national monthly average ────────────────────────
-
-SSB_URL = "https://data.ssb.no/api/v0/en/table/09654"
-SSB_BODY = {
-    "query": [
-        {"code": "PetroleumProd", "selection": {"filter": "item", "values": ["031", "035"]}},
-        {"code": "ContentsCode",  "selection": {"filter": "item", "values": ["Priser"]}},
-        {"code": "Tid",           "selection": {"filter": "top",  "values": ["1"]}},
-    ],
-    "response": {"format": "json-stat2"},
-}
-
-
 class NorwayScraper(BaseScraper):
     COUNTRY    = "NO"
     CURRENCY   = "NOK"
@@ -72,9 +58,8 @@ class NorwayScraper(BaseScraper):
     REFRESH_MINUTES = 55   # full ANWB crawl plus a country-wide Overpass query per run: hourly
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        anwb_res, osm_els, ssb_avg = await asyncio.gather(
-            _NOAnwb(self.session).fetch_stations(), self._fetch_osm(), self._fetch_ssb(),
-            return_exceptions=True)
+        anwb_res, osm_els = await asyncio.gather(
+            _NOAnwb(self.session).fetch_stations(), self._fetch_osm(), return_exceptions=True)
 
         anwb_err = osm_err = None
         if isinstance(anwb_res, Exception):
@@ -87,8 +72,6 @@ class NorwayScraper(BaseScraper):
             osm_els = []
         elif not osm_els:
             osm_err = "empty"
-        if isinstance(ssb_avg, Exception) or not ssb_avg:
-            ssb_avg = []
 
         results = [
             SourceResult("anwb", "ANWB", anwb_res, 9, "aggregator", "NOK", ok=anwb_err is None, error=anwb_err),
@@ -97,13 +80,9 @@ class NorwayScraper(BaseScraper):
         ]
         stations, self.merge_report = merge_sources(results, MergeConfig(country="NO"))
 
-        if not stations and ssb_avg:
-            stations = self._fallback_ssb_markers(ssb_avg)
         if not stations:
             raise RuntimeError("Norway: no station source returned data")
 
-        if ssb_avg:
-            print(f"[NO] SSB national avg (reference only, not attached to stations): {ssb_avg}")
         rp = self.merge_report
         print(f"[NO] {len(stations)} stations ({rp['priced_station_count']} priced; "
               f"conflicts {rp['conflicts']}, outliers {rp['outliers_dropped']}, failed {rp['failed_sources']})")
@@ -167,60 +146,3 @@ class NorwayScraper(BaseScraper):
                 "prices":     [],
             })
         return stations
-
-    # ── SSB fallback ───────────────────────────────────────────────────────────
-
-    async def _fetch_ssb(self) -> List[Dict]:
-        try:
-            async with self.session.post(
-                SSB_URL,
-                json=SSB_BODY,
-                timeout=aiohttp.ClientTimeout(total=20),
-                headers={"Accept": "application/json"},
-            ) as resp:
-                if resp.status != 200:
-                    return []
-                data = await resp.json(content_type=None)
-        except Exception as e:
-            print(f"[NO/SSB] {type(e).__name__}: {e}")
-            return []
-
-        values = data.get("value", [])
-        if len(values) < 2:
-            return []
-
-        prices = []
-        for idx, fuel_type, unit in [(0, "E10", "L"), (1, "DIESEL", "L")]:
-            try:
-                p = float(values[idx])
-                if p > 0:
-                    prices.append(self.price_entry(fuel_type, p, unit, octane=95 if fuel_type == "E10" else None))
-            except (TypeError, ValueError, IndexError):
-                pass
-        return prices
-
-    def _fallback_ssb_markers(self, prices: List[Dict]) -> List[Dict]:
-        """Only used when OSM returns nothing — show SSB avg at major cities."""
-        cities = [
-            ("Oslo",      59.9139, 10.7522),
-            ("Bergen",    60.3913,  5.3221),
-            ("Trondheim", 63.4305, 10.3951),
-            ("Stavanger", 58.9700,  5.7331),
-            ("Tromsø",    69.6496, 18.9560),
-        ]
-        return [
-            {
-                "id":         f"no_ssb_{city.lower()}",
-                "country":    "NO",
-                "name":       f"Norway Avg · {city}",
-                "brand":      "National Average",
-                "address":    "SSB Statistics Norway · monthly avg",
-                "city":       city,
-                "lat":        lat,
-                "lon":        lon,
-                "source":     "ssb.no (national monthly avg)",
-                "confidence": 0.85,
-                "prices":     prices,
-            }
-            for city, lat, lon in cities
-        ]

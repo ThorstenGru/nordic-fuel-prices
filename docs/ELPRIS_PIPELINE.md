@@ -9,6 +9,8 @@ DK (Energi Data Service), NO, FI and DE-LU are not implemented (rate limits / li
 - Local: `PYTHONIOENCODING=utf-8 python src/elpris.py`
 - One-off seed (complete months since 2022-01): `python src/elpris.py --backfill [YYYY-MM-DD]` writes
   `src/seed/elpris_monthly.json` (committed, about 7,000 requests, 4 parallel). Re-run only to extend history; past months are frozen.
+  The seed already holds every complete month up to 2026-10 (checked 2026-11-07). It cannot be extended offline: once a month, run `python src/elpris.py --backfill 2022-01-01` (needs the network, about 7,000 requests) and commit the new `src/seed/elpris_monthly.json`.
+  `fetch_prev` (last published file) treats a clean 404 on every Pages base as "none yet" and any other failure as "unknown" (the run keeps the old file instead of rebuilding from the seed).
 - Tests: `cd src && python -m unittest tests.test_elpris` (offline; includes the Sep 2026 SE4 invoice check, tolerance 0.002).
 
 ## State and failure handling

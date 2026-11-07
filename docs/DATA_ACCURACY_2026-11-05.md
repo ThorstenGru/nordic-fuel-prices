@@ -12,7 +12,7 @@ ANWB reports two petrol slots for Sweden. Their levels differ by brand (live dat
 | 98 | ST1 | 71 | 17.67 | Single value; resembles a genuine 98 |
 | 95 | Preem / Circle K / Ingo | about 330 | 17.3 to 17.9 | About 1.5 SEK above bensinpriser.nu's regular-95 level (about 15.6 to 16.3) |
 
-The bensinpriser.nu E10 median is 15.64 SEK. Reproduce the table with `tools/analysis/i_se_anwb_slots_by_brand.py <folder with se.json>`.
+The bensinpriser.nu E10 median is 15.64 SEK. Reproduce the table with `tools/archive/i_se_anwb_slots_by_brand.py <folder with se.json>`.
 
 **Ground-truth data point (owner, at the pump):** ST1 Loddekopinge, 95 E10 = 15.64 SEK. In our live data this station (`se_xavvy_M_SWE_2078103`, ANWB) has only a diesel price (22.54 SEK) and no petrol 95 from any source.
 

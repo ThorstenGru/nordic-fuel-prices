@@ -1,6 +1,6 @@
 # Charger data design: Type 2 stations from Open Charge Map (+ optional NOBIL) (2026-11-07)
 
-Scope: research and measurement for the "Chargers + typical prices" feature (Santa Fe PHEV, Type 2 AC only, 3.6 kW). No web/ code changed. Two standalone probes were added under `tools/analysis/`: `ocm_probe.js` (live fetch, needs env `OCM_API_KEY`, prints no key) and `ocm_compact_design.js` (offline, reads the probe output, measures the proposed filter/dedupe/compaction). Builds on `EV_PRICE_SOURCES_2026-11-06.md` and `NOBIL_TEST_2026-11-06.md`.
+Scope: research and measurement for the "Chargers + typical prices" feature (Santa Fe PHEV, Type 2 AC only, 3.6 kW). No web/ code changed. Two standalone probes were added under `tools/archive/`: `ocm_probe.js` (live fetch, needs env `OCM_API_KEY`, prints no key) and `ocm_compact_design.js` (offline, reads the probe output, measures the proposed filter/dedupe/compaction). Builds on `EV_PRICE_SOURCES_2026-11-06.md` and `NOBIL_TEST_2026-11-06.md`.
 
 Legend: [M] measured today with the owner's key (2026-11-07, 18 requests in total, at least 1.2 s apart, all HTTP 200, no 429, no rate-limit headers returned). [D] documentation or search summary. [?] unverified.
 

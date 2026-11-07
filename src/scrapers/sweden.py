@@ -20,7 +20,6 @@ now use as the real price timestamp.
 import aiohttp
 import asyncio
 import json
-import math
 import re
 import unicodedata
 from collections import defaultdict
@@ -28,10 +27,9 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
-import importlib
 
 from merge_engine import MergeConfig, SourceResult, merge_sources
-from .base import BaseScraper, iso_utc
+from .base import BaseScraper, dist_m, iso_utc
 from ._anwb import ANWBScraper
 from . import geocoder as _geo
 
@@ -115,13 +113,6 @@ def _street_token(street: str) -> str:
     return _norm(m.group(0)) if m else ""
 
 
-def _dist_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp, dl = p2 - p1, math.radians(lon2 - lon1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * 6371000.0 * math.asin(math.sqrt(a))
-
-
 def _parse_station_id(station_id: str) -> Dict[str, str]:
     """'{lan}_{Brand}_{City}__{Street}[__{Sub}]' -> brand / city / street / street_q / name."""
     parts = station_id.split("_", 2)
@@ -158,11 +149,6 @@ class _SEAnwb(ANWBScraper):
     CONFIDENCE = 0.80
 
 
-# Optional extra SE price sources (src/sources/se_*.py exposing `async def fetch(session)`),
-# loaded lazily: (module, source_id, display name, priority, kind).  Adding one = one line.
-OPTIONAL_SOURCES: List[Tuple[str, str, str, int, str]] = []
-
-
 class SwedenScraper(BaseScraper):
     COUNTRY    = "SE"
     CURRENCY   = "SEK"
@@ -174,9 +160,9 @@ class SwedenScraper(BaseScraper):
     _CONCURRENCY = 4  # max concurrent county requests to henrikhjelm.se
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
-        osm_els, priced, anwb, *extra_res = await asyncio.gather(
+        osm_els, priced, anwb = await asyncio.gather(
             self._fetch_osm(), self._fetch_all_counties(), _SEAnwb(self.session).fetch_stations(),
-            *[self._fetch_optional(m) for m, *_ in OPTIONAL_SOURCES], return_exceptions=True)
+            return_exceptions=True)
         osm_err = None
         if isinstance(osm_els, Exception) or not osm_els:
             osm_err = str(osm_els) if isinstance(osm_els, Exception) else "empty"
@@ -263,7 +249,7 @@ class SwedenScraper(BaseScraper):
                         sbk = _brand_key(s.get("brand", ""))
                         if bk not in ("ovriga", "") and sbk and sbk != bk:
                             continue
-                        d = _dist_m(p["lat"], p["lon"], s["lat"], s["lon"])
+                        d = dist_m(p["lat"], p["lon"], s["lat"], s["lon"])
                         if d < best_d:
                             best, best_d = s, d
             if best is not None and best_d <= MATCH_RADIUS_M:
@@ -281,10 +267,6 @@ class SwedenScraper(BaseScraper):
             SourceResult("osm", "OpenStreetMap", geometry, 99, "geometry", "SEK",
                          ok=osm_err is None, error=osm_err),
         ]
-        for (mod, sid, name, prio, kind), r in zip(OPTIONAL_SOURCES, extra_res):
-            bad = isinstance(r, Exception)
-            results.append(SourceResult(sid, name, [] if bad else r, prio, kind, "SEK",
-                                        ok=not bad, error=str(r) if bad else None))
         usable = sum(len(r.stations) for r in results if r.ok and r.kind != "geometry")
         if osm_err is not None and usable <= 1000:
             # Without the OSM backbone (and no other source with >1000 stations) we would publish a
@@ -297,10 +279,6 @@ class SwedenScraper(BaseScraper):
               f"{len(priced) - matched_n - snapped - len(extra)} priced but un-locatable; "
               f"conflicts {rp['conflicts']}, outliers {rp['outliers_dropped']}, failed {rp['failed_sources']})")
         return all_stations
-
-    async def _fetch_optional(self, module: str) -> List[Dict]:
-        mod = importlib.import_module(f"sources.{module}")
-        return await mod.fetch(self.session)
 
     # ── OSM fetch ──────────────────────────────────────────────────────────────
 
@@ -401,7 +379,7 @@ class SwedenScraper(BaseScraper):
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     for o in cells.get((cell[0] + dx, cell[1] + dy), []):
-                        if _dist_m(lat, lon, o["lat"], o["lon"]) <= 30 and (not bk or not o["_bk"] or bk == o["_bk"]):
+                        if dist_m(lat, lon, o["lat"], o["lon"]) <= 30 and (not bk or not o["_bk"] or bk == o["_bk"]):
                             dup = True
             if dup:
                 continue

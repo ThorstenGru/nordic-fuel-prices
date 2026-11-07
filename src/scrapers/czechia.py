@@ -24,12 +24,11 @@ station is near); ANWB priority 9 'aggregator' (already CZK). Newer timestamp wi
 priority. A failing source is marked ok=False; raise only when all fail.
 """
 
-import math
 from typing import Any, Dict, List, Optional
 
 import aiohttp
 
-from .base import BaseScraper, iso_utc, octane_of
+from .base import BaseScraper, cheapest_per_slot, iso_utc, octane_of
 from ._anwb import ANWBScraper
 from merge_engine import MergeConfig, SourceResult, merge_sources
 
@@ -43,23 +42,9 @@ CZK_BAND = (15.0, 90.0)
 LPG_BAND = (10.0, 50.0)
 LAT_RANGE, LON_RANGE = (48.5, 51.1), (12.0, 18.9)
 
-def _dist_m(a_lat, a_lon, b_lat, b_lon) -> float:
-    dlat = (b_lat - a_lat) * 111_320.0
-    dlon = (b_lon - a_lon) * 111_320.0 * math.cos(math.radians((a_lat + b_lat) / 2))
-    return math.hypot(dlat, dlon)
-
-
 def _in_cz(lat, lon) -> bool:
     return (isinstance(lat, (int, float)) and isinstance(lon, (int, float))
             and LAT_RANGE[0] <= lat <= LAT_RANGE[1] and LON_RANGE[0] <= lon <= LON_RANGE[1])
-
-
-def _slot(p: Dict) -> str:
-    """Merge slot: petrol bucketed by octane (95 / 98+), other fuels by fuel_type."""
-    o = octane_of(p)
-    if o is None:
-        return p["fuel_type"]
-    return "P98" if o >= 97 else "P95"
 
 
 def _plausible(fuel: str, price: float) -> bool:
@@ -83,8 +68,11 @@ class CzechiaScraper(BaseScraper):
     CONFIDENCE = 0.75
     GRADE = "D"                    # crowd-sourced primary; ANWB aggregator fills gaps
     REFRESH_MINUTES = 60
-    requests_made = 0
     merge_report: Dict[str, Any] = {}
+
+    def __init__(self, session):
+        super().__init__(session)
+        self.requests_made = 0
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         errors: Dict[str, str] = {}
@@ -125,7 +113,7 @@ class CzechiaScraper(BaseScraper):
 
     # -- BenzinMapa ----------------------------------------------------------
     async def _fetch_benzinmapa(self) -> List[Dict]:
-        CzechiaScraper.requests_made += 1
+        self.requests_made += 1
         async with self.session.get(
             BM_URL, timeout=aiohttp.ClientTimeout(total=30),
             headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
@@ -187,11 +175,6 @@ class CzechiaScraper(BaseScraper):
             if not _in_cz(st.get("lat"), st.get("lon")):
                 stations.remove(st)
                 continue
-            best: Dict[str, Dict] = {}
-            for p in st.get("prices", []):
-                if p.get("currency") != "CZK" or not _plausible(p["fuel_type"], p["price"]):
-                    continue
-                cur = best.get(_slot(p))
-                if cur is None or p["price"] < cur["price"]:
-                    best[_slot(p)] = p
-            st["prices"] = list(best.values())
+            st["prices"] = cheapest_per_slot(
+                [p for p in st.get("prices", [])
+                 if p.get("currency") == "CZK" and _plausible(p["fuel_type"], p["price"])])

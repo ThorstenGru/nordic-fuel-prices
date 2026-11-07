@@ -142,7 +142,7 @@ class UnitedKingdomScraper(ANWBScraper):
                 # retailer E10 price (median diff 0.000; vs retailer E5 -15 p), so it is regular 95 / E10.
                 # The earlier 10-07 benchmark (E5 super) no longer holds. The "98" slot is DROPPED: it has no
                 # same-station overlap with retailer prices and its median equals the 95 slot's (1.908), so
-                # it is probably regular fuel. shortcut: re-check with tools/analysis/e_anwb_slot_matching.py.
+                # it is probably regular fuel. shortcut: re-check with tools/archive/e_anwb_slot_matching.py.
                 if p["fuel_type"] == "98" or (octane_of(p) or 0) >= 98:
                     continue
                 if p["fuel_type"] in ("E10", "E5", "95"):

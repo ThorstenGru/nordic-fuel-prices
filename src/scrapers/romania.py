@@ -1,11 +1,13 @@
 import asyncio
+import os
 import re
 import json
 import urllib.parse
 from datetime import datetime, timedelta, timezone
 import aiohttp
 from typing import List, Dict, Any, Optional
-from .base import BaseScraper
+from .base import BaseScraper, dist_m_flat
+from .romania_official import MonitorulSource
 
 # Romania: peco-online.ro — server-side rendered map with embedded JSON
 # Fuel price data from ANPC mandatory price reporting
@@ -57,6 +59,12 @@ _HEADERS = {
 _PACE_S = 2.0
 _NULL_BACKOFF_S = 12.0
 
+# ROMANIA_SOURCE = peco (default) | official | both. 'official' is the Monitorul Preturilor API: permission from
+# the owner of that portal is NOT yet confirmed, so the default must stay peco (docs/ROMANIA_SETUP.md).
+SOURCE_MODES = ("peco", "official", "both")
+OFFICIAL_SOURCE = "monitorulpreturilor.info"
+DEDUPE_M = 150            # in 'both' mode an official station replaces a peco-online one this close
+
 MAX_CARRY_DAYS = 3        # carried-over stations are kept this long without being seen again (a full refresh cycle takes ~1 h)
 
 _LAT_MIN, _LAT_MAX = 43.5, 48.4
@@ -98,7 +106,7 @@ class RomaniaScraper(BaseScraper):
             try:
                 key = f"{st['brand']}|{round(st['lat'], 4)}|{round(st['lon'], 4)}"
                 st["_prices"] = {
-                    p["fuel_type"]: (p["price"], p.get("unit", "L"))
+                    p["fuel_type"]: (p["price"], p.get("unit", "L"), p.get("updated_at"))
                     for p in st.get("prices", []) if p.get("price", 0) > 0
                 }
                 st.pop("prices", None)
@@ -120,8 +128,15 @@ class RomaniaScraper(BaseScraper):
         self._null_replies = 0
         self._requests = 0
 
-        cycle = int(time.time() // (self.REFRESH_MINUTES * 60)) % self.NSLICES
-        counties = _COUNTIES[cycle::self.NSLICES]
+        mode = os.environ.get("ROMANIA_SOURCE", "peco").strip().lower()
+        if mode not in SOURCE_MODES:
+            print(f"[RO] unknown ROMANIA_SOURCE={mode!r}, using 'peco'")
+            mode = "peco"
+        self.SOURCE = {"peco": "peco-online.ro", "official": OFFICIAL_SOURCE,
+                       "both": f"{OFFICIAL_SOURCE} + peco-online.ro"}[mode]
+        slot = int(time.time() // (self.REFRESH_MINUTES * 60))
+        cycle = slot % self.NSLICES
+        counties = _COUNTIES[cycle::self.NSLICES] if mode != "official" else []
         t0 = time.monotonic()
         done = 0
         for county in counties:
@@ -143,7 +158,7 @@ class RomaniaScraper(BaseScraper):
                             "city":       city,
                             "lat":        lat,
                             "lon":        lon,
-                            "source":     self.SOURCE,
+                            "source":     "peco-online.ro",
                             "confidence": self.CONFIDENCE,
                             "_prices":    {},
                         }
@@ -151,7 +166,13 @@ class RomaniaScraper(BaseScraper):
                     st["seen_at"] = now_iso
                 await asyncio.sleep(_PACE_S)   # bursts get throttled -> JSON.parse('null')
             done += 1
-        print(f"[RO] slice {cycle + 1}/{self.NSLICES}: {done}/{len(counties)} counties refreshed, "
+        if mode != "peco":   # after the peco pass, so an official station replaces a peco one at the same place
+            known = [(st["lat"], st["lon"]) for st in stations_by_key.values()]
+            budget = int(os.environ.get("ROMANIA_OFFICIAL_BUDGET", "150"))
+            found = await MonitorulSource(self.session, budget=budget).fetch(known, slot)
+            self._merge_official(stations_by_key, found, now_iso)
+        if mode != "official":
+            print(f"[RO] slice {cycle + 1}/{self.NSLICES}: {done}/{len(counties)} counties refreshed, "
               f"{n_prev} stations carried over")
 
         # Convert to final format. A station that has not been seen at the source for MAX_CARRY_DAYS (closed, or no longer reporting) is dropped;
@@ -169,21 +190,38 @@ class RomaniaScraper(BaseScraper):
                 s.pop("_prices", None)
                 continue
             prices = [
-                self.price_entry(ft, pr, unit, updated_at=seen.isoformat(), octane=95 if ft == "E5" else None)   # Benzina_Regular = 95
-                for ft, (pr, unit) in s.pop("_prices").items()
-                if pr > 0
+                # Benzina_Regular = 95; the official source brings its own price time, otherwise it is when we last saw it
+                self.price_entry(ft, v[0], v[1], updated_at=(v[2] if len(v) > 2 and v[2] else seen.isoformat()),
+                                 octane=95 if ft == "E5" else None)
+                for ft, v in s.pop("_prices").items()
+                if v[0] > 0
             ]
             if prices:
                 s["prices"] = prices
                 result.append(s)
 
-        print(f"[RO] {len(result)} stations from peco-online.ro, {expired} not seen for {MAX_CARRY_DAYS} days dropped "
+        print(f"[RO] {len(result)} stations from {self.SOURCE}, {expired} not seen for {MAX_CARRY_DAYS} days dropped "
               f"({self._requests} requests, {self._null_replies} empty/null replies)")
         if not result:
             raise RuntimeError(
-                f"peco-online.ro returned no stations ({self._requests} requests, "
+                f"{self.SOURCE} returned no stations ({self._requests} requests, "
                 f"{self._null_replies} null replies) - token scheme or markup probably changed")
         return result
+
+    @staticmethod
+    def _merge_official(stations_by_key: Dict[str, dict], found: Dict[str, dict], now_iso: str) -> None:
+        """Fold official stations into the carried set; an existing station within DEDUPE_M is replaced."""
+        import hashlib
+        for f in found.values():
+            for k in [k for k, o in stations_by_key.items()
+                      if dist_m_flat(f["lat"], f["lon"], o["lat"], o["lon"]) <= DEDUPE_M]:
+                del stations_by_key[k]
+            key = f"{f['brand']}|{round(f['lat'], 4)}|{round(f['lon'], 4)}"
+            stations_by_key[key] = {
+                "id": "ro_" + hashlib.md5(key.encode()).hexdigest()[:10], "country": "RO", "name": f["name"],
+                "brand": f["brand"], "address": f["address"], "city": "", "lat": f["lat"], "lon": f["lon"],
+                "source": OFFICIAL_SOURCE, "confidence": 0.95, "seen_at": now_iso, "_prices": dict(f["prices"]),
+            }
 
     async def _get_token(self, force: bool = False) -> Optional[dict]:
         """GET the page once (sets the session cookie) and read the signed token it embeds."""

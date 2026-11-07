@@ -17,14 +17,21 @@ A GitHub Actions job scrapes official and third-party feeds about every 15 minut
 
 | Grade | Meaning | Examples |
 |---|---|---|
-| **A** | Official feed; stations are legally obliged to report price changes (minutes–hours) | France, Spain, Portugal, Austria, Germany (with Tankerkönig key) |
+| **A** | Official feed; stations are legally obliged to report price changes (minutes–hours) | France, Spain, Portugal, Austria |
 | **B** | Official feed, daily/periodic or regulated prices | Italy (daily CSV) |
-| **C** | Third-party aggregator (ANWB/xavvy/Appitup), **no price timestamps**, unofficial | NL, BE, PL, CZ, GB, IE, … (and DE/ES fallback) |
-| **D** | Community-reported | Sweden (bensinpriser.nu), Finland, Iceland |
+| **C** | Third-party aggregator (ANWB/xavvy/Appitup), **no price timestamps**, unofficial | NL, BE, PL, CZ, GB, IE, … (and ES fallback) |
+| **partial, test mode** | Germany: ANWB baseline (grade C) plus Tankerkönig/MTS-K prices (grade A) on a rotating subset of stations only; see [docs/TANKERKOENIG_SETUP.md](docs/TANKERKOENIG_SETUP.md) | Germany |
+| **D** | Community-reported | Sweden (bensinpriser.nu), Finland (Hintatutka.net), Iceland |
 | **L** | Locations only | Norway, Kosovo (no legitimate price source) |
 
 Sweden and Norway: authorities discourage/ban chains from publishing list prices, so there is no official feed; Sweden relies on crowd
 data (~20 % of stations) on top of an OpenStreetMap location backbone.
+
+## Features (web app, `web/`)
+
+Price map and lists per country with grade and price-age badges, route planner (cheapest fill-ups along a route), My car
+(fuel/electric/plug-in hybrid cost per trip), EV chargers with typical prices, and a price outlook (price cycles and
+electricity-price context). Currency display is local plus EUR.
 
 ## Reliability design
 
@@ -39,17 +46,40 @@ data (~20 % of stations) on top of an OpenStreetMap location backbone.
 ## Setup
 
 1. Fork/clone, enable **Settings → Pages → Deploy from branch → gh-pages**.
-2. **Germany (statutory MTS-K, 5-minute reporting duty):** register a free key at <https://onboarding.tankerkoenig.de>, add it as
-   repository secret `TANKERKOENIG_API_KEY`. Without it Germany uses the ANWB fallback (~14.9k stations, grade C).
-3. Run **Actions → EuroFuelPrices — Scrape → Run workflow** once; it then keeps itself running.
-4. Local: `pip install -r requirements.txt && python src/main.py` (writes `data/`), serve `data/` + `web/` together.
+2. **Germany (optional upgrade, off by default):** register a free key at <https://onboarding.tankerkoenig.de>, add repository secret
+   `TANKERKOENIG_API_KEY` **and** set the repository variable `TANKERKOENIG_MODE` to `test` (or `commercial` with a contract).
+   Without the variable the mode is `off` even if the key exists, and Germany uses the ANWB baseline (~14.9k stations, grade C).
+   Details, rate limits and modes: [docs/TANKERKOENIG_SETUP.md](docs/TANKERKOENIG_SETUP.md).
+3. Optional variables/secrets: `GOON_API_KEY` (Denmark), `OCM_API_KEY` (chargers), `ROMANIA_SOURCE` = `peco` (default) | `official` | `both`
+   ([docs/ROMANIA_SETUP.md](docs/ROMANIA_SETUP.md); `official` needs permission first).
+4. Run **Actions → EuroFuelPrices — Scrape → Run workflow** once; it then keeps itself running.
+5. Local: `pip install -r requirements.txt && python src/main.py` (writes `data/`), serve `data/` + `web/` together.
+
+## Tests
+
+- Python (no network): `cd src && python -m unittest discover -s tests -q`.
+- Web/page: `node tools/check_page_syntax.js`, `for f in tools/test_*.js; do node "$f"; done`, `node tools/check_fares.js`, `node tools/check_ac_tariffs.js`.
+- Data versions: `web/vehicles.json` and `web/fares.json` are fetched as `?v=<N>` and cached by the service worker, so an edit needs a version bump.
+  `node tools/check_data_versions.js` fails when a data file changed without it; after editing one, run `node tools/check_data_versions.js --fix`
+  to bump the version and record the new hash in `web/index.html`.
+- CI: `.github/workflows/tests.yml` runs all of the above on every push and pull request; `scrape.yml` runs them before each scrape.
+- One-off research scripts live in `tools/archive/` (not maintained, not run by CI).
+
+## Sources and permissions
+
+Status per source (granted, pending, open) is in [docs/PERMISSIONS.md](docs/PERMISSIONS.md). Permission granted by the owners on 2026-11-07:
+Hintatutka.net (Finland, keep the attribution "Hintatutka.net") and the unofficial ANWB feed.
+
+## Licence
+
+**Licence: not yet chosen (all rights reserved until then).** There is no LICENSE file in this repository.
 
 ## Roadmap (summary — details and numbers in [docs/ROADMAP.md](docs/ROADMAP.md))
 
 **Data**
 - [x] Honest timestamps, last-known-good, validation, health report, 15-minute cadence
 - [x] Sweden parser fixed (crowd prices), Germany/Spain via tiled ANWB, France/Portugal/Italy real timestamps, UK/IE interim
-- [ ] Tankerkönig key (DE grade A), UK Fuel Finder registration (30-min statutory feed), Spain relay (MINETUR blocks GitHub IPs)
+- [ ] Tankerkönig (DE grade A; test mode only so far), UK Fuel Finder registration (30-min statutory feed), Spain relay (MINETUR blocks GitHub IPs)
 - [ ] Denmark statutory operator APIs (real-time since 2026-01-01), Lithuania LEA, Romania monitorulpreturilor, Greece ministry feed
 - [ ] EU Weekly Oil Bulletin as independent price-sanity validator; monthly OSM snapshot per country as location backbone
 - [ ] Licence register per country (gate monetization per source)

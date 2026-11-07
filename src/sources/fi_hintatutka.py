@@ -6,9 +6,9 @@ Endpoint : GET http://www.hintatutka.net/about   (any page of the site embeds th
            price_diesel_thousandths,latest_price_updated_at,...}] ...)
            ONE request returns every station (224 on 2026-10-07), with GPS and a per-station
            timestamp (the latest report for that station; naive time, assumed Europe/Helsinki).
-Licence  : NONE published (no ToS / licence page; robots.txt only "Disallow: /admin").
-           Prices are community-reported. Before production use, e-mail info@hintatutka.net to ask
-           permission and agree attribution ("Hintatutka.net"). Until then treat as opt-in.
+Licence  : PERMISSION GRANTED by the site owner of hintatutka.net (confirmed by the EuroFuelPrices owner,
+           2026-11-07). Condition: keep the attribution "Hintatutka.net" wherever these prices are shown.
+           Prices are community-reported. (No ToS page exists; robots.txt only "Disallow: /admin".)
 Rate     : 1 request per run (<= 1 req/s trivially). Honest User-Agent.
 Refresh  : every 6 h is plenty (reports arrive a few per day; many stations are weeks old).
 Fuels    : 95E10 -> E10/octane 95, Diesel -> DIESEL. (98E5 / E85 exist only on per-station pages.)

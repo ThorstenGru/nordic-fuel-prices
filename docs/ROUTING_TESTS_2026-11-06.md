@@ -1,7 +1,7 @@
 # Routing capability tests, 2026-11-06
 
 Server: `https://valhalla1.openstreetmap.de/route` (public FOSSGIS Valhalla, the one used by `rtValhalla` in `web/index.html`).
-Request shape used (identical to the app): `GET /route?json=<urlencoded JSON>` with `{"locations":[{lat,lon},{lat,lon}],"costing":"auto","directions_type":"none"}` plus the option under test. All 27 `/route` calls and 1 `/trace_attributes` call were made from `tools/analysis/valhalla_probe.js` (plus one ad-hoc POST), at least 1.1 s apart, all HTTP 200. Latencies are measured from a Swedish office network via Node, so a phone on mobile data will be slower.
+Request shape used (identical to the app): `GET /route?json=<urlencoded JSON>` with `{"locations":[{lat,lon},{lat,lon}],"costing":"auto","directions_type":"none"}` plus the option under test. All 27 `/route` calls and 1 `/trace_attributes` call were made from `tools/archive/valhalla_probe.js` (plus one ad-hoc POST), at least 1.1 s apart, all HTTP 200. Latencies are measured from a Swedish office network via Node, so a phone on mobile data will be slower.
 
 Points: Malmo 55.605/13.000, Hamburg 53.551/9.994, Berlin 52.520/13.405, Stockholm 59.329/18.069, Oslo 59.913/10.752, Billeberga 55.917/13.083, Copenhagen 55.676/12.568.
 
@@ -120,4 +120,4 @@ Errors were not provoked (no invalid requests were sent beyond out-of-range `top
 - `trace_attributes` latency and CORS on long routes from a browser.
 - Waze: no Valhalla relation; per the owner's decision R13 navigates to the first stop only for Waze.
 - Behaviour above 1 req/s (intentionally avoided).
-- Raw response dump was kept outside the repo; re-run `node tools/analysis/valhalla_probe.js out.json` to regenerate (27 requests, about 45 s).
+- Raw response dump was kept outside the repo; re-run `node tools/archive/valhalla_probe.js out.json` to regenerate (27 requests, about 45 s).

@@ -6,6 +6,9 @@ Europe through its Onderweg routing service. It is UNOFFICIAL and UNDOCUMENTED â
 fallback/supplement wherever a government feed exists, and as the primary only where nothing
 better is available (see docs/DATA_SOURCES_AUDIT.md).
 
+Permission: the EuroFuelPrices owner confirmed on 2026-11-07 that the use of this ANWB feed is permitted
+(status listed in docs/PERMISSIONS.md). The feed stays unofficial and undocumented, so it can change without notice.
+
 Endpoint: https://api.anwb.nl/routing/points-of-interest/v3/all
   ?type-filter=FUEL_STATION
   &bounding-box-filter={min_lat},{min_lon},{max_lat},{max_lon}

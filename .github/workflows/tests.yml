@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.3.0
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Python unit tests
+        working-directory: src
+        run: python -m unittest discover -s tests
+
+      - name: Frontend tests, data versions and page syntax
+        run: |
+          node tools/check_page_syntax.js
+          node tools/check_data_versions.js
+          for f in tools/test_*.js; do node "$f" || exit 1; done
+          node tools/check_fares.js
+          node tools/check_ac_tariffs.js

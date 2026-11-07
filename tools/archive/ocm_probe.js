@@ -1,6 +1,6 @@
 // Standalone probe: Open Charge Map v3 Type 2 stations per country. Writes raw responses to OUT_DIR
 // and prints counts/sizes. Key comes from env OCM_API_KEY only and is never printed or written.
-// Usage: OCM_API_KEY=... node tools/analysis/ocm_probe.js <out_dir> [SE,NO,DK,DE]
+// Usage: OCM_API_KEY=... node tools/archive/ocm_probe.js <out_dir> [SE,NO,DK,DE]
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const key = process.env.OCM_API_KEY;
 if (!key) { console.error('OCM_API_KEY not set'); process.exit(1); }

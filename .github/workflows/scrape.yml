@@ -64,6 +64,8 @@ jobs:
           # repo variable: off (default) | test | commercial. See docs/TANKERKOENIG_SETUP.md
           TANKERKOENIG_MODE: ${{ vars.TANKERKOENIG_MODE || 'off' }}
           GOON_API_KEY: ${{ secrets.GOON_API_KEY }}
+          # repo variable: peco (default) | official | both. 'official' needs the owner's permission first, see docs/ROMANIA_SETUP.md
+          ROMANIA_SOURCE: ${{ vars.ROMANIA_SOURCE || 'peco' }}
           FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
           ALLOW_SHRINK: ${{ inputs.allow_shrink }}
         run: python src/main.py

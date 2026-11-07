@@ -1,6 +1,6 @@
 // Offline design measurement: reads poi_<CC>.json (from ocm_probe.js) + ref.json (referencedata),
 // applies the proposed filter / dedupe / compaction and prints counts and gzip sizes. No network, no key.
-// Usage: node tools/analysis/ocm_compact_design.js <dir> [SE,NO,DK,DE]
+// Usage: node tools/archive/ocm_compact_design.js <dir> [SE,NO,DK,DE]
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const dir = process.argv[2]; const countries = (process.argv[3] || 'SE,NO,DK,DE').split(',');
 const ref = JSON.parse(fs.readFileSync(path.join(dir, 'ref.json'), 'utf8'));

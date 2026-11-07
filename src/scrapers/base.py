@@ -1,4 +1,5 @@
 import asyncio
+import math
 import aiohttp
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
@@ -131,3 +132,36 @@ def octane_of(price: Dict) -> Optional[int]:
     if ft == "E5":
         return 95
     return None
+
+
+def slot_of(p: Dict) -> str:
+    """Merge slot: petrol bucketed by octane (95 / 98+), other fuels by fuel_type."""
+    o = octane_of(p)
+    if o is None:
+        return p["fuel_type"]
+    return "P98" if o >= 97 else "P95"
+
+
+def cheapest_per_slot(prices: List[Dict]) -> List[Dict]:
+    """One price per slot_of() bucket, keeping the lower price (never an average)."""
+    best: Dict[str, Dict] = {}
+    for p in prices:
+        k = slot_of(p)
+        if k not in best or p["price"] < best[k]["price"]:
+            best[k] = p
+    return list(best.values())
+
+
+def dist_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle (haversine) distance in metres."""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = p2 - p1, math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * 6371000.0 * math.asin(math.sqrt(a))
+
+
+def dist_m_flat(a_lat, a_lon, b_lat, b_lon) -> float:
+    """Equirectangular approximation in metres (fast, fine below ~100 km)."""
+    dlat = (b_lat - a_lat) * 111_320.0
+    dlon = (b_lon - a_lon) * 111_320.0 * math.cos(math.radians((a_lat + b_lat) / 2))
+    return math.hypot(dlat, dlon)
