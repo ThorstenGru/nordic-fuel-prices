@@ -4515,7 +4515,7 @@ function opRender() {
 }
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
-const VEH_V = 3;   // bump whenever web/vehicles.json changes (service worker serves ?v= URLs cache-first)
+const VEH_V = 3;   // data-hash:vehicles.json=f47c8f9f9c  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
 let _veh = null, _vehTried = false;
 function vehLoad() {
   if (_vehTried) return; _vehTried = true;
@@ -5623,7 +5623,7 @@ function rtM(v) {                          // amount (EUR) in the trip currency
 const rtPL = v => `${dec(rtLocal(v).toFixed(2))} ${curLbl(rtTripCur)}`.trim();   // price per litre (EUR in, trip currency out)
 function rtRng(lo, hi) { const x = Math.round(rtLocal(lo)), y = Math.round(rtLocal(hi)); return (x === y ? '' + x : x + '–' + y) + ' ' + curLbl(rtTripCur); }
 // ── Wave 2 UI: R4 cost card + alternatives, R5 fare list, R9 border tip, R10 noon note ──
-const FARES_V = 1;   // bump whenever web/fares.json changes (service worker serves ?v= URLs cache-first)
+const FARES_V = 1;   // data-hash:fares.json=f94c9f72fd  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
 let rtFaresData = null, rtFaresP = null;
 function rtFaresLoad() {
   return rtFaresP = rtFaresP || fetch('fares.json?v=' + FARES_V).then(r => r.ok ? r.json() : Promise.reject()).then(j => rtFaresData = j).catch(() => { rtFaresP = null; return null; });
