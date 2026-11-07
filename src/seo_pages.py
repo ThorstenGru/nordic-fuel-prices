@@ -374,7 +374,7 @@ footer { margin-top:40px; padding-top:14px; border-top:1px solid var(--border); 
 def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, jsonld: List[Dict],
          crumbs: str, modified: str, foot: str) -> str:
     x = TXT[cfg["lang"]]
-    ld = "\n".join(f'<script type="application/ld+json">{json.dumps(o, ensure_ascii=False)}</script>' for o in jsonld)
+    ld = "\n".join('<script type="application/ld+json">' + json.dumps(o, ensure_ascii=False).replace("</", "<\\/") + '</script>' for o in jsonld)   # a name containing </script> must not end the block
     return f"""<!DOCTYPE html>
 <html lang="{cfg['lang']}">
 <head>
@@ -521,9 +521,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
     if unofficial and EXCLUDE_ANWB:
         print(f"seo_pages[{cc}]: excluded by SEO_EXCLUDE_ANWB (source {meta.get('source')!r})")
         return None
-    if meta.get("status") == "stale":
-        print(f"seo_pages[{cc}]: source stale - skipped")
-        return None
+    if meta.get("status") == "stale":   # keep the pages (a 404 on every indexed URL is worse); they show the real fetch date and fresh_price drops timestamped prices older than 72 h
+        print(f"seo_pages[{cc}]: source stale - pages kept with the last fetch date")
     lang, x = cfg["lang"], TXT[cfg["lang"]]
     fetched = parse_iso(meta.get("fetched_at")) or now
     c = Ctx(cc, cfg, now, fetched, {})
