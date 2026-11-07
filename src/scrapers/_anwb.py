@@ -58,6 +58,14 @@ def ecb_date() -> Optional[str]:
     return _ecb_date
 
 
+_ecb_failed = False
+
+
+def _set_ecb_failed() -> None:
+    global _ecb_failed
+    _ecb_failed = True
+
+
 async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
     """Return {currency: units_per_EUR}. Cached per process, concurrency-safe."""
     global _ecb_lock
@@ -65,6 +73,8 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
         _ecb_lock = asyncio.Lock()
     async with _ecb_lock:
         if _ecb_cache:
+            return _ecb_cache
+        if _ecb_failed:        # both hosts already failed once in this run: do not make every other country wait for the same timeouts again
             return _ecb_cache
         try:
             async with session.get(_ECB_URL, timeout=aiohttp.ClientTimeout(total=20)) as resp:
@@ -87,6 +97,8 @@ async def _ecb_rates(session: aiohttp.ClientSession) -> Dict[str, float]:
                             _set_ecb_date(str(data["date"]))
             except Exception as e:
                 print(f"[ECB] frankfurter fallback failed: {type(e).__name__}: {e}")
+        if not _ecb_cache:
+            _set_ecb_failed()
         for k, v in _FIXED_PEGS.items():
             _ecb_cache.setdefault(k, v)
         print(f"[ECB] {len(_ecb_cache)} FX rates loaded")
@@ -270,8 +282,10 @@ class ANWBScraper(BaseScraper):
                     for p in st["prices"]:
                         p["price"] = round(p["price"] * rate, 2 if rate > 20 else 3)
                         p["currency"] = self.CURRENCY
-            else:
-                print(f"[{self.COUNTRY}] no FX rate for {self.CURRENCY} — prices stay in EUR")
+            elif any(st["prices"] for st in stations):
+                # EUR prices in a country that is shown in another currency would be thrown out as outliers or, worse, read as wrong prices:
+                # fail the source so the last good file stays (stale) instead
+                raise RuntimeError(f"no FX rate for {self.CURRENCY} (ECB and Frankfurter unreachable)")
 
         priced = sum(1 for st in stations if st["prices"])
         print(f"[{self.COUNTRY}] {len(stations)} stations ({priced} priced) from ANWB API")
