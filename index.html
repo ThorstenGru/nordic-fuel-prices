@@ -602,6 +602,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .mc-st.done { color:var(--ok-t); } .mc-st.todo { color:var(--warn-t); }
 .mc-step label, .mc-step .mc-lbl { text-transform:none; letter-spacing:0; font-size:.84rem; font-weight:700; color:var(--ink); margin:14px 0 4px; display:block; }
 .mc-step .tchips { margin-top:2px; }
+.cur-sel { font:inherit; font-size:.85rem; border:1px solid var(--line); border-radius:6px; background:var(--surf); color:var(--ink); padding:1px 4px; margin-left:4px; }
 .mc-hint { font-size:.72rem; color:var(--sub); margin:4px 0 0; line-height:1.45; }
 .mc-step details.car-box { background:var(--surf); margin-top:14px; }
 .mc-q { background:none; border:0; padding:0; min-height:44px; font:inherit; font-size:.76rem; font-weight:700; color:var(--acc-t); text-decoration:underline; cursor:pointer; text-align:left; }
@@ -935,7 +936,8 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <section class="car-box mc-step" id="mc-s2" aria-labelledby="mc-h2" hidden>
       <h3 class="mc-h" id="mc-h2"><span class="mc-n" aria-hidden="true">2</span><span data-i18n="mcS2">Your electricity price</span><span class="mc-st" id="mc-st2"></span></h3>
       <p class="ev-note" data-i18n="mcS2i">This is the number that decides the result. Find it on your bill.</p>
-      <label for="car-elec"><span data-i18n="carElec">What you pay for electricity at home (per kWh, including VAT)</span> <span id="car-cur">€</span></label><input id="car-elec" aria-describedby="h-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
+      <label for="car-elec"><span data-i18n="carElec">What you pay for electricity at home (per kWh, including VAT)</span> <select id="car-cur" class="cur-sel" aria-label="Currency" onchange="carCur('elec', this.value)"></select></label><input id="car-elec" aria-describedby="h-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
+      <p class="mc-hint" id="h-elec-w" hidden data-i18n="mcElecW">That looks high for euro. If you enter kronor, change the currency next to the field.</p>
       <p class="mc-hint" id="h-elec" data-i18n="mcElecH">Find it on your electricity bill. Sweden is roughly 1.50 to 3.50 kr per kWh including grid fees and tax. Not sure? Work it out below.</p>
       <div data-hq="price"></div>
       <span class="mc-lbl" id="ev-mode-l" data-i18n="evMode">Where do you charge?</span>
@@ -965,7 +967,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <div id="car-phev2" style="display:none">
         <label for="car-chg" data-i18n="carChg">Charger rating on the road, kW</label><input id="car-chg" aria-describedby="h-chg" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('chg',this.value)">
         <p class="mc-hint" id="h-chg" data-i18n="mcChgH">Only used for the public charging verdict on the Route tab. Leave empty if unsure.</p>
-        <label for="car-acp"><span data-i18n="carAcp">Public AC charging price (per kWh, including VAT)</span> <span id="car-cur2">€</span></label><input id="car-acp" aria-describedby="h-acp" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('acp',this.value)">
+        <label for="car-acp"><span data-i18n="carAcp">Public AC charging price (per kWh, including VAT)</span> <select id="car-cur2" class="cur-sel" aria-label="Currency" onchange="carCur('acp', this.value)"></select></label><input id="car-acp" aria-describedby="h-acp" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('acp',this.value)">
         <p class="mc-hint" id="h-acp" data-i18n="mcAcpH">Only used for the public charging verdict. In Sweden 3.50 kr per kWh is assumed until you enter your own.</p>
       </div>
       <label for="car-cardpct" data-i18n="cardLbl">Card currency fee (%)</label><input id="car-cardpct" aria-describedby="h-card" type="number" inputmode="decimal" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
@@ -1963,6 +1965,7 @@ Object.assign(I18N.en, {
   chgTime:'A full battery ({k} kWh) takes about {h}.', chgCostEst:'Estimated cost: about {c}{x}.', chgCostFree:'Estimated cost: free, as the source says.', chgCostNone:'No cost estimate because the price is not published.', chgCostOld:'No cost estimate because the list price is too old.',
   chgCostRange:'{a} to {b}', chgCostStart:', including the start fee', chgCostIdle:', including the idle fee', chgNoBatt:'Set your battery size in My car to see a cost estimate.', chgNoCarKw:'Set your car’s charging rate in My car to see the charging time.',
   chgNav:'Navigate', chgDetails:'Details', chgSrc:'Data: {a}. Prices are not part of this data: they come from our own dated table of list prices.',
+  mcElecW:'That looks high for euro. If you entered kronor, change the currency next to the field.',
   chgSumN:'Your battery is empty on arrival. {n} public Type 2 posts within {r} km of the destination{b}. The list is under More detail.', chgSumN1:'Your battery is empty on arrival. One public Type 2 post within {r} km of the destination{b}. Details are under More detail.', chgSumNone:'Your battery is empty on arrival, and our data has no public Type 2 post within {r} km of the destination. Check that your hotel or destination has charging.', chgSumFree:', marked free by its source', chgSumCost:', the cheapest about {c} for a full charge (estimate)',
   chgNearH:'Charging near the destination', chgNearN:'{n} public Type 2 posts within {r} km of the destination.', chgNearN1:'One public Type 2 post within {r} km of the destination.', chgNearNone:'No public Type 2 post in our data within {r} km of the destination.',
   chgNearSort:'Cheapest known first, then free, then price not published. Showing {m} of {n}.', chgNearKw:'Power: {x}.', chgNearKwN:'{g}: {n}', chgNearKwU:'not stated: {n}',
@@ -1987,6 +1990,7 @@ Object.assign(I18N.sv, {
   chgTime:'Ett fullt batteri ({k} kWh) tar cirka {h}.', chgCostEst:'Uppskattad kostnad: cirka {c}{x}.', chgCostFree:'Uppskattad kostnad: gratis, enligt källan.', chgCostNone:'Ingen kostnadsuppskattning eftersom priset inte är publicerat.', chgCostOld:'Ingen kostnadsuppskattning eftersom listpriset är för gammalt.',
   chgCostRange:'{a} till {b}', chgCostStart:', inklusive startavgiften', chgCostIdle:', inklusive överliggningsavgiften', chgNoBatt:'Ange batteriets storlek i Min bil för att se en kostnadsuppskattning.', chgNoCarKw:'Ange bilens laddeffekt i Min bil för att se laddtiden.',
   chgNav:'Navigera', chgDetails:'Detaljer', chgSrc:'Data: {a}. Priserna ingår inte i datan: de kommer från vår egen daterade tabell med listpriser.',
+  mcElecW:'Det ser högt ut för euro. Om du angav kronor, byt valuta intill fältet.',
   chgSumN:'Batteriet är tomt när du kommer fram. {n} publika Typ 2-stolpar inom {r} km från målet{b}. Listan finns under Mer detaljer.', chgSumN1:'Batteriet är tomt när du kommer fram. En publik Typ 2-stolpe inom {r} km från målet{b}. Detaljer finns under Mer detaljer.', chgSumNone:'Batteriet är tomt när du kommer fram, och våra data har ingen publik Typ 2-stolpe inom {r} km från målet. Kontrollera att hotellet eller målet har laddning.', chgSumFree:', markerad som gratis av källan', chgSumCost:', billigast cirka {c} för en full laddning (uppskattning)',
   chgNearH:'Laddning nära målet', chgNearN:'{n} publika Typ 2-stolpar inom {r} km från målet.', chgNearN1:'En publik Typ 2-stolpe inom {r} km från målet.', chgNearNone:'Ingen publik Typ 2-stolpe i våra data inom {r} km från målet.',
   chgNearSort:'Billigast känd först, sedan gratis, sedan pris ej publicerat. Visar {m} av {n}.', chgNearKw:'Effekt: {x}.', chgNearKwN:'{g}: {n}', chgNearKwU:'uppgift saknas: {n}',
@@ -2996,8 +3000,10 @@ function vehStrip(s) {
   if (!p || (p.unit && p.unit !== 'L')) return `<div class="veh-strip">${esc(t('vehNoPrice'))}</div>`;
   const L = [];
   if (car.cons) L.push(t('vehFuel', { v: '<b>' + money(car.cons * p.price, p.currency) + '</b>' }));
-  if (car.type === 'phev' && car.batt && car.range && car.elec && (car.elecCur || p.currency) === p.currency)
-    L.push(t('vehElec', { v: '<b>' + money(carKwh100(100 / (car.eff || 90)) * car.elec, p.currency) + '</b>' }));
+  if (car.type === 'phev' && car.batt && car.range && car.elec) {
+    const eC = car.elecCur || homeDefaultCur(), a = rateOf(eC), b = rateOf(p.currency), price = eC === p.currency ? car.elec : (a > 0 && b > 0 ? car.elec / a * b : null);   // your price is in your currency; the station may be in another
+    if (price != null) L.push(t('vehElec', { v: '<b>' + money(carKwh100(100 / (car.eff || 90)) * price, p.currency) + '</b>' }));
+  }
   if (!L.length) L.push(`<button type="button" onclick="goTab('car')">${t('vehMore')}</button>`);
   return `<div class="veh-strip">${L.join('<br>')}</div>`;
 }
@@ -3843,8 +3849,8 @@ function carSet(k, raw) {
       car[k] = v;
       if (k === 'tank') setTank(v);
       if (k === 'cons') { trip.cons = Math.min(20, Math.max(2, v)); tripSave(); }
-      if (k === 'elec') car.elecCur = ctyCur();
-      if (k === 'acp') car.acpCur = ctyCur();
+      if (k === 'elec' && !car.elecCur) car.elecCur = homeDefaultCur();   // not the country pill: a price typed while Germany was selected used to be stored as EUR
+      if (k === 'acp' && !car.acpCur) car.acpCur = homeDefaultCur();
     }
   }
   store.set('efp_car', car); carUi();
@@ -3852,6 +3858,11 @@ function carSet(k, raw) {
 const ctyCc = () => fCountry || myCountry || centerCountry() || 'SE';
 const CUR_DEF = { SE:'SEK', NO:'NOK', DK:'DKK', IS:'ISK', PL:'PLN', CZ:'CZK', HU:'HUF', RO:'RON', BG:'BGN', CH:'CHF', GB:'GBP', UK:'GBP' };   // used until meta.json has loaded, so a Swede never stores EUR
 const ctyCur = () => { const cc = ctyCc(); return metaCountries.find(c => c.country === cc)?.currency || metaOf[cc]?.currency || CUR_DEF[cc] || 'EUR'; };
+const homeDefaultCur = () => homeCur() || (lang === 'sv' ? 'SEK' : lang === 'de' || lang === 'fr' ? 'EUR' : ctyCur());   // where you live, not what you are looking at on the map
+function curChoices() { return [...new Set(['EUR', ...Object.values(CUR_DEF), ...metaCountries.map(c => c.currency).filter(Boolean)])].sort(); }
+function carCur(k, v) { car[k === 'elec' ? 'elecCur' : 'acpCur'] = v; store.set('efp_car', car); carUi(); }
+function curSelFill(id, cur) { const el = $id(id); if (!el) return; const want = cur || homeDefaultCur(), list = curChoices(); if (!list.includes(want)) list.push(want);
+  const sig = list.join() + '|' + want; if (el.dataset.sig === sig) return; el.dataset.sig = sig; el.innerHTML = list.map(c => `<option value="${c}"${c === want ? ' selected' : ''}>${c}</option>`).join(''); }
 function renderCarCard() { mcStaticHelps(); mcSummary(); }
 
 // ── Petrol or electricity? Cost per km on electricity vs petrol 95 (average of the 5 nearest priced stations) ──
@@ -4048,9 +4059,9 @@ function mcSummary() {
   const el = $id('mc-summary'); if (!el || !carPanelOpen()) return;
   const a = _mcAns || {}, phev = car.type === 'phev', cur = a.cur || ctyCur(), r = a.r || {};
   for (const id of ['mc-s2', 'ev-card']) { const e = $id(id); if (e) e.hidden = !phev; }
-  const cu = $id('car-cur'); if (cu) cu.textContent = curLbl(car.elecCur || ctyCur());
+  curSelFill('car-cur', car.elecCur); { const w = $id('h-elec-w'); if (w) { const hi = car.elec > 0 && (car.elecCur || homeDefaultCur()) === 'EUR' && car.elec > 1.5; w.hidden = !hi; } }
   const ef = $id('car-eff'); if (ef) ef.placeholder = Math.round(100 / evLoss());
-  const cg = $id('car-chg'); if (cg) cg.placeholder = VEH_AC[car.veh] || ''; const ap = $id('car-acp'); if (ap) ap.placeholder = ctyCc() === 'SE' ? '3.50' : ''; const c2 = $id('car-cur2'); if (c2) c2.textContent = curLbl(car.acpCur || ctyCur());
+  const cg = $id('car-chg'); if (cg) cg.placeholder = VEH_AC[car.veh] || ''; const ap = $id('car-acp'); if (ap) ap.placeholder = ctyCc() === 'SE' ? '3.50' : ''; curSelFill('car-cur2', car.acpCur);
   const o = { type: car.type, missCar: a.missCar || [], missElec: !!a.missElec, cheaper: r.cheaper || null };
   const s = mcState(o), v = car.veh && _veh?.by[car.veh], nx = mcNext(o);
   const my = v ? t('mcYour', { m: v.model || vehName(v) }) : t('mcYourCar');
