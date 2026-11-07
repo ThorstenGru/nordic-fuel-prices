@@ -417,8 +417,8 @@ async function load() {
 
   try {
     const [rm, rh] = await Promise.all([
-      fetch(`meta.json?t=${Date.now()}`),
-      fetch(`health.json?t=${Date.now()}`).catch(() => null),
+      fetch('meta.json', { cache: 'no-store' }),
+      fetch('health.json', { cache: 'no-store' }).catch(() => null),
     ]);
     if (!rm.ok) throw new Error(`HTTP ${rm.status}`);
     const meta = await rm.json();

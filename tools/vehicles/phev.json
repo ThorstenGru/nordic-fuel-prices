@@ -14,13 +14,13 @@
    "year": 2025,
    "rank": 1,
    "tank_l": 60,
-   "cons_l100": null,
+   "cons_l100": 5.5,
    "battery_kwh": 18.3,
    "range_km": 80,
    "ev_kwh100": 21.0,
-   "confidence": "low",
+   "confidence": "medium",
    "source": "https://autotijd.be/en/specs/byd/seal-u/dm-i-boost-4962",
-   "notes": "Battery 18.3 kWh gross (autotijd lists as gross on sibling page); consumption page https://autotijd.be/en/consumption/byd/seal-u/dm-i-boost-4962; FWD version, AWD Design has 70 km range. Weighted WLTP 0.9 l/100 km is not a usable petrol-only value, so cons_l100 is null."
+   "notes": "[2026-11-07 ADAC catalogue page read (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/byd/seal-u/1generation/335440): WLTP charge-sustaining 5.5 l/100 km, 18.3 kWh gross, 80 km.] Battery 18.3 kWh gross (autotijd lists as gross on sibling page); consumption page https://autotijd.be/en/consumption/byd/seal-u/dm-i-boost-4962; FWD version, AWD Design has 70 km range. Weighted WLTP 0.9 l/100 km is not a usable petrol-only value, so cons_l100 is null."
   },
   {
    "id": "volkswagen-tiguan-1-5-etsi-ehybrid-204-hp",
@@ -140,13 +140,13 @@
    "year": 2025,
    "rank": 8,
    "tank_l": 60,
-   "cons_l100": null,
+   "cons_l100": 6.0,
    "battery_kwh": null,
    "range_km": 90,
    "ev_kwh100": 18.7,
    "confidence": "low",
    "source": "http://www.carsart.net/en/cars/jaecoo/7/7/shs-15-tgdi-347hp-plug-in-hybrid-dht/",
-   "notes": "Battery 18.3 kWh gross only. Fuel cons not usable: carsart page shows garbled '0.7-6', other sources 2.4 l/100 km. Electric cons 18.7-20.6 on carsart, another source (ecomento.de) says 15.1; range 90-91 km."
+   "notes": "[2026-11-07 ADAC page read (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/jaecoo/7/1generation/341508/): Select 205 kW/279 PS 2WD, WLTP charge-sustaining 6.0, 15.1 kWh/100 km, 18.4 gross, 90 km; this 347 hp AWD trim not confirmed.] Battery 18.3 kWh gross only. Fuel cons not usable: carsart page shows garbled '0.7-6', other sources 2.4 l/100 km. Electric cons 18.7-20.6 on carsart, another source (ecomento.de) says 15.1; range 90-91 km."
   },
   {
    "id": "mg-hs-1-5t-phev-258-hp",
@@ -164,7 +164,7 @@
    "ev_kwh100": 24.0,
    "confidence": "low",
    "source": "https://autotijd.be/en/specs/mg/hs/ehs-1-5t-gdi-4111",
-   "notes": "Battery 16.6 kWh, gross/usable not stated, so battery_kwh null. Data is the 2023-2024 EHS; consumption https://autotijd.be/en/consumption/mg/hs/ehs-15t-gdi-4111. Current model-year version not verified. Weighted WLTP 1.8 l/100 km is not a usable petrol-only value, so cons_l100 is null."
+   "notes": "[2026-11-07 cons_l100 stays null: ADAC EHS page (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/mg/hs-ehs/1generation/318503/) lists only weighted 1.8; 5.8 CS is the 272 PS 2nd-gen HS, not this car.] Battery 16.6 kWh, gross/usable not stated, so battery_kwh null. Data is the 2023-2024 EHS; consumption https://autotijd.be/en/consumption/mg/hs/ehs-15t-gdi-4111. Current model-year version not verified. Weighted WLTP 1.8 l/100 km is not a usable petrol-only value, so cons_l100 is null."
   },
   {
    "id": "skoda-kodiaq-1-5-tsi-phev-204-hp",
@@ -176,13 +176,13 @@
    "year": 2025,
    "rank": 10,
    "tank_l": 45,
-   "cons_l100": null,
+   "cons_l100": 5.7,
    "battery_kwh": 19.7,
    "range_km": 100,
    "ev_kwh100": null,
-   "confidence": "low",
+   "confidence": "medium",
    "source": "https://www.auto-data.net/en/skoda-kodiaq-ii-iv-1.5-tsi-204hp-plug-in-hybrid-dsg-49887",
-   "notes": "Usable 19.7 kWh (25.7 gross). WLTP cons and electric cons not published on pages read."
+   "notes": "[2026-11-07 Skoda DE page read (skoda-auto.de/modelle/kodiaq/kodiaq-iv/kodiaq-iv-plugin-technologie): depleted battery 5.7-6.1 l/100 km depending on trim, lower end used; 14.1-14.5 kWh weighted.] Usable 19.7 kWh (25.7 gross). WLTP cons and electric cons not published on pages read."
   },
   {
    "id": "cupra-formentor-1-5-e-hybrid-272-hp",
@@ -216,9 +216,9 @@
    "battery_kwh": 18.7,
    "range_km": 93,
    "ev_kwh100": 19.9,
-   "confidence": "low",
+   "confidence": "medium",
    "source": "https://www.auto-data.net/en/bmw-5-series-sedan-g60-530e-299hp-plug-in-hybrid-steptronic-49722",
-   "notes": "[UNVERIFIED cons_l100 7.7: taken from a search-result summary of an ADAC page, not read from the test itself; treat as indicative.] Rank not confirmed (candidate: 9th in H1 2025 per Autovista via ev-erything.com). Usable 18.7 (22.1 gross) per auto-data; other sources say 19.4. Page ranges: cons 0.6-0.8, range 93-103, 19.9-21.7; lower end used. [build 2026-11-05: WLTP weighted PHEV figure 0.6 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC Ecotest G60 5 Series article (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/bmw-5er-test/); variant not confirmed.]"
+   "notes": "[2026-11-07 7.7 read on ADAC article https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/bmw-5er-test/ (530e Touring M Sport, hybrid mode empty battery); ADAC net battery 19.4.] Rank not confirmed (candidate: 9th in H1 2025 per Autovista via ev-erything.com). Usable 18.7 (22.1 gross) per auto-data; other sources say 19.4. Page ranges: cons 0.6-0.8, range 93-103, 19.9-21.7; lower end used. [build 2026-11-05: WLTP weighted PHEV figure 0.6 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC Ecotest G60 5 Series article (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/bmw-5er-test/); variant not confirmed.]"
   },
   {
    "id": "volkswagen-passat-variant-1-5-ehybrid-204-hp",
@@ -230,13 +230,13 @@
    "year": 2025,
    "rank": null,
    "tank_l": 45,
-   "cons_l100": 6.2,
+   "cons_l100": 5.5,
    "battery_kwh": 19.7,
    "range_km": 131,
    "ev_kwh100": 16.0,
-   "confidence": "low",
+   "confidence": "medium",
    "source": "https://www.auto-data.net/en/volkswagen-passat-variant-b9-1.5-tsi-204hp-ehybrid-dsg-51384",
-   "notes": "[UNVERIFIED cons_l100 6.2: taken from a search-result summary of an ADAC page, not read from the test itself; treat as indicative.] Rank not confirmed (named as a notable 2025 PHEV by Inovev). Usable 19.7 (25.7 gross). Page ranges: range 131-132, 16-16.1; cons 0.4 (autotijd 0.37). [build 2026-11-05: WLTP weighted PHEV figure 0.4 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC Ecotest Passat Variant 1.5 eHybrid (adac.de autokatalog, VW Passat b9).]"
+   "notes": "[2026-11-07 was 6.2 (ADAC measured, only seen in a search summary, not opened). Now ADAC catalogue page read (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/vw/passat/b9/333684): WLTP charge-sustaining 5.5, 16.2 kWh/100 km.] Rank not confirmed (named as a notable 2025 PHEV by Inovev). Usable 19.7 (25.7 gross). Page ranges: range 131-132, 16-16.1; cons 0.4 (autotijd 0.37). [build 2026-11-05: WLTP weighted PHEV figure 0.4 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC Ecotest Passat Variant 1.5 eHybrid (adac.de autokatalog, VW Passat b9).]"
   },
   {
    "id": "cupra-terramar-1-5-e-hybrid-204-hp",
@@ -248,13 +248,13 @@
    "year": 2025,
    "rank": null,
    "tank_l": 45,
-   "cons_l100": null,
+   "cons_l100": 5.8,
    "battery_kwh": 19.7,
-   "range_km": 113,
+   "range_km": 120,
    "ev_kwh100": 17.6,
-   "confidence": "low",
-   "source": "https://www.auto-data.net/en/cupra-terramar-1.5-tsi-204hp-e-hybrid-dsg-53218",
-   "notes": "Rank not confirmed (named as a notable 2025 PHEV by Inovev). Usable 19.7 (25.8 gross). Page ranges: cons 0.4-0.5, range 113-120, 17.6-19.0; lower end used. [build 2026-11-05: WLTP weighted PHEV figure 0.4 l/100 km is not a usable petrol-only value; set to null]"
+   "confidence": "high",
+   "source": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/cupra/terramar/1generation/337434/",
+   "notes": "[2026-11-07 ADAC page read (12/24-10/25): WLTP charge-sustaining 5.8, 17.6 kWh/100 km, 19.7 net/25.8 gross, 120 km, 45 l.] Rank not confirmed (named as a notable 2025 PHEV by Inovev). Usable 19.7 (25.8 gross). Page ranges: cons 0.4-0.5, range 113-120, 17.6-19.0; lower end used. [build 2026-11-05: WLTP weighted PHEV figure 0.4 l/100 km is not a usable petrol-only value; set to null]"
   },
   {
    "id": "volkswagen-golf-1-5-ehybrid-204-hp",
@@ -266,13 +266,13 @@
    "year": 2025,
    "rank": null,
    "tank_l": 40,
-   "cons_l100": 6.0,
+   "cons_l100": 5.0,
    "battery_kwh": 19.7,
    "range_km": 143,
    "ev_kwh100": 14.7,
-   "confidence": "low",
+   "confidence": "medium",
    "source": "https://www.auto-data.net/en/volkswagen-golf-viii-facelift-2024-1.5-tsi-204hp-ehybrid-dsg-51778",
-   "notes": "[UNVERIFIED cons_l100 6.0: taken from a search-result summary of an ADAC page, not read from the test itself; treat as indicative.] Rank not confirmed (named as a notable 2025 PHEV by Inovev). Usable 19.7 (25.7 gross). Page range: 14.7-15.7 kWh/100 km, lower end used. [build 2026-11-05: WLTP weighted PHEV figure 0.3 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC autotest at6565 VW Golf 1.5 eHybrid Style (assets.adac.de).]"
+   "notes": "[2026-11-07 was 6.0 (not found on any opened page). ADAC catalogue page read (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/vw/golf/viii-facelift/340772/): WLTP charge-sustaining 5.0, 14.6 kWh/100 km, 40 l.] Rank not confirmed (named as a notable 2025 PHEV by Inovev). Usable 19.7 (25.7 gross). Page range: 14.7-15.7 kWh/100 km, lower end used. [build 2026-11-05: WLTP weighted PHEV figure 0.3 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC autotest at6565 VW Golf 1.5 eHybrid Style (assets.adac.de).]"
   },
   {
    "id": "skoda-superb-combi-1-5-iv-204-hp",
@@ -288,9 +288,9 @@
    "battery_kwh": 19.7,
    "range_km": 100,
    "ev_kwh100": null,
-   "confidence": "low",
+   "confidence": "medium",
    "source": "https://www.auto-data.net/en/skoda-superb-iv-combi-iv-1.5-tsi-204hp-plug-in-hybrid-dsg-51752",
-   "notes": "[UNVERIFIED cons_l100 6.0: taken from a search-result summary of an ADAC page, not read from the test itself; treat as indicative.] Rank unconfirmed; included as a likely top-20 candidate only (no sales source read). Usable 19.7 (25.7 gross). Cons 0.4-0.5; Liftback shows 122-137 km range on another page. [build 2026-11-05: WLTP weighted PHEV figure 0.4 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC Ecotest Superb Combi iV (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/skoda/skoda-superb/).]"
+   "notes": "[2026-11-07 6.0 read on ADAC article https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/skoda/skoda-superb/ (empty battery, hybrid mode, ADAC test); variant not stated; WLTP electric 13.0 kWh/100 km.] Rank unconfirmed; included as a likely top-20 candidate only (no sales source read). Usable 19.7 (25.7 gross). Cons 0.4-0.5; Liftback shows 122-137 km range on another page. [build 2026-11-05: WLTP weighted PHEV figure 0.4 l/100 km is not a usable petrol-only value; set to null] [cons_l100 = charge-sustaining petrol l/100 km: ADAC Ecotest Superb Combi iV (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/skoda/skoda-superb/).]"
   },
   {
    "id": "kia-sportage-1-6-t-gdi-plug-in-hybrid-288-hp-awd",

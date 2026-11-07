@@ -38,7 +38,7 @@
    "ev_kwh100": null,
    "confidence": "low",
    "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/Prislista_i30_250303pdf",
-   "notes": "5.3 L/100 km from search snippet of the Swedish i30 price list (2025-03-03; PDF not readable now); the i30 Kombi list of 2025-04-11 shows 5.4. Tank 50 L from autotijd.be (120 hp version, https://autotijd.be/en/specs/hyundai/i30/10-t-gdi-120-hp-2742)."
+   "notes": "[2026-11-07 unconfirmed: SE price list 2026-11-02 has no i30; ADAC 120 hp 2020-23 shows 6.0 WLTP, 50 l (older).] 5.3 L/100 km from search snippet of the Swedish i30 price list (2025-03-03; PDF not readable now); the i30 Kombi list of 2025-04-11 shows 5.4. Tank 50 L from autotijd.be (120 hp version, https://autotijd.be/en/specs/hyundai/i30/10-t-gdi-120-hp-2742)."
   },
   {
    "id": "hyundai-kona-1-0-t-gdi-48v-120-hp-manual",
@@ -56,7 +56,7 @@
    "ev_kwh100": null,
    "confidence": "low",
    "source": "https://autotijd.be/en/consumption/hyundai/kona/10-t-gdi-48v-120-hp-manual-3879",
-   "notes": "autotijd.be 2023-2026 listing: WLTP 5.6 manual, 5.8 automatic. Tank 47 L from one aggregator page. Not confirmed on the Swedish price list of 2026-11-02."
+   "notes": "[2026-11-07 unconfirmed: SE price list 2026-11-02 has no Kona 1.0; ADAC 2021-23 shows 6.1 (older).] autotijd.be 2023-2026 listing: WLTP 5.6 manual, 5.8 automatic. Tank 47 L from one aggregator page. Not confirmed on the Swedish price list of 2026-11-02."
   },
   {
    "id": "hyundai-i20-1-0-t-gdi-100-hp-manual",
@@ -200,7 +200,7 @@
    "ev_kwh100": null,
    "confidence": "medium",
    "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/Hyundai_Sverige_Prislista_20261102pdf",
-   "notes": "Weighted WLTP per SE price list 2WD Essential 2.7 (Advanced/N Line 2.8). Battery 13.8 kWh from Hyundai SE page https://www.hyundai.com/se/sv/bilar/tucson-plug-in-hybrid/prestanda.html; electric range up to 71 km (2WD) from SE brochure Modelbrochure_TUCSON-NX4_102024, which says it is not yet officially confirmed. Tank 42 L from the Hyundai UK 2021 PHEV tech sheet (garbled PDF text, column inferred). Battery gross/usable not stated. ev_kwh100 not found. Weighted WLTP 2.7 l/100 km is not a usable petrol-only value, so cons_l100 is null."
+   "notes": "[2026-11-07 cons_l100 stays null: only a search-summary 6.2-6.6 (not opened page).] Weighted WLTP per SE price list 2WD Essential 2.7 (Advanced/N Line 2.8). Battery 13.8 kWh from Hyundai SE page https://www.hyundai.com/se/sv/bilar/tucson-plug-in-hybrid/prestanda.html; electric range up to 71 km (2WD) from SE brochure Modelbrochure_TUCSON-NX4_102024, which says it is not yet officially confirmed. Tank 42 L from the Hyundai UK 2021 PHEV tech sheet (garbled PDF text, column inferred). Battery gross/usable not stated. ev_kwh100 not found. Weighted WLTP 2.7 l/100 km is not a usable petrol-only value, so cons_l100 is null."
   },
   {
    "id": "hyundai-tucson-1-6-t-gdi-plug-in-hybrid-288-hp-4wd",
@@ -212,13 +212,13 @@
    "year": 2026,
    "rank": null,
    "tank_l": 42,
-   "cons_l100": null,
+   "cons_l100": 6.9,
    "battery_kwh": 13.8,
-   "range_km": null,
+   "range_km": 64,
    "ev_kwh100": null,
    "confidence": "medium",
    "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/Hyundai_Sverige_Prislista_20261102pdf",
-   "notes": "Weighted WLTP per SE price list 4WD Essential 3.1 (Advanced/N Line 3.2). Battery 13.8 kWh (Hyundai SE). Range for 4WD not found. Tank 42 L per UK 2021 sheet. An all-new Tucson (unveiled 2026-10-01, 17.1 kWh PHEV) is not yet on sale and is not included. Weighted WLTP 3.1 l/100 km is not a usable petrol-only value, so cons_l100 is null."
+   "notes": "[2026-11-07 ADAC page read (https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/hyundai/tucson/3generation-facelift/336336/): N Line Allrad 252 hp 07/24-11/25: WLTP depleted 6.9, 18.7 kWh/100 km, 64 km, 42 l; 288 hp MY not on ADAC.] Weighted WLTP per SE price list 4WD Essential 3.1 (Advanced/N Line 3.2). Battery 13.8 kWh (Hyundai SE). Range for 4WD not found. Tank 42 L per UK 2021 sheet. An all-new Tucson (unveiled 2026-10-01, 17.1 kWh PHEV) is not yet on sale and is not included. Weighted WLTP 3.1 l/100 km is not a usable petrol-only value, so cons_l100 is null."
   },
   {
    "id": "hyundai-santa-fe-1-6-t-gdi-plug-in-hybrid-288-hp-4wd",
@@ -236,7 +236,7 @@
    "ev_kwh100": null,
    "confidence": "high",
    "source": "https://www.hyundai.news/de/modelle/alternative-antriebe/santa-fe-plug-in-hybrid/pressemappe/hyundai-santa-fe-plug-in-hybrid-pressetext-my27.html",
-   "notes": "Hyundai Germany MY27 press text: 13.8 kWh, up to 54 km WLTP combined, 3.8 L/100 km weighted plus 11.4 kWh/100 km (7.1 L/100 km depleted battery, used as cons_l100). Same 3.8 in SE price list. Tank 47 L from SE brochure https://dmassets.hyundai.com/is/content/hyundaiautoever/7556_HYU_MX5_SANTA_FE_digital_se_LR-2pdf-AFpdf (which also shows an older 1.7 L/100 km figure). Battery gross/usable not stated."
+   "notes": "[2026-11-07 ev_kwh100 null: 11.4 is the weighted figure (also on ADAC https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/hyundai/santa-fe/5generation/346768/); charge-depleting WLTP not published.] Hyundai Germany MY27 press text: 13.8 kWh, up to 54 km WLTP combined, 3.8 L/100 km weighted plus 11.4 kWh/100 km (7.1 L/100 km depleted battery, used as cons_l100). Same 3.8 in SE price list. Tank 47 L from SE brochure https://dmassets.hyundai.com/is/content/hyundaiautoever/7556_HYU_MX5_SANTA_FE_digital_se_LR-2pdf-AFpdf (which also shows an older 1.7 L/100 km figure). Battery gross/usable not stated."
   },
   {
    "id": "hyundai-santa-fe-1-6-t-gdi-plug-in-hybrid-253-hp-4wd",

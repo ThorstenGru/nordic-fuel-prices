@@ -161,7 +161,6 @@ h1, h2, h3, .num, .st-name, .pk-p b, .trust-title { font-family:var(--f-disp); }
 #chips-more { position:absolute; top:48px; right:0; width:max-content; max-width:calc(100vw - 20px); z-index:2; display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; padding:8px;
   background:var(--surf); border:1px solid var(--line); border-radius:var(--r-m); box-shadow:var(--shadow); }
 #chips-more[hidden] { display:none; }
-.cur-sw { display:flex; align-items:center; gap:6px; width:100%; justify-content:flex-end; font-size:.68rem; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.06em; }
 #sform { display:none; flex:1; min-width:0; align-items:center; gap:8px; height:44px; padding:0 4px 0 14px; border-radius:22px;
   background:var(--surf); border:1px solid var(--line); box-shadow:var(--shadow); }
 #sform input { flex:1; min-width:0; border:none; background:none; outline:none; font-size:16px; color:var(--ink); height:100%; }
@@ -610,6 +609,13 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 #ac-list .ac-foot { padding:6px 10px 4px; font-size:.68rem; line-height:1.4; color:var(--sub); border-top:1px solid var(--line); margin-top:2px; }
 .mc-hint { font-size:.72rem; color:var(--sub); margin:4px 0 0; line-height:1.45; }
 .mc-step details.car-box { background:var(--surf); margin-top:14px; }
+.scard:focus-visible { outline:3px solid var(--acc); outline-offset:-3px; }
+.st-more > summary { cursor:pointer; font-size:.84rem; font-weight:800; font-family:var(--f-disp); color:var(--ink); padding:12px 0; min-height:44px; }
+.st-more > summary small { display:block; font-family:var(--f-body); font-weight:500; font-size:.7rem; color:var(--sub); margin-top:2px; }
+.st-more { margin-top:8px; border-top:1px solid var(--line); }
+.pv-r .reg { color:var(--warn-t); }
+.pv-r { font-size:.72rem; color:var(--sub); line-height:1.45; margin:6px 0; }
+.mc-details section.car-box { border:0; border-top:1px solid var(--line); border-radius:0; background:none; padding:4px 0 14px; margin:0; }
 .mc-q { background:none; border:0; padding:0; min-height:44px; font:inherit; font-size:.76rem; font-weight:700; color:var(--acc-t); text-decoration:underline; cursor:pointer; text-align:left; }
 .mc-a { font-size:.76rem; color:var(--sub); line-height:1.5; margin:0 0 6px; padding:8px 10px; border-left:3px solid var(--acc); background:var(--surf); border-radius:0 var(--r-s) var(--r-s) 0; }
 .mc-pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
@@ -682,7 +688,6 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .st-big button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:92px; padding:10px 6px; background:var(--surf); border:1px solid var(--line); border-radius:var(--r-m); color:var(--ink); font-size:.86rem; font-weight:700; cursor:pointer; }
 .st-big button .ic { width:26px; height:26px; color:var(--acc-t); }
 .st-big button:active { background:var(--surf2); }
-#start .st-tip { font-size:.8rem; color:var(--sub); }
 .st-skip { align-self:center; background:none; border:none; color:var(--sub); text-decoration:underline; font-size:.9rem; min-height:44px; padding:0 14px; cursor:pointer; }
 
 /* ── Desktop (>= 1000 px): sidebar + full-width map, same tokens and icons ── */
@@ -804,7 +809,6 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <button class="chip" data-f="DIESEL" type="button" onclick="chipTap(this,'DIESEL')"><span data-i18n="fuelOptDiesel">Diesel</span></button>
       <button class="chip" id="chip-more" type="button" aria-expanded="false" aria-controls="chips-more" onclick="toggleMore()"><span data-i18n="moreFuels">More</span><svg class="ic sm"><use href="#i-chev-d"/></svg></button>
     <div id="chips-more" hidden>
-      <div class="cur-sw" role="group" data-i18n-aria="curSwitch" aria-label="Show prices in"><span data-i18n="curSwitch">Show prices in</span><button class="chip cur-btn" data-m="local" type="button" onclick="setCurMode('local')"><span data-i18n="curLocal">Local</span></button><button class="chip cur-btn" data-m="eur" type="button" onclick="setCurMode('eur')">EUR</button></div>
       <button class="chip" data-f="" type="button" onclick="chipTap(this,'');toggleMore(false)"><span data-i18n="fuelAll">All fuels</span></button>
       <button class="chip" data-f="HVO100" type="button" onclick="chipTap(this,'HVO100');toggleMore(false)"><svg class="ic sm"><use href="#i-leaf"/></svg> HVO</button>
       <button class="chip" data-f="E85" type="button" onclick="chipTap(this,'E85');toggleMore(false)">E85</button>
@@ -891,8 +895,8 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
   <div class="phead"><h2 data-i18n="tabTrip">Trip</h2></div>
   <div class="view-seg" id="cmp-views">
     <button class="on" type="button" data-v="countries" onclick="setCmpView('countries')"><span data-i18n="segPrices">Prices</span></button>
-    <button type="button" data-v="trip" onclick="setCmpView('trip')"><span data-i18n="segBorder">Border run</span></button>
     <button type="button" data-v="route" onclick="setCmpView('route')"><span data-i18n="routeTab">Route</span></button>
+    <button type="button" data-v="trip" onclick="setCmpView('trip')"><span data-i18n="segBorder">Border run</span></button>
   </div>
   <div class="seg">
     <button class="on" type="button" data-k="p95" onclick="setCmpKey('p95')">95</button>
@@ -947,12 +951,10 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <div data-hq="price"></div>
       <span class="mc-lbl" id="ev-mode-l" data-i18n="evMode">Where do you charge?</span>
       <div id="ev-in" role="group" aria-labelledby="ev-mode-l"></div>
-      <details class="car-box ev-box" id="tf-card" hidden>
-        <summary data-i18n="tfTitle">Work out my real electricity price (optional)</summary>
-        <div id="tf-form"></div><div id="tf-out" aria-live="polite"></div>
-      </details>
     </section>
 
+    <details class="car-box ev-box mc-step mc-fold mc-details" id="mc-details" hidden>
+      <summary><span data-i18n="mcDet">Details</span><small data-i18n="mcDetS">Temperature, trip cost, nearby prices, electricity tariff, advanced settings</small></summary>
     <section class="car-box ev-box mc-step" id="ev-card" aria-labelledby="mc-h3" hidden>
       <h3 class="mc-h" id="mc-h3"><span class="mc-n" aria-hidden="true">3</span><span data-i18n="mcS3">Result: charging or filling up?</span><span class="mc-st" id="mc-st3"></span></h3>
       <p class="ev-note" data-i18n="mcS3i">What 100 km costs on electricity and on petrol, and what a trip costs.</p>
@@ -963,8 +965,12 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 
     <section class="car-box ev-box mc-step" id="op-card" aria-labelledby="mc-h4" hidden></section>
 
-    <details class="car-box ev-box mc-step mc-fold" id="mc-adv">
-      <summary><span data-i18n="mcAdv">Advanced settings</span><small id="mc-adv-sum"></small></summary>
+    <details class="car-box ev-box" id="tf-card" hidden>
+        <summary data-i18n="tfTitle">Work out my real electricity price (optional)</summary>
+        <div id="tf-form"></div><div id="tf-out" aria-live="polite"></div>
+      </details>
+    <section class="car-box mc-step" id="mc-adv" aria-labelledby="mc-h5">
+      <h3 class="mc-h" id="mc-h5" data-i18n="mcAdv">Advanced settings</h3><p class="ev-note" id="mc-adv-sum"></p>
       <div id="ev-in2"></div>
       <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" aria-describedby="h-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="87" onchange="carSet('eff',this.value)">
       <p class="mc-hint" id="h-eff" data-i18n="mcEffH">Default: 90. Some electricity is lost as heat when charging, so 90 means 10 percent is lost.</p>
@@ -977,6 +983,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       </div>
       <label for="car-cardpct" data-i18n="cardLbl">Card currency fee (%)</label><input id="car-cardpct" aria-describedby="h-card" type="number" inputmode="decimal" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
       <p class="mc-hint" id="h-card" data-i18n="cardHint">Only matters when you buy abroad. Check your bank; 0 to 3 percent is common. Stored on this device only.</p><p class="cmp-note fx-src" style="margin:2px 0 0"></p>
+    </section>
     </details>
 
     <details class="car-box ev-box mc-step mc-fold" id="mc-app">
@@ -1030,12 +1037,6 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <select id="mobCountry" onchange="setCountry(this.value)"></select>
     <label data-i18n="lgBands">Price bands on the map</label>
     <div id="legend"></div>
-    <label data-i18n="labelTheme">Appearance</label>
-    <div class="lang-row">
-      <button class="theme-btn" type="button" data-theme="auto" onclick="setTheme('auto')" data-i18n="themeAuto">Auto</button>
-      <button class="theme-btn" type="button" data-theme="light" onclick="setTheme('light')" data-i18n="themeLight">Light</button>
-      <button class="theme-btn" type="button" data-theme="dark" onclick="setTheme('dark')" data-i18n="themeDark">Dark</button>
-    </div>
     <button class="btn-line" type="button" style="margin-top:18px" onclick="resetAll()"><svg class="ic"><use href="#i-refresh"/></svg><span data-i18n="resetFilters">Reset all filters</span></button>
   </div>
 </div>
@@ -1052,7 +1053,6 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
   <div class="st-card">
     <img class="st-logo" src="logo.svg" alt="EuroFuelPrices" height="40">
     <h2 id="start-h" data-i18n="startPromise">Find the cheapest fuel near you.</h2>
-    <p data-i18n="startSub">Live prices from official sources across Europe. Every price shows where it came from and how old it is.</p>
     <form class="st-search" role="search" onsubmit="startSearch();return false;">
       <svg class="ic" style="color:var(--sub)"><use href="#i-search"/></svg>
       <input type="search" id="startQ" data-ac="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr" data-i18n-aria="tabSearch" aria-label="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
@@ -1062,7 +1062,6 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <button type="button" onclick="startGo('route')"><svg class="ic"><use href="#i-route"/></svg><span data-i18n="routeTab">Route</span></button>
       <button type="button" onclick="startGo('favs')"><svg class="ic"><use href="#i-star"/></svg><span data-i18n="saved">Saved</span></button>
     </div>
-    <p class="st-tip" data-i18n="startTip">Tip: the card at the bottom of the map shows the cheapest station in view.</p>
     <button class="st-skip" type="button" onclick="closeStart()" data-i18n="startSkip">Skip</button>
   </div>
 </div>
@@ -1184,8 +1183,8 @@ const CB = Object.fromEntries(Object.entries(BBOX).map(([cc,b]) =>
 // real per-language SEO would need that too (see docs/ROADMAP.md), this just serves the visitor.
 // ════════════════════════════════════════════════════
 const I18N = {
-en: { fuelAll:'All fuels', tabMap:'Map', tabNearby:'Near Me', tabSearch:'Search', tabList:'List', tabListCount:'List ({n})', tabFilter:'Filter',
-  nearbyTitle:'Cheapest Near You', bestPriceNearby:'Best price nearby', tapToLocate:'Tap the button to find your location…',
+en: { fuelAll:'All fuels', tabMap:'Map', tabSearch:'Search', tabList:'List', tabListCount:'List ({n})', tabFilter:'Filter',
+  nearbyTitle:'Cheapest Near You', bestPriceNearby:'Best price nearby', 
   noStationsNearby:'No stations within {r} km in {c} yet.', panMore:'Pan the map, or try again once more data has loaded.',
   bestWithinDetail:'Best within {d} · {n} stations within {r} km in {c}', yourCountry:'your country',
   searchPhAddr:'City, address, or station…', searchPhName:'Station name or brand…',
@@ -1201,16 +1200,16 @@ en: { fuelAll:'All fuels', tabMap:'Map', tabNearby:'Near Me', tabSearch:'Search'
   justNow:'just now', minAgo:'{m} min ago', hAgo:'{h} h ago', daysAgo:'{d} days ago',
   priceTimeUnknown:'price time unknown', checkedAt:' · checked {t}', priceSetAt:'source data updated {t}',
   staleNote:'Source temporarily unavailable — showing data from {t}',
-  noPriceData:'No price data available', noPricesShort:'No prices', noGpsTitle:'No GPS', go:'Go', youAreHere:'You are here',
+  noPricesShort:'No prices', noGpsTitle:'No GPS', go:'Go', youAreHere:'You are here',
   e10ok:'E10-compatible', geoNotSupported:'Geolocation not supported.', locErrorPrefix:'Location error: ', permDenied:'Permission denied.',
   posUnavailable:'Position unavailable.', timedOut:'Timed out.',
-  statsStations:'{n} stations', loadingMore:'Loading {n} more…', countriesShort:'{ld}/{tot} countries',
+  statsStations:'{n} stations', 
   installApp:'Install app',
   trustTitle:'How we grade sources', trustIntro:'Every price shows where it came from and how old it is. We grade each country’s data source so you know how much to trust it:',
   trustLinkLabel:'How we grade sources', trustDismiss:'Got it',
   reportedAgo:'reported {t}', ageUnknown:'age unknown', srcLabel:'Source: {s}', otherSources:'other sources ({n})', sourcesDiffer:'sources differ', regulatedMax:'regulated maximum — not a station price', convertedEur:'converted from EUR' },
-sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabNearby:'Nära mig', tabSearch:'Sök', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filter',
-  nearbyTitle:'Billigast nära dig', bestPriceNearby:'Bästa pris i närheten', tapToLocate:'Tryck på knappen för att hitta din plats…',
+sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabSearch:'Sök', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filter',
+  nearbyTitle:'Billigast nära dig', bestPriceNearby:'Bästa pris i närheten', 
   noStationsNearby:'Inga stationer inom {r} km i {c} än.', panMore:'Panorera kartan, eller försök igen när mer data har laddats.',
   bestWithinDetail:'Bäst inom {d} · {n} stationer inom {r} km i {c}', yourCountry:'ditt land',
   searchPhAddr:'Stad, adress eller station…', searchPhName:'Stationsnamn eller märke…',
@@ -1226,16 +1225,16 @@ sv: { fuelAll:'Alla bränslen', tabMap:'Karta', tabNearby:'Nära mig', tabSearch
   justNow:'just nu', minAgo:'för {m} min sedan', hAgo:'för {h} tim sedan', daysAgo:'för {d} dagar sedan',
   priceTimeUnknown:'okänd pristid', checkedAt:' · kontrollerad {t}', priceSetAt:'källdata uppdaterad {t}',
   staleNote:'Källan är tillfälligt otillgänglig — visar data som hämtades {t}',
-  noPriceData:'Inga prisuppgifter tillgängliga', noPricesShort:'Inga priser', noGpsTitle:'Ingen GPS', go:'Kör', youAreHere:'Du är här',
+  noPricesShort:'Inga priser', noGpsTitle:'Ingen GPS', go:'Kör', youAreHere:'Du är här',
   e10ok:'E10-kompatibel', geoNotSupported:'Geolokalisering stöds inte.', locErrorPrefix:'Platsfel: ', permDenied:'Behörighet nekad.',
   posUnavailable:'Position ej tillgänglig.', timedOut:'Tidsgräns överskriden.',
-  statsStations:'{n} stationer', loadingMore:'Laddar {n} till…', countriesShort:'{ld}/{tot} länder',
+  statsStations:'{n} stationer', 
   installApp:'Installera app',
   trustTitle:'Så betygsätter vi källor', trustIntro:'Varje pris visar varifrån den kommer och hur gammal den är. Vi betygsätter varje lands datakälla så att du vet hur mycket du kan lita på den:',
   trustLinkLabel:'Så betygsätter vi källor', trustDismiss:'Jag förstår',
   reportedAgo:'rapporterat {t}', ageUnknown:'ålder okänd', srcLabel:'Källa: {s}', otherSources:'andra källor ({n})', sourcesDiffer:'källorna skiljer sig', regulatedMax:'reglerat maxpris — inte ett stationspris', convertedEur:'omräknat från EUR' },
-de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabNearby:'In der Nähe', tabSearch:'Suche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filter',
-  nearbyTitle:'Günstigste in der Nähe', bestPriceNearby:'Bester Preis in der Nähe', tapToLocate:'Tippe auf die Schaltfläche, um deinen Standort zu ermitteln…',
+de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabSearch:'Suche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filter',
+  nearbyTitle:'Günstigste in der Nähe', bestPriceNearby:'Bester Preis in der Nähe', 
   noStationsNearby:'Noch keine Tankstellen innerhalb von {r} km in {c}.', panMore:'Verschiebe die Karte oder versuche es erneut, sobald mehr Daten geladen sind.',
   bestWithinDetail:'Bester Preis innerhalb {d} · {n} Tankstellen innerhalb von {r} km in {c}', yourCountry:'deinem Land',
   searchPhAddr:'Stadt, Adresse oder Tankstelle…', searchPhName:'Tankstellenname oder Marke…',
@@ -1251,16 +1250,16 @@ de: { fuelAll:'Alle Kraftstoffe', tabMap:'Karte', tabNearby:'In der Nähe', tabS
   justNow:'gerade eben', minAgo:'vor {m} Min.', hAgo:'vor {h} Std.', daysAgo:'vor {d} Tagen',
   priceTimeUnknown:'Preiszeitpunkt unbekannt', checkedAt:' · geprüft {t}', priceSetAt:'Quelldaten aktualisiert {t}',
   staleNote:'Quelle vorübergehend nicht verfügbar — zeige Daten von {t}',
-  noPriceData:'Keine Preisdaten verfügbar', noPricesShort:'Keine Preise', noGpsTitle:'Kein GPS', go:'Los', youAreHere:'Du bist hier',
+  noPricesShort:'Keine Preise', noGpsTitle:'Kein GPS', go:'Los', youAreHere:'Du bist hier',
   e10ok:'E10-verträglich', geoNotSupported:'Standortbestimmung wird nicht unterstützt.', locErrorPrefix:'Standortfehler: ', permDenied:'Zugriff verweigert.',
   posUnavailable:'Standort nicht verfügbar.', timedOut:'Zeitüberschreitung.',
-  statsStations:'{n} Tankstellen', loadingMore:'Lade {n} weitere…', countriesShort:'{ld}/{tot} Länder',
+  statsStations:'{n} Tankstellen', 
   installApp:'App installieren',
   trustTitle:'So bewerten wir Quellen', trustIntro:'Jeder Preis zeigt, woher er stammt und wie alt er ist. Wir bewerten die Datenquelle jedes Landes, damit du weißt, wie sehr du ihr vertrauen kannst:',
   trustLinkLabel:'So bewerten wir Quellen', trustDismiss:'Verstanden',
   reportedAgo:'gemeldet {t}', ageUnknown:'Alter unbekannt', srcLabel:'Quelle: {s}', otherSources:'andere Quellen ({n})', sourcesDiffer:'Quellen weichen ab', regulatedMax:'regulierter Höchstpreis — kein Stationspreis', convertedEur:'aus EUR umgerechnet' },
-fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabNearby:'Près de moi', tabSearch:'Recherche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filtre',
-  nearbyTitle:'Le moins cher près de vous', bestPriceNearby:'Meilleur prix à proximité', tapToLocate:'Appuyez sur le bouton pour localiser votre position…',
+fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabSearch:'Recherche', tabList:'Liste', tabListCount:'Liste ({n})', tabFilter:'Filtre',
+  nearbyTitle:'Le moins cher près de vous', bestPriceNearby:'Meilleur prix à proximité', 
   noStationsNearby:'Aucune station à moins de {r} km en {c} pour le moment.', panMore:'Déplacez la carte, ou réessayez une fois que plus de données seront chargées.',
   bestWithinDetail:'Meilleur prix à {d} · {n} stations à moins de {r} km en {c}', yourCountry:'votre pays',
   searchPhAddr:'Ville, adresse ou station…', searchPhName:'Nom de station ou marque…',
@@ -1276,16 +1275,16 @@ fr: { fuelAll:'Tous les carburants', tabMap:'Carte', tabNearby:'Près de moi', t
   justNow:'à l’instant', minAgo:'il y a {m} min', hAgo:'il y a {h} h', daysAgo:'il y a {d} jours',
   priceTimeUnknown:'horodatage du prix inconnu', checkedAt:' · vérifié {t}', priceSetAt:'données source mises à jour {t}',
   staleNote:'Source temporairement indisponible — affichage des données de {t}',
-  noPriceData:'Aucune donnée de prix disponible', noPricesShort:'Aucun prix', noGpsTitle:'Pas de GPS', go:'Y aller', youAreHere:'Vous êtes ici',
+  noPricesShort:'Aucun prix', noGpsTitle:'Pas de GPS', go:'Y aller', youAreHere:'Vous êtes ici',
   e10ok:'compatible E10', geoNotSupported:'La géolocalisation n’est pas prise en charge.', locErrorPrefix:'Erreur de localisation : ', permDenied:'Autorisation refusée.',
   posUnavailable:'Position indisponible.', timedOut:'Délai dépassé.',
-  statsStations:'{n} stations', loadingMore:'Chargement de {n} de plus…', countriesShort:'{ld}/{tot} pays',
+  statsStations:'{n} stations', 
   installApp:'Installer l’application',
   trustTitle:'Comment nous évaluons les sources', trustIntro:'Chaque prix indique d’où il vient et son âge. Nous évaluons la source de données de chaque pays pour que vous sachiez à quel point lui faire confiance :',
   trustLinkLabel:'Comment nous évaluons les sources', trustDismiss:'Compris',
   reportedAgo:'signalé {t}', ageUnknown:'ancienneté inconnue', srcLabel:'Source : {s}', otherSources:'autres sources ({n})', sourcesDiffer:'les sources diffèrent', regulatedMax:'prix maximum réglementé — pas un prix de station', convertedEur:'converti depuis EUR' },
-es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí', tabSearch:'Buscar', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filtro',
-  nearbyTitle:'Más barato cerca de ti', bestPriceNearby:'Mejor precio cerca', tapToLocate:'Toca el botón para encontrar tu ubicación…',
+es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabSearch:'Buscar', tabList:'Lista', tabListCount:'Lista ({n})', tabFilter:'Filtro',
+  nearbyTitle:'Más barato cerca de ti', bestPriceNearby:'Mejor precio cerca', 
   noStationsNearby:'Aún no hay estaciones a {r} km en {c}.', panMore:'Mueve el mapa o inténtalo de nuevo cuando se hayan cargado más datos.',
   bestWithinDetail:'Mejor precio a {d} · {n} estaciones a {r} km en {c}', yourCountry:'tu país',
   searchPhAddr:'Ciudad, dirección o estación…', searchPhName:'Nombre de estación o marca…',
@@ -1301,10 +1300,10 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
   justNow:'justo ahora', minAgo:'hace {m} min', hAgo:'hace {h} h', daysAgo:'hace {d} días',
   priceTimeUnknown:'hora del precio desconocida', checkedAt:' · comprobado {t}', priceSetAt:'datos de origen actualizados {t}',
   staleNote:'Fuente temporalmente no disponible — mostrando datos de {t}',
-  noPriceData:'No hay datos de precio disponibles', noPricesShort:'Sin precios', noGpsTitle:'Sin GPS', go:'Ir', youAreHere:'Estás aquí',
+  noPricesShort:'Sin precios', noGpsTitle:'Sin GPS', go:'Ir', youAreHere:'Estás aquí',
   e10ok:'compatible con E10', geoNotSupported:'La geolocalización no es compatible.', locErrorPrefix:'Error de ubicación: ', permDenied:'Permiso denegado.',
   posUnavailable:'Posición no disponible.', timedOut:'Tiempo agotado.',
-  statsStations:'{n} estaciones', loadingMore:'Cargando {n} más…', countriesShort:'{ld}/{tot} países',
+  statsStations:'{n} estaciones', 
   installApp:'Instalar app',
   trustTitle:'Cómo calificamos las fuentes', trustIntro:'Cada precio muestra de dónde viene y qué antigüedad tiene. Calificamos la fuente de datos de cada país para que sepas cuánto confiar en ella:',
   trustLinkLabel:'Cómo calificamos las fuentes', trustDismiss:'Entendido',
@@ -1312,23 +1311,23 @@ es: { fuelAll:'Todos los combustibles', tabMap:'Mapa', tabNearby:'Cerca de mí',
 };
 
 // Extra strings (price colouring, country comparison). Missing keys fall back to English.
-Object.assign(I18N.en, { routeTab:'Route', rtPreview:'Preview', rtFrom:'From', rtTo:'To', rtPh:'Address or place', rtMyLoc:'My location', rtPickMap:'Pick on map', rtTapMap:'Tap the map to set the {w}', rtStart:'start', rtEnd:'destination', rtWidth:'Corridor width', rtHideUnknown:'Hide prices of unknown age', rtGo:'Find cheapest pumps', rtSearching:'Searching places…', rtRouting:'Calculating route…', rtLoading:'Loading prices: {c}…', rtNoPlace:'Couldn’t find “{q}”', rtFail:'Couldn’t calculate a route — the free routing server may be busy. Try again in a moment.', rtNone:'No priced pumps within {w} km of the route.', rtSummary:'{d} km · about {h} · {n} priced pumps within {w} km', rtMedian:'Route median {p} per litre', rtCheaper:'{d}/L below the route median', rtSame:'around the route median', rtAlong:'km {k} of {n}', rtDetour:'+{k} km detour (est.)', rtVia:'Route via here', rtOld:'{n} prices older than 10 h are hidden.', rtClear:'Clear route', rtNote:'Preview. Route from the free OSRM demo server (car; ferries and tolls not considered). Detours are estimates (straight line × 1.3). Prices change — check at the pump. Your start and end are sent to OpenStreetMap (Nominatim) and the OSRM server.', worthYes:'Worth the drive — saves {s}', worthNo:'Not worth the drive — costs {s} more', worthSame:'≈ About the same (within {s})', worthClosest:'This is the closest pump with a price.', worthVs:'{d} from {w} · vs {n} ({a}) at {p}', worthBreak:'worth it up to {k} km away', worthYou:'you', worthMap:'the map centre', worthMapNote:'Distances from the map centre — tap the locate button to use your position.', worthFuel:'Fuel', ctyTab:'Countries', tripTab:'Trip', updAgo:'Updated {t}', updOld:'Updated {t} — tap to refresh', updDone:'Updated — {n} countries refreshed', updNone:'Already up to date', updFail:'Couldn’t reach the server — showing saved data', tripBorder:'Border run: is it worth the drive?', tripFrom:'Fill up here', tripTo:'…or drive to', tripExtra:'Extra driving, round trip: {k} km', tripCons:'Consumption', tripLper:'L / 100 km', tripWorth:'Worth it — you save {s}', tripNot:'Not worth it — it costs {s} more', tripBreak:'Break-even at about {k} km extra (round trip). Fill-up: {l} L, driving cost included.', tripRoad:'Road trip: where to fill up?', tripDist:'Distance (km)', tripVia:'Countries on the way', tripNeed:'{l} L needed · {n} fill-up(s) with a {t} L tank', tripBest:'Cheapest: {c} — {s} less than {w}', tripAll:'Fuel for the whole trip, if bought in…', tripPick:'Pick at least two countries', tripNote:'Uses each country’s median station price (EUR). Real stations vary — use the “Cheapest in view” card for the cheapest near you.', sortView:'In view', navTitle:'Navigate with', navRemember:'Use this app next time', cancel:'Cancel', navCopy:'Copy address', navCopied:'Address copied', navOther:'Other app…', navPrefLabel:'Navigation app', navAsk:'Ask every time', installApp2:'Add to Home Screen', iosInstall:'Tap the Share button, then “Add to Home Screen”.', cheapTip:'Tip: the card at the bottom of the map shows the cheapest station in view.', cheapHere:'Cheapest here', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'{p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap the star on a station to save it here.', share:'Share', copied:'Link copied', tankLabel:'Tank size', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', tabCompare:'Prices', cmpTitle:'Price by country', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
+Object.assign(I18N.en, { routeTab:'Route', rtPreview:'Preview', rtFrom:'From', rtTo:'To', rtPh:'Address or place', rtMyLoc:'My location', rtPickMap:'Pick on map', rtTapMap:'Tap the map to set the {w}', rtStart:'start', rtEnd:'destination', rtWidth:'Corridor width', rtHideUnknown:'Hide prices of unknown age', rtGo:'Find cheapest pumps', rtSearching:'Searching places…', rtRouting:'Calculating route…', rtLoading:'Loading prices: {c}…', rtNoPlace:'Couldn’t find “{q}”', rtFail:'Couldn’t calculate a route — the free routing server may be busy. Try again in a moment.', rtNone:'No priced pumps within {w} km of the route.', rtSummary:'{d} km · about {h} · {n} priced pumps within {w} km', rtMedian:'Route median {p} per litre', rtCheaper:'{d}/L below the route median', rtSame:'around the route median', rtAlong:'km {k} of {n}', rtDetour:'+{k} km detour (est.)', rtVia:'Route via here', rtClear:'Clear route', rtNote:'Preview. Route from the free OSRM demo server (car; ferries and tolls not considered). Detours are estimates (straight line × 1.3). Prices change — check at the pump. Your start and end are sent to OpenStreetMap (Nominatim) and the OSRM server.', worthYes:'Worth the drive — saves {s}', worthNo:'Not worth the drive — costs {s} more', worthSame:'≈ About the same (within {s})', worthClosest:'This is the closest pump with a price.', worthVs:'{d} from {w} · vs {n} ({a}) at {p}', worthBreak:'worth it up to {k} km away', worthYou:'you', worthMap:'the map centre', worthMapNote:'Distances from the map centre — tap the locate button to use your position.', updAgo:'Updated {t}', updOld:'Updated {t} — tap to refresh', updDone:'Updated — {n} countries refreshed', updNone:'Already up to date', updFail:'Couldn’t reach the server — showing saved data', tripBorder:'Border run: is it worth the drive?', tripFrom:'Fill up here', tripTo:'…or drive to', tripExtra:'Extra driving, round trip: {k} km', tripCons:'Consumption', tripLper:'L / 100 km', tripWorth:'Worth it — you save {s}', tripNot:'Not worth it — it costs {s} more', tripBreak:'Break-even at about {k} km extra (round trip). Fill-up: {l} L, driving cost included.', tripRoad:'Road trip: where to fill up?', tripDist:'Distance (km)', tripVia:'Countries on the way', tripNeed:'{l} L needed · {n} fill-up(s) with a {t} L tank', tripBest:'Cheapest: {c} — {s} less than {w}', tripAll:'Fuel for the whole trip, if bought in…', tripPick:'Pick at least two countries', tripNote:'Uses each country’s median station price (EUR). Real stations vary — use the “Cheapest in view” card for the cheapest near you.', sortView:'In view', navTitle:'Navigate with', navRemember:'Use this app next time', cancel:'Cancel', navCopy:'Copy address', navCopied:'Address copied', navOther:'Other app…', navPrefLabel:'Navigation app', navAsk:'Ask every time', installApp2:'Add to Home Screen', iosInstall:'Tap the Share button, then “Add to Home Screen”.', cheapNone:'No priced stations in view — zoom in or pan the map.', cheapFar:'Zoom in to a country first.', cheapResult:'{p} at {n} — cheapest of {c} stations in view', saved:'Saved', allSt:'All', noFavs:'Tap the star on a station to save it here.', share:'Share', copied:'Link copied', fillLine:'{l} L ≈ {c}', nearGo:'Navigate to the cheapest', nearSave:'{d}/L below the nearby average ({a}) — saves {s} on {l} L', bbAbout:'About', bbSources:'Sources', brandTag:'Live fuel prices at every station across Europe.', cmpCheapest:'Cheapest', cmpPriciest:'Priciest', cmpSpread:'{p}% above the cheapest',
   cmpMedian:'median', cmpRange:'middle 80% of stations', cmpNoData:'Country statistics appear after the next data refresh.',
   cmpNote:'Cheapest 95-octane / diesel price per station, converted to EUR at the ECB rate. Faded rows have few priced stations. Data quality differs by country — see source grades.',
   cmpStations:'{n} priced stations', lgPrice:'Price vs. country', lgSource:'Source grade', lgCheap:'cheaper', lgDear:'pricier' });
-Object.assign(I18N.sv, { routeTab:'Rutt', rtPreview:'Förhandsvisning', rtFrom:'Från', rtTo:'Till', rtPh:'Adress eller plats', rtMyLoc:'Min plats', rtPickMap:'Välj på kartan', rtTapMap:'Tryck på kartan för att sätta {w}', rtStart:'start', rtEnd:'mål', rtWidth:'Korridorbredd', rtHideUnknown:'Dölj priser med okänd ålder', rtGo:'Hitta billigaste pumparna', rtSearching:'Söker platser…', rtRouting:'Beräknar rutt…', rtLoading:'Laddar priser: {c}…', rtNoPlace:'Hittade inte ”{q}”', rtFail:'Kunde inte beräkna rutten — den gratis ruttservern kan vara upptagen. Försök igen strax.', rtNone:'Inga pumpar med pris inom {w} km från rutten.', rtSummary:'{d} km · cirka {h} · {n} pumpar med pris inom {w} km', rtMedian:'Medianpris längs rutten {p} per liter', rtCheaper:'{d}/L under medianen längs rutten', rtSame:'runt medianen längs rutten', rtAlong:'km {k} av {n}', rtDetour:'+{k} km omväg (uppsk.)', rtVia:'Rutt via hit', rtOld:'{n} priser äldre än 10 tim är dolda.', rtClear:'Rensa rutt', rtNote:'Förhandsvisning. Rutt från den gratis OSRM-demoservern (bil; färjor och vägtullar beaktas inte). Omvägar är uppskattningar (fågelväg × 1,3). Priser ändras — kontrollera vid pumpen. Start och mål skickas till OpenStreetMap (Nominatim) och OSRM-servern.', worthYes:'Värt att köra dit — du sparar {s}', worthNo:'Inte värt att köra dit — det kostar {s} mer', worthSame:'≈ Ungefär lika (inom {s})', worthClosest:'Det här är närmaste pump med pris.', worthVs:'{d} från {w} · jämfört med {n} ({a}) à {p}', worthBreak:'lönar sig upp till {k} km bort', worthYou:'dig', worthMap:'kartans mitt', worthMapNote:'Avstånd från kartans mitt — tryck på platsknappen för att använda din position.', worthFuel:'Bränsle', ctyTab:'Länder', tripTab:'Resa', updAgo:'Uppdaterad {t}', updOld:'Uppdaterad {t} — tryck för att uppdatera', updDone:'Uppdaterat — {n} länder', updNone:'Redan uppdaterat', updFail:'Ingen kontakt med servern — visar sparad data', tripBorder:'Gränshandel: lönar det sig?', tripFrom:'Tanka här', tripTo:'…eller kör till', tripExtra:'Extra körning, tur och retur: {k} km', tripCons:'Förbrukning', tripLper:'L / 100 km', tripWorth:'Lönar sig — du sparar {s}', tripNot:'Lönar sig inte — det kostar {s} mer', tripBreak:'Break-even vid ca {k} km extra (tur och retur). Tankning: {l} L, körkostnad inräknad.', tripRoad:'Roadtrip: var ska jag tanka?', tripDist:'Sträcka (km)', tripVia:'Länder på vägen', tripNeed:'{l} L behövs · {n} tankning(ar) med {t} L tank', tripBest:'Billigast: {c} — {s} mindre än {w}', tripAll:'Bränsle för hela resan om du köper i…', tripPick:'Välj minst två länder', tripNote:'Använder varje lands medianpris (EUR). Enskilda stationer varierar — använd kortet ”Billigast i vyn” för billigast nära dig.', sortView:'I vyn', navTitle:'Navigera med', navRemember:'Använd den här appen nästa gång', cancel:'Avbryt', navCopy:'Kopiera adress', navCopied:'Adress kopierad', navOther:'Annan app…', navPrefLabel:'Navigeringsapp', navAsk:'Fråga varje gång', installApp2:'Lägg till på hemskärmen', iosInstall:'Tryck på Dela-knappen och sedan ”Lägg till på hemskärmen”.', cheapTip:'Tips: kortet längst ner på kartan visar billigaste stationen i vyn.', cheapHere:'Billigast här', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'{p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på stjärnan vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', tankLabel:'Tankstorlek', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', tabCompare:'Priser', cmpTitle:'Pris per land', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
+Object.assign(I18N.sv, { routeTab:'Rutt', rtPreview:'Förhandsvisning', rtFrom:'Från', rtTo:'Till', rtPh:'Adress eller plats', rtMyLoc:'Min plats', rtPickMap:'Välj på kartan', rtTapMap:'Tryck på kartan för att sätta {w}', rtStart:'start', rtEnd:'mål', rtWidth:'Korridorbredd', rtHideUnknown:'Dölj priser med okänd ålder', rtGo:'Hitta billigaste pumparna', rtSearching:'Söker platser…', rtRouting:'Beräknar rutt…', rtLoading:'Laddar priser: {c}…', rtNoPlace:'Hittade inte ”{q}”', rtFail:'Kunde inte beräkna rutten — den gratis ruttservern kan vara upptagen. Försök igen strax.', rtNone:'Inga pumpar med pris inom {w} km från rutten.', rtSummary:'{d} km · cirka {h} · {n} pumpar med pris inom {w} km', rtMedian:'Medianpris längs rutten {p} per liter', rtCheaper:'{d}/L under medianen längs rutten', rtSame:'runt medianen längs rutten', rtAlong:'km {k} av {n}', rtDetour:'+{k} km omväg (uppsk.)', rtVia:'Rutt via hit', rtClear:'Rensa rutt', rtNote:'Förhandsvisning. Rutt från den gratis OSRM-demoservern (bil; färjor och vägtullar beaktas inte). Omvägar är uppskattningar (fågelväg × 1,3). Priser ändras — kontrollera vid pumpen. Start och mål skickas till OpenStreetMap (Nominatim) och OSRM-servern.', worthYes:'Värt att köra dit — du sparar {s}', worthNo:'Inte värt att köra dit — det kostar {s} mer', worthSame:'≈ Ungefär lika (inom {s})', worthClosest:'Det här är närmaste pump med pris.', worthVs:'{d} från {w} · jämfört med {n} ({a}) à {p}', worthBreak:'lönar sig upp till {k} km bort', worthYou:'dig', worthMap:'kartans mitt', worthMapNote:'Avstånd från kartans mitt — tryck på platsknappen för att använda din position.', updAgo:'Uppdaterad {t}', updOld:'Uppdaterad {t} — tryck för att uppdatera', updDone:'Uppdaterat — {n} länder', updNone:'Redan uppdaterat', updFail:'Ingen kontakt med servern — visar sparad data', tripBorder:'Gränshandel: lönar det sig?', tripFrom:'Tanka här', tripTo:'…eller kör till', tripExtra:'Extra körning, tur och retur: {k} km', tripCons:'Förbrukning', tripLper:'L / 100 km', tripWorth:'Lönar sig — du sparar {s}', tripNot:'Lönar sig inte — det kostar {s} mer', tripBreak:'Break-even vid ca {k} km extra (tur och retur). Tankning: {l} L, körkostnad inräknad.', tripRoad:'Roadtrip: var ska jag tanka?', tripDist:'Sträcka (km)', tripVia:'Länder på vägen', tripNeed:'{l} L behövs · {n} tankning(ar) med {t} L tank', tripBest:'Billigast: {c} — {s} mindre än {w}', tripAll:'Bränsle för hela resan om du köper i…', tripPick:'Välj minst två länder', tripNote:'Använder varje lands medianpris (EUR). Enskilda stationer varierar — använd kortet ”Billigast i vyn” för billigast nära dig.', sortView:'I vyn', navTitle:'Navigera med', navRemember:'Använd den här appen nästa gång', cancel:'Avbryt', navCopy:'Kopiera adress', navCopied:'Adress kopierad', navOther:'Annan app…', navPrefLabel:'Navigeringsapp', navAsk:'Fråga varje gång', installApp2:'Lägg till på hemskärmen', iosInstall:'Tryck på Dela-knappen och sedan ”Lägg till på hemskärmen”.', cheapNone:'Inga stationer med pris i vyn — zooma in eller panorera.', cheapFar:'Zooma in till ett land först.', cheapResult:'{p} hos {n} — billigast av {c} stationer i vyn', saved:'Sparade', allSt:'Alla', noFavs:'Tryck på stjärnan vid en station för att spara den här.', share:'Dela', copied:'Länk kopierad', fillLine:'{l} L ≈ {c}', nearGo:'Navigera till billigaste', nearSave:'{d}/L under snittet i närheten ({a}) — du sparar {s} på {l} L', bbAbout:'Om', bbSources:'Källor', brandTag:'Livepriser på drivmedel vid varje station i Europa.', cmpCheapest:'Billigast', cmpPriciest:'Dyrast', cmpSpread:'{p}% över det billigaste',
   cmpMedian:'median', cmpRange:'mittersta 80 % av stationerna', cmpNoData:'Landsstatistik visas efter nästa datauppdatering.',
   cmpNote:'Lägsta 95-oktan-/dieselpris per station, omräknat till EUR med ECB-kurs. Bleka rader har få stationer med pris. Datakvaliteten skiljer mellan länder — se källbetyg.',
   cmpStations:'{n} stationer med pris', lgPrice:'Pris jämfört med landet', lgSource:'Källbetyg', lgCheap:'billigare', lgDear:'dyrare' });
-Object.assign(I18N.de, { routeTab:'Route', rtPreview:'Vorschau', rtFrom:'Von', rtTo:'Nach', rtPh:'Adresse oder Ort', rtMyLoc:'Mein Standort', rtPickMap:'Auf Karte wählen', rtTapMap:'Tippe auf die Karte, um {w} zu setzen', rtStart:'den Start', rtEnd:'das Ziel', rtWidth:'Korridorbreite', rtHideUnknown:'Preise unbekannten Alters ausblenden', rtGo:'Günstigste Tankstellen finden', rtSearching:'Suche Orte…', rtRouting:'Route wird berechnet…', rtLoading:'Lade Preise: {c}…', rtNoPlace:'„{q}“ nicht gefunden', rtFail:'Route konnte nicht berechnet werden — der kostenlose Routing-Server ist evtl. ausgelastet. Bitte gleich nochmal versuchen.', rtNone:'Keine Tankstellen mit Preis im Umkreis von {w} km der Route.', rtSummary:'{d} km · ca. {h} · {n} Tankstellen mit Preis im Umkreis von {w} km', rtMedian:'Medianpreis entlang der Route {p} pro Liter', rtCheaper:'{d}/L unter dem Routen-Median', rtSame:'etwa beim Routen-Median', rtAlong:'km {k} von {n}', rtDetour:'+{k} km Umweg (geschätzt)', rtVia:'Route über diese Tankstelle', rtOld:'{n} Preise älter als 10 Std. sind ausgeblendet.', rtClear:'Route löschen', rtNote:'Vorschau. Route vom kostenlosen OSRM-Demoserver (Auto; Fähren und Maut nicht berücksichtigt). Umwege sind Schätzungen (Luftlinie × 1,3). Preise ändern sich — vor Ort prüfen. Start und Ziel werden an OpenStreetMap (Nominatim) und den OSRM-Server gesendet.', worthYes:'Die Fahrt lohnt sich — du sparst {s}', worthNo:'Die Fahrt lohnt sich nicht — {s} mehr', worthSame:'≈ Etwa gleich (innerhalb {s})', worthClosest:'Das ist die nächste Tankstelle mit Preis.', worthVs:'{d} von {w} · vs. {n} ({a}) zu {p}', worthBreak:'lohnt sich bis {k} km Entfernung', worthYou:'dir', worthMap:'der Kartenmitte', worthMapNote:'Entfernungen von der Kartenmitte — tippe auf die Standort-Schaltfläche, um deinen Standort zu nutzen.', worthFuel:'Kraftstoff', ctyTab:'Länder', tripTab:'Reise', updAgo:'Aktualisiert {t}', updOld:'Aktualisiert {t} — zum Aktualisieren tippen', updDone:'Aktualisiert — {n} Länder', updNone:'Bereits aktuell', updFail:'Server nicht erreichbar — zeige gespeicherte Daten', tripBorder:'Grenztanken: lohnt sich die Fahrt?', tripFrom:'Hier tanken', tripTo:'…oder fahren nach', tripExtra:'Extra-Strecke, hin und zurück: {k} km', tripCons:'Verbrauch', tripLper:'L / 100 km', tripWorth:'Lohnt sich — du sparst {s}', tripNot:'Lohnt sich nicht — es kostet {s} mehr', tripBreak:'Break-even bei ca. {k} km extra (hin und zurück). Tankfüllung: {l} L, Fahrkosten eingerechnet.', tripRoad:'Reise: wo tanken?', tripDist:'Strecke (km)', tripVia:'Länder auf dem Weg', tripNeed:'{l} L nötig · {n} Tankstopp(s) mit {t}-L-Tank', tripBest:'Am günstigsten: {c} — {s} weniger als {w}', tripAll:'Kraftstoff für die ganze Reise, gekauft in…', tripPick:'Wähle mindestens zwei Länder', tripNote:'Basiert auf dem Medianpreis je Land (EUR). Einzelne Tankstellen weichen ab — nutze die Karte „Günstigste im Ausschnitt“ für die günstigste in deiner Nähe.', sortView:'Im Ausschnitt', navTitle:'Navigieren mit', navRemember:'Diese App nächstes Mal verwenden', cancel:'Abbrechen', navCopy:'Adresse kopieren', navCopied:'Adresse kopiert', navOther:'Andere App…', navPrefLabel:'Navigations-App', navAsk:'Jedes Mal fragen', installApp2:'Zum Home-Bildschirm', iosInstall:'Tippe auf „Teilen“ und dann auf „Zum Home-Bildschirm“.', cheapTip:'Tipp: Die Karte unten auf der Karte zeigt die günstigste Tankstelle im Ausschnitt.', cheapHere:'Günstigste hier', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'{p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf den Stern, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', tankLabel:'Tankgröße', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', tabCompare:'Preise', cmpTitle:'Preis nach Land', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
+Object.assign(I18N.de, { routeTab:'Route', rtPreview:'Vorschau', rtFrom:'Von', rtTo:'Nach', rtPh:'Adresse oder Ort', rtMyLoc:'Mein Standort', rtPickMap:'Auf Karte wählen', rtTapMap:'Tippe auf die Karte, um {w} zu setzen', rtStart:'den Start', rtEnd:'das Ziel', rtWidth:'Korridorbreite', rtHideUnknown:'Preise unbekannten Alters ausblenden', rtGo:'Günstigste Tankstellen finden', rtSearching:'Suche Orte…', rtRouting:'Route wird berechnet…', rtLoading:'Lade Preise: {c}…', rtNoPlace:'„{q}“ nicht gefunden', rtFail:'Route konnte nicht berechnet werden — der kostenlose Routing-Server ist evtl. ausgelastet. Bitte gleich nochmal versuchen.', rtNone:'Keine Tankstellen mit Preis im Umkreis von {w} km der Route.', rtSummary:'{d} km · ca. {h} · {n} Tankstellen mit Preis im Umkreis von {w} km', rtMedian:'Medianpreis entlang der Route {p} pro Liter', rtCheaper:'{d}/L unter dem Routen-Median', rtSame:'etwa beim Routen-Median', rtAlong:'km {k} von {n}', rtDetour:'+{k} km Umweg (geschätzt)', rtVia:'Route über diese Tankstelle', rtClear:'Route löschen', rtNote:'Vorschau. Route vom kostenlosen OSRM-Demoserver (Auto; Fähren und Maut nicht berücksichtigt). Umwege sind Schätzungen (Luftlinie × 1,3). Preise ändern sich — vor Ort prüfen. Start und Ziel werden an OpenStreetMap (Nominatim) und den OSRM-Server gesendet.', worthYes:'Die Fahrt lohnt sich — du sparst {s}', worthNo:'Die Fahrt lohnt sich nicht — {s} mehr', worthSame:'≈ Etwa gleich (innerhalb {s})', worthClosest:'Das ist die nächste Tankstelle mit Preis.', worthVs:'{d} von {w} · vs. {n} ({a}) zu {p}', worthBreak:'lohnt sich bis {k} km Entfernung', worthYou:'dir', worthMap:'der Kartenmitte', worthMapNote:'Entfernungen von der Kartenmitte — tippe auf die Standort-Schaltfläche, um deinen Standort zu nutzen.', updAgo:'Aktualisiert {t}', updOld:'Aktualisiert {t} — zum Aktualisieren tippen', updDone:'Aktualisiert — {n} Länder', updNone:'Bereits aktuell', updFail:'Server nicht erreichbar — zeige gespeicherte Daten', tripBorder:'Grenztanken: lohnt sich die Fahrt?', tripFrom:'Hier tanken', tripTo:'…oder fahren nach', tripExtra:'Extra-Strecke, hin und zurück: {k} km', tripCons:'Verbrauch', tripLper:'L / 100 km', tripWorth:'Lohnt sich — du sparst {s}', tripNot:'Lohnt sich nicht — es kostet {s} mehr', tripBreak:'Break-even bei ca. {k} km extra (hin und zurück). Tankfüllung: {l} L, Fahrkosten eingerechnet.', tripRoad:'Reise: wo tanken?', tripDist:'Strecke (km)', tripVia:'Länder auf dem Weg', tripNeed:'{l} L nötig · {n} Tankstopp(s) mit {t}-L-Tank', tripBest:'Am günstigsten: {c} — {s} weniger als {w}', tripAll:'Kraftstoff für die ganze Reise, gekauft in…', tripPick:'Wähle mindestens zwei Länder', tripNote:'Basiert auf dem Medianpreis je Land (EUR). Einzelne Tankstellen weichen ab — nutze die Karte „Günstigste im Ausschnitt“ für die günstigste in deiner Nähe.', sortView:'Im Ausschnitt', navTitle:'Navigieren mit', navRemember:'Diese App nächstes Mal verwenden', cancel:'Abbrechen', navCopy:'Adresse kopieren', navCopied:'Adresse kopiert', navOther:'Andere App…', navPrefLabel:'Navigations-App', navAsk:'Jedes Mal fragen', installApp2:'Zum Home-Bildschirm', iosInstall:'Tippe auf „Teilen“ und dann auf „Zum Home-Bildschirm“.', cheapNone:'Keine Tankstellen mit Preis im Ausschnitt — zoome hinein oder verschiebe die Karte.', cheapFar:'Zoome zuerst in ein Land.', cheapResult:'{p} bei {n} — günstigste von {c} Tankstellen im Ausschnitt', saved:'Gemerkt', allSt:'Alle', noFavs:'Tippe bei einer Tankstelle auf den Stern, um sie hier zu speichern.', share:'Teilen', copied:'Link kopiert', fillLine:'{l} L ≈ {c}', nearGo:'Zur günstigsten navigieren', nearSave:'{d}/L unter dem Durchschnitt in der Nähe ({a}) — du sparst {s} bei {l} L', bbAbout:'Info', bbSources:'Quellen', brandTag:'Aktuelle Kraftstoffpreise an jeder Tankstelle in Europa.', cmpCheapest:'Günstigster', cmpPriciest:'Teuerster', cmpSpread:'{p} % über dem günstigsten',
   cmpMedian:'Median', cmpRange:'mittlere 80 % der Tankstellen', cmpNoData:'Länderstatistiken erscheinen nach der nächsten Datenaktualisierung.',
   cmpNote:'Günstigster 95-Oktan-/Dieselpreis je Tankstelle, mit EZB-Kurs in EUR umgerechnet. Blasse Zeilen haben wenige Tankstellen mit Preis. Die Datenqualität variiert je Land — siehe Quellenbewertung.',
   cmpStations:'{n} Tankstellen mit Preis', lgPrice:'Preis im Landesvergleich', lgSource:'Quellenbewertung', lgCheap:'günstiger', lgDear:'teurer' });
-Object.assign(I18N.fr, { worthYes:'Ça vaut le déplacement — vous économisez {s}', worthNo:'Pas rentable — {s} de plus', worthSame:'≈ À peu près pareil (à {s} près)', worthClosest:'C’est la station avec prix la plus proche.', worthVs:'{d} de {w} · contre {n} ({a}) à {p}', worthBreak:'rentable jusqu’à {k} km', worthYou:'vous', worthMap:'le centre de la carte', worthMapNote:'Distances depuis le centre de la carte — touchez le bouton de localisation pour utiliser votre position.', worthFuel:'Carburant', ctyTab:'Pays', tripTab:'Trajet', updAgo:'Mis à jour {t}', updOld:'Mis à jour {t} — touchez pour actualiser', updDone:'Actualisé — {n} pays', updNone:'Déjà à jour', updFail:'Serveur injoignable — données enregistrées affichées', tripBorder:'Plein de l’autre côté : ça vaut le coup ?', tripFrom:'Faire le plein ici', tripTo:'…ou aller en', tripExtra:'Détour aller-retour : {k} km', tripCons:'Consommation', tripLper:'L / 100 km', tripWorth:'Ça vaut le coup — vous économisez {s}', tripNot:'Pas rentable — {s} de plus', tripBreak:'Seuil de rentabilité vers {k} km de détour (aller-retour). Plein : {l} L, coût du trajet inclus.', tripRoad:'Road trip : où faire le plein ?', tripDist:'Distance (km)', tripVia:'Pays traversés', tripNeed:'{l} L nécessaires · {n} plein(s) avec un réservoir de {t} L', tripBest:'Moins cher : {c} — {s} de moins que {w}', tripAll:'Carburant pour tout le trajet, acheté en…', tripPick:'Choisissez au moins deux pays', tripNote:'Basé sur le prix médian par pays (EUR). Les stations varient — utilisez la carte « Moins chère en vue » pour la moins chère près de vous.', sortView:'Dans la vue', navTitle:'Naviguer avec', navRemember:'Utiliser cette app la prochaine fois', cancel:'Annuler', navCopy:'Copier l’adresse', navCopied:'Adresse copiée', navOther:'Autre app…', navPrefLabel:'Application de navigation', navAsk:'Toujours demander', installApp2:'Ajouter à l’écran d’accueil', iosInstall:'Touchez Partager, puis « Sur l’écran d’accueil ».', cheapTip:'Astuce : la carte en bas de la carte montre la station la moins chère en vue.', cheapHere:'Le moins cher ici', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'{p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez l’étoile sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', tankLabel:'Taille du réservoir', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', tabCompare:'Prix', cmpTitle:'Prix par pays', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
+Object.assign(I18N.fr, { worthYes:'Ça vaut le déplacement — vous économisez {s}', worthNo:'Pas rentable — {s} de plus', worthSame:'≈ À peu près pareil (à {s} près)', worthClosest:'C’est la station avec prix la plus proche.', worthVs:'{d} de {w} · contre {n} ({a}) à {p}', worthBreak:'rentable jusqu’à {k} km', worthYou:'vous', worthMap:'le centre de la carte', worthMapNote:'Distances depuis le centre de la carte — touchez le bouton de localisation pour utiliser votre position.', updAgo:'Mis à jour {t}', updOld:'Mis à jour {t} — touchez pour actualiser', updDone:'Actualisé — {n} pays', updNone:'Déjà à jour', updFail:'Serveur injoignable — données enregistrées affichées', tripBorder:'Plein de l’autre côté : ça vaut le coup ?', tripFrom:'Faire le plein ici', tripTo:'…ou aller en', tripExtra:'Détour aller-retour : {k} km', tripCons:'Consommation', tripLper:'L / 100 km', tripWorth:'Ça vaut le coup — vous économisez {s}', tripNot:'Pas rentable — {s} de plus', tripBreak:'Seuil de rentabilité vers {k} km de détour (aller-retour). Plein : {l} L, coût du trajet inclus.', tripRoad:'Road trip : où faire le plein ?', tripDist:'Distance (km)', tripVia:'Pays traversés', tripNeed:'{l} L nécessaires · {n} plein(s) avec un réservoir de {t} L', tripBest:'Moins cher : {c} — {s} de moins que {w}', tripAll:'Carburant pour tout le trajet, acheté en…', tripPick:'Choisissez au moins deux pays', tripNote:'Basé sur le prix médian par pays (EUR). Les stations varient — utilisez la carte « Moins chère en vue » pour la moins chère près de vous.', sortView:'Dans la vue', navTitle:'Naviguer avec', navRemember:'Utiliser cette app la prochaine fois', cancel:'Annuler', navCopy:'Copier l’adresse', navCopied:'Adresse copiée', navOther:'Autre app…', navPrefLabel:'Application de navigation', navAsk:'Toujours demander', installApp2:'Ajouter à l’écran d’accueil', iosInstall:'Touchez Partager, puis « Sur l’écran d’accueil ».', cheapNone:'Aucune station avec prix dans la vue — zoomez ou déplacez la carte.', cheapFar:'Zoomez d’abord sur un pays.', cheapResult:'{p} chez {n} — la moins chère parmi {c} stations en vue', saved:'Favoris', allSt:'Toutes', noFavs:'Touchez l’étoile sur une station pour la garder ici.', share:'Partager', copied:'Lien copié', fillLine:'{l} L ≈ {c}', nearGo:'Naviguer vers la moins chère', nearSave:'{d}/L sous la moyenne à proximité ({a}) — vous économisez {s} sur {l} L', bbAbout:'À propos', bbSources:'Sources', brandTag:'Les prix des carburants de chaque station en Europe, en direct.', cmpCheapest:'Le moins cher', cmpPriciest:'Le plus cher', cmpSpread:'{p} % de plus que le moins cher',
   cmpMedian:'médiane', cmpRange:'80 % centraux des stations', cmpNoData:'Les statistiques par pays apparaîtront après la prochaine mise à jour.',
   cmpNote:'Prix le plus bas en 95 / diesel par station, converti en EUR au taux de la BCE. Les lignes pâles ont peu de stations avec prix. La qualité des données varie selon le pays — voir les notes des sources.',
   cmpStations:'{n} stations avec prix', lgPrice:'Prix vs pays', lgSource:'Note de source', lgCheap:'moins cher', lgDear:'plus cher' });
-Object.assign(I18N.es, { worthYes:'Compensa ir — ahorras {s}', worthNo:'No compensa — cuesta {s} más', worthSame:'≈ Más o menos igual (dentro de {s})', worthClosest:'Es la estación con precio más cercana.', worthVs:'{d} desde {w} · frente a {n} ({a}) a {p}', worthBreak:'compensa hasta {k} km de distancia', worthYou:'ti', worthMap:'el centro del mapa', worthMapNote:'Distancias desde el centro del mapa — toca el botón de ubicación para usar tu posición.', worthFuel:'Combustible', ctyTab:'Países', tripTab:'Viaje', updAgo:'Actualizado {t}', updOld:'Actualizado {t} — toca para actualizar', updDone:'Actualizado — {n} países', updNone:'Ya está al día', updFail:'Sin conexión con el servidor — mostrando datos guardados', tripBorder:'Repostar al otro lado: ¿compensa?', tripFrom:'Repostar aquí', tripTo:'…o conducir a', tripExtra:'Desvío ida y vuelta: {k} km', tripCons:'Consumo', tripLper:'L / 100 km', tripWorth:'Compensa — ahorras {s}', tripNot:'No compensa — cuesta {s} más', tripBreak:'Punto de equilibrio en unos {k} km de desvío (ida y vuelta). Repostaje: {l} L, coste de conducción incluido.', tripRoad:'Viaje: ¿dónde repostar?', tripDist:'Distancia (km)', tripVia:'Países en el camino', tripNeed:'{l} L necesarios · {n} repostaje(s) con depósito de {t} L', tripBest:'Más barato: {c} — {s} menos que {w}', tripAll:'Combustible de todo el viaje, comprado en…', tripPick:'Elige al menos dos países', tripNote:'Usa el precio mediano de cada país (EUR). Las estaciones varían — usa la tarjeta «Más barata a la vista» para la más barata cerca de ti.', sortView:'En vista', navTitle:'Navegar con', navRemember:'Usar esta app la próxima vez', cancel:'Cancelar', navCopy:'Copiar dirección', navCopied:'Dirección copiada', navOther:'Otra app…', navPrefLabel:'App de navegación', navAsk:'Preguntar siempre', installApp2:'Añadir a la pantalla de inicio', iosInstall:'Toca Compartir y luego «Añadir a pantalla de inicio».', cheapTip:'Consejo: la tarjeta de la parte inferior del mapa muestra la estación más barata a la vista.', cheapHere:'Más barata aquí', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'{p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca la estrella en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', tankLabel:'Tamaño del depósito', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', tabCompare:'Precios', cmpTitle:'Precio por país', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
+Object.assign(I18N.es, { worthYes:'Compensa ir — ahorras {s}', worthNo:'No compensa — cuesta {s} más', worthSame:'≈ Más o menos igual (dentro de {s})', worthClosest:'Es la estación con precio más cercana.', worthVs:'{d} desde {w} · frente a {n} ({a}) a {p}', worthBreak:'compensa hasta {k} km de distancia', worthYou:'ti', worthMap:'el centro del mapa', worthMapNote:'Distancias desde el centro del mapa — toca el botón de ubicación para usar tu posición.', updAgo:'Actualizado {t}', updOld:'Actualizado {t} — toca para actualizar', updDone:'Actualizado — {n} países', updNone:'Ya está al día', updFail:'Sin conexión con el servidor — mostrando datos guardados', tripBorder:'Repostar al otro lado: ¿compensa?', tripFrom:'Repostar aquí', tripTo:'…o conducir a', tripExtra:'Desvío ida y vuelta: {k} km', tripCons:'Consumo', tripLper:'L / 100 km', tripWorth:'Compensa — ahorras {s}', tripNot:'No compensa — cuesta {s} más', tripBreak:'Punto de equilibrio en unos {k} km de desvío (ida y vuelta). Repostaje: {l} L, coste de conducción incluido.', tripRoad:'Viaje: ¿dónde repostar?', tripDist:'Distancia (km)', tripVia:'Países en el camino', tripNeed:'{l} L necesarios · {n} repostaje(s) con depósito de {t} L', tripBest:'Más barato: {c} — {s} menos que {w}', tripAll:'Combustible de todo el viaje, comprado en…', tripPick:'Elige al menos dos países', tripNote:'Usa el precio mediano de cada país (EUR). Las estaciones varían — usa la tarjeta «Más barata a la vista» para la más barata cerca de ti.', sortView:'En vista', navTitle:'Navegar con', navRemember:'Usar esta app la próxima vez', cancel:'Cancelar', navCopy:'Copiar dirección', navCopied:'Dirección copiada', navOther:'Otra app…', navPrefLabel:'App de navegación', navAsk:'Preguntar siempre', installApp2:'Añadir a la pantalla de inicio', iosInstall:'Toca Compartir y luego «Añadir a pantalla de inicio».', cheapNone:'Ninguna estación con precio a la vista — acerca o mueve el mapa.', cheapFar:'Acércate primero a un país.', cheapResult:'{p} en {n} — la más barata de {c} estaciones a la vista', saved:'Guardadas', allSt:'Todas', noFavs:'Toca la estrella en una estación para guardarla aquí.', share:'Compartir', copied:'Enlace copiado', fillLine:'{l} L ≈ {c}', nearGo:'Navegar a la más barata', nearSave:'{d}/L por debajo de la media cercana ({a}) — ahorras {s} en {l} L', bbAbout:'Acerca de', bbSources:'Fuentes', brandTag:'Precios de combustible en directo de cada estación de Europa.', cmpCheapest:'Más barato', cmpPriciest:'Más caro', cmpSpread:'{p} % más que el más barato',
   cmpMedian:'mediana', cmpRange:'80 % central de las estaciones', cmpNoData:'Las estadísticas por país aparecerán tras la próxima actualización.',
   cmpNote:'Precio más bajo de 95 / diésel por estación, convertido a EUR al tipo del BCE. Las filas tenues tienen pocas estaciones con precio. La calidad de los datos varía por país — consulta las calificaciones de fuente.',
   cmpStations:'{n} estaciones con precio', lgPrice:'Precio vs. país', lgSource:'Calificación de fuente', lgCheap:'más barato', lgDear:'más caro' });
@@ -1352,48 +1351,48 @@ Object.assign(I18N.fr, { labelTheme:'Apparence', themeAuto:'Auto', themeLight:'C
 Object.assign(I18N.es, { labelTheme:'Apariencia', themeAuto:'Auto', themeLight:'Claro', themeDark:'Oscuro' });
 
 // v1.16 — station sheet, Near Me states, notes on headline claims
-Object.assign(I18N.en, { lgUnverified:'unverified price', suspectNote:'Unverified — well below the verified prices in this country', close:'Close', locHelp:'Allow location for this site in your browser settings, or search for a place instead.', searchPlace:'Search for a place',
+Object.assign(I18N.en, { lgUnverified:'unverified price', suspectNote:'Unverified — well below the verified prices in this country', close:'Close', locHelp:'Allow location for this site in your browser settings, or search for a place instead.', 
   cheapZooming:'Looking for the cheapest in {c}…', cheapSkipped:'unverified lower prices ignored: {n}', loadFailShort:"Couldn't load — tap to retry", statsLoaded:'{n} of {tot} stations' });
-Object.assign(I18N.sv, { lgUnverified:'overifierat pris', suspectNote:'Overifierat — långt under landets verifierade priser', close:'Stäng', locHelp:'Tillåt plats för den här webbplatsen i webbläsarens inställningar, eller sök efter en plats i stället.', searchPlace:'Sök efter en plats',
+Object.assign(I18N.sv, { lgUnverified:'overifierat pris', suspectNote:'Overifierat — långt under landets verifierade priser', close:'Stäng', locHelp:'Tillåt plats för den här webbplatsen i webbläsarens inställningar, eller sök efter en plats i stället.', 
   cheapZooming:'Letar efter billigaste i {c}…', cheapSkipped:'overifierade lägre priser ignorerade: {n}', loadFailShort:'Kunde inte ladda — tryck för att försöka igen', statsLoaded:'{n} av {tot} stationer' });
-Object.assign(I18N.de, { lgUnverified:'nicht verifizierter Preis', suspectNote:'Nicht verifiziert — deutlich unter den verifizierten Preisen im Land', close:'Schließen', locHelp:'Erlaube den Standort für diese Seite in den Browsereinstellungen, oder suche stattdessen nach einem Ort.', searchPlace:'Nach einem Ort suchen',
+Object.assign(I18N.de, { lgUnverified:'nicht verifizierter Preis', suspectNote:'Nicht verifiziert — deutlich unter den verifizierten Preisen im Land', close:'Schließen', locHelp:'Erlaube den Standort für diese Seite in den Browsereinstellungen, oder suche stattdessen nach einem Ort.', 
   cheapZooming:'Suche den günstigsten Preis in {c}…', cheapSkipped:'nicht verifizierte niedrigere Preise ignoriert: {n}', loadFailShort:'Laden fehlgeschlagen — tippen zum Wiederholen', statsLoaded:'{n} von {tot} Tankstellen' });
-Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vérifié — bien en dessous des prix vérifiés du pays', close:'Fermer', locHelp:'Autorisez la localisation pour ce site dans les réglages du navigateur, ou cherchez plutôt un lieu.', searchPlace:'Rechercher un lieu',
+Object.assign(I18N.fr, { lgUnverified:'prix non vérifié', suspectNote:'Non vérifié — bien en dessous des prix vérifiés du pays', close:'Fermer', locHelp:'Autorisez la localisation pour ce site dans les réglages du navigateur, ou cherchez plutôt un lieu.', 
   cheapZooming:'Recherche du moins cher en {c}…', cheapSkipped:'prix plus bas non vérifiés ignorés : {n}', loadFailShort:'Échec du chargement — touchez pour réessayer', statsLoaded:'{n} stations sur {tot}' });
-Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', searchPlace:'Buscar un lugar',
+Object.assign(I18N.es, { lgUnverified:'precio sin verificar', suspectNote:'Sin verificar — muy por debajo de los precios verificados del país', close:'Cerrar', locHelp:'Permite la ubicación para este sitio en los ajustes del navegador, o busca un lugar.', 
   cheapZooming:'Buscando el más barato en {c}…', cheapSkipped:'precios más bajos sin verificar ignorados: {n}', loadFailShort:'No se pudo cargar — toca para reintentar', statsLoaded:'{n} de {tot} estaciones' });
 
-Object.assign(I18N.en, { evTitle:'Petrol or electricity?', evSetCar:'Choose petrol or plug-in hybrid under Vehicle type above to compare.', evDiesel:'This comparison uses petrol 95. Choose petrol or plug-in hybrid above.',
-  evNoElec:'Electric: not applicable for a petrol-only car. Choose plug-in hybrid above to compare.', evVerdictE:'Electric is {p}% cheaper per km', evVerdictP:'Petrol is cheaper per km', evSame:'About the same per km',
-  evPctE:'{p}% below petrol', evPctP:'Electric costs {p}% more than petrol', evElec:'Electric', evPet:'Petrol', evKm:'Per km', evK100:'Per 100 km', evTrip:'{k} km trip', evTripMix:'The battery covers about {k} km of this trip; the rest runs on petrol.',
+Object.assign(I18N.en, { 
+  
+  evElec:'Electric', evPet:'Petrol', evTripMix:'The battery covers about {k} km of this trip; the rest runs on petrol.',
   evBreak:'Break-even: electricity at {v} per kWh or less beats petrol at the average price of the 5 nearest stations.', evMode:'Charging', evHome:'Home', evPub:'Public charger',
-  evPriceHome:'Home electricity price per kWh ({c})', evPricePub:'Public charging price per kWh ({c})', evLoss:'Charging loss factor (1.15 = 15% lost)', evDist:'Trip distance (km)',
+  evPricePub:'Public charging price per kWh ({c})', evLoss:'Charging loss factor (1.15 = 15% lost)', evDist:'Trip distance (km)',
   evStTitle:'5 nearest petrol 95 stations', evStFrom:'Measured from {w}.', evMyPos:'your position', evMapC:'the map centre', evAvg:'Average {p} per litre',
   evSetAside:'{n} nearer station(s) with unverified prices were set aside.', evNoSt:'No petrol 95 prices near here in {c}. Pan the map or use your location.', evFew:'Only {n} priced station(s) found nearby.',
   evAssume:'Assumption, not a live price: {p} per kWh, typical public fast-charging list price in Sweden ({d}). Replace it with your own.', evOld:'This reference is over 90 days old.', evNoRef:'No reference price for {c}: enter your own.',
-  evNeeds:'To compare, add: {x}.', evOwnNote:'Estimate from your own inputs and nearby station prices. Charging loss is the energy lost between the wall and the battery.', evOpen:'Petrol or electricity?', evNoPrice:'no price' });
-Object.assign(I18N.en, { carTitle:'My car', carType:'Vehicle type', carNone:'Not set', carPetrol:'Petrol', carPhev:'Plug-in hybrid', carTank:'Fuel tank (litres)', carCons:'Fuel consumption (L/100 km)',
+  evNeeds:'To compare, add: {x}.', evOwnNote:'Estimate from your own inputs and nearby station prices. Charging loss is the energy lost between the wall and the battery.', });
+Object.assign(I18N.en, { carType:'Vehicle type', carNone:'Not set', carPetrol:'Petrol', carPhev:'Plug-in hybrid', carTank:'Fuel tank (litres)', carCons:'Fuel consumption (L/100 km)',
   carBatt:'Battery, usable (kWh)', carRange:'Electric range (km)', carElec:'Home electricity price per kWh', carEff:'Charging efficiency (%)',
-  carEst:'Estimate from your own inputs: {i}.', carNeeds:'To calculate this, add: {x}.', carCurMis:'electricity price in {c}', carPriceNeed:'a petrol 95 price for {c}',
-  carElecKm:'On electricity: {v} per 100 km', carPetKm:'On petrol: {v} per 100 km', carCharge:'One full charge: {v}', carBreak:'Break-even electricity price: {v} per kWh (electric costs the same as petrol per km)',
-  carInputs:'petrol 95 {p} per litre (country median), {k} kWh/100 km electric, {e}% charging efficiency',
+  
+  
+  
   no95:'No petrol 95 price reported for this station', no95Near:'Nearest station with a petrol 95 price: {n}, {d} away, {p}',
   gapLine:'For {f} ({n} stations), sources {o} and {p} differ by a median of {x}', gapP95:'petrol 95', gapDiesel:'diesel',
   staleCty:'Prices for {c} were last updated {d} (source temporarily unavailable)' });
-Object.assign(I18N.sv, { evTitle:'Bensin eller el?', evSetCar:'Välj bensin eller laddhybrid under Fordonstyp ovan för att jämföra.', evDiesel:'Jämförelsen använder bensin 95. Välj bensin eller laddhybrid ovan.',
-  evNoElec:'El: gäller inte en ren bensinbil. Välj laddhybrid ovan för att jämföra.', evVerdictE:'El är {p}% billigare per km', evVerdictP:'Bensin är billigare per km', evSame:'Ungefär lika per km',
-  evPctE:'{p}% under bensin', evPctP:'El kostar {p}% mer än bensin', evElec:'El', evPet:'Bensin', evKm:'Per km', evK100:'Per 100 km', evTrip:'{k} km resa', evTripMix:'Batteriet räcker ungefär {k} km av resan; resten går på bensin.',
+Object.assign(I18N.sv, { 
+  
+  evElec:'El', evPet:'Bensin', evTripMix:'Batteriet räcker ungefär {k} km av resan; resten går på bensin.',
   evBreak:'Break-even: el till {v} per kWh eller lägre är billigare än bensin till snittpriset hos de 5 närmaste stationerna.', evMode:'Laddning', evHome:'Hemma', evPub:'Publik laddare',
-  evPriceHome:'Elpris hemma per kWh ({c})', evPricePub:'Pris publik laddning per kWh ({c})', evLoss:'Laddförlust (1,15 = 15 % förlorat)', evDist:'Reslängd (km)',
+  evPricePub:'Pris publik laddning per kWh ({c})', evLoss:'Laddförlust (1,15 = 15 % förlorat)', evDist:'Reslängd (km)',
   evStTitle:'5 närmaste stationer med bensin 95', evStFrom:'Mätt från {w}.', evMyPos:'din position', evMapC:'kartans mitt', evAvg:'Snitt {p} per liter',
   evSetAside:'{n} närmare station(er) med overifierade priser lämnades utanför.', evNoSt:'Inga bensin 95-priser i närheten i {c}. Panorera kartan eller använd din position.', evFew:'Bara {n} station(er) med pris hittades i närheten.',
   evAssume:'Antagande, inte ett live-pris: {p} per kWh, typiskt listpris för publik snabbladdning i Sverige ({d}). Byt till ditt eget.', evOld:'Referensen är över 90 dagar gammal.', evNoRef:'Inget referenspris för {c}: ange ditt eget.',
-  evNeeds:'För att jämföra, fyll i: {x}.', evOwnNote:'Uppskattning utifrån dina egna uppgifter och närliggande stationspriser. Laddförlust är energin som går förlorad mellan vägguttag och batteri.', evOpen:'Bensin eller el?', evNoPrice:'inget pris' });
-Object.assign(I18N.sv, { carTitle:'Min bil', carType:'Fordonstyp', carNone:'Inte angiven', carPetrol:'Bensin', carPhev:'Laddhybrid', carTank:'Bränsletank (liter)', carCons:'Bränsleförbrukning (L/100 km)',
+  evNeeds:'För att jämföra, fyll i: {x}.', evOwnNote:'Uppskattning utifrån dina egna uppgifter och närliggande stationspriser. Laddförlust är energin som går förlorad mellan vägguttag och batteri.', });
+Object.assign(I18N.sv, { carType:'Fordonstyp', carNone:'Inte angiven', carPetrol:'Bensin', carPhev:'Laddhybrid', carTank:'Bränsletank (liter)', carCons:'Bränsleförbrukning (L/100 km)',
   carBatt:'Batteri, användbart (kWh)', carRange:'Elräckvidd (km)', carElec:'Elpris hemma per kWh', carEff:'Laddverkningsgrad (%)',
-  carEst:'Uppskattning utifrån dina egna uppgifter: {i}.', carNeeds:'För att räkna ut detta, fyll i: {x}.', carCurMis:'elpris i {c}', carPriceNeed:'ett pris för bensin 95 i {c}',
-  carElecKm:'På el: {v} per 100 km', carPetKm:'På bensin: {v} per 100 km', carCharge:'En full laddning: {v}', carBreak:'Break-even-elpris: {v} per kWh (el kostar lika mycket som bensin per km)',
-  carInputs:'bensin 95 {p} per liter (landets median), {k} kWh/100 km el, {e}% laddverkningsgrad',
+  
+  
+  
   no95:'Inget pris för bensin 95 rapporterat för denna station', no95Near:'Närmaste station med pris för bensin 95: {n}, {d} bort, {p}',
   gapLine:'För {f} ({n} stationer) skiljer sig källorna {o} och {p} med en median på {x}', gapP95:'bensin 95', gapDiesel:'diesel',
   staleCty:'Priserna för {c} uppdaterades senast {d} (källan är tillfälligt otillgänglig)' });
@@ -1418,11 +1417,11 @@ Object.assign(I18N.es, { routeTab:'Ruta', rtPreview:'Vista previa', rtFrom:'Desd
 for (const l of ['de', 'fr', 'es']) { delete I18N[l].rtNote; delete I18N[l].rtCheaper; delete I18N[l].rtSame; }
 Object.assign(I18N.en, {
   rtFuelNow:'Fuel in the tank at start', rtBattNow:'Battery at start', rtReserve:'Keep in reserve',
-  rtNoStop:'No fuel stop needed: about {l} L of petrol{e}. You arrive with about {a} L.', rtAndKwh:' and {k} kWh of electricity',
-  rtNeedStop:'You need a fuel stop: with your fuel and reserve you can drive about {r} km; the destination is {d} km away.',
+  rtAndKwh:' and {k} kWh of electricity',
+  
   rtBest:'Best stop on the route saves about {s} after the detour.', rtNoBest:'No priced stop saves more than {s} after the detour.',
   rtNetSave:'saves about {s} after the detour', rtNetCost:'costs about {s} more after the detour', rtNetNone:'no saving after the detour',
-  rtCheaper:'{d}/L below the nearby median', rtSame:'around the nearby median', rtFerry:'via ferry',
+  rtCheaper:'{d}/L below the nearby median', rtSame:'around the nearby median', 
   rtBelow:'Below the line: age unknown or not verified. These are never called best.',
   rtWhyPs:'not verified: price unchanged for 2+ days', rtWhySus:'not verified: far below other prices here', rtWhyCty:'not verified: this country’s data is not current',
   rtStaleCty:'Prices not current: {c}.', rtBeyond:'{n} pumps are beyond your range and are not shown.',
@@ -1431,11 +1430,11 @@ Object.assign(I18N.en, {
   rtNote:'Preview. Route from {r}. Estimates only: detours are straight line × 1.3, electric range is assumed at 75% of the official figure, and the saving is against the median of nearby pumps. Prices change — check at the pump. Your start and end points are sent to OpenStreetMap (Nominatim) to find the places and to the routing server to calculate the route. Your car profile and these settings stay in your browser and are not sent to us.' });
 Object.assign(I18N.sv, {
   rtFuelNow:'Bränsle i tanken vid start', rtBattNow:'Batteri vid start', rtReserve:'Behåll i reserv',
-  rtNoStop:'Inget tankstopp behövs: cirka {l} L bensin{e}. Du kommer fram med cirka {a} L kvar.', rtAndKwh:' och {k} kWh el',
-  rtNeedStop:'Du behöver tanka: med ditt bränsle och din reserv kommer du cirka {r} km; målet ligger {d} km bort.',
+  rtAndKwh:' och {k} kWh el',
+  
   rtBest:'Bästa stopp längs rutten sparar cirka {s} efter omvägen.', rtNoBest:'Inget stopp med pris sparar mer än {s} efter omvägen.',
   rtNetSave:'sparar cirka {s} efter omvägen', rtNetCost:'kostar cirka {s} mer efter omvägen', rtNetNone:'ingen besparing efter omvägen',
-  rtCheaper:'{d}/L under medianen i närheten', rtSame:'runt medianen i närheten', rtFerry:'via färja',
+  rtCheaper:'{d}/L under medianen i närheten', rtSame:'runt medianen i närheten', 
   rtBelow:'Under strecket: okänd ålder eller overifierade. De kallas aldrig bäst.',
   rtWhyPs:'overifierat: priset oförändrat i 2+ dygn', rtWhySus:'overifierat: långt under övriga priser här', rtWhyCty:'overifierat: landets data är inte aktuell',
   rtStaleCty:'Priser inte aktuella: {c}.', rtBeyond:'{n} pumpar ligger utanför din räckvidd och visas inte.',
@@ -1490,7 +1489,7 @@ Object.assign(I18N.en, {
   rtFareUnkGen:'Toll or ferry fare unknown, check operator.', rtFareOsrm:'The fallback router does not report ferries or tolls. If the trip has any, check operator.', rtFareNone:'The router found no ferry or toll on this route.',
   rtFaresAll:'All crossings and tolls', rtFaresH:'Crossings and tolls', rtFaresIntro:'Fares read by hand from operator pages. They can be out of date: always check operator. Entries last seen more than 90 days ago are greyed and never used in a cost.',
   rtFaresNoTrip:'No trip fare read', rtFaresSeen:'Seen {d}', rtFaresOld:'older than 90 days, not used', rtFaresSrc:'Operator page', rtFaresCond:'Conditions', rtFaresChk:'check operator', rtFaresLoading:'Loading the fare list...', rtFaresFail:'The fare list could not be loaded.',
-  rtAltsH:'Compare routes', rtMore:'More detail: route comparison, battery and fuel chart, charging', rtCostNoElec:'Electricity is not counted: no price is set in My car.', rtAltSkip:'Cheapest and Balanced only compare routes whose fares are all known.', rtAltCheap:'Cheapest', rtAltBal:'Balanced', rtAltFast:'Fastest', rtAltColPick:'Pick', rtAltColRoute:'Route', rtAltColTime:'Time', rtAltColCost:'Cost',
+  rtAltsH:'Compare routes', rtMore:'Details', rtMoreS:'Cost breakdown, other stations, route comparison, energy, charging, tips, assumptions', rtCostNoElec:'Electricity is not counted: no price is set in My car.', rtAltSkip:'Cheapest and Balanced only compare routes whose fares are all known.', rtAltCheap:'Cheapest', rtAltBal:'Balanced', rtAltFast:'Fastest', rtAltColPick:'Pick', rtAltColRoute:'Route', rtAltColTime:'Time', rtAltColCost:'Cost',
   rtAltName:'Route {n}', rtAltPlan:'Route {n} (plan above)', rtAltFerry:'with ferry', rtAltNoFerry:'no ferry', rtAltFaresUnk:'plus fares unknown',
   rtAltNone:'The router offered no other route for this trip, so there is nothing to compare.', rtAltNoBal:'Set a value of time under Assumptions to get a Balanced pick.',
   rtAltNote:'Stops are assumed as in the plan; time includes them. Cost leaves out any fare marked unknown. Alternatives more than 60 minutes slower are not shown.', rtAltNoteBal:'Balanced adds your value of time ({v} per hour) to the cost.', rtAltDetail:'Details per route',
@@ -1507,7 +1506,7 @@ Object.assign(I18N.sv, {
   rtFareUnkGen:'Väg- eller färjeavgift okänd, kontrollera hos operatören.', rtFareOsrm:'Reservroutern rapporterar inte färjor eller vägavgifter. Om resan har några, kontrollera hos operatören.', rtFareNone:'Routern hittade ingen färja eller vägavgift på rutten.',
   rtFaresAll:'Alla övergångar och avgifter', rtFaresH:'Övergångar och avgifter', rtFaresIntro:'Avgifter avlästa för hand från operatörernas sidor. De kan vara inaktuella: kontrollera alltid hos operatören. Uppgifter som sågs senast för mer än 90 dagar sedan är gråade och används aldrig i en kostnad.',
   rtFaresNoTrip:'Ingen reseavgift avläst', rtFaresSeen:'Sedd {d}', rtFaresOld:'äldre än 90 dagar, används inte', rtFaresSrc:'Operatörens sida', rtFaresCond:'Villkor', rtFaresChk:'kontrollera hos operatören', rtFaresLoading:'Laddar avgiftslistan...', rtFaresFail:'Kunde inte ladda avgiftslistan.',
-  rtAltsH:'Jämför rutter', rtMore:'Mer detaljer: ruttjämförelse, batteri- och bränsleschema, laddning', rtCostNoElec:'Elen är inte inräknad: inget elpris är satt i Min bil.', rtAltSkip:'Billigast och Balanserad jämför bara rutter där alla avgifter är kända.', rtAltCheap:'Billigast', rtAltBal:'Balanserad', rtAltFast:'Snabbast', rtAltColPick:'Val', rtAltColRoute:'Rutt', rtAltColTime:'Tid', rtAltColCost:'Kostnad',
+  rtAltsH:'Jämför rutter', rtMore:'Detaljer', rtMoreS:'Kostnadsuppdelning, andra stationer, ruttjämförelse, energi, laddning, tips, antaganden', rtCostNoElec:'Elen är inte inräknad: inget elpris är satt i Min bil.', rtAltSkip:'Billigast och Balanserad jämför bara rutter där alla avgifter är kända.', rtAltCheap:'Billigast', rtAltBal:'Balanserad', rtAltFast:'Snabbast', rtAltColPick:'Val', rtAltColRoute:'Rutt', rtAltColTime:'Tid', rtAltColCost:'Kostnad',
   rtAltName:'Rutt {n}', rtAltPlan:'Rutt {n} (planen ovan)', rtAltFerry:'med färja', rtAltNoFerry:'ingen färja', rtAltFaresUnk:'plus okända avgifter',
   rtAltNone:'Routern gav ingen annan rutt för den här resan, så det finns inget att jämföra.', rtAltNoBal:'Ange ett tidsvärde under Antaganden för att få ett balanserat val.',
   rtAltNote:'Stoppen antas som i planen; tiden räknar med dem. Kostnaden utelämnar avgifter som markerats okända. Alternativ som är mer än 60 minuter långsammare visas inte.', rtAltNoteBal:'Balanserad lägger ditt tidsvärde ({v} per timme) till kostnaden.', rtAltDetail:'Detaljer per rutt',
@@ -1707,7 +1706,7 @@ Object.assign(I18N.en, {
   tfArea:'Price area', tfVar:'Retail variable costs (per kWh, ex VAT)', tfMarkup:'Retail markup (per kWh, ex VAT)', tfDisc:'Retail discount (per kWh, ex VAT)',
   tfRetFee:'Retail monthly fee (ex VAT, when not waived)', tfDiscUntil:'Discount runs until', tfFeeUntil:'Retail fee waived until', tfTransfer:'Grid transfer (per kWh, ex VAT)', tfTax:'Energy tax (per kWh, ex VAT)', tfGrid:'Grid subscription (per month, ex VAT)',
   tfVat:'VAT (%)', tfKwh:'Typical use at home (kWh per month)', tfReset:'Reset to example',
-  tfMarg:'One more kWh incl. VAT, at a spot price of {s} ex VAT ({w})', tfAll:'All-in average at {k} kWh a month: {v} per kWh incl. VAT and fixed fees.',
+  tfMarg:'One more kWh incl. VAT, at a spot price of {s} ex VAT ({w})', 
   tfFixed:'Without spot price data only the fixed part is known: {v} per kWh incl. VAT on top of (spot + variable costs) × VAT.',
   tfFormula:'Price of one more kWh = (spot + variable costs) × (1 + VAT) + (markup − discount + transfer + tax) × (1 + VAT). Monthly fees are not part of it; they only enter the all-in average.',
   tfSpotNext:'average of the days published', tfSpotMonth:'average of {m}',
@@ -1715,19 +1714,19 @@ Object.assign(I18N.en, {
   evAtT:'Both sides at {t} °C.',
   opTitle:'Electricity price outlook', opNone:'No price data yet. The file with Nord Pool based prices has not been published yet; this section fills in as soon as it is.',
   opNoArea:'The price data has nothing for area {a}. Pick another area in My home electricity.', opLoading:'Loading prices…',
-  opDays:'Next days (exact day-ahead prices)', opCheap:'Cheapest {h} h window for a full charge', opFull:'Full charge ({k} kWh)',
+  opDays:'Next days (exact day-ahead prices)', 
   opMonths:'Coming 12 months (estimate)', opEst:'Estimate, not a forecast of the market: the same calendar month over up to {n} past years, run through your tariff. The bar marks the average; the framed part is the usual range (the middle half of those years when there are four or more, otherwise cheapest to dearest).',
   opMonthsNo:'no past data', opSrc:'Spot prices: {s}, area {a}, updated {d}.',
-  opTbl:'Price per kWh against petrol', opSpot:'Spot', opPerKwh:'Per kWh', opPer100:'Per 100 km',
+  opSpot:'Spot', opPerKwh:'Per kWh', opPer100:'Per 100 km',
   opBreak:'With petrol at {p} per litre, driving on the battery only is cheaper than petrol up to a spot price of {s} per kWh.',
   opDrive:'Driving {d} km a day: about {c} per month in {m}.', opYear:'Next 12 months: about {c} for driving {d} km a day (battery first, then petrol).',
-  evFc:'Forecast', evFcMonth:'Month', evFcNote:'Forecast for {m}: {p} per kWh incl. VAT. An estimate from past years.', evFcNone:'Forecast not available yet.',
+  evFc:'Forecast', evFcMonth:'Month', evFcNote:'Forecast for {m}: {p} per kWh incl. VAT. An estimate from past years.', 
   mxTitle:'Realistic cost for your plug-in hybrid', mxTemp:'Outside temperature', mxAuto:'Automatic', mxManual:'Manual', mxTempIn:'Temperature (°C)', mxT:'{t} °C, {s}',
   mxSrc_forecast:'forecast for today at your position', mxSrc_normal:'normal for this month at your position', mxSrc_manual:'set by you', mxSrc_none:'unknown',
   mxNone:'No temperature yet, so no adjustment is applied.', mxPos:'Position used: {p} (rounded to 0.1 degree).', mxPosUpd:'Use current position',
   mxPrivShort:'Automatic asks the weather service Open-Meteo. It receives your position rounded to 0.1 degree (the map centre if your position is not shared) and, like any web request, your IP address.', mxAllow:'Fetch the temperature',
-  mxTrip:'Trip', mxEl:'Electric', mxPet:'Petrol', mxCost:'Per 100 km', mxKm:'{k} km', mxL:'{l} L',
-  mxBand:'For 100 km the likely range is {lo} to {hi}.', mxByT:'A 100 km trip by outside temperature', mxDaily:'Typical km per day',
+  mxTrip:'Trip', mxEl:'Electric', mxPet:'Petrol', mxKm:'{k} km', mxL:'{l} L',
+  mxBand:'For 100 km the likely range is {lo} to {hi}.', mxDaily:'Typical km per day',
   mxDay:'With {d} km a day the battery covers about {s} % of your km at {t} °C. About {m} per month now.', mxNeed:'To work out the mix, add: {x}.',
   mxHow:'How this is calculated',
   mxH1:'The electric range is taken as 75 % of the official (WLTP) figure at 20 °C, the same assumption as in the trip planner. Electric km are the smaller of the trip length and the electric range at the outside temperature. The rest is driven with the engine at the charge-sustaining consumption. The cost per 100 km is always the mix of both, never pure electric. Electricity is counted at the wall, charging loss included.',
@@ -1741,7 +1740,7 @@ Object.assign(I18N.sv, {
   tfArea:'Elområde', tfVar:'Rörliga kostnader hos elhandlaren (per kWh, exkl. moms)', tfMarkup:'Påslag hos elhandlaren (per kWh, exkl. moms)', tfDisc:'Rabatt hos elhandlaren (per kWh, exkl. moms)',
   tfRetFee:'Månadsavgift elhandel (exkl. moms, när den inte är efterskänkt)', tfDiscUntil:'Rabatten gäller till', tfFeeUntil:'Månadsavgiften efterskänkt till', tfTransfer:'Elöverföring (per kWh, exkl. moms)', tfTax:'Energiskatt (per kWh, exkl. moms)', tfGrid:'Elnätsabonnemang (per månad, exkl. moms)',
   tfVat:'Moms (%)', tfKwh:'Typisk förbrukning hemma (kWh per månad)', tfReset:'Återställ till exempel',
-  tfMarg:'En kWh till inkl. moms, vid ett spotpris på {s} exkl. moms ({w})', tfAll:'Snittpris all-in vid {k} kWh i månaden: {v} per kWh inkl. moms och fasta avgifter.',
+  tfMarg:'En kWh till inkl. moms, vid ett spotpris på {s} exkl. moms ({w})', 
   tfFixed:'Utan spotprisdata är bara den fasta delen känd: {v} per kWh inkl. moms utöver (spot + rörliga kostnader) × moms.',
   tfFormula:'Pris för en kWh till = (spot + rörliga kostnader) × (1 + moms) + (påslag − rabatt + överföring + skatt) × (1 + moms). Månadsavgifter ingår inte; de påverkar bara all-in-snittet.',
   tfSpotNext:'snitt av de publicerade dagarna', tfSpotMonth:'snitt för {m}',
@@ -1749,19 +1748,19 @@ Object.assign(I18N.sv, {
   evAtT:'Båda sidor vid {t} °C.',
   opTitle:'Elprisutblick', opNone:'Inga prisdata ännu. Filen med Nord Pool-baserade priser är inte publicerad än; den här delen fylls i så fort den finns.',
   opNoArea:'Prisdatan saknar elområde {a}. Välj ett annat område under Min el hemma.', opLoading:'Hämtar priser…',
-  opDays:'Kommande dagar (exakta priser för dagen före)', opCheap:'Billigaste fönstret på {h} h för full laddning', opFull:'Full laddning ({k} kWh)',
+  opDays:'Kommande dagar (exakta priser för dagen före)', 
   opMonths:'Kommande 12 månader (uppskattning)', opEst:'Uppskattning, ingen marknadsprognos: samma kalendermånad över upp till {n} tidigare år, räknad genom ditt avtal. Strecket visar snittet; den inramade delen är det vanliga spannet (mellersta hälften av åren när det finns fyra eller fler, annars billigaste till dyraste).',
   opMonthsNo:'inga tidigare data', opSrc:'Spotpriser: {s}, område {a}, uppdaterad {d}.',
-  opTbl:'Pris per kWh jämfört med bensin', opSpot:'Spot', opPerKwh:'Per kWh', opPer100:'Per 100 km',
+  opSpot:'Spot', opPerKwh:'Per kWh', opPer100:'Per 100 km',
   opBreak:'Med bensin för {p} per liter är det billigare att köra enbart på batteriet än på bensin upp till ett spotpris på {s} per kWh.',
   opDrive:'Kör du {d} km om dagen: cirka {c} per månad i {m}.', opYear:'Kommande 12 månader: cirka {c} för {d} km om dagen (batteri först, sedan bensin).',
-  evFc:'Prognos', evFcMonth:'Månad', evFcNote:'Prognos för {m}: {p} per kWh inkl. moms. En uppskattning från tidigare år.', evFcNone:'Prognos finns inte ännu.',
+  evFc:'Prognos', evFcMonth:'Månad', evFcNote:'Prognos för {m}: {p} per kWh inkl. moms. En uppskattning från tidigare år.', 
   mxTitle:'Realistisk kostnad för din laddhybrid', mxTemp:'Utetemperatur', mxAuto:'Automatisk', mxManual:'Manuell', mxTempIn:'Temperatur (°C)', mxT:'{t} °C, {s}',
   mxSrc_forecast:'prognos för idag vid din position', mxSrc_normal:'normalt för månaden vid din position', mxSrc_manual:'angiven av dig', mxSrc_none:'okänd',
   mxNone:'Ingen temperatur ännu, så ingen justering görs.', mxPos:'Position som används: {p} (avrundad till 0,1 grad).', mxPosUpd:'Använd aktuell position',
   mxPrivShort:'Automatisk frågar vädertjänsten Open-Meteo. Den får din position avrundad till 0,1 grad (kartans mitt om din position inte delas) och, som vid alla webbanrop, din IP-adress.', mxAllow:'Hämta temperaturen',
-  mxTrip:'Resa', mxEl:'El', mxPet:'Bensin', mxCost:'Per 100 km', mxKm:'{k} km', mxL:'{l} L',
-  mxBand:'För 100 km är det troliga spannet {lo} till {hi}.', mxByT:'En resa på 100 km per utetemperatur', mxDaily:'Typisk körsträcka per dag',
+  mxTrip:'Resa', mxEl:'El', mxPet:'Bensin', mxKm:'{k} km', mxL:'{l} L',
+  mxBand:'För 100 km är det troliga spannet {lo} till {hi}.', mxDaily:'Typisk körsträcka per dag',
   mxDay:'Med {d} km om dagen täcker batteriet cirka {s} % av dina km vid {t} °C. Cirka {m} per månad just nu.', mxNeed:'För att räkna ut blandningen, fyll i: {x}.',
   mxHow:'Så räknas det',
   mxH1:'Elräckvidden räknas som 75 % av den officiella (WLTP) siffran vid 20 °C, samma antagande som i reseplaneraren. Elkilometer är det minsta av reslängden och elräckvidden vid utetemperaturen. Resten körs med motorn på förbrukningen utan laddning. Kostnaden per 100 km är alltid blandningen av båda, aldrig ren el. El räknas vid vägguttaget, laddförlust inräknad.',
@@ -1781,11 +1780,11 @@ for (const l of Object.keys(TMP_PRIV)) I18N[l].mxPriv = TMP_PRIV[l];
 
 // v2.0 strings (EN + SV; DE/FR/ES fall back to English until translated)
 Object.assign(I18N.en, { tabTrip:'Trip', tabCar:'My car', segPrices:'Prices', segBorder:'Border run', moreFuels:'More', locateMe:'Use my location', zoomIn:'Zoom in', zoomOut:'Zoom out',
-  cheapView:'Cheapest in view', lgBands:'Price bands on the map', startPromise:'Find the cheapest fuel near you.', startSub:'Live prices from official sources across Europe. Every price shows where it came from and how old it is.',
-  startNearby:'Nearby', startSkip:'Skip', startTip:'Tip: the card at the bottom of the map shows the cheapest station in view.', fullMethod:'Full methodology', distAway:'{d} away' });
+  cheapView:'Cheapest in view', lgBands:'Price bands on the map', startPromise:'Find the cheapest fuel near you.',
+  startNearby:'Nearby', startSkip:'Skip', fullMethod:'Full methodology', });
 Object.assign(I18N.sv, { tabTrip:'Resa', tabCar:'Min bil', segPrices:'Priser', segBorder:'Gränshandel', moreFuels:'Fler', locateMe:'Använd min plats', zoomIn:'Zooma in', zoomOut:'Zooma ut',
-  cheapView:'Billigast i vyn', lgBands:'Prisband på kartan', startPromise:'Hitta billigaste bränslet nära dig.', startSub:'Livepriser från officiella källor i hela Europa. Varje pris visar varifrån det kommer och hur gammalt det är.',
-  startNearby:'Nära mig', startSkip:'Hoppa över', startTip:'Tips: kortet längst ner på kartan visar billigaste stationen i vyn.', fullMethod:'Fullständig metod', distAway:'{d} bort' });
+  cheapView:'Billigast i vyn', lgBands:'Prisband på kartan', startPromise:'Hitta billigaste bränslet nära dig.',
+  startNearby:'Nära mig', startSkip:'Hoppa över', fullMethod:'Fullständig metod', });
 Object.assign(I18N.en, { noPriceRep:'No price reported', vehSet:'Set your car for cost estimates', vehNoPrice:'No price for your fuel at this station.', vehFuel:'100 km on fuel here: {v}', vehElec:'100 km electric: {v}', vehMore:'Add consumption in My car for cost estimates',
   actReport:'Report', nbTitle:'Other options nearby', nbSame:'same price', facTitle:'Nearby facilities', facErr:'Could not load facilities: the map data service is slow or busy.', facRetry:'Try again', facNone:'Nothing found within 200 m.', fac_food:'Food & drink', fac_shops:'Shops', fac_toilets:'Toilets',
   fk_cafe:'Cafe', fk_restaurant:'Restaurant', fk_fast_food:'Fast food', fk_convenience:'Convenience store', fk_supermarket:'Supermarket', fk_kiosk:'Kiosk', fk_toilets:'Toilets',
@@ -1863,7 +1862,7 @@ Object.assign(I18N.en, {
   mcSum_cold:'These figures are for {t} °C outside: in the cold the battery covers fewer km.', mcSum_trust:'Based on petrol prices at the 5 closest stations and the charging price used in this answer.',
   mcProg:'Step {n} of 4: {x}', mcProgX1:'pick your car', mcProgX2:'enter your electricity price', mcProgX3:'get petrol prices near you',
   mcSt_done:'Done', mcSt_todo:'Needs input', mcSt_wait:'Waiting', mcSt_ready:'Ready', mcAdv:'Advanced settings', mcAdvStd:'Everything is standard', mcAdvChg:'You changed: {x}', mcNmKm:'trip length', mcNmEff:'charging efficiency', mcNmCard:'card fee',
-  mcApp:'App settings', mcAppS:'Language, appearance, currency, navigation app',
+  mcApp:'App settings', trdLine:'Usually cheapest: {x}', trd_night:'night', trd_morning:'morning', trd_afternoon:'afternoon', trd_evening:'evening', stMore:'More', stMoreS:'Fuel cost for your car, facilities, worth the drive, sources and age', mcDet:'Details', mcDetS:'Temperature, trip cost, nearby prices, electricity tariff, advanced settings', mcAppS:'Language, appearance, currency, navigation app, address suggestions',
   mcBev:'{m} runs only on electricity or hydrogen, so there is no petrol to compare with. This tab is for plug-in hybrids.', mcSt_assumed:'Assumed',
   mcPayPub:'You pay {u} per kWh at the public charger.', mcPayAssume:'We assume {u} per kWh (typical public fast charging). Enter your own price in step 2 for a precise answer.', mcPayFc:'Forecast price: {u} per kWh.',
   opWhy:'These prices are the exchange price of each hour plus grid fee, tax and VAT from the tariff in step 2, so they can differ a lot from the single price you typed in.',
@@ -1936,7 +1935,7 @@ Object.assign(I18N.sv, {
   mcSum_cold:'Siffrorna gäller vid {t} °C ute: när det är kallt räcker batteriet färre km.', mcSum_trust:'Baserat på bensinpriser vid de 5 närmaste stationerna och det laddpris som används i svaret.',
   mcProg:'Steg {n} av 4: {x}', mcProgX1:'välj din bil', mcProgX2:'ange ditt elpris', mcProgX3:'hämta bensinpriser nära dig',
   mcSt_done:'Klart', mcSt_todo:'Behöver uppgift', mcSt_wait:'Väntar', mcSt_ready:'Klart', mcAdv:'Avancerade inställningar', mcAdvStd:'Allt är standard', mcAdvChg:'Du har ändrat: {x}', mcNmKm:'reslängd', mcNmEff:'laddverkningsgrad', mcNmCard:'kortavgift',
-  mcApp:'Appinställningar', mcAppS:'Språk, utseende, valuta, navigeringsapp',
+  mcApp:'Appinställningar', trdLine:'Oftast billigast: {x}', trd_night:'natt', trd_morning:'förmiddag', trd_afternoon:'eftermiddag', trd_evening:'kväll', stMore:'Mer', stMoreS:'Bränslekostnad för din bil, service i närheten, värt omvägen, källor och ålder', mcDet:'Detaljer', mcDetS:'Temperatur, reskostnad, priser i närheten, eltariff, avancerade inställningar', mcAppS:'Språk, utseende, valuta, navigeringsapp, adressförslag',
   mcBev:'{m} går bara på el eller vätgas, så det finns ingen bensin att jämföra med. Den här fliken är till för laddhybrider.', mcSt_assumed:'Antaget',
   mcPayPub:'Du betalar {u} per kWh vid den publika laddaren.', mcPayAssume:'Vi utgår från {u} per kWh (typiskt pris för publik snabbladdning). Ange ditt eget pris i steg 2 för ett exakt svar.', mcPayFc:'Prognospris: {u} per kWh.',
   opWhy:'Priserna är börspriset för varje timme plus elnätsavgift, skatt och moms enligt tariffen i steg 2, så de kan skilja sig mycket från det enda pris du angav.',
@@ -2041,7 +2040,7 @@ localizeCN();
 
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
-  if (vars) for (const k in vars) s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);   // one pass with a function: '$&' or '{n}' inside a value is never re-read as a pattern or a placeholder
   return s;
 }
 
@@ -2369,7 +2368,7 @@ const cNum = (p, cur, d = 2) => cShow(p, cur).v.toFixed(d);
 const cUn = cur => curLbl(cShow(1, cur).cur);
 const dec = s => lang === 'en' ? s : s.replace('.', ',');           // decimal comma outside English
 const cTxt = (p, cur, d = 2) => { const x = cShow(p, cur); return `${dec(x.v.toFixed(d))} ${curLbl(x.cur)}`; };
-const tagU = cur => cur === 'EUR' ? '' : `<u>${esc(cUn(cur))}</u>`;     // unit on map tags: euro countries stay bare
+const tagU = cur => `<u>${esc(cUn(cur))}</u>`;     // unit on every map tag: the euro sign for euro prices, the code for the rest; EUR mode shows the euro sign everywhere
 function fxDate() { try { return new Date(metaFx.date + 'T12:00:00Z').toLocaleDateString(lang, { day:'numeric', month:'short', year:'numeric', timeZone:'UTC' }); } catch (_) { return metaFx?.date || ''; } }
 const cardNote = () => cardPct > 0 ? t('fxFootCard', { p: cardPct }) : '';
 // "Exchange rate: ECB reference rate, 5 Nov 2026 (1 EUR = 10.99 SEK)." (+ card note) for a country's currency
@@ -2986,22 +2985,23 @@ function stBody(s) {
   const rows = (s.prices||[]).map(p => {
     const sp = sheetPrice(p.price, p.currency);
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
-    const pv = provHtml(p);
     const np = p.plausible === false;
     const sus = np ? '' : suspectMsg(s.country, p);       // not flagged by the pipeline, but the data contradicts it: shown, marked, never ranked first
     return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? ico('warn', 'sm') + ' ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${sp.n}</td><td class="un">${esc(sp.u)}${UNIT[p.unit]||''}${sp.alt ? `<small>${esc(sp.alt)}${UNIT[p.unit]||''}</small>` : ''}</td></tr>`
       + (np ? `<tr class="np"><td class="pv npnote" colspan="3"><b>${t('notPlausible')}</b> — ${t('np_' + (p.implausible_reason || 'far_from_country'))}. ${t('npExcluded')}</td></tr>`
-            : (pv || sus ? `<tr><td class="pv" colspan="3">${pv}${sus ? `${pv ? '<br>' : ''}<span class="sus-note">${ico('warn', 'sm')} ${sus}</span>` : ''}</td></tr>` : ''));
+            : (sus ? `<tr><td class="pv" colspan="3"><span class="sus-note">${ico('warn', 'sm')} ${sus}</span></td></tr>` : ''));
   }).join('') + (missing ? `<tr><td class="ft">${fFuel === 'P95' ? '95' : fFuel === 'P98' ? '98' : esc(fFuel)}</td><td colspan="2" style="text-align:right"><span class="nobadge">${t('noPriceRep')}</span></td></tr>` : '');
   const noP   = !s.prices?.length ? `<div style="margin:4px 0"><span class="nobadge">${t('noPriceRep')}</span></div>` : '';
+  const src = (s.prices || []).filter(p => p.plausible !== false).map(p => { const pv = provHtml(p); return pv ? `<div class="pv-r"><b>${fuelLabel(p)}</b> ${pv}</div>` : ''; }).join('');
   return `${actRow(s)}<table class="pop-tbl">${rows}</table>${noP}${no95Html(s)}
+    ${nearOpts(s, fk)}
+    <details class="st-more"><summary>${t('stMore')}<small>${t('stMoreS')}</small></summary>
     ${fillHtml(car.type === 'phev' ? minOf(s, 'P95') : cheapest(s) || minOf(s, 'P95') || minOf(s, 'DIESEL'))}
     ${vehStrip(s)}
-    ${nearOpts(s, fk)}
     ${facHtml(s)}
     <div class="worth" id="worth-${esc(s.id)}">${worthHtml(s, fFuel || _worthKey || (fk || 'P95'))}</div>
-    ${fxFootHtml(s)}
-    ${ageHtml(s)}`;
+    ${src}${fxFootHtml(s)}
+    ${ageHtml(s)}</details>`;
 }
 function fxFootHtml(s) { const f = fxFoot(metaOf[s.country]?.currency || (s.prices || []).find(p => p.currency)?.currency); return f ? `<div class="fx-foot">${esc(f)}</div>` : ''; }
 
@@ -3150,7 +3150,8 @@ function mkCard(s, km) {
   const favBtn = `<button class="fav-btn${favs[s.id] ? ' on' : ''}" data-fav="${esc(s.id)}" aria-label="${t('saved')}" onclick="event.stopPropagation();toggleFav('${escId(s.id)}')">${ico('star')}</button>`;
   const distHtml = km != null
     ? `<span class="dist-badge">${ico('ruler', 'sm')} ${fmtDist(km)}</span>` : '';
-  return `<div class="scard ${fc}${isSel}" id="c-${esc(s.id)}" onclick="selectStation('${escId(s.id)}')">
+  const nameTxt = [s.name || s.brand || '—', s.city].filter(Boolean).join(', ');
+  return `<div class="scard ${fc}${isSel}" id="c-${esc(s.id)}" role="button" tabindex="0" aria-label="${esc(nameTxt)}" onclick="selectStation('${escId(s.id)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();selectStation('${escId(s.id)}')}">
     <div class="scard-top">
       <div class="scard-name">${flag} ${esc(s.name||s.brand||'—')}${noPin}</div>
       ${favBtn}${goBtn}
@@ -3532,7 +3533,7 @@ async function detectCountry(lat, lon) {
   // 2.5 s at most: a slow geocoder used to hold the whole Near Me flow hostage (the tap seemed to do nothing for as long as it took)
   const ac = new AbortController(), to = setTimeout(() => ac.abort(), 2500);
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=5&accept-language=en`, { signal: ac.signal });
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${(+lat).toFixed(2)}&lon=${(+lon).toFixed(2)}&format=json&zoom=5&accept-language=en`, { signal: ac.signal });
     if (r.ok) {
       const j = await r.json();
       const cc = (j.address?.country_code || '').toUpperCase();
@@ -3999,6 +4000,14 @@ function ctyNote(cc) {
     if (!g || (g.fuel !== 'p95' && g.fuel !== 'diesel') || typeof g.median_pct !== 'number' || !isFinite(g.median_pct) || !(g.n > 0) || !g.primary || !g.other) continue;
     h += `<div>${esc(t('gapLine', { f: t(g.fuel === 'p95' ? 'gapP95' : 'gapDiesel'), n: g.n, o: g.other, p: g.primary, x: (g.median_pct > 0 ? '+' : '') + (+g.median_pct).toFixed(1) + '%' }))}</div>`;
   }
+  try {
+    const L = rtCycData && cc ? trdLines(rtCycData, cc) : [];
+    if (L.length) {
+      const when = l => new Date(2024, 0, 1 + l.wd).toLocaleDateString(lang, { weekday: 'long' }) + ' ' + t('trd_' + l.part);
+      const x = L.length === 2 && L[0].wd === L[1].wd && L[0].part === L[1].part ? when(L[0]) : L.map(l => (l.fuel === 'p95' ? '95' : t('fuelOptDiesel')) + ': ' + when(l)).join(' · ');
+      h += `<div>${esc(t('trdLine', { x }))}</div>`;
+    }
+  } catch (_) {}   // the cycles file is not loaded yet: nothing to say
   el.innerHTML = h;
 }
 
@@ -4238,6 +4247,7 @@ function mcSummary() {
   const el = $id('mc-summary'); if (!el || !carPanelOpen()) return;
   const a = _mcAns || {}, phev = car.type === 'phev', cur = a.cur || ctyCur(), r = a.r || {};
   for (const id of ['mc-s2', 'ev-card']) { const e = $id(id); if (e) e.hidden = !phev; }
+  { const d = $id('mc-details'); if (d) d.hidden = !car.type; }   // an empty profile shows only the answer card, step 1 and the settings
   curSelFill('car-cur', car.elecCur); { const w = $id('h-elec-w'); if (w) { const hi = car.elec > 0 && (car.elecCur || homeDefaultCur()) === 'EUR' && car.elec > 1.5; w.hidden = !hi; } }
   const ef = $id('car-eff'); if (ef) ef.placeholder = Math.round(100 / evLoss());
   const cg = $id('car-chg'); if (cg) cg.placeholder = VEH_AC[car.veh] || ''; const ap = $id('car-acp'); if (ap) ap.placeholder = ctyCc() === 'SE' ? '3.50' : ''; curSelFill('car-cur2', car.acpCur);
@@ -4534,7 +4544,7 @@ function opRender() {
 }
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
-const VEH_V = 3;   // data-hash:vehicles.json=f47c8f9f9c  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
+const VEH_V = 4;   // data-hash:vehicles.json=7d1cd12e37  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
 let _veh = null, _vehTried = false;
 function vehLoad() {
   if (_vehTried) return; _vehTried = true;
@@ -4783,7 +4793,7 @@ async function cheapestInView() {
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
 // acpOv: a public AC price taken from a shared plan link; it wins over My car's own price for this session only and is never saved
-const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
@@ -5210,6 +5220,12 @@ function rtDepartHint(file, cc, fuel) {
   return best && best.lvl <= -RT_CYC_DROP ? best : null;
 }
 // RT-PURE-END
+// TRD-PURE-BEGIN  (no DOM; needs rtDepartHint above: extracted and tested by tools/test_trends.js)
+// "Usually cheapest" per country: the cheapest weekday and local time of day per fuel, from the same decode and thresholds as the departure hint (min 12 samples per cell, a dip of at least 0.3 %). Nothing when the series is too thin.
+const TRD_FUELS = ['p95', 'diesel'];
+function trdPart(hr) { return hr < 6 ? 'night' : hr < 12 ? 'morning' : hr < 18 ? 'afternoon' : 'evening'; }
+function trdLines(file, cc) { const o = []; for (const f of TRD_FUELS) { const h = rtDepartHint(file, cc, f); if (h) o.push({ fuel: f, wd: h.wd, part: trdPart(h.hr) }); } return o; }
+// TRD-PURE-END
 // CHG-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_chargers.js)
 const CHG_F = { free: 1, card: 2, notice: 4, pay: 8, hint: 16, note: 32, tether: 64, fee: 128 };   // flag bits of data/ev_<cc>.json, docs/CHARGERS_PIPELINE.md
 const CHG_OLD_DAYS = 90, CHG_STALE_DAYS = 21, CHG_RADIUS_KM = 2, CHG_MAX_LIST = 5;
@@ -5375,9 +5391,8 @@ function renderRoute() {
       ${rt.res && !rt.res.error && rt.from && rt.to ? `<div class="rt-sh"><button type="button" class="mc-btn" id="rt-sh-btn" onclick="shShare()">${ico('share')} ${t('rtShBtn')}</button><p class="cmp-note" style="margin-top:6px">${t('rtShLine')}</p><div id="rt-sh-out"></div></div>` : ''}
     </div>
     <div id="rt-out"></div>
-    <div id="rt-fares"></div>
     <p class="cmp-note">${t('rtNote')}</p>${(o => o.phev && o.T != null ? `<p class="cmp-note">${esc(t('rtTemp', { t: Math.round(o.T), s: t('mxSrc_' + o.tSrc) }))}</p>` : '')(rtInputs())}`;
-  rtRenderOut(); rtRenderFares();
+  rtRenderOut();
 }
 function rtSetStatus(msg) { rt.status = msg; const o = document.getElementById('rt-out'); if (o && rt.busy) o.innerHTML = `<p class="empty" style="padding:14px 0"><i class="spin"></i> ${esc(msg)}</p>`; }
 
@@ -5611,7 +5626,7 @@ function rtRank() {
   rtRenderOut(); rtDraw(false);
 }
 // Plan card. Waves 2 and 3 fill the containers #rt-x-strip, -cost, -alts, -tank, -dep, -nav, -ac by setting rtExtras.<name> = (R, plan) => html
-const rtX = ['cost', 'nav', 'tank', 'dep', 'alts', 'strip', 'ac', 'chg'], rtXMore = 4, rtExtras = {};   // the first four stay in view; the rest sit under 'More detail'
+const rtX = ['cost', 'nav', 'costd', 'navd', 'tank', 'dep', 'alts', 'strip', 'ac', 'chg'], rtXMore = 2, rtExtras = {};   // the first two (trip total, navigation buttons) stay in view; the rest sit in the one Details fold
 const rtLet = i => 'ABC'[i] || String(i + 1);
 const rtL0 = v => Math.max(0, Math.round(v));
 const rtHm = m => { const h = Math.floor(Math.round(m) / 60), r = Math.round(m) % 60; return (h ? h + ' h ' : '') + r + ' min'; };
@@ -5669,13 +5684,14 @@ function rtFareLines(c) {                 // one line per matched entry, then th
   return L;
 }
 const rtGoFares = () => { rt.faresOpen = true; rtRenderFares(); const e = document.getElementById('rt-fares'); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-function rtCostHtml(R) {
+function rtCostHtml(R, detail) {          // detail=false: the trip total only (always visible); true: breakdown + fare lines (inside Details)
   const C = R.costs, c = C.costs[0]; if (!c) return '';
   const parts = [c.fuel ? t('rtCostFuel', { c: rtEurRng(c.fuel) }) : '', c.elec != null ? t('rtCostElec', { c: rtM(c.elec) }) : '', c.fare > 0 ? t('rtCostFares', { c: rtM(c.fare) }) : ''].filter(Boolean);
   const head = c.total ? t(c.fareUnknown ? 'rtCostHeadU' : 'rtCostHead', { c: rtEurRng(c.total) }) : t('rtCostNoFuel');
   const noEl = c.total && R.o.phev && c.kwh > 0.05 && c.elec == null ? ' ' + t('rtCostNoElec') : '';
   const sub = (c.total && parts.length > 1 ? rtCap(parts.join(', ')) + '.' : '') + noEl;
-  return `<div class="rt-xc"><div class="tverdict same">${head}${sub ? `<small>${sub}</small>` : ''}</div>
+  if (!detail) return `<div class="rt-xc"><div class="tverdict same">${head}</div></div>`;
+  return `<div class="rt-xc">${sub ? `<p class="mc-hint">${sub}</p>` : ''}
     <ul class="rt-fl">${rtFareLines(c).map(x => `<li>${x}</li>`).join('')}</ul>
     <p class="mc-hint">${t('rtCostNote')} <button type="button" class="rt-lnk" onclick="rtGoFares()">${t('rtFaresAll')}</button></p></div>`;
 }
@@ -5705,7 +5721,8 @@ function rtTankHtml(R, P) {
     return `<p class="rt-tip"><b>${t('rtTankH', v)}</b> ${t(x.dir === 'before' ? 'rtTankBefore' : 'rtTankAfter', v)}${x.dir === 'before' && x.planned ? ' ' + t('rtTankPlanned') : ''}</p>`;
   }).join('')}</div>`;
 }
-rtExtras.cost = (R, P) => R.costs ? rtCostHtml(R) : '';
+rtExtras.cost = (R, P) => R.costs ? rtCostHtml(R, false) : '';
+rtExtras.costd = (R, P) => R.costs ? rtCostHtml(R, true) : '';
 rtExtras.alts = (R, P) => R.costs ? rtAltsHtml(R) : '';
 rtExtras.tank = (R, P) => rtTankHtml(R, P);
 // ── Wave 3 UI: R8 energy strip, R13 navigation export, R14 return trip, R15 backup pump, R16 AC verdict, R18 departure hint ──
@@ -5717,6 +5734,7 @@ let rtCycData = null, rtCycP = null;
 function rtCyclesLoad() {                               // our own static file, same origin; absent or thin = no hint
   return rtCycP = rtCycP || fetch('price_cycles.json').then(r => r.ok ? r.json() : null).then(j => rtCycData = j && j.schema === 1 && j.series ? j : null).catch(() => null);
 }
+rtCyclesLoad().then(() => { try { updLabel(); } catch (_) {} });   // the country note reads the same file
 const rtPumpName = x => (x.s.name || x.s.brand || '—') + (x.s.city && !(x.s.name || '').includes(x.s.city) ? ', ' + x.s.city : '');
 const rtNum1 = v => dec((Math.round(v * 10) / 10).toFixed(1));
 function rtBackupHtml(R, s) {
@@ -5746,7 +5764,7 @@ function rtStripHtml(R, P) {
     <div class="rt-lg">${leg}</div><p class="rt-fresh" id="rt-strip-cap">${esc(cap)}</p></div>`;
 }
 const rtNavDest = R => (rt.toTxt || '').trim() || t('rtNavDest');
-function rtNavHtml(R, P) {
+function rtNavHtml(R, P, detail) {   // detail=false: heading + buttons; true: hints and leg list (inside Details)
   if (P.status !== 'ok' || !P.nStops) return '';
   const stops = P.stops.map(s => ({ lat: s.s.lat, lon: s.s.lon })), e = R.pts[R.pts.length - 1], dest = rtNavDest(R);
   const L = rtNavLinks(stops, { lat: e[0], lon: e[1] }), A = { waze: [t('rtNavWazeBtn'), L.waze[0]], google: [t('rtNavGoogle'), L.google], apple: [t('rtNavApple'), L.apple] };
@@ -5754,8 +5772,9 @@ function rtNavHtml(R, P) {
   const order = ['waze', 'google', 'apple'].filter(k => A[k][1] && (k !== 'apple' || iosOk)), pi = order.indexOf(navPref); if (pi > 0) order.unshift(order.splice(pi, 1)[0]);   // the app you picked in App settings goes first
   const lnk = (u, x, c) => `<a${c ? ` class="${c}"` : ''} href="${esc(u)}" target="_blank" rel="noopener noreferrer">${x}</a>`;
   const legs = [...P.stops.map((s, i) => t('rtNavLeg', { l: rtLet(i), n: esc(rtPumpName(s)) })), t('rtNavFinal', { n: esc(dest) })].map((x, i) => `<li>${lnk(L.waze[i], x)}</li>`).join('');
-  return `<div class="rt-xc"><h4 class="rt-xh">${t('rtNavH')}</h4>
-    <div class="rt-navb">${order.map((k, i) => lnk(A[k][1], esc(A[k][0]), i ? '' : 'pri')).join('')}<button type="button" onclick="rtNavCopy()">${t('rtNavCopy')}</button></div>
+  if (!detail) return `<div class="rt-xc"><h4 class="rt-xh">${t('rtNavH')}</h4>
+    <div class="rt-navb">${order.map((k, i) => lnk(A[k][1], esc(A[k][0]), i ? '' : 'pri')).join('')}<button type="button" onclick="rtNavCopy()">${t('rtNavCopy')}</button></div></div>`;
+  return `<div class="rt-xc">
     <p class="mc-hint">${t('rtNavWazeNote')}${L.google ? '' : ' ' + t('rtNavMax', { n: RT_NAV_MAX })}</p>
     <ol class="rt-legs" aria-label="${esc(t('rtNavLegs'))}">${legs}</ol><p class="mc-hint">${t('rtNavPriv')}</p></div>`;
 }
@@ -5788,7 +5807,7 @@ function rtDepHtml(R, P) {
   const hh = x => String(x % 24).padStart(2, '0') + ':00', day = new Date(2024, 0, 1 + h.wd).toLocaleDateString(lang, { weekday: 'long' });
   return `<div class="rt-xc"><p class="rt-tip">${t('rtDep', { d: day + ' ' + hh(h.hr) + '–' + hh(h.hr + h.width), c: CNAMES[cc] || cc, f: t(R.fuel === 'DIESEL' ? 'rtFuelDiesel' : 'rtFuelPetrol'), p: dec(Math.abs(h.lvl).toFixed(1)) })}</p></div>`;
 }
-Object.assign(rtExtras, { strip: rtStripHtml, nav: rtNavHtml, ac: rtAcHtml, dep: rtDepHtml });
+Object.assign(rtExtras, { strip: rtStripHtml, nav: (R, P) => rtNavHtml(R, P, false), navd: (R, P) => rtNavHtml(R, P, true), ac: rtAcHtml, dep: rtDepHtml });
 // ── Charging posts (Type 2): map layer, sheet, list near the destination. Posts: data/ev_<cc>.json (src/chargers.py, docs/CHARGERS_PIPELINE.md). Prices: web/ac_tariffs.json (docs/AC_TARIFFS.md), never from the post data. ──
 const CHG_CC = ['SE', 'NO', 'DK', 'DE'];                 // countries that have a data file: add one here when src/chargers.py gains it
 const CHG_ZOOM = 11, CHG_MAX_MARKERS = 400;
@@ -5944,7 +5963,7 @@ function rtSegTable(P) {
   if (ferry > 0.5) rows.push(`<tr><td>${esc(t('rtSegFerry'))}</td><td>${Math.round(ferry)} km</td><td>–</td><td>0 %</td></tr>`);
   return rows.length ? `<table class="ev-tbl wide"><tr><th>${esc(t('rtSegH'))}</th><th>km</th><th>${esc(t('rtSegSpd'))}</th><th>${esc(t('rtSegShare'))}</th></tr>${rows.join('')}</table>` : '';
 }
-function rtPlanHtml(R) {
+function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold (route summary, other stations, fare list)
   rtSetCur(R);
   const P = R.plan, I = R.o, E = P.energy, eur = v => rtM(v), n = P.nStops;
   const arr = P.arrive ? ' ' + (rtL0(P.arrive.lo) === rtL0(P.arrive.hi) ? t('rtPlanArriveOne', { a: rtL0(P.arrive.mid) }) : t('rtPlanArrive', { a: rtL0(P.arrive.mid), lo: rtL0(P.arrive.lo), hi: rtL0(P.arrive.hi) })) : '';
@@ -5973,13 +5992,17 @@ function rtPlanHtml(R) {
     <div class="tverdict ${cls}" id="rt-plan-head" aria-live="polite">${head}<small>${sub}</small></div>
     <div id="rt-plan-stops">${stops}</div>
     ${fresh ? `<p class="rt-fresh" id="rt-plan-fresh">${fresh}</p>` : ''}
-    <p class="rt-fresh" id="rt-plan-energy">${en}</p>
-    ${rtBackHtml(R)}
-    <div id="rt-chg-s">${rtChgSumHtml(R)}</div>
-    <div id="rt-chg-n">${rtChgNHtml(R)}</div>
-    ${rtX.map((k, i) => (i === rtXMore ? `<details class="ev-how"><summary>${esc(t('rtMore'))}</summary>` : '') + `<div id="rt-x-${k}">${rtExtras[k] ? rtExtras[k](R, P) : ''}</div>` + (i === rtX.length - 1 ? '</details>' : '')).join('')}
-    ${mcQ('rtWhat')}${mcQ('rtRange')}${mcQ('rtMin')}
-    <details class="ev-how"><summary>${esc(t('rtHow'))}</summary><p>${esc(t('rtH1'))}</p>${rtSegTable(P)}${assump.map(x => `<p>${esc(x)}</p>`).join('')}</details>
+    ${rtX.slice(0, rtXMore).map(k => `<div id="rt-x-${k}">${rtExtras[k] ? rtExtras[k](R, P) : ''}</div>`).join('')}
+    <details class="car-box ev-box mc-fold rt-det" id="rt-det" ${rt.detOpen ? 'open' : ''} ontoggle="rt.detOpen=this.open"><summary>${esc(t('rtMore'))}<small>${esc(t('rtMoreS'))}</small></summary>
+      <p class="rt-fresh" id="rt-plan-energy">${en}</p>
+      ${rtBackHtml(R)}
+      <div id="rt-chg-s">${rtChgSumHtml(R)}</div>
+      <div id="rt-chg-n">${rtChgNHtml(R)}</div>
+      ${rtX.slice(rtXMore).map(k => `<div id="rt-x-${k}">${rtExtras[k] ? rtExtras[k](R, P) : ''}</div>`).join('')}
+      ${mcQ('rtWhat')}${mcQ('rtRange')}${mcQ('rtMin')}
+      ${extra || ''}
+      <details class="ev-how"><summary>${esc(t('rtHow'))}</summary><p>${esc(t('rtH1'))}</p>${rtSegTable(P)}${assump.map(x => `<p>${esc(x)}</p>`).join('')}</details>
+    </details>
   </section>`;
 }
 function rtSpeedLine(R) {
@@ -6004,11 +6027,11 @@ function rtRenderOut() {
   const best = R.best ? t('rtBest', { s: eur(R.best.saving) }) : t('rtNoBest', { s: eur(RT_MIN_SAVE) });
   const notes = [used.slice(4), R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '',
     R.segs ? '' : t('rtNoSegs'), I.withCar ? '' : t('rtNoCar', { c: trip.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
-  const plan = rtPlanHtml(R);
-  if (!R.rows?.length) { o.innerHTML = `<p class="rt-sum">${sum}${notes}${clr}</p>${plan}<p class="empty">${t('rtNone', { w: rt.w })}</p>`; return; }
+  const fares = '<div id="rt-fares"></div>';
+  if (!R.rows?.length) { o.innerHTML = rtPlanHtml(R, `<p class="rt-sum">${sum}${notes}${clr}</p><p class="empty">${t('rtNone', { w: rt.w })}</p>${fares}`); rtRenderFares(); return; }
   const fl = cmpKey === 'diesel' ? 'Diesel' : '95';
   let sep = false;
-  o.innerHTML = `<p class="rt-sum">${sum}<br><b>${fl}</b> · ${t('rtMedian', { p: rtPL(R.median) })}${notes}${clr}</p>${plan}
+  o.innerHTML = rtPlanHtml(R, `<p class="rt-sum">${sum}<br><b>${fl}</b> · ${t('rtMedian', { p: rtPL(R.median) })}${notes}${clr}</p>
     <h3 class="rt-oh">${t('rtOther')}</h3><p class="rt-sum" style="margin-top:0">${best}</p>
     ${R.rows.map((r, i) => {
       const d = r.ref - r.eur, s = r.saving;
@@ -6021,7 +6044,8 @@ function rtRenderOut() {
           <div class="sub">${esc(r.s.city || '')} · ${t('rtAlong', { k: Math.round(r.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: r.detourKm < 1 ? '<1' : r.detourKm.toFixed(1) })}<br>${esc(srcName(r.p.source || r.s.source || ''))}${r.p.source || r.s.source ? ' · ' : ''}${ageTxt(r.p.updated_at)}${r.why ? '<br>' + t(r.why) : ''}<br>${net}</div>
           <div class="acts"><button onclick="event.stopPropagation();doNav('${escId(r.s.id)}')">${ico('go', 'sm')} ${t('go')}</button><button onclick="event.stopPropagation();rtVia(${i})">${ico('route', 'sm')} ${t('rtVia')}</button></div></div>
         <div class="pr">${cTxt(r.p.price, r.p.currency)}<small>${cmp}</small></div></div>`;
-    }).join('')}`;
+    }).join('')}${fares}`);
+  rtRenderFares();
 }
 function rtDraw(fit) {
   const R = rt.res; if (!R || R.error) return;
