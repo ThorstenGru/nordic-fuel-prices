@@ -29,7 +29,7 @@ for (const e of f.entries || []) {
       if (typeof a.subscription_needed_for_member !== 'boolean') w('subscription_needed_for_member boolean');
       if (![true, false, null].includes(a.app_required_adhoc)) w('app_required_adhoc true/false/null');
       const i = a.idle_fee;
-      if (i !== null && !(i && num(i.amount) && i.currency === a.currency && typeof i.unit === 'string' && typeof i.label === 'string')) w('idle_fee needs amount, same currency, unit, label');
+      if (i !== null && !(i && num(i.amount) && i.currency === a.currency && ['minute', 'session', 'unspecified'].includes(i.unit) && typeof i.label === 'string')) w('idle_fee needs amount, same currency, unit (minute, session or unspecified), label');
     }
     if (/not read|no body|not recorded/.test(e.confidence)) w('price given but confidence says not read');
   }

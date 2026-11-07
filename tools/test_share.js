@@ -60,4 +60,10 @@ assert.strictEqual(F.shEncode({ ...full, w: 9 }), null); assert.strictEqual(F.sh
 // the link never carries fields outside the allowed list (home tariff, car profile ...)
 const leak = F.shEncode({ ...full, elec: 1.23, home: 'Storgatan 1', car: { cons: 7 } });
 assert.deepStrictEqual(Object.keys(JSON.parse(Buffer.from(leak.slice(4), 'base64url').toString())).sort(), ['a', 'bp', 'd', 'f', 'fp', 'h', 'k', 'r', 's', 't', 'v', 'w']);
+
+// esc() must escape quotes: place names from a shared link land inside value="..." attributes (a crafted link used to inject attributes)
+{ const m2 = src.match(/function esc\(v\) \{[\s\S]*?\n\}/); assert(m2, 'esc() not found');
+  const fake = { textContent: '', get innerHTML() { return String(this.textContent).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); } };
+  const esc = new Function('_escDiv', m2[0] + '; return esc;')(fake);
+  assert.strictEqual(esc('A" onmouseover="x'), 'A&quot; onmouseover=&quot;x'); assert.strictEqual(esc("it's"), 'it&#39;s'); assert.strictEqual(esc(null), ''); }
 console.log('test_share: all passed');

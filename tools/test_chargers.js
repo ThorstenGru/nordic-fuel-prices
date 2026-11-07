@@ -85,5 +85,5 @@ assert.strictEqual(F.chgStale('2026-11-07', NOW), 0); assert.strictEqual(F.chgSt
 // --- wiring checks on the page source (the DOM code itself is exercised in the browser)
 assert(/chgDecode\(j\)/.test(src) && /'ev_' \+ cc\.toLowerCase\(\) \+ '\.json'/.test(src), 'data file loader missing');
 assert(!/NOBIL_API_KEY|OCM_API_KEY|X-API-Key/.test(src), 'a key name reached the page');
-assert(/id="chip-chg"/.test(src) && /ac_tariffs\.json\?v=/.test(src));
+assert(/id="chip-chg"/.test(src) && /fetch\('ac_tariffs\.json'\)/.test(src) && !/AC_V/.test(src), 'tariff file must load without a hand-bumped version');
 console.log('test_chargers: all passed');

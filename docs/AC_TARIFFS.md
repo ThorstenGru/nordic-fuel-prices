@@ -6,7 +6,7 @@ Hand-kept, dated list of operators' public AC (Type 2, up to 22 kW) list prices 
 - A price goes in only if it was read on an opened operator or official tariff page. Otherwise `ac: null` and `notes` says why. Search snippets and third-party roundups (Hurbra etc.) never count.
 - `ac.adhoc_kwh` is the no-subscription price ('from' price where the page says so, `adhoc_kwh_max` for a range). `member_kwh` needs registration, an app or a subscription, with `member_label` and `subscription_needed_for_member`.
 - `start_fee` / `idle_fee` null means "not stated on the page read". The UI must say "not published", never "none". `idle_fee.unit` is "unspecified" when the page does not say per minute or per session.
-- `match.ocm_names` are exact Operator titles from the OCM reference data (verified 2026-11-07 with the local key, 19 names). `match.nobil_names` are unverified hints: no NOBIL call has been made.
+- `match.ocm_names` are exact Operator titles from the OCM reference data (verified 2026-11-07 with the local key, 17 names). `match.nobil_names` are unverified hints: no NOBIL call has been made.
 - Prices include VAT. Entries older than 90 days grey out (same rule as fares).
 - Roaming prices (operator A's app at operator B's charger) are not recorded as the AC tariff of A.
 

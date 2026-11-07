@@ -26,6 +26,11 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
 
+      - name: Frontend tests
+        run: |
+          for f in tools/test_*.js; do node "$f" || exit 1; done
+          node tools/check_fares.js && node tools/check_ac_tariffs.js
+
       - name: Checkout gh-pages into subdirectory
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
         with:
