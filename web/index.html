@@ -7370,7 +7370,7 @@ function rtM(v) {                          // amount (EUR) in the trip currency
 const rtPL = v => `${dec(rtLocal(v).toFixed(2))} ${curLbl(rtTripCur)}`.trim();   // price per litre (EUR in, trip currency out)
 function rtRng(lo, hi) { const x = Math.round(rtLocal(lo)), y = Math.round(rtLocal(hi)); return (x === y ? '' + x : x + '–' + y) + ' ' + curLbl(rtTripCur); }
 // ── Wave 2 UI: R4 cost card + alternatives, R5 fare list, R9 border tip, R10 noon note ──
-const FARES_V = 1;   // data-hash:fares.json=f94c9f72fd  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
+const FARES_V = 1;   // data-hash:fares.json=0b4d09b5ff  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
 let rtFaresData = null, rtFaresP = null;
 function rtFaresLoad() {
   return rtFaresP = rtFaresP || fetch('fares.json?v=' + FARES_V).then(r => r.ok ? r.json() : Promise.reject()).then(j => rtFaresData = j).catch(() => { rtFaresP = null; return null; });
