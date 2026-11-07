@@ -105,7 +105,7 @@ class CroatiaScraper(BaseScraper):
                 if vrsta_id is None:
                     continue
                 ft_info = _VRSTA_MAP.get(vrsta_id)
-                if not ft_info or ft_info[0] in seen:
+                if not ft_info or (ft_info[0], ft_info[2]) in seen:
                     continue
                 try:
                     price = float(str(c.get("cijena", 0)).replace(",", "."))
@@ -113,7 +113,7 @@ class CroatiaScraper(BaseScraper):
                     continue
                 if price > 0:
                     prices.append(self.price_entry(ft_info[0], price, ft_info[1], octane=ft_info[2]))
-                    seen.add(ft_info[0])
+                    seen.add((ft_info[0], ft_info[2]))
 
             if not prices:
                 continue

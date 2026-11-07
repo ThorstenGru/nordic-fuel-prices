@@ -33,6 +33,10 @@ class PortugalScraper(BaseScraper):
         tasks = [self._fetch_fuel(fid, sem) for fid in FUEL_IDS]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
+        core = {2101, 3201}      # diesel and 95: without them the file would look complete but miss the main fuels
+        bad = [fid for fid, r in zip(FUEL_IDS, results) if fid in core and (isinstance(r, Exception) or not r)]
+        if bad:
+            raise RuntimeError(f"DGEG request failed for fuel id(s) {bad}; not publishing a partial country")
         merged: Dict[str, Dict] = {}
         for result in results:
             if isinstance(result, Exception) or not result:
@@ -42,9 +46,9 @@ class PortugalScraper(BaseScraper):
                 if sid not in merged:
                     merged[sid] = s
                 else:
-                    existing = {p["fuel_type"] for p in merged[sid]["prices"]}
+                    existing = {(p["fuel_type"], p.get("octane")) for p in merged[sid]["prices"]}
                     for p in s["prices"]:
-                        if p["fuel_type"] not in existing:
+                        if (p["fuel_type"], p.get("octane")) not in existing:
                             merged[sid]["prices"].append(p)
 
         stations = list(merged.values())
@@ -62,11 +66,11 @@ class PortugalScraper(BaseScraper):
                 ) as resp:
                     if resp.status != 200:
                         print(f"[PT] HTTP {resp.status} fuel={fuel_id}")
-                        return []
+                        raise RuntimeError(f"HTTP {resp.status}")
                     data = await resp.json(content_type=None)
             except Exception as e:
                 print(f"[PT] fuel={fuel_id}: {type(e).__name__}: {e}")
-                return []
+                raise
 
         if not data.get("status"):
             return []

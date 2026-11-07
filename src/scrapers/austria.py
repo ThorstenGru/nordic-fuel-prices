@@ -49,6 +49,9 @@ class AustriaScraper(BaseScraper):
             ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
+        failed = sum(1 for r in results if isinstance(r, Exception))
+        if failed > max(2, 0.02 * len(results)):   # a few lost districts are tolerated; more means the file would silently miss regions or a fuel
+            raise RuntimeError(f"{failed} of {len(results)} e-control requests failed; not publishing a partial country")
 
         merged: Dict[str, Dict] = {}
         for result in results:
@@ -59,9 +62,9 @@ class AustriaScraper(BaseScraper):
                 if sid not in merged:
                     merged[sid] = s
                 else:
-                    existing = {p["fuel_type"] for p in merged[sid]["prices"]}
+                    existing = {(p["fuel_type"], p.get("octane")) for p in merged[sid]["prices"]}
                     for p in s["prices"]:
-                        if p["fuel_type"] not in existing:
+                        if (p["fuel_type"], p.get("octane")) not in existing:
                             merged[sid]["prices"].append(p)
 
         stations = list(merged.values())
@@ -109,11 +112,11 @@ class AustriaScraper(BaseScraper):
                     headers={"Accept": "application/json"},
                 ) as resp:
                     if resp.status != 200:
-                        return []
+                        raise RuntimeError(f"HTTP {resp.status}")
                     raw = await resp.json(content_type=None)
             except Exception as e:
                 print(f"[AT] {region_type}={code} fuel={fuel}: {type(e).__name__}: {e}")
-                return []
+                raise
 
         if not isinstance(raw, list):
             return []

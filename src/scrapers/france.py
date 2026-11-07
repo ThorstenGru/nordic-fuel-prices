@@ -70,7 +70,7 @@ class FranceScraper(BaseScraper):
             seen: set = set()
             prices = []
             for field, (ft, unit, ts_field, octane) in PRICE_FIELDS.items():
-                if ft in seen:
+                if (ft, octane) in seen:
                     continue
                 val = s.get(field)
                 if val is None:
@@ -83,7 +83,7 @@ class FranceScraper(BaseScraper):
                     prices.append(self.price_entry(ft, price, unit,
                                                    updated_at=self._maj(s.get(ts_field)), tz="Europe/Paris",
                                                    octane=octane))
-                    seen.add(ft)
+                    seen.add((ft, octane))
 
             if not prices:
                 continue

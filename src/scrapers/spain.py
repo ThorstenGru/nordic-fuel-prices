@@ -100,7 +100,7 @@ class SpainScraper(BaseScraper):
             prices, seen = [], set()
             for field, (ft, unit, octane) in FUEL_FIELDS.items():
                 val_str = (s.get(field) or "").strip()
-                if not val_str or ft in seen:
+                if not val_str or (ft, octane) in seen:
                     continue
                 try:
                     price = float(val_str.replace(",", "."))
@@ -108,7 +108,7 @@ class SpainScraper(BaseScraper):
                     continue
                 if price > 0:
                     prices.append(self.price_entry(ft, price, unit, updated_at=as_of, octane=octane))
-                    seen.add(ft)
+                    seen.add((ft, octane))
 
             try:
                 lat = float((s.get("Latitud") or "0").replace(",", "."))

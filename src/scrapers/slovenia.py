@@ -72,11 +72,11 @@ class SloveniaScraper(BaseScraper):
                 ) as resp:
                     if resp.status != 200:
                         print(f"[SI] HTTP {resp.status} — {url}")
-                        break
+                        raise RuntimeError(f"HTTP {resp.status}")
                     page = await resp.json(content_type=None)
             except Exception as e:
                 print(f"[SI] {type(e).__name__}: {e} — {url}")
-                break
+                raise            # pages read so far are only part of the country
 
             results = page.get("results") if isinstance(page, dict) else None
             if not results:
@@ -99,7 +99,7 @@ class SloveniaScraper(BaseScraper):
             prices = []
             seen: set = set()
             for key, (ft, unit, octane) in _PRICE_MAP.items():
-                if ft in seen:
+                if (ft, octane) in seen:
                     continue
                 val = prices_raw.get(key)
                 if val is None:
@@ -113,7 +113,7 @@ class SloveniaScraper(BaseScraper):
                     dropped += 1
                     continue
                 prices.append(self.price_entry(ft, price, unit, octane=octane))
-                seen.add(ft)
+                seen.add((ft, octane))
 
             if not prices:
                 continue
