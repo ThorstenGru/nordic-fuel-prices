@@ -1965,6 +1965,7 @@ Object.assign(I18N.en, {
   chgTime:'A full battery ({k} kWh) takes about {h}.', chgCostEst:'Estimated cost: about {c}{x}.', chgCostFree:'Estimated cost: free, as the source says.', chgCostNone:'No cost estimate because the price is not published.', chgCostOld:'No cost estimate because the list price is too old.',
   chgCostRange:'{a} to {b}', chgCostStart:', including the start fee', chgCostIdle:', including the idle fee', chgNoBatt:'Set your battery size in My car to see a cost estimate.', chgNoCarKw:'Set your car’s charging rate in My car to see the charging time.',
   chgNav:'Navigate', chgDetails:'Details', chgSrc:'Data: {a}. Prices are not part of this data: they come from our own dated table of list prices.',
+  rtShBusy:'A route search is running. Open the link again when it has finished.',
   mcElecW:'That looks high for euro. If you entered kronor, change the currency next to the field.',
   chgSumN:'Your battery is empty on arrival. {n} public Type 2 posts within {r} km of the destination{b}. The list is under More detail.', chgSumN1:'Your battery is empty on arrival. One public Type 2 post within {r} km of the destination{b}. Details are under More detail.', chgSumNone:'Your battery is empty on arrival, and our data has no public Type 2 post within {r} km of the destination. Check that your hotel or destination has charging.', chgSumFree:', marked free by its source', chgSumCost:', the cheapest about {c} for a full charge (estimate)',
   chgNearH:'Charging near the destination', chgNearN:'{n} public Type 2 posts within {r} km of the destination.', chgNearN1:'One public Type 2 post within {r} km of the destination.', chgNearNone:'No public Type 2 post in our data within {r} km of the destination.',
@@ -1990,6 +1991,7 @@ Object.assign(I18N.sv, {
   chgTime:'Ett fullt batteri ({k} kWh) tar cirka {h}.', chgCostEst:'Uppskattad kostnad: cirka {c}{x}.', chgCostFree:'Uppskattad kostnad: gratis, enligt källan.', chgCostNone:'Ingen kostnadsuppskattning eftersom priset inte är publicerat.', chgCostOld:'Ingen kostnadsuppskattning eftersom listpriset är för gammalt.',
   chgCostRange:'{a} till {b}', chgCostStart:', inklusive startavgiften', chgCostIdle:', inklusive överliggningsavgiften', chgNoBatt:'Ange batteriets storlek i Min bil för att se en kostnadsuppskattning.', chgNoCarKw:'Ange bilens laddeffekt i Min bil för att se laddtiden.',
   chgNav:'Navigera', chgDetails:'Detaljer', chgSrc:'Data: {a}. Priserna ingår inte i datan: de kommer från vår egen daterade tabell med listpriser.',
+  rtShBusy:'En ruttsökning pågår. Öppna länken igen när den är klar.',
   mcElecW:'Det ser högt ut för euro. Om du angav kronor, byt valuta intill fältet.',
   chgSumN:'Batteriet är tomt när du kommer fram. {n} publika Typ 2-stolpar inom {r} km från målet{b}. Listan finns under Mer detaljer.', chgSumN1:'Batteriet är tomt när du kommer fram. En publik Typ 2-stolpe inom {r} km från målet{b}. Detaljer finns under Mer detaljer.', chgSumNone:'Batteriet är tomt när du kommer fram, och våra data har ingen publik Typ 2-stolpe inom {r} km från målet. Kontrollera att hotellet eller målet har laddning.', chgSumFree:', markerad som gratis av källan', chgSumCost:', billigast cirka {c} för en full laddning (uppskattning)',
   chgNearH:'Laddning nära målet', chgNearN:'{n} publika Typ 2-stolpar inom {r} km från målet.', chgNearN1:'En publik Typ 2-stolpe inom {r} km från målet.', chgNearNone:'Ingen publik Typ 2-stolpe i våra data inom {r} km från målet.',
@@ -2384,6 +2386,7 @@ function setCurMode(m) {
   renderMarkers(); rebuildList(); renderBubbles(); updStatus(); renderCarCard(); renderCompare();
   if (typeof rt !== 'undefined' && rt.res) rtRenderOut();
   if (stId) { const s = findStation(stId), b = document.getElementById('st-body'); if (s && b) { const y = b.scrollTop; b.innerHTML = `<div class="pop">${stBody(s)}</div>`; b.scrollTop = y; } }
+  else if (typeof chg !== 'undefined' && chg.sel && document.getElementById('p-station')?.classList.contains('open')) { const b = document.getElementById('st-body'); if (b) { const y = b.scrollTop; b.innerHTML = `<div class="pop">${chgBody(chg.sel)}</div>`; b.scrollTop = y; } }
   if (activeTab === 'stations' && myLat != null) showNearby();
 }
 function curUi() { document.querySelectorAll('.cur-btn').forEach(b => { const on = b.dataset.m === curMode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); const e = document.getElementById('car-cardpct'); if (e && document.activeElement !== e) e.value = cardPct || ''; fxSrcUpd(); }
@@ -3710,7 +3713,8 @@ function goTab(tab) {
 }
 
 function openTrust() { document.getElementById('trust-overlay')?.classList.add('on'); document.querySelector('#trust-overlay .trust-dismiss')?.focus(); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeStart(); closeTrust(); closeNav(); if (stId && !DESK.matches) closeStation(true); } });
+const stOpen = () => !!document.getElementById('p-station')?.classList.contains('open');   // the sheet is open for a pump or a charging post; stId only knows pumps
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeStart(); closeTrust(); closeNav(); if (stOpen() && !DESK.matches) closeStation(true); } });
 function closeTrust() {
   document.getElementById('trust-overlay')?.classList.remove('on');
   try { localStorage.setItem('efp_seen_trust_intro', '1'); } catch (_) {}
@@ -3735,7 +3739,7 @@ function closePanel() {
 // Only a deliberate gesture (tap or drag on the map) shrinks a full sheet — popup auto-pan or a flyTo finishing
 // right after a tab tap used to collapse the Prices sheet to half height.
 map.on('click dragstart', () => { if (!DESK.matches && curPanel && sheetState === 'full') setSheet('half'); });
-map.on('click', () => { if (stId && !DESK.matches) closeStation(true); });   // a tap on empty map dismisses the station sheet
+map.on('click', () => { if (stOpen() && !DESK.matches) closeStation(true); });   // a tap on empty map dismisses the station sheet
 
 // ── Draggable sheets: full / half / peek (phones & tablets). Drag the handle; swipe past peek to close. ──
 let sheetState = 'full', curPanel = null;
@@ -5327,6 +5331,7 @@ function shApply(S) {
 }
 function shOpen() {
   const d = shDecode(location.hash); if (d.st === 'none') return;
+  if (rt.busy) { toast(t('rtShBusy')); return; }       // a search is running: applying now would mix two plans
   closeStart(); goTab('compare'); setCmpView('route');
   if (d.st !== 'ok') { rt.shMsg = () => t(d.st === 'ver' ? 'rtShVer' : 'rtShBad', { v: d.v }); renderRoute(); return; }
   shApply(d.state);
@@ -5611,11 +5616,11 @@ function rtDepHtml(R, P) {
 Object.assign(rtExtras, { strip: rtStripHtml, nav: rtNavHtml, ac: rtAcHtml, dep: rtDepHtml });
 // ── Charging posts (Type 2): map layer, sheet, list near the destination. Posts: data/ev_<cc>.json (src/chargers.py, docs/CHARGERS_PIPELINE.md). Prices: web/ac_tariffs.json (docs/AC_TARIFFS.md), never from the post data. ──
 const CHG_CC = ['SE', 'NO', 'DK', 'DE'];                 // countries that have a data file: add one here when src/chargers.py gains it
-const CHG_ZOOM = 11, CHG_MAX_MARKERS = 400, AC_V = 1;    // AC_V: bump whenever web/ac_tariffs.json changes (service worker serves ?v= URLs cache-first)
+const CHG_ZOOM = 11, CHG_MAX_MARKERS = 400;
 const chg = { on: store.get('efp_chg', false) === true, files: {}, loading: {}, tariffs: null, tarP: null, tarDone: false, layer: L.layerGroup().addTo(map), told: new Set() };
 const CHG_ICON = L.divIcon({ className: '', html: `<div class="chg-mk">${ico('bolt')}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
 function chgTariffs() {
-  return chg.tarP = chg.tarP || fetch('ac_tariffs.json?v=' + AC_V).then(r => r.ok ? r.json() : null).then(j => { chg.tariffs = j && j.schema === 1 && Array.isArray(j.entries) ? j.entries : null; }).catch(() => {}).then(() => { chg.tarDone = true; });
+  return chg.tarP = chg.tarP || fetch('ac_tariffs.json').then(r => r.ok ? r.json() : null).then(j => { chg.tariffs = j && j.schema === 1 && Array.isArray(j.entries) ? j.entries : null; }).catch(() => {}).then(() => { chg.tarDone = true; });
 }
 function chgLoad(cc) {                                   // files[cc]: undefined = not asked yet, null = failed (asked again after a minute), object = ready
   if (!CHG_CC.includes(cc)) return Promise.resolve(null);
@@ -5625,12 +5630,13 @@ function chgLoad(cc) {                                   // files[cc]: undefined
 const chgOwn = acpNow;
 const chgFind = (cc, i) => { const f = chg.files[cc]; return f && f.posts.find(x => x.i === i) || null; };
 function chgView(p) {                                    // everything the sheet and the list say about one post
-  const entry = chgMatchTariff(chg.tariffs, p.cc, p.op), pr = chgPrice(p, entry, chgOwn(), Date.now()), kwh = car.batt > 0 ? car.batt : null, carKw = rtChg();
+  const entry = chgMatchTariff(chg.tariffs, p.cc, p.op), own = chgOwn(), pcur = metaOf[p.cc]?.currency || CUR_DEF[p.cc] || 'EUR', pr = chgPrice(p, entry, own && own.cur === pcur ? own : null, Date.now()),   kwh = car.batt > 0 ? car.batt : null, carKw = rtChg();
   const min = chgMinutes(kwh, p.kw, carKw), cost = kwh ? chgCost(pr, kwh, min) : null;
-  return { pr, kwh, carKw, min, cost, eur: cost && !cost.free ? (cost.lo + cost.hi) / 2 * (rtToEur(pr.cur) || 1) : null };
+  const rate = pr.cur ? rtToEur(pr.cur) : null;   // no rate: unknown, never 1:1
+  return { pr, kwh, carKw, min, cost, eur: rate && cost && !cost.free ? (cost.lo + cost.hi) / 2 * rate : rate && (pr.kind === 'own' || pr.kind === 'list') ? (pr.lo + pr.hi) / 2 * rate : null };   // without a battery size there is no cost: rank by the price per kWh
 }
 const chgRng = (c, cur) => Math.abs(c.hi - c.lo) < 0.005 ? money(c.lo, cur) : t('chgCostRange', { a: money(c.lo, cur), b: money(c.hi, cur) });
-const chgShort = v => v.pr.kind === 'free' ? t('chgShortFree') : v.cost ? t('chgShortCost', { c: chgRng(v.cost, v.pr.cur) }) : v.pr.kind === 'old' ? t('chgShortOld') : v.pr.kind === 'none' ? t('chgShortNone') : cTxt(v.pr.lo, v.pr.cur) + '/kWh';
+const chgShort = v => v.pr.kind === 'free' ? t('chgShortFree') : v.cost ? t('chgShortCost', { c: chgRng(v.cost, v.pr.cur) }) : v.pr.kind === 'old' ? t('chgShortOld') : v.pr.kind === 'none' ? t('chgShortNone') : (v.pr.from ? t('chgFrom') + ' ' : '') + (v.pr.hi > v.pr.lo ? cTxt(v.pr.lo, v.pr.cur) + '–' + cTxt(v.pr.hi, v.pr.cur) : cTxt(v.pr.lo, v.pr.cur)) + '/kWh';
 const CHG_KWK = { low: 'chgKwLow', mid: 'chgKwMid', high: 'chgKwHigh' };
 function chgHead(p, popup) {
   const sub = [t('chgPost'), p.title, myLat != null ? fmtDist(dist(myLat, myLon, p.lat, p.lon)) : ''].filter(Boolean).join(' · ');
@@ -5661,7 +5667,7 @@ function chgBody(p) {
 function chgOpen(cc, i) {
   const p = chgFind(cc, i); if (!p) return;
   chgTariffs().then(() => {                                // price table first, so the sheet never flashes 'not published'
-    if (!DESK.matches) { openStationSheet(p, true, { head: chgHead(p), body: chgBody(p) }); return; }
+    if (!DESK.matches) { chg.sel = p; openStationSheet(p, true, { head: chgHead(p), body: chgBody(p) }); return; }
     if (map.getZoom() < 14) map.setView([p.lat, p.lon], 14);
     L.popup({ maxWidth: 290, offset: [0, -6], autoPanPadding: [12, 70] }).setLatLng([p.lat, p.lon]).setContent(`<div class="pop">${chgHead(p, true)}${chgBody(p)}</div>`).openOn(map);
   });
