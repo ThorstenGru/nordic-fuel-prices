@@ -77,6 +77,23 @@ jobs:
         continue-on-error: true
         run: test -f data/price_cycles.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/price_cycles.json -o data/price_cycles.json || rm -f data/price_cycles.json
 
+      - name: Charging stations (data/ev_*.json; calls Open Charge Map/NOBIL only when the published file is older than 6 days; never fails the run)
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          OCM_API_KEY: ${{ secrets.OCM_API_KEY }}
+          # optional: SE/NO merge; skipped silently when the secret does not exist. See docs/CHARGERS_PIPELINE.md
+          NOBIL_API_KEY: ${{ secrets.NOBIL_API_KEY }}
+          FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
+        run: python src/chargers.py
+
+      - name: Keep last good ev_*.json if this run produced none
+        continue-on-error: true
+        run: |
+          for cc in se no dk de; do
+            test -f data/ev_$cc.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/ev_$cc.json -o data/ev_$cc.json || rm -f data/ev_$cc.json
+          done
+
       - name: Copy web files to data dir
         run: cp -r web/* data/
 
