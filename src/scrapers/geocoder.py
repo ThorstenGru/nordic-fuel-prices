@@ -80,9 +80,11 @@ async def _throttle() -> None:
 
 
 # ── Cache I/O ─────────────────────────────────────────────────────────────────
+_CACHE_RETRY_SLEEP = 2.0
 
-async def _load_cache(country_code: str, session: aiohttp.ClientSession) -> Dict:
-    """Load geocache from local file, then fall back to the previous GitHub Pages deploy."""
+async def _load_cache(country_code: str, session: aiohttp.ClientSession) -> Optional[Dict]:
+    """Load geocache from local file, then fall back to the previous GitHub Pages deploy.
+    {} = there is no cache yet (clean 404); None = it could not be read, so the caller must not overwrite it."""
     path = _DATA_DIR / f"{country_code.lower()}_geocache.json"
 
     if path.exists():
@@ -96,18 +98,22 @@ async def _load_cache(country_code: str, session: aiohttp.ClientSession) -> Dict
 
     base = await resolve_pages_base(session)
     url = f"{base}/{country_code.lower()}_geocache.json"
-    try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
-            if resp.status == 200:
-                data = await resp.json(content_type=None)
-                if isinstance(data, dict):
-                    print(f"[{country_code}] Loaded geocache from GitHub Pages ({len(data)} entries)")
-                    _save_cache(country_code, data)   # re-publish: gh-pages deploy deletes files absent from data/
-                    return data
-    except Exception:
-        pass
-
-    return {}
+    for attempt in range(3):
+        try:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    if isinstance(data, dict):
+                        print(f"[{country_code}] Loaded geocache from GitHub Pages ({len(data)} entries)")
+                        _save_cache(country_code, data)   # re-publish: gh-pages deploy deletes files absent from data/
+                        return data
+                elif resp.status == 404:
+                    return {}
+        except Exception:
+            pass
+        if attempt < 2:
+            await asyncio.sleep(_CACHE_RETRY_SLEEP)
+    return None
 
 
 def _save_cache(country_code: str, cache: Dict) -> None:
@@ -182,6 +188,9 @@ async def apply_geocoding(
     """
     global _used
     cache = await _load_cache(country_code, session)
+    if cache is None:   # unreadable is not empty: writing a near-empty cache would destroy the accumulated one
+        print(f"[{country_code}] geocache unreadable, skipping geocoding this run")
+        return
 
     # 1. Apply already-cached coordinates
     for s in stations:
