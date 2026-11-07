@@ -16,6 +16,7 @@ import os
 import sys
 import time
 import traceback
+import types
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -256,8 +257,16 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
             return {"cc": cc, "meta": old["meta"], "health": {"seconds": 0, "skipped": True, **{k: v for k, v in old["meta"].items() if k != "country"}}}
     error: Optional[str] = None
     stations: List[Dict[str, Any]] = []
-    scraper = scraper_cls(session)
     try:
+        scraper = scraper_cls(session)
+    except Exception as e:  # noqa: BLE001 — a scraper that cannot even be built must not take the run down
+        error = f"init {type(e).__name__}: {e}"
+        traceback.print_exc()
+        scraper = types.SimpleNamespace(SOURCE=getattr(scraper_cls, "SOURCE", ""), CONFIDENCE=getattr(scraper_cls, "CONFIDENCE", 0),
+                                        GRADE=getattr(scraper_cls, "GRADE", "C"), fetched_at=now_iso())
+    try:
+        if error:
+            raise RuntimeError(error)
         stations = await asyncio.wait_for(scraper.fetch_stations(), timeout=SCRAPER_TIMEOUT_S)
     except asyncio.TimeoutError:
         error = f"timeout after {SCRAPER_TIMEOUT_S}s"

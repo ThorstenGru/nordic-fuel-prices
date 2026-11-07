@@ -148,6 +148,16 @@ def parse_tk_stations(data: Dict, price_entry) -> List[Dict[str, Any]]:
     return out
 
 
+def _num(name, default, cast):
+    """Number from the environment; a typo in a repo variable (400x) must not take the whole pipeline down."""
+    raw = os.environ.get(name)
+    try:
+        return cast(raw) if raw not in (None, "") else default
+    except ValueError:
+        print(f"[DE] {name}={raw!r} is not a number - using {default}")
+        return default
+
+
 class GermanyScraper(BaseScraper):
     COUNTRY    = "DE"
     CURRENCY   = "EUR"
@@ -166,11 +176,11 @@ class GermanyScraper(BaseScraper):
         self.mode = mode
         self.api_key = env("TANKERKOENIG_API_KEY", "")
         self.base_url = (env("TANKERKOENIG_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
-        self.radius_km = float(env("TANKERKOENIG_RADIUS_KM") or 25)
-        self.max_req = int(env("TANKERKOENIG_MAX_REQ") or 400)
-        self.concurrency = int(env("TANKERKOENIG_CONCURRENCY") or 4)
-        self.budget_s = float(env("TANKERKOENIG_BUDGET_S") or 420)
-        self.scraper_timeout_s = float(env("SCRAPER_TIMEOUT_S") or 900)   # same default as main.py
+        self.radius_km = _num("TANKERKOENIG_RADIUS_KM", 25, float)
+        self.max_req = _num("TANKERKOENIG_MAX_REQ", 400, int)
+        self.concurrency = _num("TANKERKOENIG_CONCURRENCY", 4, int)
+        self.budget_s = _num("TANKERKOENIG_BUDGET_S", 420, float)
+        self.scraper_timeout_s = _num("SCRAPER_TIMEOUT_S", 900, float)   # same default as main.py
         # injectable for tests
         self._sleep = asyncio.sleep
         self._clock = time.monotonic

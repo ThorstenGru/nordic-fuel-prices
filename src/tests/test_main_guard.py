@@ -93,6 +93,21 @@ class Retention(unittest.TestCase):
         r, f = run_one_with(good_scraper(0, error="boom"), old=None)
         self.assertEqual(f["meta"]["status"], "failed"); self.assertEqual(f["stations"], [])
 
+    def test_scraper_that_cannot_be_built_fails_only_itself(self):
+        class Boom:
+            COUNTRY, CURRENCY, SOURCE, CONFIDENCE, REFRESH_MINUTES, GRADE = "XX", "EUR", "t", 1, 1, "C"
+            def __init__(self, session): raise ValueError("bad env")
+        r, f = run_one_with(Boom, old=None)
+        self.assertEqual(f["meta"]["status"], "failed"); self.assertIn("bad env", f["meta"]["last_error"])
+        r, f = run_one_with(Boom, old=self.OLD)
+        self.assertEqual(f["meta"]["status"], "stale"); self.assertEqual(len(f["stations"]), 30)
+
+    def test_german_env_typo_is_ignored(self):
+        from scrapers.germany import GermanyScraper
+        with mock.patch.dict(os.environ, {"TANKERKOENIG_MAX_REQ": "400x", "TANKERKOENIG_RADIUS_KM": "abc"}):
+            g = GermanyScraper(None)
+        self.assertEqual((g.max_req, g.radius_km), (400, 25))
+
     def test_shrink_below_ratio_is_refused(self):
         pm = {"XX": {"station_count": 100, "priced_count": 100, "status": "ok", "fetched_at": "2026-10-01T00:00:00+00:00"}}
         r, f = run_one_with(good_scraper(10), old=self.OLD, prev_meta=pm)
