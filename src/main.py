@@ -13,6 +13,7 @@ Reliability rules (the product lives on its data):
 import asyncio
 import json
 import os
+import sys
 import time
 import traceback
 from collections import Counter
@@ -203,15 +204,31 @@ def summarize(stations: List[Dict[str, Any]], fallback_currency: str) -> Dict[st
 
 # ── I/O helpers ──────────────────────────────────────────────────────────────
 
+RETRY_SLEEP = 2.0          # seconds between tries of a read of our own published files
+MAX_FAILED_COUNTRIES = 5   # more countries than this with no data at all: something is wrong with the run itself, do not deploy it
+
+
+async def fetch_prev_json(session: aiohttp.ClientSession, url: str, timeout: int = 60) -> Tuple[Optional[Any], bool]:
+    """Read one of our own published files. Returns (data, clean). clean is False when the answer is unknown
+    (timeouts, 5xx, bad body after 3 tries); a clean 404 means 'no such file yet' and is (None, True)."""
+    for attempt in range(3):
+        try:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout),
+                                   headers={"Cache-Control": "no-cache"}) as resp:
+                if resp.status == 200:
+                    return await resp.json(content_type=None), True
+                if resp.status == 404:
+                    return None, True
+                print(f"[prev] {url}: HTTP {resp.status} (try {attempt + 1})")
+        except Exception as e:
+            print(f"[prev] {url}: {type(e).__name__}: {e} (try {attempt + 1})")
+        if attempt < 2:
+            await asyncio.sleep(RETRY_SLEEP)
+    return None, False
+
+
 async def fetch_json(session: aiohttp.ClientSession, url: str, timeout: int = 60) -> Optional[Any]:
-    try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout),
-                               headers={"Cache-Control": "no-cache"}) as resp:
-            if resp.status == 200:
-                return await resp.json(content_type=None)
-    except Exception as e:
-        print(f"[prev] {url}: {type(e).__name__}: {e}")
-    return None
+    return (await fetch_prev_json(session, url, timeout))[0]
 
 
 def write_json(path: Path, obj: Any) -> None:
@@ -378,7 +395,11 @@ async def run_all() -> None:
     connector = aiohttp.TCPConnector(limit=60, limit_per_host=12)
     async with aiohttp.ClientSession(connector=connector) as session:
         base = await resolve_pages_base(session)
-        prev = await fetch_json(session, f"{base}/meta.json", timeout=30) or {}
+        prev, known = await fetch_prev_json(session, f"{base}/meta.json", timeout=30)
+        if not known:   # unknown is not "first run": without it every shrink guard and the cadence skip would be off
+            print("::error::Could not read the published meta.json after 3 tries; not publishing this run.")
+            sys.exit(1)
+        prev = prev or {}
         prev_meta = {c["country"]: c for c in prev.get("countries", []) if isinstance(c, dict) and "country" in c}
         try:
             from scrapers._anwb import _ecb_rates, ecb_date
@@ -387,6 +408,11 @@ async def run_all() -> None:
         except Exception as e:  # noqa: BLE001 — stats are optional
             print(f"[stats] no FX rates: {type(e).__name__}: {e}")
         results = await asyncio.gather(*(run_one(sc, session, prev_meta) for sc in ALL_SCRAPERS))
+
+    failed_cc = [r["cc"] for r in results if r["meta"]["status"] == "failed"]
+    if len(failed_cc) > MAX_FAILED_COUNTRIES:   # e.g. the live site was unreachable all run: publishing this would blank the map
+        print(f"::error::{len(failed_cc)} countries have no data ({', '.join(failed_cc)}); not publishing this run.")
+        sys.exit(1)
 
     generated = now_iso()
     metas = [r["meta"] for r in results]
