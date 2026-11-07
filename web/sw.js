@@ -10,7 +10,7 @@
 // Versioned CDN libraries (URL contains the version) and small static icons: cache-first — safe,
 // because a version bump changes the URL itself.
 
-const SHELL_CACHE = 'efp-shell-v31';   // v25: quotes escaped in esc() (shared-plan attribute injection fix). v24: share a route plan as a link (#p1=, plan inputs only, nothing stored server-side). v23: charging posts (Type 2) layer, sheet and list near the destination (data/ev_<cc>.json is plain unversioned JSON, network-first; ac_tariffs.json is requested as ?v=, cache-first). v22: route planner review fixes (incremental border tip, electricity note, fare-aware picks, departure hint wording, collapsed plan card). v21: route planner wave 3 (energy strip, navigation export, backup pump, return trip, public AC verdict, departure hint; price_cycles.json is plain unversioned JSON, network-first). v20: route planner wave 2 (trip cost, alternatives, fare list, border tip, noon note). v19: route plan review fixes (reserve below start fuel, reach, undated pumps, focus). v18: route planner wave 1 (fuel plan, assumptions panel). v17: My car self-explanatory pass 2 (electric-only note, price source wording, decimal comma, aria-describedby). v16: My car clarity pass (answer card, numbered steps, plain help). v15: tariff expiry, partial-month blend, temperature-matched verdict, privacy consent. v14: home tariff, price outlook, temperature model. v9 (app 2.0.0): Nordic Paper remake, self-hosted fonts + new icons precached. v7: purges Nominatim/OSRM responses that older versions cached by mistake (see the fetch handler)
+const SHELL_CACHE = 'efp-shell-v32';   // v25: quotes escaped in esc() (shared-plan attribute injection fix). v24: share a route plan as a link (#p1=, plan inputs only, nothing stored server-side). v23: charging posts (Type 2) layer, sheet and list near the destination (data/ev_<cc>.json is plain unversioned JSON, network-first; ac_tariffs.json is requested as ?v=, cache-first). v22: route planner review fixes (incremental border tip, electricity note, fare-aware picks, departure hint wording, collapsed plan card). v21: route planner wave 3 (energy strip, navigation export, backup pump, return trip, public AC verdict, departure hint; price_cycles.json is plain unversioned JSON, network-first). v20: route planner wave 2 (trip cost, alternatives, fare list, border tip, noon note). v19: route plan review fixes (reserve below start fuel, reach, undated pumps, focus). v18: route planner wave 1 (fuel plan, assumptions panel). v17: My car self-explanatory pass 2 (electric-only note, price source wording, decimal comma, aria-describedby). v16: My car clarity pass (answer card, numbered steps, plain help). v15: tariff expiry, partial-month blend, temperature-matched verdict, privacy consent. v14: home tariff, price outlook, temperature model. v9 (app 2.0.0): Nordic Paper remake, self-hosted fonts + new icons precached. v7: purges Nominatim/OSRM responses that older versions cached by mistake (see the fetch handler)
 const DATA_CACHE  = 'efp-data-v3';
 const SLOW_NET_MS = 3500;   // flaky/slow connection: serve the cached copy instead of waiting
 
@@ -31,10 +31,15 @@ const SHELL_ASSETS = [
   './fonts/schibsted-grotesk-latin-ext-wght-normal.woff2',
 ];
 
-// CDN assets — versioned URLs, safe to cache indefinitely
+// Leaflet 1.9.4, self-hosted (same origin, so no third-party host is needed to draw the map)
 const CDN_ASSETS = [
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  './vendor/leaflet/leaflet.css',
+  './vendor/leaflet/leaflet.js',
+  './vendor/leaflet/images/layers.png',
+  './vendor/leaflet/images/layers-2x.png',
+  './vendor/leaflet/images/marker-icon.png',
+  './vendor/leaflet/images/marker-icon-2x.png',
+  './vendor/leaflet/images/marker-shadow.png',
 ];
 
 self.addEventListener('install', event => {
@@ -99,7 +104,7 @@ self.addEventListener('fetch', event => {
   // Third-party APIs (Nominatim place search / reverse geocoding, OSRM routes, analytics) are never cached: answers would go stale,
   // and reverse-geocode URLs contain the user's coordinates — they must not pile up in a cache on the device. Returning without
   // respondWith() lets the browser fetch them normally.
-  if (url.origin !== self.location.origin && url.hostname !== 'unpkg.com') return;
+  if (url.origin !== self.location.origin) return;
 
   // Everything else (versioned CDN libs, manifest, icon, flags): cache-first
   event.respondWith(cacheFirst(event.request));

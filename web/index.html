@@ -29,16 +29,15 @@
      buys us is blocking any OTHER script origin and any exfiltration to an unlisted endpoint. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
-  style-src 'self' 'unsafe-inline' https://unpkg.com;
-  img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://tile.openstreetmap.org;
+  script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https://server.arcgisonline.com https://tile.openstreetmap.org;
   connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
   frame-ancestors 'none';
 ">
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
 <link rel="preload" href="fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -48,8 +47,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>EuroFuelPrices — Live European Fuel Prices</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>   <!-- Leaflet 1.9.4 (BSD-2, vendor/leaflet/LICENSE), self-hosted: an unpkg outage must not blank the app -->
 <style>
 /* ══════════════════════════════════════════════════════════════
    EuroFuelPrices v2.0 — "Nordic Paper"
@@ -1116,8 +1114,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 <!-- Backdrop -->
 <div id="bd" onclick="closePanel()"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script>
 // ════════════════════════════════════════════════════
 // Constants
@@ -3245,6 +3242,7 @@ async function loadCC(cc, opts) {
     delete _cs[cc];
     _cv[cc] = (_cv[cc] | 0) + 1; _qVer++; _ro = {};
     if (!force) { schedRender(); onNewData(); }
+    evictFar();
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
     failedCC.add(cc);
@@ -3252,6 +3250,27 @@ async function loadCC(cc, opts) {
     dlRelease();
     loading.delete(cc); updStatus(); showNetBanner();
   }
+}
+
+// A long session over several regions used to keep every country file in memory (Germany alone is ~15k stations): on a phone that can end in a killed tab.
+// Above MAX_LOADED countries, drop the ones farthest from the map that are not in view, selected, the user's own, or on the planned route.
+const MAX_LOADED = 6;
+function evictFar() {
+  if (loaded.size <= MAX_LOADED) return;
+  const keep = new Set([fCountry, myCountry, centerCountry()]);
+  if (typeof rt !== 'undefined' && rt.res) [...(rt.res.countries || []), ...(rt.res.cc || [])].forEach(c => keep.add(c));
+  if (stId) keep.add(findStation(stId)?.country);
+  const view = map.getBounds().pad(0.25), c = map.getCenter();
+  const far = [...loaded].filter(cc => !keep.has(cc) && !loading.has(cc) && CB[cc] && !view.intersects(CB[cc]))
+    .map(cc => { const m = CB[cc].getCenter(); return [cc, hKm(c.lat, c.lng, m.lat, m.lng)]; }).sort((a, b) => b[1] - a[1]);
+  let n = 0;
+  while (loaded.size > MAX_LOADED && far.length) {
+    const [cc] = far.shift();
+    delete data[cc]; loaded.delete(cc); delete _cs[cc];
+    for (const k in _qCache) if (k.startsWith(cc + '|')) delete _qCache[k];
+    _cv[cc] = (_cv[cc] | 0) + 1; n++;
+  }
+  if (n) { _qVer++; schedRender(); }
 }
 
 // Pull-to-refresh / "last updated": only countries whose version changed are downloaded again.
