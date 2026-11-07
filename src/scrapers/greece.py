@@ -109,8 +109,8 @@ class GreeceScraper(BaseScraper):
     COUNTRY    = "GR"
     CURRENCY   = "EUR"
     SOURCE     = SOURCE_STRING
-    CONFIDENCE = 0.95
-    GRADE      = "B"
+    CONFIDENCE = 0.95 if USE_FUELGR else 0.85
+    GRADE      = "B" if USE_FUELGR else "C"   # with fuelGR off every price comes from ANWB (no timestamps): grade C, like Spain's ANWB fallback
     REFRESH_MINUTES = 180   # fuel-prices.eu rate limit; ministry data changes ~twice a day anyway
 
     def __init__(self, session: aiohttp.ClientSession):
@@ -128,10 +128,12 @@ class GreeceScraper(BaseScraper):
 
         # fuelgr and anwb are independent; anwb is also the planning pool when fuelgr is down
         async def _no_fuelgr():
-            raise RuntimeError("fuelGR source disabled (no licence)")
+            return []                    # disabled (no licence): not an error, so it is not reported as a failed source every run
         res = await asyncio.gather(self._fetch_fuelgr() if USE_FUELGR else _no_fuelgr(), self._fetch_anwb(),
                                    return_exceptions=True)
         for name, r in zip(("fuelgr", "anwb"), res):
+            if name == "fuelgr" and not USE_FUELGR:
+                continue
             if isinstance(r, BaseException):
                 errors[name] = f"{type(r).__name__}: {r}"
                 print(f"[GR/{name}] FAILED: {errors[name]}")
@@ -158,9 +160,8 @@ class GreeceScraper(BaseScraper):
         for st in fp_stations:
             st["prices"] = []
         priced_anwb = [s for s in by_source.get("anwb", []) if s["prices"]]   # location-only ANWB rows are mostly stale/closed
-        results = [
-            SourceResult("fuelgr", SOURCE_LABEL["fuelgr"], by_source.get("fuelgr", []), 1, "community", "EUR",
-                         "fuelgr" in by_source, errors.get("fuelgr")),
+        results = ([SourceResult("fuelgr", SOURCE_LABEL["fuelgr"], by_source.get("fuelgr", []), 1, "community", "EUR",
+                                 "fuelgr" in by_source, errors.get("fuelgr"))] if USE_FUELGR else []) + [
             SourceResult("fpeu", SOURCE_LABEL["fpeu"], fp_stations, 5, "geometry", "EUR",
                          "fpeu" in by_source, errors.get("fpeu")),
             SourceResult("anwb", SOURCE_LABEL["anwb"], priced_anwb, 9, "aggregator", "EUR",

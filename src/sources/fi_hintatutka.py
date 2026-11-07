@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
-URL = "http://www.hintatutka.net/about"
+URL = "https://www.hintatutka.net/about"
 UA = "EuroFuelPrices/1.0 (+https://eurofuelprices.com)"
 SOURCE = "hintatutka.net (community)"
 CONFIDENCE = 0.6
@@ -62,17 +62,24 @@ def parse(html: str, max_age_days: Optional[int] = MAX_AGE_DAYS) -> List[Dict[st
         prices = []
         for key, ft, oct_ in (("price_95e10_thousandths", "E10", 95), ("price_diesel_thousandths", "DIESEL", None)):
             v = s.get(key)
-            if v and 1000 <= int(v) <= 4000:
-                p = {"fuel_type": ft, "price": int(v) / 1000, "currency": "EUR", "unit": "L",
+            try:
+                v = int(v) if v else None
+            except (TypeError, ValueError):
+                continue
+            if v and 1000 <= v <= 4000:
+                p = {"fuel_type": ft, "price": v / 1000, "currency": "EUR", "unit": "L",
                      "updated_at": upd, "source": SOURCE}
                 if oct_:
                     p["octane"] = oct_
                 prices.append(p)
         if not prices:
             continue
-        brand = (s.get("brand") or s["name"].split()[0]).strip()
+        name = str(s.get("name") or "").strip()
+        if not name or s.get("id") is None:
+            continue
+        brand = (s.get("brand") or name.split()[0]).strip()
         out.append({
-            "id": f"fi_ht_{s['id']}", "country": "FI", "name": s["name"], "brand": brand,
+            "id": f"fi_ht_{s['id']}", "country": "FI", "name": name, "brand": brand,
             "address": s.get("address") or "", "city": s.get("city_name") or "",
             "lat": lat, "lon": lon, "source": SOURCE, "confidence": CONFIDENCE, "prices": prices,
         })

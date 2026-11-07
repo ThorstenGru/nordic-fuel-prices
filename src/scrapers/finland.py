@@ -116,6 +116,7 @@ class FinlandScraper(BaseScraper):
     CURRENCY = "EUR"
     SOURCE = "polttoaine.net + anwb.nl"
     CONFIDENCE = 0.70  # Community-reported prices (polttoaine.net); ANWB at 0.90
+    REFRESH_MINUTES = 55   # ~140 HTML pages from a small hobby site plus a full ANWB crawl per run: hourly, not every 15 minutes
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         sem = asyncio.Semaphore(CONCURRENCY)

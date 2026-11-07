@@ -69,6 +69,7 @@ class NorwayScraper(BaseScraper):
     SOURCE     = "anwb.nl (ANWB POI API) + openstreetmap.org (locations)"
     CONFIDENCE = 0.80
     GRADE = "C"
+    REFRESH_MINUTES = 55   # full ANWB crawl plus a country-wide Overpass query per run: hourly
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         anwb_res, osm_els, ssb_avg = await asyncio.gather(
