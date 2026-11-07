@@ -29,12 +29,13 @@ BAD_STATUS = {100, 150, 200, 210}   # not operational, planned, removed, removed
 PRIVATE_USAGE = {2, 3, 6}
 DROP_PROVIDERS = {26}               # Oplaadpalen.nl: NonCommercial licence
 DROP_RATIO = 0.8                    # fewer than 80 % of the previous count: refuse
+ALLOW_SHRINK = {c.strip().upper() for c in os.environ.get("ALLOW_SHRINK", "").split(",") if c.strip()}   # same workflow input as the fuel pipeline: one run, listed countries may shrink
 MAX_OUTLIER_SHARE = 0.02            # more than 2 % of stations outside the country box: refuse
 
 # cc -> (OCM countrycode, NOBIL countrycode or None, count band, (lat0, lat1, lon0, lon1))
 COUNTRIES = {
     "SE": ("SE", "SWE", (2000, 6000), (55.0, 69.2, 10.8, 24.3)),
-    "NO": ("NO", "NOR", (1500, 4000), (57.5, 81.0, 4.0, 35.0)),
+    "NO": ("NO", "NOR", (1500, 8000), (57.5, 81.0, 4.0, 35.0)),
     "DK": ("DK", None, (1000, 4000), (54.5, 57.9, 7.9, 15.3)),
     "DE": ("DE", None, (10000, 40000), (47.2, 55.2, 5.8, 15.1)),
 }
@@ -267,7 +268,7 @@ def check(new: Dict[str, Any], prev: Optional[Dict[str, Any]], secrets: List[str
     if not lo <= n <= hi:
         return f"{n} stations outside the sanity band {lo}-{hi}"
     pn = len((prev or {}).get("s") or [])
-    if pn and n < DROP_RATIO * pn:
+    if pn and n < DROP_RATIO * pn and new["cc"] not in ALLOW_SHRINK:
         return f"{n} stations is a drop of more than 20 % from {pn}"
     if new["dropped_outside_box"] > MAX_OUTLIER_SHARE * (n + new["dropped_outside_box"]):
         return f"{new['dropped_outside_box']} stations outside the country box"
@@ -332,7 +333,7 @@ async def refresh(session: aiohttp.ClientSession, cc: str, ocm_key: str, nobil_k
                           f"&includecomments=false&maxresults=100000", {"X-API-Key": ocm_key}, f"{cc} OCM")
     if not isinstance(pois, list) or not pois:
         return None
-    ops = {o["ID"]: o.get("Title") or "" for o in ref.get("Operators") or [] if "ID" in o}
+    ops = {o["ID"]: ("" if (o.get("Title") or "").strip().startswith("(") else o.get("Title") or "") for o in ref.get("Operators") or [] if "ID" in o}   # "(Unknown Operator)" and the like are placeholders, not operators
     provs = {d["ID"]: (d.get("Title") or "", d.get("License") or "") for d in ref.get("DataProviders") or [] if "ID" in d}
     stations, st = reduce_ocm(pois, ops)
     used_nobil = False
@@ -362,6 +363,9 @@ async def run(countries: Optional[List[str]] = None, force: bool = False) -> int
         for cc in countries or list(COUNTRIES):
             out = DATA / f"ev_{cc.lower()}.json"
             prev = await fetch_prev(session, cc)
+            if prev is None:                            # could not be read (Pages hiccup): unknown is not "no file", so no blind refresh; the curl step restores the live file
+                print(f"[chargers] {cc}: previous file unreadable, skipped this run")
+                continue
             if prev and prev.get("v") != 1:
                 prev = None
             if not due(prev, today, force):
@@ -376,12 +380,15 @@ async def run(countries: Optional[List[str]] = None, force: bool = False) -> int
             if ref is None:
                 ref = await get_json(session, f"{OCM}/referencedata/", {"X-API-Key": ocm_key}, "referencedata") or {}
                 await asyncio.sleep(CALL_GAP)
-            new = await refresh(session, cc, ocm_key, nobil_key, ref, prev) if ref else None
-            why = "no usable data" if new is None else check(new, prev, [ocm_key, nobil_key])
+            if prev:
+                write_json(out, {**prev, "attempted": today.isoformat()})   # written BEFORE the pull: a crash or the step timeout must not mean a retry every 15 minutes
+            try:
+                new = await refresh(session, cc, ocm_key, nobil_key, ref, prev) if ref else None
+                why = "no usable data" if new is None else check(new, prev, [ocm_key, nobil_key])
+            except Exception as e:  # noqa: BLE001  (type only: messages can carry URLs)
+                new, why = None, f"error {type(e).__name__}"
             if why:
                 print(f"[chargers] {cc}: refresh refused ({why}); last good file kept")
-                if prev:
-                    write_json(out, {**prev, "attempted": today.isoformat()})   # no retry before tomorrow
                 await asyncio.sleep(CALL_GAP)
                 continue
             write_json(out, new)

@@ -217,6 +217,61 @@ class Run(unittest.TestCase):
         self.assertEqual(n, 0)
         self.assertEqual(json.loads(txt)["n"], 2000)
 
+    def test_not_due_republishes_without_calling_ocm(self):
+        today = datetime.now(timezone.utc).date().isoformat()
+        prev = {"v": 1, "cc": "DK", "generated": today, "s": [[55, 12, 0, 11, 2, 0, 24, "a"]] * 1500, "n": 1500}
+        with tempfile.TemporaryDirectory() as d:
+            data = Path(d); (data / "ev_dk.json").write_text(json.dumps(prev), encoding="utf-8"); calls = []
+
+            async def fake_prev(session, cc):
+                return prev
+
+            async def fake_get(*a, **k):
+                calls.append(a); return None
+
+            with mock.patch.object(chargers, "DATA", data), mock.patch.object(chargers, "get_json", fake_get), mock.patch.object(chargers, "fetch_prev", fake_prev),                     mock.patch.object(chargers, "CALL_GAP", 0), mock.patch.dict(os.environ, {"OCM_API_KEY": KEY}):
+                n = asyncio.run(chargers.run(["DK"]))
+            self.assertEqual(n, 0); self.assertEqual(calls, [])
+            self.assertEqual(json.loads((data / "ev_dk.json").read_text(encoding="utf-8"))["n"], 1500)
+
+    def test_crash_keeps_last_good_and_marks_attempt(self):
+        prev = {"v": 1, "cc": "DK", "generated": "2026-10-01", "s": [[55, 12, 0, 11, 2, 0, 24, "a"]] * 1500, "n": 1500}
+        pois = [poi(55.0 + i * 0.001, 12.0 + i * 0.001, OperatorID=1) for i in range(1100)]
+        with mock.patch.object(chargers, "reduce_ocm", side_effect=AttributeError("boom")):
+            n, txt, _ = self.run_with(pois, prev_file=prev)
+        self.assertEqual(n, 0)
+        kept = json.loads(txt)
+        self.assertEqual(kept["n"], 1500); self.assertEqual(kept["attempted"], datetime.now(timezone.utc).date().isoformat())
+
+    def test_unreadable_previous_file_is_skipped(self):
+        with tempfile.TemporaryDirectory() as d:
+            data = Path(d); calls = []
+
+            async def fake_prev(session, cc):
+                return None
+
+            async def fake_get(*a, **k):
+                calls.append(a); return None
+
+            with mock.patch.object(chargers, "DATA", data), mock.patch.object(chargers, "get_json", fake_get), mock.patch.object(chargers, "fetch_prev", fake_prev),                     mock.patch.object(chargers, "CALL_GAP", 0), mock.patch.dict(os.environ, {"OCM_API_KEY": KEY}):
+                n = asyncio.run(chargers.run(["DK"], force=True))
+            self.assertEqual((n, calls), (0, [])); self.assertFalse((data / "ev_dk.json").exists())
+
+    def test_placeholder_operator_is_unknown(self):
+        pois = [poi(55.0 + i * 0.001, 12.0 + i * 0.001, OperatorID=7) for i in range(1100)]
+        with tempfile.TemporaryDirectory() as d:
+            async def fake_get(session, url, headers, tag):
+                if "referencedata" in url:
+                    return {"Operators": [{"ID": 7, "Title": "(Unknown Operator)"}], "DataProviders": [{"ID": 1, "Title": "OCM", "License": "CC BY 4.0"}]}
+                return pois
+
+            async def fake_prev(session, cc):
+                return {}
+
+            with mock.patch.object(chargers, "DATA", Path(d)), mock.patch.object(chargers, "get_json", fake_get), mock.patch.object(chargers, "fetch_prev", fake_prev),                     mock.patch.object(chargers, "CALL_GAP", 0), mock.patch.dict(os.environ, {"OCM_API_KEY": KEY}):
+                asyncio.run(chargers.run(["DK"], force=True))
+            self.assertEqual(json.loads((Path(d) / "ev_dk.json").read_text(encoding="utf-8"))["ops"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
