@@ -74,13 +74,14 @@ def parse_erc_homepage(html: str) -> Dict[str, Any]:
 
 
 MIRROR_URL = "https://gorivo.mk"
+MIRROR_ENABLED = False   # re-enable only if the mirror page ever shows the decision date; today the scrape day would be stamped on possibly stale prices
 _MIRROR_ROWS = [(r"бензин", "95", 95), (r"бензин 98\+", "98", 98), (r"дизел", "DIESEL", None)]   # label before price
 
 
 def parse_gorivo_mk(html: str, today=None) -> Dict[str, Any]:
     """Fallback: gorivo.mk mirrors the ERC decision ('Цена на бензин 98,5 ден' = BS-95, '98+' = BS-98).
     The page carries no effective date, so the cap is dated with the scrape day and flagged as a mirror."""
-    t = re.sub(r"(?is)<(script|style).*?</>", " ", html)
+    t = re.sub(r"(?is)<(script|style)\b.*?</\1>", " ", html)
     t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t))
     prices: Dict[tuple, float] = {}
     for pat, ft, octane in _MIRROR_ROWS:
@@ -135,6 +136,9 @@ class NorthMacedoniaScraper(ANWBScraper):
         return parsed
 
     async def _fetch_mirror(self) -> Optional[Dict[str, Any]]:
+        if not MIRROR_ENABLED:
+            print("[MK] gorivo.mk mirror disabled: its page carries no effective date, so a mirror that stopped updating would always look fresh - no cap")
+            return None
         try:
             async with self.session.get(MIRROR_URL, headers={"User-Agent": "Mozilla/5.0 (compatible; EuroFuelPrices/1.0)"},
                                         timeout=aiohttp.ClientTimeout(total=30)) as resp:
