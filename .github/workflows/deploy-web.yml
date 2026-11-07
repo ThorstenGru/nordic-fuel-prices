@@ -28,6 +28,7 @@ jobs:
 
       - name: Frontend tests
         run: |
+          node tools/check_page_syntax.js
           for f in tools/test_*.js; do node "$f" || exit 1; done
           node tools/check_fares.js && node tools/check_ac_tariffs.js
 

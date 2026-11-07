@@ -2174,7 +2174,7 @@ function esc(v) {
 // For an id interpolated inside onclick="fn('${id}')" (a single-quoted JS string literal that
 // itself sits inside a double-quoted HTML attribute) — needs escaping for BOTH contexts.
 function escId(v) {
-  return String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 // Mainstream fuels only: 95-octane petrol and Diesel. LPG/CNG/E85/H2 are niche and far cheaper per litre,
@@ -2193,7 +2193,7 @@ function inFuel(p, f) { return f === 'P95' ? isP95(p) : f === 'P98' ? isP98(p) :
 // Human label for one price row: 95 (E10), 95 (E5), 98 (E5), 95, 98 ...
 function fuelLabel(p) {
   const o = octOf(p);
-  if (o === null) return p.fuel_type;
+  if (o === null) return esc(p.fuel_type);
   const ob = o >= 97 ? String(o) : '95';
   return (p.fuel_type === 'E10' || p.fuel_type === 'E5') ? `${ob} (${p.fuel_type})` : ob;
 }

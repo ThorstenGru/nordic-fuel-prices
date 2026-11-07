@@ -351,7 +351,7 @@ window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
 const _escDiv = document.createElement('div');
 function esc(v) {
   _escDiv.textContent = v ?? '';
-  return _escDiv.innerHTML;
+  return _escDiv.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');   // quotes too: esc() is used inside title="..." attributes
 }
 
 const FLAGS = {
@@ -485,7 +485,7 @@ function render(meta, health) {
       ? `${ago(c.newest_price_at)}<br><span style="color:var(--t3);font-size:0.62rem">${ts}% have source time</span>`
       : `<span style="color:var(--amber)">unknown</span><br><span style="color:var(--t3);font-size:0.62rem">source gives no timestamp</span>`;
     return `<tr${trCls}>
-      <td style="white-space:nowrap">${FLAGS[c.country]||''} <strong>${c.country}</strong></td>
+      <td style="white-space:nowrap">${FLAGS[c.country]||''} <strong>${esc(c.country)}</strong></td>
       <td>${barHtml(c.station_count || 0, c.priced_count || 0, maxN)}<div style="font-size:0.62rem;color:var(--t3)">${(c.priced_count||0).toLocaleString()} priced</div></td>
       <td style="max-width:230px;font-size:0.72rem;color:var(--t2)"><span class="src-chip ${gi.chip}">${gi.txt}</span><br><span style="font-size:0.66rem">${esc((c.source||'').split('(')[0].trim())}</span></td>
       <td style="white-space:nowrap;font-size:0.72rem;color:var(--t2)">${priceAge}</td>

@@ -51,6 +51,12 @@ jobs:
         working-directory: src
         run: python -m unittest discover -s tests
 
+      - name: Frontend tests and page syntax (a broken index.html must not be republished every 15 minutes)
+        run: |
+          node tools/check_page_syntax.js
+          for f in tools/test_*.js; do node "$f" || exit 1; done
+          node tools/check_fares.js && node tools/check_ac_tariffs.js
+
       - name: Run scrapers
         env:
           TANKERKOENIG_API_KEY: ${{ secrets.TANKERKOENIG_API_KEY }}
