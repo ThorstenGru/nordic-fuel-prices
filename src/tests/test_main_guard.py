@@ -171,6 +171,34 @@ class RunAllGuards(unittest.TestCase):
         self.assertEqual(code, 0); self.assertTrue((out / "meta.json").exists())
 
 
+class IsoUtc(unittest.TestCase):
+    def test_timezones_epoch_and_junk(self):
+        from scrapers.base import iso_utc
+        try:
+            from zoneinfo import ZoneInfo; ZoneInfo("Europe/Lisbon")
+        except Exception:
+            self.skipTest("no tz database on this machine (CI has one)")
+        self.assertEqual(iso_utc("2026-10-01T10:45:01+02:00"), "2026-10-01T08:45:01+00:00")        # offset honoured
+        self.assertEqual(iso_utc("2026-10-01 10:45:01", "Europe/Lisbon"), "2026-10-01T09:45:01+00:00")   # naive local time, summer
+        self.assertEqual(iso_utc("2026-12-01 10:45:01", "Europe/Stockholm"), "2026-12-01T09:45:01+00:00")  # naive local time, winter
+        self.assertEqual(iso_utc("2026-10-01 10:45:01"), "2026-10-01T10:45:01+00:00")                 # no tz given: UTC
+        self.assertEqual(iso_utc(1790000000), iso_utc(1790000000000))                                  # seconds and milliseconds agree
+        self.assertIsNone(iso_utc("not a date")); self.assertIsNone(iso_utc(""))
+
+
+class PricedRegression(unittest.TestCase):
+    def test_priced_station_drop_is_refused(self):
+        def priced_scraper():
+            class G(good_scraper(60)):
+                async def fetch_stations(self):
+                    return [st(i) if i < 10 else {**st(i), "prices": []} for i in range(60)]
+            return G
+        old = {"meta": {"currency": "EUR", "station_count": 60, "priced_count": 60, "fetched_at": "2026-10-01T00:00:00+00:00"}, "stations": [st(i) for i in range(60)]}
+        pm = {"XX": {"station_count": 60, "priced_count": 60, "status": "ok", "fetched_at": "2026-10-01T00:00:00+00:00"}}
+        r, f = run_one_with(priced_scraper(), old=old, prev_meta=pm)
+        self.assertEqual(f["meta"]["status"], "stale"); self.assertIn("priced stations regressed", f["meta"]["last_error"])
+
+
 class FxBlock(unittest.TestCase):
     def test_only_published_non_euro_currencies(self):
         fx = {"SEK": 10.99, "PLN": 4.22, "CHF": 0.93, "USD": 1.1}
