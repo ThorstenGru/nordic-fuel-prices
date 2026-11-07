@@ -1,6 +1,8 @@
 import asyncio
 import re
 import json
+import urllib.parse
+from datetime import datetime, timedelta, timezone
 import aiohttp
 from typing import List, Dict, Any, Optional
 from .base import BaseScraper
@@ -54,6 +56,8 @@ _HEADERS = {
 # peco-online throttles bursts (replies turn into ``JSON.parse('null')``); ~2 s spacing works.
 _PACE_S = 2.0
 _NULL_BACKOFF_S = 12.0
+
+MAX_CARRY_DAYS = 3        # carried-over stations are kept this long without being seen again (a full refresh cycle takes ~1 h)
 
 _LAT_MIN, _LAT_MAX = 43.5, 48.4
 _LON_MIN, _LON_MAX = 22.0, 30.2
@@ -109,6 +113,9 @@ class RomaniaScraper(BaseScraper):
         # station_key -> station dict with a "_prices" {fuel_type: (price, unit)} scratch field
         stations_by_key: Dict[str, dict] = await self._load_previous()
         n_prev = len(stations_by_key)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        for st in stations_by_key.values():
+            st.setdefault("seen_at", now_iso)       # files from before this field existed get the full grace period
         self._token: Optional[dict] = None
         self._null_replies = 0
         self._requests = 0
@@ -141,16 +148,28 @@ class RomaniaScraper(BaseScraper):
                             "_prices":    {},
                         }
                     st["_prices"][ft] = (price, unit)       # refreshed value replaces the old one
+                    st["seen_at"] = now_iso
                 await asyncio.sleep(_PACE_S)   # bursts get throttled -> JSON.parse('null')
             done += 1
         print(f"[RO] slice {cycle + 1}/{self.NSLICES}: {done}/{len(counties)} counties refreshed, "
               f"{n_prev} stations carried over")
 
-        # Convert to final format
+        # Convert to final format. A station that has not been seen at the source for MAX_CARRY_DAYS (closed, or no longer reporting) is dropped;
+        # its price time is when we last saw it, so the app's freshness guard can judge it.
+        cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_CARRY_DAYS)
+        expired = 0
         result = []
         for s in stations_by_key.values():
+            try:
+                seen = datetime.fromisoformat(str(s.get("seen_at")))
+            except ValueError:
+                seen = datetime.now(timezone.utc)
+            if seen < cutoff:
+                expired += 1
+                s.pop("_prices", None)
+                continue
             prices = [
-                self.price_entry(ft, pr, unit, octane=95 if ft == "E5" else None)   # Benzina_Regular = 95
+                self.price_entry(ft, pr, unit, updated_at=seen.isoformat(), octane=95 if ft == "E5" else None)   # Benzina_Regular = 95
                 for ft, (pr, unit) in s.pop("_prices").items()
                 if pr > 0
             ]
@@ -158,7 +177,7 @@ class RomaniaScraper(BaseScraper):
                 s["prices"] = prices
                 result.append(s)
 
-        print(f"[RO] {len(result)} stations from peco-online.ro "
+        print(f"[RO] {len(result)} stations from peco-online.ro, {expired} not seen for {MAX_CARRY_DAYS} days dropped "
               f"({self._requests} requests, {self._null_replies} empty/null replies)")
         if not result:
             raise RuntimeError(
@@ -209,9 +228,8 @@ class RomaniaScraper(BaseScraper):
             "req_token": tok.get("token", ""),
         }
         self._requests += 1
-        # Add all station chain checkboxes
-        retele_str = "&".join(f"retele[]={r}" for r in _RETELE)
-        form_body = "&".join(f"{k}={v}" for k, v in post_data.items()) + "&" + retele_str
+        # Add all station chain checkboxes; urlencode, because tokens and county names can contain + = & or non-ASCII characters
+        form_body = urllib.parse.urlencode([*post_data.items(), *(("retele[]", r) for r in _RETELE)])
 
         try:
             async with self.session.post(
