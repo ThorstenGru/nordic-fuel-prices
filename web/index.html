@@ -32,7 +32,7 @@
   script-src 'self' 'unsafe-inline' https://unpkg.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://unpkg.com;
   img-src 'self' data: https://unpkg.com https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com https://archive-api.open-meteo.com;
+  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -603,6 +603,13 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .mc-step label, .mc-step .mc-lbl { text-transform:none; letter-spacing:0; font-size:.84rem; font-weight:700; color:var(--ink); margin:14px 0 4px; display:block; }
 .mc-step .tchips { margin-top:2px; }
 .cur-sel { font:inherit; font-size:.85rem; border:1px solid var(--line); border-radius:6px; background:var(--surf); color:var(--ink); padding:1px 4px; margin-left:4px; }
+#ac-list { position:fixed; z-index:3500; margin:0; padding:4px; list-style:none; background:var(--surf); border:1px solid var(--line); border-radius:var(--r-m); box-shadow:var(--shadow); overflow-y:auto; overscroll-behavior:contain; }
+#ac-list li[role=option] { display:grid; grid-template-columns:1fr auto; column-gap:8px; align-items:baseline; padding:9px 10px; border-radius:var(--r-s); cursor:pointer; }
+#ac-list li[role=option][aria-selected=true], #ac-list li[role=option]:hover { background:var(--acc-soft); }
+#ac-list .ac-n { font-weight:700; font-size:.92rem; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#ac-list .ac-s { grid-column:1; font-size:.76rem; color:var(--sub); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#ac-list .ac-k { grid-row:1; grid-column:2; font-size:.66rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--sub); }
+#ac-list .ac-foot { padding:6px 10px 4px; font-size:.68rem; line-height:1.4; color:var(--sub); border-top:1px solid var(--line); margin-top:2px; }
 .mc-hint { font-size:.72rem; color:var(--sub); margin:4px 0 0; line-height:1.45; }
 .mc-step details.car-box { background:var(--surf); margin-top:14px; }
 .mc-q { background:none; border:0; padding:0; min-height:44px; font:inherit; font-size:.76rem; font-weight:700; color:var(--acc-t); text-decoration:underline; cursor:pointer; text-align:left; }
@@ -810,7 +817,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     </div>
     <form id="sform" role="search" onsubmit="runSearch(true);return false;">
       <svg class="ic" style="color:var(--sub)"><use href="#i-search"/></svg>
-      <input type="search" id="mobSearch" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+      <input type="search" id="mobSearch" data-ac="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
       <button class="rb" type="button" onclick="closeSearch()" data-i18n-aria="close" aria-label="Close"><svg class="ic"><use href="#i-close"/></svg></button>
     </form>
   </div>
@@ -994,6 +1001,9 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       </div>
       <span class="mc-lbl" data-i18n="curSwitch">Show prices in</span>
       <div class="lang-row" role="group" data-i18n-aria="curSwitch" aria-label="Show prices in"><button class="theme-btn cur-btn" type="button" data-m="local" onclick="setCurMode('local')" data-i18n="curLocal">Local</button><button class="theme-btn cur-btn" type="button" data-m="eur" onclick="setCurMode('eur')">EUR</button></div>
+      <span class="mc-lbl" data-i18n="acSet">Address suggestions from an online service</span>
+      <div class="lang-row" role="group" data-i18n-aria="acSet" aria-label="Address suggestions"><button class="theme-btn ac-btn" type="button" data-on="1" onclick="setAcNet(true)" data-i18n="acOn">On</button><button class="theme-btn ac-btn" type="button" data-on="0" onclick="setAcNet(false)" data-i18n="acOff">Off</button></div>
+      <p class="mc-hint" data-i18n="acPriv">Suggestions for places in your own data work without any service. For addresses, what you type and your rounded map position are sent to photon.komoot.io (OpenStreetMap data). Switch off to keep everything on your device.</p>
       <p class="cmp-note fx-src" style="margin-top:6px"></p>
       <button class="btn-acc install-row" id="install-row" type="button" onclick="installApp()" style="display:none"><svg class="ic"><use href="#i-down"/></svg><span data-i18n="installApp2">Add to Home Screen</span></button>
       <button class="btn-line link trust-link" type="button" onclick="openTrust()"><svg class="ic"><use href="#i-info"/></svg><span data-i18n="trustLinkLabel">How we grade sources</span></button>
@@ -1047,7 +1057,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <p data-i18n="startSub">Live prices from official sources across Europe. Every price shows where it came from and how old it is.</p>
     <form class="st-search" role="search" onsubmit="startSearch();return false;">
       <svg class="ic" style="color:var(--sub)"><use href="#i-search"/></svg>
-      <input type="search" id="startQ" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr" data-i18n-aria="tabSearch" aria-label="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+      <input type="search" id="startQ" data-ac="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" placeholder="City, address, or station…" data-i18n-ph="searchPhAddr" data-i18n-aria="tabSearch" aria-label="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
     </form>
     <div class="st-big">
       <button type="button" onclick="startGo('nearby')"><svg class="ic"><use href="#i-locate"/></svg><span data-i18n="startNearby">Nearby</span></button>
@@ -1965,6 +1975,7 @@ Object.assign(I18N.en, {
   chgTime:'A full battery ({k} kWh) takes about {h}.', chgCostEst:'Estimated cost: about {c}{x}.', chgCostFree:'Estimated cost: free, as the source says.', chgCostNone:'No cost estimate because the price is not published.', chgCostOld:'No cost estimate because the list price is too old.',
   chgCostRange:'{a} to {b}', chgCostStart:', including the start fee', chgCostIdle:', including the idle fee', chgNoBatt:'Set your battery size in My car to see a cost estimate.', chgNoCarKw:'Set your car’s charging rate in My car to see the charging time.',
   chgNav:'Navigate', chgDetails:'Details', chgSrc:'Data: {a}. Prices are not part of this data: they come from our own dated table of list prices.',
+  acSet:'Address suggestions from an online service', acOn:'On', acOff:'Off', acPriv:'Suggestions for places in your own data work without any service. For addresses, what you type and your rounded map position are sent to photon.komoot.io (OpenStreetMap data). Switch off to keep everything on your device.', acCity:'Place', acStation:'Station', acAddr:'Address', acFoot:'Address suggestions: photon.komoot.io, OpenStreetMap data. Switch off in Settings.',
   rtShBusy:'A route search is running. Open the link again when it has finished.',
   mcElecW:'That looks high for euro. If you entered kronor, change the currency next to the field.',
   chgSumN:'Your battery is empty on arrival. {n} public Type 2 posts within {r} km of the destination{b}. The list is under More detail.', chgSumN1:'Your battery is empty on arrival. One public Type 2 post within {r} km of the destination{b}. Details are under More detail.', chgSumNone:'Your battery is empty on arrival, and our data has no public Type 2 post within {r} km of the destination. Check that your hotel or destination has charging.', chgSumFree:', marked free by its source', chgSumCost:', the cheapest about {c} for a full charge (estimate)',
@@ -1991,6 +2002,7 @@ Object.assign(I18N.sv, {
   chgTime:'Ett fullt batteri ({k} kWh) tar cirka {h}.', chgCostEst:'Uppskattad kostnad: cirka {c}{x}.', chgCostFree:'Uppskattad kostnad: gratis, enligt källan.', chgCostNone:'Ingen kostnadsuppskattning eftersom priset inte är publicerat.', chgCostOld:'Ingen kostnadsuppskattning eftersom listpriset är för gammalt.',
   chgCostRange:'{a} till {b}', chgCostStart:', inklusive startavgiften', chgCostIdle:', inklusive överliggningsavgiften', chgNoBatt:'Ange batteriets storlek i Min bil för att se en kostnadsuppskattning.', chgNoCarKw:'Ange bilens laddeffekt i Min bil för att se laddtiden.',
   chgNav:'Navigera', chgDetails:'Detaljer', chgSrc:'Data: {a}. Priserna ingår inte i datan: de kommer från vår egen daterade tabell med listpriser.',
+  acSet:'Adressförslag från en onlinetjänst', acOn:'På', acOff:'Av', acPriv:'Förslag på orter i dina egna data fungerar utan någon tjänst. För adresser skickas det du skriver och din avrundade kartposition till photon.komoot.io (OpenStreetMap-data). Stäng av för att behålla allt på din enhet.', acCity:'Ort', acStation:'Station', acAddr:'Adress', acFoot:'Adressförslag: photon.komoot.io, OpenStreetMap-data. Stäng av i Inställningar.',
   rtShBusy:'En ruttsökning pågår. Öppna länken igen när den är klar.',
   mcElecW:'Det ser högt ut för euro. Om du angav kronor, byt valuta intill fältet.',
   chgSumN:'Batteriet är tomt när du kommer fram. {n} publika Typ 2-stolpar inom {r} km från målet{b}. Listan finns under Mer detaljer.', chgSumN1:'Batteriet är tomt när du kommer fram. En publik Typ 2-stolpe inom {r} km från målet{b}. Detaljer finns under Mer detaljer.', chgSumNone:'Batteriet är tomt när du kommer fram, och våra data har ingen publik Typ 2-stolpe inom {r} km från målet. Kontrollera att hotellet eller målet har laddning.', chgSumFree:', markerad som gratis av källan', chgSumCost:', billigast cirka {c} för en full laddning (uppskattning)',
@@ -3683,6 +3695,150 @@ async function runSearch(isMob) {
 }
 
 // ════════════════════════════════════════════════════
+// Autocomplete for the search boxes (map search, start screen, route From/To)
+// Local suggestions come from the country files already loaded (towns, brands, stations): instant and private.
+// Addresses come from Photon (photon.komoot.io, OpenStreetMap data) after 3 characters, unless switched off in Settings.
+// ════════════════════════════════════════════════════
+// AC-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_autocomplete.js)
+const acNorm = s => String(s == null ? '' : s).toLowerCase().replace(/ß/g, 'ss').replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/ł/g, 'l').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+// every query word must start a word of the key (or at least occur in it); higher = better, 0 = no match. key and q are acNorm'ed.
+function acScore(q, key) {
+  if (!q || !key) return 0;
+  const ws = key.split(' '); let sum = 0;
+  for (const t of q.split(' ')) {
+    if (key.startsWith(t)) sum += 3; else if (ws.some(w => w.startsWith(t))) sum += 2; else if (key.includes(t)) sum += 1; else return 0;
+  }
+  return sum / q.split(' ').length + (key === q ? 5 : 0);
+}
+// towns from the stations' city field: one entry per country and normalised name, position = mean of its stations, n = station count (a size proxy)
+function acBuildCities(byCc) {
+  const m = new Map();
+  for (const cc of Object.keys(byCc || {})) for (const s of byCc[cc] || []) {
+    const name = String(s.city || '').trim(); if (!name || !s.lat || !s.lon) continue;
+    const k = cc + '|' + acNorm(name); let e = m.get(k);
+    if (!e) m.set(k, e = { name, cc, k: acNorm(name), n: 0, la: 0, lo: 0 });
+    e.n++; e.la += s.lat; e.lo += s.lon;
+  }
+  return [...m.values()].map(e => ({ kind: 'city', name: e.name, cc: e.cc, k: e.k, n: e.n, lat: e.la / e.n, lon: e.lo / e.n }));
+}
+function acBuildStations(byCc) {
+  const out = [];
+  for (const cc of Object.keys(byCc || {})) for (const s of byCc[cc] || []) {
+    if (!s.lat || !s.lon) continue;
+    const nm = String(s.name || s.brand || '').trim(); if (!nm) continue;
+    out.push({ kind: 'station', id: s.id, name: nm, sub: [s.city, s.address].filter(Boolean).join(', '), cc, k: acNorm(nm + ' ' + (s.city || '')), lat: s.lat, lon: s.lon });
+  }
+  return out;
+}
+// best local suggestions: towns first (bigger first on equal score), then stations; max items in total
+function acLocal(q, cities, stations, max) {
+  const qn = acNorm(q); if (qn.length < 2) return [];
+  const take = (list, lim, bias) => list.map(e => ({ e, sc: acScore(qn, e.k) })).filter(x => x.sc > 0)
+    .sort((a, b) => b.sc - a.sc || (bias ? (b.e.n || 0) - (a.e.n || 0) : 0) || a.e.name.length - b.e.name.length).slice(0, lim).map(x => x.e);
+  const c = take(cities, Math.min(max, 5), true);
+  return [...c, ...(qn.length >= 3 ? take(stations, max - c.length, false) : [])].slice(0, max);
+}
+// remote address hits: drop towns we already list locally (same normalised name and country), keep the rest after the local ones
+function acMerge(local, remote, max) {
+  const have = new Set(local.filter(e => e.kind === 'city').map(e => e.cc + '|' + acNorm(e.name)));
+  const seen = new Set();   // Photon sometimes returns the same place twice
+  const extra = (remote || []).filter(r => { const k = acNorm(r.name) + '|' + acNorm(r.sub); if (seen.has(k)) return false; seen.add(k); return !(r.place && have.has((r.cc || '') + '|' + acNorm(r.name))); });
+  return [...local, ...extra].slice(0, max);
+}
+// Photon feature -> suggestion (or null when it has no usable point)
+function acPhoton(f) {
+  const p = (f && f.properties) || {}, c = f && f.geometry && f.geometry.coordinates;
+  if (!c || !isFinite(c[0]) || !isFinite(c[1])) return null;
+  const street = [p.street, p.housenumber].filter(Boolean).join(' '), name = p.name || street; if (!name) return null;
+  const place = ['city', 'town', 'village', 'municipality', 'locality', 'district', 'suburb'].includes(p.type) || p.osm_key === 'place';
+  return { kind: 'addr', place, name, sub: [p.name && street ? street : '', p.city || p.district || p.county || p.state || '', p.country || ''].filter(Boolean).join(', '),
+    cc: String(p.countrycode || '').toUpperCase(), lat: +c[1], lon: +c[0] };
+}
+// AC-PURE-END
+
+let acNet = store.get('efp_acnet', true) !== false;
+const ac = { el: null, input: null, items: [], sel: -1, seq: 0, ctl: null, timer: null, sig: '', cities: [], stations: [] };
+function acIndex() {
+  const sig = Object.keys(data).map(k => k + ((data[k] || []).length)).join();
+  if (sig !== ac.sig) { ac.sig = sig; ac.cities = acBuildCities(data); ac.stations = acBuildStations(data); }
+}
+function acEnsure() {
+  if (ac.el) return ac.el;
+  const u = document.createElement('ul'); u.id = 'ac-list'; u.setAttribute('role', 'listbox'); u.hidden = true; document.body.appendChild(u);
+  u.addEventListener('mousedown', e => e.preventDefault());           // keep focus in the field
+  u.addEventListener('click', e => { const li = e.target.closest('li[data-i]'); if (li) acPick(+li.dataset.i); });
+  return ac.el = u;
+}
+function acHide() {
+  clearTimeout(ac.timer); if (ac.ctl) ac.ctl.abort(); ac.seq++;
+  if (ac.el) ac.el.hidden = true;
+  if (ac.input) { ac.input.setAttribute('aria-expanded', 'false'); ac.input.removeAttribute('aria-activedescendant'); }
+  ac.items = []; ac.sel = -1;
+}
+function acKindLbl(it) { return t(it.kind === 'city' ? 'acCity' : it.kind === 'station' ? 'acStation' : it.place ? 'acCity' : 'acAddr'); }
+function acRender(foot) {
+  const u = acEnsure(), inp = ac.input; if (!inp) return;
+  if (!ac.items.length) { u.hidden = true; inp.setAttribute('aria-expanded', 'false'); return; }
+  u.innerHTML = ac.items.map((it, i) => `<li role="option" id="ac-o${i}" data-i="${i}" aria-selected="${i === ac.sel}"><span class="ac-n">${esc(it.name)}</span><span class="ac-k">${esc(acKindLbl(it))}</span><span class="ac-s">${esc([it.sub, it.kind !== 'addr' && it.cc ? (CNAMES[it.cc] || it.cc) : ''].filter(Boolean).join(' · '))}</span></li>`).join('')
+    + (foot ? `<li role="presentation" class="ac-foot">${esc(t('acFoot'))}</li>` : '');
+  const r = inp.getBoundingClientRect();
+  u.style.left = Math.max(8, r.left) + 'px'; u.style.top = (r.bottom + 4) + 'px'; u.style.width = Math.min(innerWidth - 16, Math.max(r.width, 260)) + 'px';
+  u.style.maxHeight = Math.max(120, Math.min(innerHeight * 0.5, innerHeight - r.bottom - 16)) + 'px';
+  u.hidden = false; inp.setAttribute('aria-expanded', 'true');
+  if (ac.sel >= 0) inp.setAttribute('aria-activedescendant', 'ac-o' + ac.sel); else inp.removeAttribute('aria-activedescendant');
+}
+function acQuery(inp) {
+  ac.input = inp; const q = inp.value.trim(), seq = ++ac.seq; clearTimeout(ac.timer); if (ac.ctl) ac.ctl.abort();
+  if (q.length < 2) { acHide(); return; }
+  acIndex(); ac.sel = -1;
+  const local = acLocal(q, ac.cities, ac.stations, 6); ac.items = local; acRender(false);
+  if (!acNet || q.length < 3 || navigator.onLine === false) return;
+  ac.timer = setTimeout(async () => {
+    ac.ctl = new AbortController(); const to = setTimeout(() => ac.ctl.abort(), 4000);
+    try {
+      const c = map.getCenter(), pl = ['de', 'fr', 'it'].includes(lang) ? lang : 'en';
+      const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lang=${pl}&lat=${c.lat.toFixed(1)}&lon=${c.lng.toFixed(1)}`, { signal: ac.ctl.signal });
+      if (!r.ok || seq !== ac.seq) return;
+      const j = await r.json(); if (seq !== ac.seq) return;
+      const remote = (j.features || []).map(acPhoton).filter(Boolean);
+      ac.items = acMerge(local, remote, 8); acRender(remote.length > 0);
+    } catch (_) {} finally { clearTimeout(to); }
+  }, 350);
+}
+function acPick(i) {
+  const it = ac.items[i], inp = ac.input; if (!it || !inp) return;
+  const label = it.kind === 'city' ? [it.name, CNAMES[it.cc] || it.cc].filter(Boolean).join(', ') : [it.name, it.sub].filter(Boolean).join(', ');
+  const mode = inp.dataset.ac; acHide();
+  if (mode === 'from' || mode === 'to') {
+    rt[mode] = { lat: it.lat, lon: it.lon }; rt[mode + 'Txt'] = label; inp.value = label;
+    try { inp.blur(); } catch (_) {}
+    return;
+  }
+  inp.value = label; try { inp.blur(); } catch (_) {}
+  if (inp.id === 'startQ') { closeStart(); openSearch(); }
+  closeSearch();
+  map.setView([it.lat, it.lon], it.kind === 'city' || it.place ? 12 : 15);
+  if (it.kind === 'station' && it.id) selectStation(it.id, true);
+  else { L.popup().setLatLng([it.lat, it.lon]).setContent(`<div style="font-size:0.82rem;max-width:220px">${esc(label)}</div>`).openOn(map); autoClose(); }
+}
+function setAcNet(on) { acNet = !!on; store.set('efp_acnet', acNet); acUi(); acHide(); }
+function acUi() { document.querySelectorAll('.ac-btn').forEach(b => { const on = (b.dataset.on === '1') === acNet; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); }
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[data-ac]')) acQuery(e.target); });
+document.addEventListener('keydown', e => {
+  if (!ac.el || ac.el.hidden || e.target !== ac.input) return;
+  const n = ac.items.length;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); ac.sel = ((ac.sel + 1 + (e.key === 'ArrowDown' ? 1 : -1) + (n + 1)) % (n + 1)) - 1;   // -1 (nothing) .. n-1
+    acRender(!!ac.el.querySelector('.ac-foot')); ac.el.querySelector('[aria-selected=true]')?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter' && ac.sel >= 0) { e.preventDefault(); e.stopImmediatePropagation(); acPick(ac.sel); }
+  else if (e.key === 'Escape') acHide();
+}, true);
+document.addEventListener('focusout', e => { if (e.target === ac.input) setTimeout(() => { if (document.activeElement !== ac.input) acHide(); }, 150); });
+addEventListener('resize', () => acHide());
+addEventListener('scroll', e => { if (ac.el && !ac.el.hidden && e.target !== ac.el) acHide(); }, true);
+acUi();
+
+// ════════════════════════════════════════════════════
 // Tab / Panel management
 // ════════════════════════════════════════════════════
 // Tabs: map (no panel) | stations (List + Nearby section) | compare (Trip: Prices | Border run | Route) | car (My car). search / filter / station open from the map.
@@ -5176,10 +5332,10 @@ function renderRoute() {
     <div class="tcard">
       <h3>${ico('route')} ${t('routeTab')} <span class="rt-badge">${t('rtPreview')}</span></h3>
       <label style="margin-top:0">${t('rtFrom')}</label>
-      <div class="rt-field"><input id="rt-from" value="${lbl('from')}" placeholder="${t('rtPh')}" oninput="rt.fromTxt=this.value;rt.from=null" onkeydown="if(event.key==='Enter')rtGo()">
+      <div class="rt-field"><input id="rt-from" data-ac="from" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" autocomplete="off" value="${lbl('from')}" placeholder="${t('rtPh')}" oninput="rt.fromTxt=this.value;rt.from=null" onkeydown="if(event.key==='Enter')rtGo()">
         <button type="button" title="${t('rtMyLoc')}" aria-label="${t('rtMyLoc')}" onclick="rtUseMe()">${ico('locate')}</button><button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('from')">${ico('map')}</button></div>
       <label>${t('rtTo')}</label>
-      <div class="rt-field"><input id="rt-to" value="${lbl('to')}" placeholder="${t('rtPh')}" oninput="rt.toTxt=this.value;rt.to=null" onkeydown="if(event.key==='Enter')rtGo()">
+      <div class="rt-field"><input id="rt-to" data-ac="to" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" autocomplete="off" value="${lbl('to')}" placeholder="${t('rtPh')}" oninput="rt.toTxt=this.value;rt.to=null" onkeydown="if(event.key==='Enter')rtGo()">
         <button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('to')">${ico('map')}</button></div>
       <label>${t('rtWidth')}</label>
       <div class="tchips">${[2, 3, 5].map(w => `<button class="${rt.w === w ? 'on' : ''}" onclick="rt.w=${w};rt.res=null;renderRoute()">${w} km</button>`).join('')}</div>
