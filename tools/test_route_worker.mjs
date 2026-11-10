@@ -32,4 +32,28 @@ mode = 'fail'; store.clear();
 assert.equal((await call({ 'Sec-Fetch-Site': 'same-origin' }, url)).status, 502);
 assert.equal(store.size, 0);                                                                  // failures are not cached
 assert.equal((await w.fetch(new Request(url, { method: 'POST' }), {}, ctx)).status, 405);
+// ── ORS backup: conversion to the Valhalla shape the app reads
+import { orsToValhalla } from '../worker/route/index.mjs';
+const decode6 = s => { const o = []; let i = 0, a = 0, b = 0; const n = () => { let c, sh = 0, r = 0; do { c = s.charCodeAt(i++) - 63; r |= (c & 31) << sh; sh += 5; } while (c >= 32); return (r & 1) ? ~(r >> 1) : (r >> 1); }; while (i < s.length) { a += n(); b += n(); o.push([a / 1e6, b / 1e6]); } return o; };
+const coords = [[13.0038, 55.6049], [12.9, 55.0], [11.0, 54.1], [9.9937, 53.5511]];                 // [lon, lat]
+const ors = { features: [{ geometry: { coordinates: coords }, properties: { summary: { distance: 374.2, duration: 16000 },
+  segments: [{ steps: [{ distance: 100, duration: 4000, way_points: [0, 1] }, { distance: 40, duration: 6000, way_points: [1, 2] }, { distance: 234.2, duration: 6000, way_points: [2, 3] }] }],
+  extras: { waytypes: { values: [[0, 1, 1], [1, 2, 9], [2, 3, 1]] }, tollways: { values: [[0, 3, 0]] } } } }] };
+const v = orsToValhalla(ors), leg = v.trip.legs[0];
+assert.equal(v.trip.status, 0); assert.equal(v.trip.summary.length, 374.2); assert.equal(v.trip.summary.time, 16000);
+assert.equal(leg.summary.has_ferry, true); assert.equal(v.trip.summary.has_toll, false);
+assert.deepEqual(leg.maneuvers.map(m => m.ferry), [false, true, false]);                              // ferry step flagged
+assert.deepEqual(leg.maneuvers.map(m => m.highway), [true, false, true]);                             // 90 km/h, 24 km/h, 140 km/h
+const back = decode6(leg.shape); assert.equal(back.length, 4);
+back.forEach(([la, lo], i) => { assert.ok(Math.abs(la - coords[i][1]) < 1e-6 && Math.abs(lo - coords[i][0]) < 1e-6); });   // polyline6 round trip
+
+// fallback order: Valhalla first, ORS only when Valhalla fails and the secret exists
+const seen = []; store.clear(); pending.length = 0;
+globalThis.fetch = async (u, o) => { seen.push(String(u).includes('heigit') ? 'ors' : 'valhalla'); return String(u).includes('heigit') ? new Response(JSON.stringify(ors)) : new Response('x', { status: 503 }); };
+const sameSite = { 'Sec-Fetch-Site': 'same-origin' };
+assert.equal((await w.fetch(new Request(url, { headers: sameSite }), {}, ctx)).status, 502);          // no secret: no ORS call
+assert.deepEqual(seen, ['valhalla']);
+seen.length = 0; r = await w.fetch(new Request(url, { headers: sameSite }), { ORS_KEY: 'k' }, ctx);
+assert.equal(r.status, 200); assert.equal(r.headers.get('x-src'), 'ors'); assert.deepEqual(seen, ['valhalla', 'ors']);
+assert.equal(JSON.parse(await r.text()).trip.legs[0].summary.has_ferry, true);
 console.log('test_route_worker: all passed');

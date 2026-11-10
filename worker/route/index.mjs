@@ -22,6 +22,29 @@ export function normalise(raw) {
   };
 }
 
+// ── Backup router: OpenRouteService (free key). api.openrouteservice.org is shut down (Nov 2026); the supported host is api.heigit.org.
+// Answer is converted to the Valhalla trip shape the app already reads, so the browser needs no second code path.
+const ORS_URL = 'https://api.heigit.org/openrouteservice/v2/directions/driving-car/geojson';
+const orsBody = q => ({ coordinates: q.locations.map(p => [p.lon, p.lat]), extra_info: ['waytype', 'tollways'], instructions: true, units: 'km' });
+function encode6(pts) {                                          // [[lat,lon]...] -> Google polyline, 6 decimals (what the app decodes)
+  let la = 0, lo = 0, out = '';
+  const enc = v => { v = v < 0 ? ~(v << 1) : v << 1; let s = ''; while (v >= 32) { s += String.fromCharCode((32 | (v & 31)) + 63); v >>= 5; } return s + String.fromCharCode(v + 63); };
+  for (const [a, b] of pts) { const A = Math.round(a * 1e6), B = Math.round(b * 1e6); out += enc(A - la) + enc(B - lo); la = A; lo = B; }
+  return out;
+}
+// Pure: ORS geojson -> { trip } in Valhalla's shape. Motorway flag is an approximation (average step speed >= 85 km/h): ORS has no motorway class.
+export function orsToValhalla(j) {
+  const f = j.features[0], p = f.properties, c = f.geometry.coordinates;
+  const way = (p.extras && p.extras.waytypes && p.extras.waytypes.values) || [];
+  const ferryAt = i => way.some(([a, b, t]) => t === 9 && i >= a && i < b);                  // waytype 9 = ferry; ranges share end points, so half-open
+  const toll = ((p.extras && p.extras.tollways && p.extras.tollways.values) || []).some(v => v[2] === 1);
+  const steps = (p.segments || []).flatMap(s => s.steps || []);
+  const maneuvers = steps.map(s => ({ length: s.distance, time: s.duration, highway: s.duration > 0 && s.distance / (s.duration / 3600) >= 85, ferry: ferryAt(s.way_points[0]) }));
+  const hasFerry = way.some(v => v[2] === 9);
+  return { trip: { status: 0, summary: { length: p.summary.distance, time: p.summary.duration, has_toll: toll },
+    legs: [{ shape: encode6(c.map(([lo, la]) => [la, lo])), maneuvers, summary: { has_ferry: hasFerry, has_toll: toll } }] } };
+}
+
 export default {
   async fetch(req, env, ctx) {
     if (req.method !== 'GET') return json({ error: 'method' }, 405);
@@ -35,12 +58,19 @@ export default {
     const hit = await caches.default.match(key);
     if (hit) return new Response(hit.body, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'HIT' } });
 
-    let r;
-    try { r = await fetch(UPSTREAM + '?json=' + encodeURIComponent(body), { headers: { 'user-agent': 'eurofuelprices.com route proxy' }, signal: AbortSignal.timeout(12000) }); }
-    catch (_) { return json({ error: 'upstream' }, 502); }
-    if (!r.ok) return json({ error: 'upstream', status: r.status }, 502);   // never cached: the client falls back to its own router chain
-    const text = await r.text();
+    let text = null, src = 'valhalla';
+    try {
+      const r = await fetch(UPSTREAM + '?json=' + encodeURIComponent(body), { headers: { 'user-agent': 'eurofuelprices.com route proxy' }, signal: AbortSignal.timeout(12000) });
+      if (r.ok) text = await r.text();
+    } catch (_) {}
+    if (text == null && env.ORS_KEY) {            // backup router, only when the secret ORS_KEY is set (wrangler secret put ORS_KEY)
+      try {
+        const r = await fetch(ORS_URL, { method: 'POST', headers: { 'content-type': 'application/json', authorization: env.ORS_KEY }, body: JSON.stringify(orsBody(q)), signal: AbortSignal.timeout(12000) });
+        if (r.ok) { text = JSON.stringify(orsToValhalla(await r.json())); src = 'ors'; }
+      } catch (_) {}
+    }
+    if (text == null) return json({ error: 'upstream' }, 502);   // never cached: the client falls back to its own router chain
     ctx.waitUntil(caches.default.put(key, new Response(text, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + TTL } })));
-    return new Response(text, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'MISS' } });
+    return new Response(text, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'MISS', 'x-src': src } });
   },
 };
