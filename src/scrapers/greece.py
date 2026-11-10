@@ -28,6 +28,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import aiohttp
 
 from .base import BaseScraper, cheapest_per_slot, dist_m_flat, octane_of
+
+
+def _hav_km(a_lat, a_lon, b_lat, b_lon) -> float:
+    return dist_m_flat(a_lat, a_lon, b_lat, b_lon) / 1000.0
 from ._anwb import ANWBScraper
 from merge_engine import MergeConfig, SourceResult, merge_sources
 

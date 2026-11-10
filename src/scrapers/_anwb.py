@@ -62,6 +62,8 @@ def ecb_date() -> Optional[str]:
 
 
 _ecb_failed = False
+# currencies the ECB reference feed publishes: if one of these has no rate, the rate fetch failed; the others (RSD, MKD, ALL, ...) never have one
+_ECB_PUBLISHED = frozenset('AUD BGN BRL CAD CHF CNY CZK DKK GBP HKD HUF IDR ILS INR ISK JPY KRW MXN MYR NOK NZD PHP PLN RON SEK SGD THB TRY USD ZAR'.split())
 
 
 def _set_ecb_failed() -> None:
@@ -285,7 +287,7 @@ class ANWBScraper(BaseScraper):
                     for p in st["prices"]:
                         p["price"] = round(p["price"] * rate, 2 if rate > 20 else 3)
                         p["currency"] = self.CURRENCY
-            elif any(st["prices"] for st in stations):
+            elif self.CURRENCY in _ECB_PUBLISHED and any(st["prices"] for st in stations):
                 # EUR prices in a country that is shown in another currency would be thrown out as outliers or, worse, read as wrong prices:
                 # fail the source so the last good file stays (stale) instead
                 raise RuntimeError(f"no FX rate for {self.CURRENCY} (ECB and Frankfurter unreachable)")

@@ -45,7 +45,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt pyflakes
 
       - name: Unit tests (a failing test blocks the scrape and deploy)
         working-directory: src
