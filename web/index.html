@@ -4957,6 +4957,7 @@ async function loadCC(cc, opts) {
     _cv[cc] = (_cv[cc] | 0) + 1; _qVer++; _ro = {};
     if (!force) { schedRender(); onNewData(); }
     evictFar();
+    (window.requestIdleCallback || setTimeout)(acIndex);   // search index built while idle, not on the first keystroke
   } catch(e) {
     console.warn(`[${cc}] ${e.message}`);
     failedCC.add(cc);
@@ -5437,11 +5438,14 @@ const acNorm = s => String(s == null ? '' : s).toLowerCase().replace(/ß/g, 'ss'
 // every query word must start a word of the key (or at least occur in it); higher = better, 0 = no match. key and q are acNorm'ed.
 function acScore(q, key) {
   if (!q || !key) return 0;
-  const ws = key.split(' '); let sum = 0;
-  for (const t of q.split(' ')) {
-    if (key.startsWith(t)) sum += 3; else if (ws.some(w => w.startsWith(t))) sum += 2; else if (key.includes(t)) sum += 1; else return 0;
+  const qs = q.split(' '); let sum = 0, ws = null;
+  for (const t of qs) {
+    if (key.startsWith(t)) sum += 3;
+    else if (!key.includes(t)) return 0;   // cheap reject first: nearly all of 50k+ keys end here without allocating
+    else if ((ws || (ws = key.split(' '))).some(w => w.startsWith(t))) sum += 2;
+    else sum += 1;
   }
-  return sum / q.split(' ').length + (key === q ? 5 : 0);
+  return sum / qs.length + (key === q ? 5 : 0);
 }
 // towns from the stations' city field: one entry per country and normalised name, position = mean of its stations, n = station count (a size proxy)
 function acBuildCities(byCc) {
@@ -5491,9 +5495,16 @@ function acPhoton(f) {
 
 let acNet = store.get('efp_acnet', true) !== false;
 const ac = { el: null, input: null, items: [], sel: -1, seq: 0, ctl: null, timer: null, sig: '', cities: [], stations: [] };
+// per-country cache: loading one more country only indexes that country (the whole index took ~270 ms with 55k stations, on the first keystroke)
+const acCc = {};
 function acIndex() {
-  const sig = Object.keys(data).map(k => k + ((data[k] || []).length)).join();
-  if (sig !== ac.sig) { ac.sig = sig; ac.cities = acBuildCities(data); ac.stations = acBuildStations(data); }
+  let changed = false;
+  for (const cc of Object.keys(acCc)) if (!data[cc]) { delete acCc[cc]; changed = true; }   // evicted by evictFar()
+  for (const cc of Object.keys(data)) {
+    const a = data[cc] || [], c = acCc[cc];
+    if (!c || c.n !== a.length) { acCc[cc] = { n: a.length, cities: acBuildCities({ [cc]: a }), stations: acBuildStations({ [cc]: a }) }; changed = true; }
+  }
+  if (changed) { const v = Object.values(acCc); ac.cities = v.flatMap(c => c.cities); ac.stations = v.flatMap(c => c.stations); }
 }
 function acEnsure() {
   if (ac.el) return ac.el;
@@ -5556,7 +5567,9 @@ function acPick(i) {
 }
 function setAcNet(on) { acNet = !!on; store.set('efp_acnet', acNet); acUi(); acHide(); }
 function acUi() { document.querySelectorAll('.ac-btn').forEach(b => { const on = (b.dataset.on === '1') === acNet; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); }
-document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[data-ac]')) acQuery(e.target); });
+// INP: the keystroke paints first, the suggestion search runs right after (a phone needs 100+ ms to search 50k stations)
+let acRaf = 0;
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[data-ac]')) { const el = e.target; cancelAnimationFrame(acRaf); acRaf = requestAnimationFrame(() => setTimeout(() => acQuery(el), 0)); } });
 document.addEventListener('keydown', e => {
   if (!ac.el || ac.el.hidden || e.target !== ac.input) return;
   const n = ac.items.length;
