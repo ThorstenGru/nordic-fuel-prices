@@ -9,7 +9,7 @@ Backend for the "Chargers + typical prices" feature (Type 2 AC, Santa Fe PHEV). 
 - Optional NOBIL merge for SE/NO (see below). Stations outside the country box are dropped and counted.
 - Cadence: no scheduler. The step runs on every scrape run but is cheap: it re-publishes the previous file (local `data/ev_<cc>.json`, else the live site) and calls the APIs only when `generated` is more than 6 days old. `FORCE_REFRESH=1` (the workflow "force" input) or `--force` overrides.
 - Last-good retention: a refresh that fails or is refused keeps the previous file and stamps `attempted` with today's date, so a persistent failure retries once a day, not every 15 minutes. A second workflow step curls the live file back if the run produced none.
-- Refused (previous file kept): no usable answer; count outside the band (SE 2000-6000, NO 1500-4000, DK 1000-4000, DE 10000-40000); fewer than 80% of the previous count; more than 2% of stations outside the country box; any key string present in the output; NOBIL configured but unusable (fewer than 500 stations).
+- Refused (previous file kept): no usable answer; count outside the band (SE 2000-12000, NO 1500-4000, DK 1000-4000, DE 10000-40000); fewer than 80% of the previous count; more than 2% of stations outside the country box; any key string present in the output; NOBIL configured but unusable (fewer than 500 stations).
 - Nothing prints a URL or an exception text (both can contain a key). Tests assert the key is absent from the file.
 
 ## Schema (v1)

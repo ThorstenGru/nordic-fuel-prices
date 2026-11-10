@@ -34,7 +34,7 @@ MAX_OUTLIER_SHARE = 0.02            # more than 2 % of stations outside the coun
 
 # cc -> (OCM countrycode, NOBIL countrycode or None, count band, (lat0, lat1, lon0, lon1))
 COUNTRIES = {
-    "SE": ("SE", "SWE", (2000, 6000), (55.0, 69.2, 10.8, 24.3)),
+    "SE": ("SE", "SWE", (2000, 12000), (55.0, 69.2, 10.8, 24.3)),
     "NO": ("NO", "NOR", (1500, 8000), (57.5, 81.0, 4.0, 35.0)),
     "DK": ("DK", None, (1000, 4000), (54.5, 57.9, 7.9, 15.3)),
     "DE": ("DE", None, (10000, 40000), (47.2, 55.2, 5.8, 15.1)),
@@ -146,7 +146,7 @@ def _nobil_attr(d: Dict[str, Any], key: str) -> Tuple[str, str]:
 
 def reduce_nobil(doc: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """NOBIL v3 datadump -> station dicts in the OCM shape. Public Type 2 (connector value 32) only. The layout was taken from the
-    NOBIL v3 documentation and has NOT been seen live; every access is defensive and a doc that yields nothing is treated as a failure upstream."""
+    NOBIL v3 documentation and checked against live datadump.php (SWE, 2026-11-10: 10006 in, 7469 kept); every access is defensive and a doc that yields nothing is treated as a failure upstream."""
     st = {"in": 0, "noT2": 0, "access": 0, "closed": 0, "nopos": 0}
     out: List[Dict[str, Any]] = []
     for cs in (doc.get("chargerstations") or []):
