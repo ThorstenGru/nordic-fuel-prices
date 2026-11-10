@@ -8106,6 +8106,11 @@ document.addEventListener('focusout', () => setTimeout(updKb, 80));
       if (city && TZ[city]) home = TZ[city];
     }
   } catch (_) {}
+  // Where the driver actually is: Cloudflare's same-origin /cdn-cgi/trace reports the visitor's country (404 off-Cloudflare, e.g. localhost → ignored)
+  try {
+    const loc = /^loc=([A-Z]{2})$/m.exec(await (await fetch('/cdn-cgi/trace', { signal: AbortSignal.timeout(800) })).text());
+    if (loc && CNAMES[loc[1]]) home = loc[1];
+  } catch (_) {}
   if (home !== 'SE' && CB[home] && !new URLSearchParams(location.search).get('s')) map.fitBounds(CB[home], { padding:[10,10] });
   loadCC(home);
   schedVP();
