@@ -6525,6 +6525,7 @@ const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', w
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
 const OSRM = 'https://router.project-osrm.org/route/v1/driving/';
 const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
+const VALHALLA_PROXY = '/api/route';          // Cloudflare Worker on this domain (worker/route/index.mjs)
 function decodePoly6(str) {                    // Valhalla shape: Google polyline, 6 decimals
   const out = []; let i = 0, la = 0, lo = 0;
   const num = () => { let b, sh = 0, r = 0; do { b = str.charCodeAt(i++) - 63; r |= (b & 31) << sh; sh += 5; } while (b >= 32); return (r & 1) ? ~(r >> 1) : (r >> 1); };
@@ -6544,7 +6545,8 @@ function rtVTrip(tr) {                         // one Valhalla trip -> route obj
 async function rtValhalla(a, b) {
   // alternates:2 rides on the same request (one call, the server asks for max 1 request/second); the main trip is always the router's best route
   const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'maneuvers', alternates:2 });
-  const j = await rtJson(`${VALHALLA}?json=${encodeURIComponent(q)}`, 15000);
+  // our own proxy first (cached, validated, one place to swap the provider: worker/route); if it is missing or down, the public server directly
+  let j; try { j = await rtJson(`${VALHALLA_PROXY}?json=${encodeURIComponent(q)}`, 15000); } catch (_) { j = await rtJson(`${VALHALLA}?json=${encodeURIComponent(q)}`, 15000); }
   const m = rtVTrip(j.trip);
   m.alts = (j.alternates || []).map(x => { try { return rtVTrip(x.trip); } catch (_) { return null; } }).filter(Boolean);   // key absent on short routes: no alternatives
   return m;

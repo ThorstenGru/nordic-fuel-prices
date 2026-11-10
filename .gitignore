@@ -9,3 +9,6 @@ data/de/
 data/ch/
 data/fr/
 .claude/launch.json
+
+# wrangler local state (holds account ids)
+.wrangler/

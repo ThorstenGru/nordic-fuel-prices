@@ -104,6 +104,8 @@ self.addEventListener('fetch', event => {
   // and reverse-geocode URLs contain the user's coordinates — they must not pile up in a cache on the device. Returning without
   // respondWith() lets the browser fetch them normally.
   if (url.origin !== self.location.origin) return;
+  // Our own API (the routing proxy): same reasons, the URL carries the route's coordinates
+  if (url.pathname.startsWith('/api/')) return;
 
   // Everything else (versioned CDN libs, manifest, icon, flags): cache-first
   event.respondWith(cacheFirst(event.request));
