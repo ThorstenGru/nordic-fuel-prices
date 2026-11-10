@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free fuel price widget for your website | EuroFuelPrices</title>
+<meta name="description" content="Add today's petrol or diesel price for any European country to your website with one line of HTML. Free, no sign-up, no tracking.">
+<link rel="canonical" href="https://eurofuelprices.com/embed.html">
+<meta property="og:title" content="Free fuel price widget for your website">
+<meta property="og:description" content="One line of HTML: today's median petrol or diesel price for a European country. Free, no sign-up.">
+<meta property="og:image" content="https://eurofuelprices.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="stylesheet" href="/theme.css">
+<style>
+*, *::before, *::after { box-sizing:border-box; }
+body { margin:0 auto; max-width:760px; padding:0 16px 60px; line-height:1.6; font-size:16px; }
+header { padding:20px 0 8px; }
+.logo { font-size:1.1rem; font-weight:500; color:var(--text); text-decoration:none; }
+h1 { font-size:1.6rem; margin:14px 0 8px; } h2 { font-size:1.1rem; margin:28px 0 8px; }
+pre { background:var(--surf); border:1px solid var(--border); border-radius:12px; padding:12px 14px; overflow-x:auto; font-size:.84rem; white-space:pre-wrap; word-break:break-all; }
+label { display:inline-block; margin:0 12px 8px 0; font-size:.9rem; }
+select { font:inherit; padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--surf); color:var(--text); }
+iframe { border:0; width:100%; max-width:340px; height:104px; display:block; margin:12px 0; }
+a { color:var(--blue); } footer { margin-top:36px; color:var(--text3); font-size:.82rem; }
+</style>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
+</head>
+<body>
+<header><a class="logo" href="/"><img src="/icon.svg" alt="" width="22" height="22" style="vertical-align:-4px"> EuroFuelPrices</a></header>
+<h1>Free fuel price widget</h1>
+<p>Show today's median petrol or diesel price for a European country on your website, blog or news page. It is one line of HTML, free, needs no sign-up and sets no cookies. It links back to EuroFuelPrices.</p>
+<div>
+  <label>Country <select id="cc"><option value="SE">Sweden</option><option value="DK">Denmark</option><option value="NO">Norway</option><option value="FI">Finland</option><option value="DE">Germany</option><option value="NL">Netherlands</option><option value="BE">Belgium</option><option value="FR">France</option><option value="ES">Spain</option><option value="PT">Portugal</option><option value="IT">Italy</option><option value="AT">Austria</option><option value="CH">Switzerland</option><option value="PL">Poland</option><option value="CZ">Czechia</option><option value="GB">United Kingdom</option><option value="IE">Ireland</option></select></label>
+  <label>Fuel <select id="fuel"><option value="diesel">Diesel</option><option value="p95">Petrol 95</option></select></label>
+  <label>Theme <select id="theme"><option value="">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+</div>
+<iframe id="prev" title="Fuel price widget preview" loading="lazy"></iframe>
+<h2>Copy this code</h2>
+<pre id="code"></pre>
+<h2>Good to know</h2>
+<ul>
+<li>The figure is the <strong>median station price</strong> of the country, converted to euro (and shown in local currency where relevant). It is indicative, not the price at a specific pump.</li>
+<li>Updated about every 15 minutes. If a country's data is unavailable the widget shows a link to the live map instead of a wrong number.</li>
+<li>Prefer data? <a href="/open-data/national-averages.json">JSON</a> and <a href="/open-data/national-averages.csv">CSV</a> of the country medians are free to reuse with a link to eurofuelprices.com. See also the <a href="/europe/">European price ranking</a>.</li>
+</ul>
+<footer>© EuroFuelPrices · <a href="/about.html">About and data sources</a></footer>
+<script>
+(function () {
+  var cc = document.getElementById('cc'), fuel = document.getElementById('fuel'), th = document.getElementById('theme');
+  function src() { var q = '?cc=' + cc.value + '&fuel=' + fuel.value + (th.value ? '&theme=' + th.value : ''); return 'https://eurofuelprices.com/widget.html' + q; }
+  function upd() {
+    var u = src();
+    document.getElementById('prev').src = u.replace('https://eurofuelprices.com/', '');
+    document.getElementById('code').textContent = '<iframe src="' + u + '" title="Fuel price" width="320" height="104" style="border:0" loading="lazy"></iframe>\n<a href="https://eurofuelprices.com/">Live fuel prices in Europe</a>';
+  }
+  [cc, fuel, th].forEach(function (e) { e.addEventListener('change', upd); }); upd();
+})();
+</script>
+</body>
+</html>

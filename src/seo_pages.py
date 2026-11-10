@@ -73,12 +73,30 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
                fuels=[("E10", "SP95-E10"), ("E5_95", "SP95 (E5)"), ("P98", "SP98"), ("DIESEL", "Gazole"), ("E85", "E85 (superéthanol)"), ("LPG", "GPLc")],
                cheapest=("E10", "DIESEL"), src="prix-carburants.gouv.fr (data.economie.gouv.fr)", osm=False,
                nation="médiane nationale"),
+    "es": dict(lang="es", currency="EUR", sym="€", mode="city", ts_kind="snapshot", fallback_nearby=False,
+               hub="Precios de gasolineras en España", hub_title="Precio gasolina y gasóleo hoy en España – gasolineras más baratas",
+               fuels=[("P95", "Gasolina 95"), ("P98", "Gasolina 98"), ("DIESEL", "Gasóleo A"), ("CNG", "GNC")],
+               cheapest=("P95", "DIESEL"), src="Ministerio para la Transición Ecológica (geoportalgasolineras.es)", osm=False,
+               nation="mediana nacional"),
+    "pt": dict(lang="pt", currency="EUR", sym="€", mode="city", ts_kind="price", fallback_nearby=False, max_age_h=168,
+               hub="Preços dos combustíveis em Portugal", hub_title="Preços dos combustíveis em Portugal hoje – gasolina e gasóleo mais baratos",
+               fuels=[("P95", "Gasolina 95"), ("DIESEL", "Gasóleo"), ("LPG", "GPL Auto")],
+               cheapest=("P95", "DIESEL"), src="DGEG – Direção-Geral de Energia e Geologia", osm=False,
+               nation="mediana nacional"),
+    "dk": dict(lang="da", currency="DKK", sym="kr", mode="city", ts_kind="price", fallback_nearby=False,
+               hub="Benzinpriser Danmark", hub_title="Benzinpriser Danmark i dag – billigste benzin og diesel",
+               fuels=[("P95", "Benzin 95"), ("P98", "Benzin 98"), ("DIESEL", "Diesel")],
+               cheapest=("P95", "DIESEL"), src="OK, Q8, Shell og Go’on (åbne API’er)", osm=False,
+               nation="landsmedian"),
 }
 
 MONTHS = {
     "sv": ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
     "de": ["Jan.", "Feb.", "Mär.", "Apr.", "Mai", "Jun.", "Jul.", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."],
     "fr": ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."],
+    "es": ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
+    "pt": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
+    "da": ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
 }
 
 TXT: Dict[str, Dict[str, str]] = {
@@ -142,13 +160,70 @@ foot_unofficial="Källa: ANWB-data (inofficiell tredjepartskälla). Priserna kan
         foot_unofficial="Source : données ANWB (source tierce non officielle). Les prix peuvent différer – vérifiez en station.",
         foot_grades="Comment nous évaluons les sources", foot_osm="Noms de lieux ©", foot_osm_who="contributeurs d’OpenStreetMap",
         foot_upd="Dernière mise à jour", ad=""),
+    "es": dict(
+        locale="es_ES", home="Inicio", map="Abrir el mapa →", crumbs="Ruta de navegación",
+        cheapest="Más barato: {f}", vs="{d} {sym} frente a la {nation}",
+        lede="Precios actuales en {n} de {total} gasolineras de {town} y alrededores, de más barata a más cara.",
+        lede_none="", h_stations="Gasolineras en {town}", h_near_priced="", h_nearby="Precios en localidades cercanas",
+        h1="Precio de la gasolina en {town}", t_priced="Gasolina y gasóleo en {town} hoy – precios",
+        t_none="", d_priced="Gasolina y gasóleo más baratos en {town}: compara los precios de {n} gasolineras, actualizados a diario.",
+        d_none="", th_station="Gasolinera", km_from="a unos {d} km del centro", central="centro", km="a unos {d} km", near="cerca de",
+        note_none="", hub_lede="Precios de gasolineras en {n} localidades de España. Elige tu localidad para ver la gasolina y el gasóleo más baratos cerca de ti, o abre el <a href=\"/\">mapa en directo</a>.",
+        h_cheapest="Más barato en España: {f}", h_find="Encuentra tu localidad",
+        hub_desc="Compara el precio de la gasolina y el gasóleo en {n} localidades de España.",
+        th_when={"snapshot": "Datos de la fuente", "fetched": "Consultado", "price": "Actualizado"},
+        foot_ts={"snapshot": "La hora es la de los datos de la fuente (actualización diaria), no el momento en que cambió el precio en la gasolinera.",
+                 "fetched": "La hora es la de nuestra consulta; la fuente no indica la hora del precio.",
+                 "price": "La hora es la del último cambio de precio según la fuente."},
+        foot_src="Fuente: {src}. Los precios pueden diferir en la gasolinera: compruébalos en el surtidor.",
+        foot_unofficial="Fuente: datos de ANWB (fuente de terceros no oficial). Los precios pueden diferir: compruébalos en el surtidor.",
+        foot_grades="Cómo valoramos las fuentes", foot_osm="Nombres de lugares ©", foot_osm_who="colaboradores de OpenStreetMap",
+        foot_upd="Última actualización", ad=""),
+    "pt": dict(
+        locale="pt_PT", home="Início", map="Abrir o mapa →", crumbs="Caminho",
+        cheapest="Mais barato: {f}", vs="{d} {sym} face à {nation}",
+        lede="Preços atuais em {n} de {total} postos de abastecimento em {town} e arredores, do mais barato ao mais caro.",
+        lede_none="", h_stations="Postos de abastecimento em {town}", h_near_priced="", h_nearby="Preços em localidades próximas",
+        h1="Preços dos combustíveis em {town}", t_priced="Gasolina e gasóleo em {town} hoje – preços",
+        t_none="", d_priced="Gasolina e gasóleo mais baratos em {town}: compare os preços de {n} postos de abastecimento.",
+        d_none="", th_station="Posto", km_from="a cerca de {d} km do centro", central="centro", km="a cerca de {d} km", near="perto de",
+        note_none="", hub_lede="Preços dos combustíveis em {n} localidades de Portugal. Escolha a sua localidade para ver a gasolina e o gasóleo mais baratos perto de si, ou abra o <a href=\"/\">mapa em direto</a>.",
+        h_cheapest="Mais barato em Portugal: {f}", h_find="Encontre a sua localidade",
+        hub_desc="Compare os preços da gasolina e do gasóleo em {n} localidades de Portugal.",
+        th_when={"snapshot": "Dados da fonte", "fetched": "Consultado", "price": "Atualizado"},
+        foot_ts={"snapshot": "A hora é a dos dados da fonte, não o momento em que o preço mudou no posto.",
+                 "fetched": "A hora é a da nossa consulta; a fonte não indica a hora do preço.",
+                 "price": "A hora é a da última alteração do preço segundo a fonte."},
+        foot_src="Fonte: {src}. Os preços podem diferir no posto: confirme na bomba.",
+        foot_unofficial="Fonte: dados ANWB (fonte de terceiros não oficial). Os preços podem diferir: confirme na bomba.",
+        foot_grades="Como avaliamos as fontes", foot_osm="Nomes de locais ©", foot_osm_who="colaboradores do OpenStreetMap",
+        foot_upd="Última atualização", ad=""),
+    "da": dict(
+        locale="da_DK", home="Forside", map="Åbn kortet →", crumbs="Brødkrummer",
+        cheapest="Billigste {f}", vs="{d} {sym} mod {nation}",
+        lede="Aktuelle priser ved {n} af {total} tankstationer i og omkring {town}, billigste først.",
+        lede_none="", h_stations="Tankstationer i {town}", h_near_priced="", h_nearby="Priser i nærliggende byer",
+        h1="Benzinpriser i {town}", t_priced="Benzinpriser {town} i dag – benzin og diesel",
+        t_none="", d_priced="Billigste benzin og diesel i {town}: sammenlign priserne på {n} tankstationer.",
+        d_none="", th_station="Station", km_from="ca. {d} km fra centrum", central="centralt", km="ca. {d} km", near="ved",
+        note_none="", hub_lede="Benzinpriser og tankstationer i {n} byer i Danmark. Vælg din by for at se billigste benzin og diesel i nærheden – eller åbn <a href=\"/\">live-kortet</a>.",
+        h_cheapest="Billigste {f} i Danmark lige nu", h_find="Find din by",
+        hub_desc="Sammenlign benzin- og dieselpriser i {n} danske byer – opdateres løbende.",
+        th_when={"snapshot": "Kildedata", "fetched": "Hentet", "price": "Opdateret"},
+        foot_ts={"snapshot": "Tiden er kildedataens tidspunkt, ikke hvornår prisen blev ændret på stationen.",
+                 "fetched": "Tiden er hvornår vi hentede prisen; kilden oplyser ikke et pristidspunkt.",
+                 "price": "Tiden er den seneste prisændring ifølge kilden; – betyder, at kilden ikke oplyser tid."},
+        foot_src="Kilder: {src}. Priserne kan afvige – tjek altid ved pumpen.",
+        foot_unofficial="Kilde: ANWB-data (uofficiel tredjepartskilde). Priserne kan afvige – tjek ved pumpen.",
+        foot_grades="Sådan vurderer vi kilderne", foot_osm="Stednavne ©", foot_osm_who="OpenStreetMap-bidragsydere",
+        foot_upd="Senest opdateret", ad=""),
 }
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def slugify(name: str, lang: str) -> str:
-    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}}[lang]
+    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}}[lang]
     s = name.lower()
     for k, v in rep.items():
         s = s.replace(k, v)
@@ -173,10 +248,10 @@ def parse_iso(s: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def to_local(dt: datetime) -> datetime:
+def to_local(dt: datetime, lang: str = "") -> datetime:
     try:
         from zoneinfo import ZoneInfo
-        return dt.astimezone(ZoneInfo("Europe/Paris"))   # CET/CEST: same as SE/DE/AT/CH/FR
+        return dt.astimezone(ZoneInfo("Europe/Lisbon" if lang == "pt" else "Europe/Paris"))   # CET/CEST: same as SE/DE/AT/CH/FR/ES/DK
     except Exception:
         return dt
 
@@ -184,7 +259,7 @@ def to_local(dt: datetime) -> datetime:
 def fmt_when(dt: Optional[datetime], lang: str) -> str:
     if not dt:
         return "–"
-    d = to_local(dt)
+    d = to_local(dt, lang)
     dot = "." if lang == "de" else ""
     return f"{d.day}{dot} {MONTHS[lang][d.month - 1]} {d.hour:02d}:{d.minute:02d}"
 
@@ -517,7 +592,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         return None
     doc = json.loads(f.read_text(encoding="utf-8"))
     meta, stations = doc.get("meta") or {}, doc.get("stations") or []
-    unofficial = "anwb" in (meta.get("source") or "").lower()
+    src_name = (meta.get("source") or "").lower()
+    unofficial = "anwb" in src_name and "+" not in src_name   # merged feeds (DK) name their own sources
     if unofficial and EXCLUDE_ANWB:
         print(f"seo_pages[{cc}]: excluded by SEO_EXCLUDE_ANWB (source {meta.get('source')!r})")
         return None

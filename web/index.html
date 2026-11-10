@@ -6365,8 +6365,29 @@ async function shareStation(id) {
   const name = s.name || s.brand || 'Fuel station';
   const url = `${location.origin}${location.pathname}?s=${encodeURIComponent(id)}`;
   const text = cp ? `${fuelLabel(cp)} ${cp.price.toFixed(2)} ${curLbl(cp.currency)} — ${name}${s.city ? ', ' + s.city : ''}` : name;
-  if (navigator.share) { try { await navigator.share({ title: 'EuroFuelPrices', text, url }); } catch (_) {} return; }
+  if (navigator.share) {
+    // A picture of the price travels better in WhatsApp/iMessage than a bare link; fall back to text+link when files can't be shared.
+    let files; try { const f = await shareCardFile(cp ? `${cp.price.toFixed(2)} ${curLbl(cp.currency)}` : '', cp ? fuelLabel(cp) : '', name + (s.city ? ', ' + s.city : '')); if (f && navigator.canShare && navigator.canShare({ files: [f] })) files = [f]; } catch (_) {}
+    try { await navigator.share(files ? { title: 'EuroFuelPrices', text, url, files } : { title: 'EuroFuelPrices', text, url }); } catch (_) {}
+    return;
+  }
   try { await navigator.clipboard.writeText(`${text}\n${url}`); toast(t('copied')); } catch (_) { toast(url); }
+}
+// 1200x630 share picture drawn on a canvas (nothing leaves the device); null when canvas/toBlob is unavailable
+async function shareCardFile(price, fuel, place) {
+  const cv = document.createElement('canvas'); cv.width = 1200; cv.height = 630;
+  const g = cv.getContext && cv.getContext('2d'); if (!g || !cv.toBlob) return null;
+  const fam = '"Bricolage Grotesque","Schibsted Grotesk",system-ui,sans-serif';
+  g.fillStyle = '#0E1A29'; g.fillRect(0, 0, 1200, 630);
+  g.fillStyle = '#0B8F6E'; g.fillRect(0, 0, 18, 630);
+  g.fillStyle = '#9FB0C0'; g.font = `500 40px ${fam}`; g.fillText(fuel || 'EuroFuelPrices', 80, 150);
+  g.fillStyle = '#F8FAFC'; g.font = `700 190px ${fam}`; g.fillText(price || '', 80, 360);
+  g.fillStyle = '#E9EEF3'; g.font = `600 48px ${fam}`;
+  let pl = place || ''; while (pl.length > 3 && g.measureText(pl).width > 1040) pl = pl.slice(0, -2);
+  g.fillText(pl === place ? pl : pl + '…', 80, 470);
+  g.fillStyle = '#5EEAD4'; g.font = `600 36px ${fam}`; g.fillText('eurofuelprices.com', 80, 560);
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  return blob ? new File([blob], 'eurofuelprices.png', { type: 'image/png' }) : null;
 }
 
 // Country under the map centre (smallest containing bbox wins, so LU beats BE, MC beats FR…)
@@ -8041,6 +8062,26 @@ async function installApp() {
   toast(t('iosInstall'), 6500);
 }
 window.addEventListener('appinstalled', () => { const r = document.getElementById('install-row'); if (r) r.style.display = 'none'; });
+// Gentle install nudge: from the 2nd visit on, once per 3 weeks, never when already installed; dismissal is remembered.
+(function installNudge() {
+  if (IS_STANDALONE) return;
+  let n = 0, last = 0;
+  try { n = +localStorage.getItem('efp_visits') || 0; last = +localStorage.getItem('efp_nudge') || 0; localStorage.setItem('efp_visits', String(n + 1)); } catch (_) { return; }
+  if (n < 1 || Date.now() - last < 21 * 864e5) return;
+  setTimeout(() => {
+    if (document.getElementById('install-nudge')) return;
+    const ios = !_installEvt && /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (!_installEvt && !ios) return;
+    const b = document.createElement('div'); b.id = 'install-nudge';
+    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2900;display:flex;gap:10px;align-items:center;background:var(--inv-bg);color:var(--inv-fg);border-radius:14px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.28);font-size:14px';
+    const close = () => { try { localStorage.setItem('efp_nudge', String(Date.now())); } catch (_) {} b.remove(); };
+    const msg = document.createElement('span'); msg.style.flex = '1'; msg.textContent = ios ? t('iosInstall') : t('installApp2');
+    b.appendChild(msg);
+    if (!ios) { const go = document.createElement('button'); go.type = 'button'; go.className = 'btn-acc'; go.textContent = t('installApp2'); go.onclick = () => { installApp(); close(); }; msg.textContent = ''; b.appendChild(go); }
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', t('cancel')); x.style.cssText = 'background:none;border:0;color:inherit;font-size:18px;padding:6px 8px;cursor:pointer'; x.onclick = close;
+    b.appendChild(x); document.body.appendChild(b);
+  }, 8000);
+})();
 
 // ════════════════════════════════════════════════════
 // Theme
