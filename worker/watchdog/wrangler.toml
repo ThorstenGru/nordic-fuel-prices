@@ -1,0 +1,12 @@
+name = "efp-watchdog"
+main = "index.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+# every 30 minutes (free plan: cron triggers are included)
+[triggers]
+crons = ["*/30 * * * *"]
+
+[[kv_namespaces]]
+binding = "STATE"
+id = "0f3387db49144c0486f2ac1f2a71e62a"
