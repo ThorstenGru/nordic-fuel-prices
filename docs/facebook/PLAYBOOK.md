@@ -10,8 +10,10 @@ no messages, no personal data, no changes to Page settings, no replies to people
 3. Otherwise post exactly `text` with the picture at `image` (do not edit the wording; do not add hashtags or tags).
    Using the Claude in Chrome tools (load them with ToolSearch if deferred):
    - `tabs_context_mcp` (createIfEmpty), open `https://www.facebook.com/eurofuelprices` in the MCP tab.
-   - Click "What's on your mind?" to open "Create post" (it must say Euro Fuel Prices / Public).
-   - Click the green photo icon in "Add to your post", find the file input (`find`), `file_upload` the image.
+   - If the page shows "Switch Now" (viewing as the owner's personal profile), click it to switch into the Page, then wait.
+     The composer **must** say "Euro Fuel Prices" and "Public"; if it shows the owner's personal name, stop (never post as the person).
+   - Click "What's on your mind?" to open "Create post".
+   - Click "Photo/video" in the dialog, `find` the file inputs, `file_upload` the image to the one inside "Create post" (tested 2026-11-11).
    - Type the text into the post box, click **Next**, check "Post audience: Public", "Publish now", **Boost post off**, click **Post**.
    - Confirm on the timeline that the post with today's text exists ("Just now").
 4. Append `date,format,key` to `docs/facebook/post_log.csv` (header: `date,format,key`), then `git add` that file, commit
