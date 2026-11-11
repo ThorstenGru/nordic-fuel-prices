@@ -71,6 +71,7 @@ class ItalyScraper(BaseScraper):
     SOURCE = "mimit.gov.it"
     CONFIDENCE = 0.90
     GRADE = "B"             # statutory duty (update on every change) but published as a daily CSV snapshot
+    TIMEOUT_S = 1800        # the fuel-prices.eu fallback crawl needs ~17 min (main.py default is 15 min)
     REFRESH_MINUTES = 1380  # MIMIT publishes once a day (~08:00); also keeps the fuel-prices.eu fallback crawl to once a day
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
@@ -176,7 +177,7 @@ class ItalyScraper(BaseScraper):
             try:
                 async with self.session.get(
                     url,
-                    timeout=aiohttp.ClientTimeout(total=90),
+                    timeout=aiohttp.ClientTimeout(total=90, sock_connect=15),   # blocked hosts fail fast, the fallback gets the time
                     headers=_HEADERS,
                 ) as resp:
                     if resp.status != 200:

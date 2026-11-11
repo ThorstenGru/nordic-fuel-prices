@@ -267,9 +267,9 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
     try:
         if error:
             raise RuntimeError(error)
-        stations = await asyncio.wait_for(scraper.fetch_stations(), timeout=SCRAPER_TIMEOUT_S)
+        stations = await asyncio.wait_for(scraper.fetch_stations(), timeout=getattr(scraper_cls, "TIMEOUT_S", SCRAPER_TIMEOUT_S))
     except asyncio.TimeoutError:
-        error = f"timeout after {SCRAPER_TIMEOUT_S}s"
+        error = f"timeout after {getattr(scraper_cls, 'TIMEOUT_S', SCRAPER_TIMEOUT_S)}s"
     except Exception as e:  # noqa: BLE001 — a scraper must never take the pipeline down
         error = f"{type(e).__name__}: {e}"
         traceback.print_exc()
