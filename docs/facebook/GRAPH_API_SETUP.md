@@ -1,4 +1,4 @@
-# One-time setup: let GitHub post for the Page (about 15 minutes, owner only)
+# One-time setup: let GitHub post for the Page (DONE 2026-11-11: secrets stored, selftest OK)
 
 After this, GitHub Actions posts every day and answers "comment your town" comments **by itself** — no computer, no Claude app, no person.
 Everything is posted with a **Page access token**, so it always comes from the Page "Euro Fuel Prices", never from a person.
@@ -42,3 +42,7 @@ Tell Claude "disable the app-based Facebook task" so the old browser task cannot
   restricted until the app passes Meta's review; if replies do nothing, check the Actions log. Posting is unaffected.
 - Follower-city insight needs enough followers; until then the town rotates through larger towns. Only aggregate numbers are used.
 - Meta can change or retire API fields; if a run fails, the workflow log says why, and the site and the other automation are unaffected.
+
+## Status 2026-11-11
+Secrets `FB_PAGE_ID` / `FB_PAGE_TOKEN` stored; `mode=selftest` passed (token = Page "Euro Fuel Prices", feed readable, unpublished photo created and deleted). The app-based browser task is disabled. Not yet exercised live: the first real post (07:00 UTC next day) and reading other people's comments (needs a comment on the Saturday post).
+Re-run the check any time: Actions -> Facebook -> Run workflow -> mode `selftest`.
