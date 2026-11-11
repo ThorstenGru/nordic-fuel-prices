@@ -79,7 +79,7 @@ class Pairs(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             f = Path(d) / "og" / "x.png"
             if ei.make_card(f, "Fuel prices: Sweden vs Denmark", "Diesel is cheaper in Sweden", "= 10 on a 50 L fill-up"):
-                self.assertEqual(f.read_bytes()[:4], b"PNG")
+                self.assertEqual(f.read_bytes()[1:4], b"PNG")
             else:
                 self.assertFalse(f.exists())      # no Pillow: no file, page falls back to the default image
 
