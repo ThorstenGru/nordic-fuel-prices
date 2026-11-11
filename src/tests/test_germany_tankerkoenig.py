@@ -7,7 +7,7 @@ from unittest import mock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from data_checks import quality_report, track_changes  # noqa: E402
 from scrapers import germany  # noqa: E402
-from scrapers.germany import GermanyScraper, GRID, _DEAnwb, _cover_circles, parse_tk_stations  # noqa: E402
+from scrapers.germany import GermanyScraper, GRID, RURAL, _DEAnwb, _cover_circles, accuracy_summary, accuracy_update, parse_tk_stations  # noqa: E402
 
 
 class FakeResp:
@@ -70,6 +70,7 @@ def make(mode, session, ft=None, key="k", **attrs):
         sc = GermanyScraper(session)
     ft = ft or FakeTime()
     sc._sleep, sc._clock, sc._wall = ft.sleep, ft.clock, lambda: ft.wall
+    sc.acc_path = None   # tests never write data/de_accuracy.json
     for k, v in attrs.items():
         setattr(sc, k, v)
     return sc, ft
@@ -126,10 +127,13 @@ class TestMode(unittest.TestCase):
 
     def test_rotation_by_time_slot_covers_all_circles(self):
         seen = []
-        for slot in range(len(GRID) // 5):
+        for slot in range(20):
             sc, _ = make("test", FakeSession(), ft=FakeTime(wall=slot * 1800 + 5))
-            seen += sc._circles([])
-        self.assertEqual(len(set(seen)), len(GRID))
+            c5 = sc._circles([])
+            self.assertEqual(len(c5), 5)
+            self.assertEqual(sum(1 for c in c5 if c in RURAL), 3)       # every run: 2 metro + 3 country-side circles
+            seen += c5
+        self.assertEqual(set(seen), set(GRID) | set(RURAL))
         a, _ = make("test", FakeSession(), ft=FakeTime(wall=100))
         b, _ = make("test", FakeSession(), ft=FakeTime(wall=1700))   # same slot, same circles
         c, _ = make("test", FakeSession(), ft=FakeTime(wall=1900))
@@ -263,6 +267,32 @@ class Baseline(unittest.TestCase):
         sc, _ = make("commercial", s, key="")
         run(sc, [anwb_station(1, 52.5, 13.4)])
         self.assertEqual(s.calls, [])
+
+
+class AccuracyMeter(unittest.TestCase):
+    def test_histograms_summary_and_pruning(self):
+        store = {}
+        pairs = [("petrol", "metro", "ESSO", 0.0)] * 6 + [("petrol", "rural", "ESSO", 1.0), ("diesel", "rural", "ARAL", -2.0),
+                                                           ("diesel", "metro", "ARAL", 12.0), ("diesel", "metro", "ARAL", 0.4)]
+        accuracy_update(store, pairs, "2026-11-11")
+        sm = accuracy_summary(store)
+        self.assertEqual(sm["n"], 10)
+        self.assertEqual(sm["within_1ct_pct"], 80.0)         # 6 zeros + 0.4 + 1.0 within 1 ct; -2 and 12 are not
+        self.assertEqual(sm["bias_median_ct"], 0.0)
+        self.assertIn("80.0%", sm["line"])
+        self.assertEqual(sm["by"]["petrol|rural"]["n"], 1)
+        for d in range(12, 30):                                # older days fall out after 14 days
+            accuracy_update(store, [("petrol", "metro", "X", 0.0)], f"2026-11-{d:02d}")
+        self.assertEqual(len(store["days"]), 14)
+        self.assertNotIn("2026-11-11", store["days"])
+
+    def test_merge_records_signed_difference_and_stratum(self):
+        base = [anwb_station(1, 52.5, 13.4)]
+        tk = parse_tk_stations(tk_body((52.5, 13.4, 1.90, 1.85, 1.75)), GermanyScraper(FakeSession()).price_entry)
+        tk[0]["_stratum"] = "rural"
+        acc = []
+        GermanyScraper._merge(base, tk, add_extras=False, acc=acc)
+        self.assertEqual(acc, [("petrol", "rural", "ARAL", 0.9), ("diesel", "rural", "ARAL", 0.9)])   # ANWB minus official, in ct
 
 
 if __name__ == "__main__":

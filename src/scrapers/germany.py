@@ -21,11 +21,14 @@ Data licence: CC BY 4.0 (attribution "Tankerkoenig / MTS-K, Bundeskartellamt").
 """
 
 import asyncio
+import json
 import math
 import os
 import re
 import time
 from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
@@ -67,6 +70,21 @@ GRID = [
     (52.1205, 11.6276), (50.9272, 11.5861), (53.4285, 14.5528), (54.5086, 13.6000),
     (50.0755, 14.4378), (51.3600, 10.0000), (49.7000, 9.9500), (50.5700, 9.6800),
 ]
+
+# Country-side circles (D): the metro circles above hold most stations, but a measurement of how good ANWB is must also
+# see villages and the east. Each run takes METRO_PER_RUN circles from GRID and RURAL_PER_RUN from here, both rotating.
+RURAL = [
+    (53.60, 12.50), (52.60, 11.50), (52.80, 13.90), (51.50, 14.20), (50.60, 13.00), (50.50, 12.20), (50.70, 10.80),
+    (51.70, 10.60), (51.30, 9.50), (51.20, 8.20), (50.20, 6.60), (49.90, 7.40), (49.40, 7.00), (49.30, 8.00),
+    (49.60, 9.00), (50.40, 9.90), (49.50, 10.80), (49.00, 13.00), (47.70, 10.30), (47.80, 12.00), (48.40, 9.40),
+    (48.20, 8.20), (52.70, 7.30), (53.40, 7.50), (54.60, 8.90), (54.00, 9.60), (53.00, 10.20), (51.90, 9.30),
+]
+METRO_PER_RUN, RURAL_PER_RUN = 2, 3        # = TEST_MAX_CIRCLES
+RURAL_SET = set(RURAL)
+
+# Accuracy meter (A): every ANWB-versus-MTS-K difference is counted in 1-cent bins, per day, so we can say how far ANWB is off.
+ACC_DAYS = 14
+ACC_CLIP = 25                              # bins beyond +-25 ct are pooled
 
 _APIKEY_RE = re.compile(r"apikey=[^&\s'\"]+")
 FUEL_MAP = {"e5": ("E5", "L"), "e10": ("E10", "L"), "diesel": ("DIESEL", "L")}
@@ -140,6 +158,70 @@ def parse_tk_stations(data: Dict, price_entry) -> List[Dict[str, Any]]:
     return out
 
 
+def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float]], day: str) -> Dict:
+    """Add one run's (fuel, stratum, BRAND, diff_ct) pairs to the per-day histograms and drop days older than ACC_DAYS.
+    diff_ct = ANWB price minus official MTS-K price, in cents. Same-day runs add up (stations are re-measured on later visits)."""
+    days = store.setdefault("days", {})
+    d = days.setdefault(day, {"bins": {}, "brands": {}})
+    for fuel, stratum, brand, diff in pairs:
+        k = f"{fuel}|{stratum}"
+        b = d["bins"].setdefault(k, {})
+        bin_ = str(max(-ACC_CLIP, min(ACC_CLIP, round(diff))))
+        b[bin_] = b.get(bin_, 0) + 1
+        t = d["brands"].setdefault(brand, [0, 0])
+        t[0] += 1
+        if abs(diff) >= 2:
+            t[1] += 1
+    for old in sorted(days)[:-ACC_DAYS]:
+        del days[old]
+    return store
+
+
+def _pct(hist: Dict[int, int], q: float) -> float:
+    n = sum(hist.values())
+    if not n:
+        return 0.0
+    acc, target = 0, q * n
+    for k in sorted(hist):
+        acc += hist[k]
+        if acc >= target:
+            return float(k)
+    return float(max(hist))
+
+
+def accuracy_summary(store: Dict) -> Dict:
+    """Read the histograms back: share within 1 ct, median bias (signed), median/90th-percentile absolute error, worst brands."""
+    def stats(hist: Dict[int, int]) -> Dict:
+        n = sum(hist.values())
+        if not n:
+            return {"n": 0}
+        ab: Dict[int, int] = defaultdict(int)
+        for k, c in hist.items():
+            ab[abs(k)] += c
+        return {"n": n, "within_1ct_pct": round(100 * sum(c for k, c in hist.items() if abs(k) <= 1) / n, 1),
+                "bias_median_ct": _pct(hist, 0.5), "abs_median_ct": _pct(ab, 0.5), "abs_p90_ct": _pct(ab, 0.9)}
+    days = store.get("days") or {}
+    allh: Dict[int, int] = defaultdict(int)
+    per: Dict[str, Dict[int, int]] = defaultdict(lambda: defaultdict(int))
+    brands: Dict[str, List[int]] = defaultdict(lambda: [0, 0])
+    for d in days.values():
+        for k, bins in d.get("bins", {}).items():
+            for b, c in bins.items():
+                allh[int(b)] += c
+                per[k][int(b)] += c
+        for br, (n, o) in d.get("brands", {}).items():
+            brands[br][0] += n
+            brands[br][1] += o
+    out = {"days": len(days), **stats(allh), "by": {k: stats(h) for k, h in sorted(per.items())}}
+    worst = sorted(((100 * o / n, br, n) for br, (n, o) in brands.items() if n >= 20), reverse=True)[:5]
+    out["worst_brands"] = [{"brand": br, "n": n, "over_2ct_pct": round(r, 1)} for r, br, n in worst]
+    if out["n"]:
+        out["line"] = (f"ANWB matched the official MTS-K price to within 1 cent for {out['within_1ct_pct']}% of {out['n']} checks "
+                       f"on German stations (last {out['days']} days); median difference {out['bias_median_ct']:+g} ct, "
+                       f"90% of checks within {out['abs_p90_ct']:g} ct.")
+    return out
+
+
 def _num(name, default, cast):
     """Number from the environment; a typo in a repo variable (400x) must not take the whole pipeline down."""
     raw = os.environ.get(name)
@@ -178,6 +260,8 @@ class GermanyScraper(BaseScraper):
         self._clock = time.monotonic
         self._wall = time.time
         self.tk_info: Dict[str, Any] = {"mode": mode}
+        # accuracy meter file (published as /de_accuracy.json; the workflow downloads the last copy before the run). None = off.
+        self.acc_path: Optional[Path] = Path(env("DE_ACCURACY_PATH") or Path(__file__).resolve().parents[2] / "data" / "de_accuracy.json")
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         t0 = self._clock()
@@ -201,13 +285,39 @@ class GermanyScraper(BaseScraper):
         try:
             tk = await self._fetch_tankerkoenig(stations, budget)
             if tk:
-                self._merge(stations, tk, add_extras=self.mode == "commercial", info=self.tk_info)
+                pairs: List[Tuple[str, str, str, float]] = []
+                self._merge(stations, tk, add_extras=self.mode == "commercial", info=self.tk_info, acc=pairs)
                 self._label(len(tk))
+                self._record_accuracy(pairs)
         except Exception as e:  # noqa: BLE001 - the ANWB baseline must survive any Tankerkoenig failure
             print(f"[DE] Tankerkoenig step failed, keeping ANWB baseline: {type(e).__name__}: {self._scrub(e)}")
             self.tk_info["error"] = type(e).__name__
         self._report(stations)
         return stations
+
+    def _record_accuracy(self, pairs: List[Tuple[str, str, str, float]]) -> None:
+        """Fold this run's differences into the rolling 14-day file and put the summary into the health report."""
+        if not pairs or self.acc_path is None:
+            return
+        try:
+            try:
+                store = json.loads(self.acc_path.read_text(encoding="utf-8"))
+                if store.get("v") != 1:
+                    store = {}
+            except (OSError, ValueError):
+                store = {}
+            day = datetime.fromtimestamp(self._wall(), tz=timezone.utc).date().isoformat()
+            store["v"] = 1
+            accuracy_update(store, pairs, day)
+            summ = accuracy_summary(store)
+            store["updated"] = datetime.fromtimestamp(self._wall(), tz=timezone.utc).isoformat()
+            store["summary"] = summ
+            self.acc_path.parent.mkdir(parents=True, exist_ok=True)
+            self.acc_path.write_text(json.dumps(store, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+            self.tk_info["accuracy"] = {k: summ[k] for k in ("days", "n", "within_1ct_pct", "bias_median_ct", "abs_p90_ct", "line") if k in summ}
+            print(f"[DE] accuracy meter: {summ.get('line', 'no pairs')}")
+        except Exception as e:  # noqa: BLE001 - the meter must never break the price feed
+            print(f"[DE] accuracy meter failed: {type(e).__name__}: {e}")
 
     def _label(self, n_tk: int) -> None:
         if self.mode == "commercial":
@@ -242,8 +352,9 @@ class GermanyScraper(BaseScraper):
     def _circles(self, baseline: List[Dict]) -> List[Tuple[float, float]]:
         if self.mode == "test":
             slot = int(self._wall() // (self.REFRESH_MINUTES * 60))
-            start = (slot * TEST_MAX_CIRCLES) % len(GRID)
-            return [GRID[(start + i) % len(GRID)] for i in range(TEST_MAX_CIRCLES)]
+            m, r = (slot * METRO_PER_RUN) % len(GRID), (slot * RURAL_PER_RUN) % len(RURAL)
+            return ([GRID[(m + i) % len(GRID)] for i in range(METRO_PER_RUN)]
+                    + [RURAL[(r + i) % len(RURAL)] for i in range(RURAL_PER_RUN)])
         return _cover_circles(baseline, self.radius_km) or list(GRID)   # no footprint: metro circles only
 
     async def _fetch_tankerkoenig(self, baseline: List[Dict], budget_s: float) -> List[Dict[str, Any]]:
@@ -280,6 +391,7 @@ class GermanyScraper(BaseScraper):
                 info["requests"] += 1
                 try:
                     for st in await self._request(circle, radius):
+                        st["_stratum"] = "rural" if circle in RURAL_SET else ("metro" if test else "cover")
                         seen.setdefault(st["id"], st)
                 finally:
                     last_end[0] = self._clock()
@@ -324,7 +436,7 @@ class GermanyScraper(BaseScraper):
 
     @staticmethod
     def _merge(base: List[Dict], tk: List[Dict], add_extras: bool = True,
-               info: Optional[Dict] = None) -> List[Dict]:
+               info: Optional[Dict] = None, acc: Optional[List] = None) -> List[Dict]:
         """MTS-K stations override the matching ANWB station (<=150 m).
 
         Both readings are kept: where the replaced ANWB petrol/diesel price differs from the MTS-K one by
@@ -359,16 +471,19 @@ class GermanyScraper(BaseScraper):
             old = {bucket_of(p): p for p in best.get("prices") or []}
             new = [dict(p) for p in t["prices"]]
             pairs = []
-            if old.get("95"):      # ANWB does not say E5 or E10: compare with the closer of the two
+            if old.get("95"):      # ANWB does not say E5 or E10: compare with the closer of the two (so petrol differences are, if anything, understated)
                 a = old["95"]
                 c = min((p for p in new if p["fuel_type"] in ("E5", "E10")),
                         key=lambda p: abs(p["price"] - a["price"]), default=None)
-                pairs.append((a, c))
+                pairs.append((a, c, "petrol"))
             if old.get("DIESEL"):
-                pairs.append((old["DIESEL"], next((p for p in new if p["fuel_type"] == "DIESEL"), None)))
-            for a, p in pairs:
+                pairs.append((old["DIESEL"], next((p for p in new if p["fuel_type"] == "DIESEL"), None), "diesel"))
+            for a, p, fuel in pairs:
                 if p is None:
                     continue
+                if acc is not None:
+                    acc.append((fuel, t.get("_stratum", "other"), (t.get("brand") or "?").strip().upper()[:40],
+                                round((a["price"] - p["price"]) * 100, 1)))
                 lo = min(a["price"], p["price"])
                 r = abs(a["price"] - p["price"]) / lo if lo > 0 else 0
                 if r >= cfg.alt_min_pct:
