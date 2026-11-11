@@ -247,60 +247,6 @@ a:hover { text-decoration:underline; }
     </table>
   </div>
 
-  <!-- Analytics -->
-  <div class="sec-hd">User analytics — setup guide</div>
-  <p style="font-size:0.78rem;color:var(--t2);margin-bottom:16px;line-height:1.6">
-    EuroFuelPrices is a static site served from GitHub Pages — there is no server-side access log. To understand how visitors use the app, you need a lightweight client-side analytics solution. Three recommended options below.
-  </p>
-  <div class="analytics-grid">
-    <div class="analytics-card">
-      <h3>GoatCounter <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free · Privacy-first</span></h3>
-      <p>Simple, open-source, GDPR-compliant. No cookies. Free for public sites. Shows page views, countries, referrers, device types. Takes 2 minutes to set up.</p>
-      <div class="tag">No cookies</div><div class="tag">GDPR OK</div><div class="tag">Open source</div>
-      <br><br>
-      <p><strong>1.</strong> Register at <a href="https://www.goatcounter.com/" target="_blank" rel="noopener">goatcounter.com</a> (free for public sites)<br>
-      <strong>2.</strong> Add this to index.html before &lt;/body&gt;:</p>
-      <code>&lt;script data-goatcounter="https://YOUR.goatcounter.com/count"
-  async src="//gc.zgo.at/count.js"&gt;&lt;/script&gt;</code>
-      <p><strong>3.</strong> To track fuel type filters and Near Me usage, emit custom events:</p>
-      <code>window.goatcounter?.count({ path:'fuel-filter/DIESEL', title:'Filter: Diesel' });
-window.goatcounter?.count({ path:'nearby-used', title:'Near Me tapped' });</code>
-    </div>
-
-    <div class="analytics-card">
-      <h3>Plausible Analytics <span style="font-size:0.65rem;color:var(--amber);font-weight:500">€9/mo · Best UX</span></h3>
-      <p>Best-in-class privacy-friendly analytics. Beautiful dashboard. Custom events for fuel types, Near Me, country filters. EU-hosted (Estonia). GDPR/CCPA compliant out of the box.</p>
-      <div class="tag">EU-hosted</div><div class="tag">Custom events</div><div class="tag">Best dashboard</div>
-      <br><br>
-      <code>&lt;script defer
-  data-domain="your-domain.github.io"
-  src="https://plausible.io/js/script.tagged-events.js"&gt;&lt;/script&gt;</code>
-      <p>Then track custom events:</p>
-      <code>// When Near Me is used:
-window.plausible?.('Near Me', { props: { action:'locate' } });
-
-// When a fuel type is selected:
-window.plausible?.('Fuel Filter', { props: { fuel: fuelType } });
-
-// When a country is filtered:
-window.plausible?.('Country Filter', { props: { cc: countryCode } });</code>
-    </div>
-
-    <div class="analytics-card">
-      <h3>Cloudflare Web Analytics <span style="font-size:0.65rem;color:var(--green);font-weight:500">Free forever</span></h3>
-      <p>100% free, requires a Cloudflare account (free). Works without proxying the site. Cookie-less. Shows Core Web Vitals, pages, countries, referrers. No custom events on free plan.</p>
-      <div class="tag">Free</div><div class="tag">Core Web Vitals</div><div class="tag">No config</div>
-      <br><br>
-      <p><strong>1.</strong> Go to Cloudflare Dashboard → Web Analytics → Add site<br>
-      <strong>2.</strong> Add the snippet to index.html:</p>
-      <code>&lt;script defer
-  src='https://static.cloudflareinsights.com/beacon.min.js'
-  data-cf-beacon='{"token": "YOUR_TOKEN"}'&gt;
-&lt;/script&gt;</code>
-      <p>No server changes needed. Works on any static host including GitHub Pages.</p>
-    </div>
-  </div>
-
   <!-- What to track -->
   <div class="sec-hd">Recommended events to track</div>
   <div style="background:var(--surf);border:1px solid var(--b);border-radius:16px;padding:20px;font-size:0.78rem;line-height:1.8;color:var(--t2)">
