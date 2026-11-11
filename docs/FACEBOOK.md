@@ -5,7 +5,7 @@ Numbers below are medians from https://eurofuelprices.com/europe/ on 2026-11-11 
 
 ## Status 2026-11-11
 Page created by Claude at the owner's request: **Euro Fuel Prices** (Facebook rejects mixed capitals, so not "EuroFuelPrices"), category Website, bio and website set, profile + cover uploaded, no posts yet, no phone/email/address added, no invitations sent.
-URL: https://www.facebook.com/profile.php?id=61596370264452 . Still to do: username `eurofuelprices` (if free), CTA button, first post (needs owner OK).
+URL: https://www.facebook.com/eurofuelprices (username set 2026-11-11, Learn more button -> site set, first post published). Not set on purpose: phone, email, address (personal data; add a business email only if wanted). Only the 101-char bio exists; this Facebook UI has no separate long description. Ignore Meta Business Suite upsell tasks (ads, Instagram).
 `docs/facebook/cover.png` was regenerated with the text clear of the profile circle; the uploaded cover is the first version (fine on the live page).
 
 ## 1. Create the Page (done, kept for reference)
