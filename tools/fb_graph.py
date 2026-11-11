@@ -11,6 +11,7 @@ import urllib.parse
 import urllib.request
 
 BASE = os.environ.get("FB_GRAPH_BASE", "https://graph.facebook.com")   # unversioned = the app's default version (no expiry surprises)
+VIDEO_BASE = os.environ.get("FB_VIDEO_BASE", "https://graph-video.facebook.com")
 EXPECTED_NAME = "Euro Fuel Prices"
 
 
@@ -48,6 +49,32 @@ def verify_page(page_id: str, token: str, call_fn=call) -> str:
 def post_photo(page_id: str, token: str, message: str, image_url: str, call_fn=call, published: bool = True) -> str:
     r = call_fn("POST", f"{page_id}/photos", token, {"url": image_url, "caption": message, "published": "true" if published else "false"})
     return r.get("post_id") or r.get("id") or ""
+
+
+def post_video(page_id: str, token: str, message: str, path: str, timeout: int = 300) -> str:
+    """Upload a (short) video file as the Page. Multipart body built by hand to stay stdlib-only; the token stays out of any log."""
+    boundary = "efp" + os.urandom(8).hex()
+    crlf = b"\r\n"
+    body = b""
+    for k, v in (("access_token", token), ("description", message), ("published", "true")):
+        body += f"--{boundary}".encode() + crlf + f'Content-Disposition: form-data; name="{k}"'.encode() + crlf + crlf + str(v).encode("utf-8") + crlf
+    with open(path, "rb") as f:
+        blob = f.read()
+    body += (f"--{boundary}".encode() + crlf + b'Content-Disposition: form-data; name="source"; filename="video.mp4"' + crlf
+             + b"Content-Type: video/mp4" + crlf + crlf + blob + crlf + f"--{boundary}--".encode() + crlf)
+    req = urllib.request.Request(f"{VIDEO_BASE}/{page_id}/videos", data=body, method="POST",
+                                 headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return str(json.loads(r.read().decode("utf-8")).get("id", ""))
+    except urllib.error.HTTPError as e:
+        try:
+            msg = json.loads(e.read().decode("utf-8")).get("error", {}).get("message", "")
+        except Exception:
+            msg = ""
+        raise GraphError(f"POST videos: HTTP {e.code} {msg}".replace(token, "***")) from None
+    except urllib.error.URLError as e:
+        raise GraphError(f"POST videos: {e.reason}".replace(token, "***")) from None
 
 
 def get_comments(object_id: str, token: str, call_fn=call) -> list:

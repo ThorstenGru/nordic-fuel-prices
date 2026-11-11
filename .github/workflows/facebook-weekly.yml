@@ -1,0 +1,65 @@
+name: Facebook — weekly video (Euro Fuel Prices Page)
+
+# One generated 9:16 video a week, posted by the Page itself (same secrets as facebook.yml). Without the secrets it only renders.
+# Dry run (the default for manual runs) renders the video and attaches it to the run as an artifact; nothing is posted.
+
+on:
+  schedule:
+    - cron: '0 16 * * 0'    # Sunday 16:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'dry run (render only, no posting)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: facebook-bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Pillow
+        run: pip install "Pillow>=10.1,<13"
+
+      - name: Render and post the weekly video
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+        run: python tools/fb_weekly.py $DRY --out weekly_out
+
+      - name: Keep the video of this run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-video
+          path: weekly_out/*.mp4
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Commit the log
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/facebook/post_log.csv 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Facebook log [skip ci]"
+            for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break || sleep 5; done
+          fi
