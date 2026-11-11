@@ -1,4 +1,6 @@
-# Daily Facebook post: playbook for the automation (standing OK from the owner, 2026-11-11)
+# Daily Facebook post: playbook (standing OK from the owner, 2026-11-11)
+
+> **Status:** the primary route is now the GitHub Actions routine (`.github/workflows/facebook.yml`, see GRAPH_API_SETUP.md and docs/ARCHITECTURE.md). This browser-based playbook belongs to the Claude-app task, which is **disabled**; it is kept as a documented fallback and its rules (one post a day, only as the Page, no ads/boost/tags/replies except the town replies of the bot) still apply to any manual or fallback posting.
 
 Page: **Euro Fuel Prices**, https://www.facebook.com/eurofuelprices (admin is the owner's logged-in Chrome profile).
 Scope of the standing OK: **one public post per day**, produced by `tools/fb_daily.py`, nothing else. No ads, no boosts, no invitations,

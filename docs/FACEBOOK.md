@@ -3,6 +3,8 @@
 No paid campaigns (project rule: everything free). Owner creates the Page and posts; Claude drafts.
 Numbers below are medians from https://eurofuelprices.com/europe/ on 2026-11-11 (EUR per litre) — **refresh them from that page right before posting**.
 
+> Posting is now automatic: see GRAPH_API_SETUP.md, PLAYBOOK.md and docs/ARCHITECTURE.md. Posts below are the original drafts; the daily routine generates its own from live data.
+
 ## Status 2026-11-11
 Page created by Claude at the owner's request: **Euro Fuel Prices** (Facebook rejects mixed capitals, so not "EuroFuelPrices"), category Website, bio and website set, profile + cover uploaded, no posts yet, no phone/email/address added, no invitations sent.
 URL: https://www.facebook.com/eurofuelprices (username set 2026-11-11, Learn more button -> site set, first post published). Not set on purpose: phone, email, address (personal data; add a business email only if wanted). Only the 101-char bio exists; this Facebook UI has no separate long description. Ignore Meta Business Suite upsell tasks (ads, Instagram).

@@ -21,9 +21,16 @@ Already existed (not rebuilt): sitemap index + robots, JSON-LD on pages, Search 
 - IndexNow (`src/indexnow.py`, key file in `web/`): daily ping at 07:00 UTC for Europe pages and country hubs.
 - Search Console and Bing Webmaster Tools: sitemaps submitted/imported 2026-11-11.
 
-## OWNER steps (10 minutes, once)
-1. **Google Search Console** (property already verified via `google9b79c7d4878035d4.html`): Sitemaps -> add `sitemap-seo.xml` and `sitemap.xml`. Re-check in 7 days: "Pages" -> indexed vs discovered.
-2. **Bing Webmaster Tools**: sign in, "Import from Google Search Console". Bing also feeds DuckDuckGo, Ecosia and Copilot.
+## Facebook and automation (2026-11-11, end of day)
+- Page **Euro Fuel Prices** (https://www.facebook.com/eurofuelprices): name, bio, website, "Learn more" button, username, profile + cover, first post live. The site links to it from About, the app bar and every generated page (`sameAs` in JSON-LD).
+- **Fully automatic, on GitHub (no computer, app or person):** `.github/workflows/facebook.yml` + `tools/fb_*.py` — daily post at 07:00 UTC, hourly replies to "comment your town". Posts always come from the Page (Page token, verified before every run). Weekly plan: Mon ranking, Tue border pair, Wed quiz, Thu "how to use" tip, Fri cheapest-within-10-km spotlight, Sat "comment your town", Sun tip. Grade D data is included and marked as estimates.
+- Verified 2026-11-11: `selftest` (token = the Page, feed readable, unpublished photo created and deleted). First real automatic post: 2026-11-12 07:00 UTC. Details: [ARCHITECTURE.md](ARCHITECTURE.md#8-facebook-routine), [facebook/GRAPH_API_SETUP.md](facebook/GRAPH_API_SETUP.md), [OPERATIONS.md](OPERATIONS.md).
+- Not automated on purpose: tagging/contacting individuals, paid ads or boosts, replies to anything but a town name.
+
+## OWNER steps
+Done 2026-11-11: Google Search Console sitemaps submitted; Bing Webmaster Tools imported; Meta app and GitHub secrets for Facebook. Still the owner's:
+1. Send the outreach drafts below (journalists, communities) when `/europe/` looks right on your own device.
+2. Join the conversation on the Page when a comment needs a human answer.
 3. Run `python tools/growth_kpis.py` weekly and paste GSC impressions/clicks into the last columns of `docs/growth_kpis.csv`.
 
 ## Outreach drafts (OWNER sends; nothing has been sent)
