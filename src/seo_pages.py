@@ -4,7 +4,8 @@ Runs after ``main.py`` in the scrape workflow and writes plain, JS-free HTML int
 pages are crawlable and fast. Targets local-intent queries ("bensinpriser Växjö", "Spritpreise
 Wien", "prix carburant Lyon") — see docs/ROADMAP.md, experiment E3.
 
-Countries (COUNTRIES below): SE (sv), AT (de), FR (fr), DE (de), CH (de). DE and CH are currently fed
+Countries (COUNTRIES below): SE, AT, FR, DE, CH, ES, PT, DK, NL, BE (nl at /be/, fr at /be-fr/, same data), PL,
+IT (IT switches on by itself once data/it.json holds prices younger than 72 h). DE and CH are currently fed
 by the unofficial ANWB API, which the roadmap flags as a licence / cease-and-desist risk; the owner
 released them anyway (2026-10-06). Their pages say so in the footer. Kill switch: SEO_EXCLUDE_ANWB=1
 skips every ANWB-fed country. When DE switches to Tankerkönig (roadmap D3) the footer attribution
@@ -97,6 +98,26 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
                hub="Brandstofprijzen Nederland", hub_title="Brandstofprijzen Nederland vandaag – goedkoopste benzine en diesel",
                fuels=[("P95", "Euro 95"), ("P98", "Euro 98"), ("DIESEL", "Diesel"), ("LPG", "LPG")],
                cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="landelijke mediaan"),
+    "be": dict(lang="nl", data="be", iso="BE", currency="EUR", sym="€", mode="city", ts_kind="fetched", fallback_nearby=False,
+               ceiling_share=0.5, hub="Brandstofprijzen België", hub_title="Brandstofprijzen België vandaag – goedkoopste benzine en diesel",
+               fuels=[("P95", "Euro 95"), ("P98", "Euro 98"), ("DIESEL", "Diesel"), ("LPG", "LPG")],
+               cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="Belgische mediaan",
+               hub_lede="Brandstofprijzen en tankstations in {n} plaatsen in België. Kies uw plaats voor de goedkoopste benzine en diesel in de buurt, of open de <a href=\"/\">live kaart</a>.",
+               h_cheapest="Goedkoopste {f} in België", hub_desc="Vergelijk benzine- en dieselprijzen in {n} Belgische plaatsen."),
+    "be-fr": dict(lang="fr", data="be", iso="BE", currency="EUR", sym="€", mode="city", ts_kind="fetched", fallback_nearby=False,
+               ceiling_share=0.5, hub="Prix des carburants en Belgique", hub_title="Prix des carburants en Belgique – le moins cher aujourd’hui",
+               fuels=[("P95", "Essence 95"), ("P98", "Essence 98"), ("DIESEL", "Diesel"), ("LPG", "LPG")],
+               cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="médiane belge",
+               hub_lede="Prix des carburants et stations-service dans {n} communes de Belgique. Choisissez votre commune pour trouver l’essence et le diesel les moins chers près de chez vous – ou ouvrez la <a href=\"/\">carte en direct</a>.",
+               h_cheapest="{f} le moins cher en Belgique", hub_desc="Comparez les prix de l’essence et du diesel dans {n} communes belges."),
+    "pl": dict(lang="pl", currency="PLN", sym="zł", mode="city", ts_kind="fetched", fallback_nearby=False,
+               hub="Ceny paliw w Polsce", hub_title="Ceny paliw w Polsce dziś – najtańsza benzyna i diesel",
+               fuels=[("P95", "Benzyna 95"), ("P98", "Benzyna 98"), ("DIESEL", "Diesel (ON)"), ("LPG", "Autogaz (LPG)")],
+               cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="mediany krajowej"),
+    "it": dict(lang="it", currency="EUR", sym="€", mode="city", ts_kind="price", fallback_nearby=False,
+               hub="Prezzi carburanti in Italia", hub_title="Prezzi carburanti in Italia oggi – benzina e gasolio più economici",
+               fuels=[("P95", "Benzina"), ("DIESEL", "Gasolio"), ("LPG", "GPL")],
+               cheapest=("P95", "DIESEL"), src="MIMIT – Osservaprezzi Carburanti", osm=False, nation="mediana nazionale"),
 }
 
 MONTHS = {
@@ -106,6 +127,8 @@ MONTHS = {
     "es": ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
     "pt": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
     "da": ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
+    "it": ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"],
+    "pl": ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"],
     "nl": ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
 }
 
@@ -246,13 +269,51 @@ foot_unofficial="Källa: ANWB-data (inofficiell tredjepartskälla). Priserna kan
         foot_unofficial="Bron: ANWB-gegevens (niet-officiële bron van derden). Prijzen kunnen afwijken – controleer ze bij de pomp.",
         foot_grades="Zo beoordelen we bronnen", foot_osm="Plaatsnamen ©", foot_osm_who="OpenStreetMap-bijdragers",
         foot_upd="Laatst bijgewerkt", ad=""),
+    "it": dict(
+        locale="it_IT", home="Home", map="Apri la mappa →", crumbs="Percorso",
+        cheapest="Più economico: {f}", vs="{d} {sym} rispetto alla {nation}",
+        lede="Prezzi attuali presso {n} su {total} distributori a {town} e dintorni, dal più economico al più caro.",
+        lede_none="", h_stations="Distributori a {town}", h_near_priced="", h_nearby="Prezzi nei comuni vicini",
+        h1="Prezzi carburanti a {town}", t_priced="Prezzi benzina e gasolio a {town} oggi",
+        t_none="", d_priced="Benzina e gasolio più economici a {town}: confronta i prezzi di {n} distributori, aggiornati ogni giorno.",
+        d_none="", th_station="Distributore", km_from="a circa {d} km dal centro", central="centro", km="a circa {d} km", near="vicino a",
+        note_none="", hub_lede="Prezzi dei carburanti in {n} comuni italiani. Scegli il tuo comune per trovare benzina e gasolio più economici vicino a te, oppure apri la <a href=\"/\">mappa in tempo reale</a>.",
+        h_cheapest="Più economico in Italia: {f}", h_find="Trova il tuo comune",
+        hub_desc="Confronta i prezzi di benzina e gasolio in {n} comuni italiani, aggiornati ogni giorno.",
+        th_when={"snapshot": "Dati della fonte", "fetched": "Rilevato", "price": "Aggiornato"},
+        foot_ts={"snapshot": "L’ora è quella dei dati della fonte, non del momento in cui il prezzo è cambiato al distributore.",
+                 "fetched": "L’ora è quella della nostra rilevazione; la fonte non indica l’ora del prezzo.",
+                 "price": "L’ora è quella dell’ultima modifica del prezzo secondo la fonte (aggiornamento giornaliero)."},
+        foot_src="Fonte: {src}, dati aperti con licenza IODL 2.0. I prezzi possono differire alla pompa: verificali sul posto.",
+        foot_unofficial="Fonte: dati ANWB (fonte di terzi non ufficiale). I prezzi possono differire: verificali alla pompa.",
+        foot_grades="Come valutiamo le fonti", foot_osm="Nomi dei luoghi ©", foot_osm_who="collaboratori di OpenStreetMap",
+        foot_upd="Ultimo aggiornamento", ad=""),
+    "pl": dict(
+        locale="pl_PL", home="Strona główna", map="Otwórz mapę →", crumbs="Ścieżka",
+        cheapest="Najtaniej: {f}", vs="{d} {sym} wobec {nation}",
+        lede="Aktualne ceny na {n} z {total} stacji paliw w miejscowości {town} i okolicy, od najtańszej.",
+        lede_none="", h_stations="Stacje paliw: {town}", h_near_priced="", h_nearby="Ceny paliw w pobliskich miejscowościach",
+        h1="Ceny paliw: {town}", t_priced="Ceny paliw {town} dziś – benzyna i diesel",
+        t_none="", d_priced="Najtańsza benzyna i diesel: {town}. Porównaj ceny na {n} stacjach paliw.",
+        d_none="", th_station="Stacja", km_from="ok. {d} km od centrum", central="centrum", km="ok. {d} km", near="koło",
+        note_none="", hub_lede="Ceny paliw i stacje w {n} miejscowościach w Polsce. Wybierz swoją miejscowość, aby znaleźć najtańszą benzynę i diesel w pobliżu – lub otwórz <a href=\"/\">mapę na żywo</a>.",
+        h_cheapest="Najtaniej w Polsce: {f}", h_find="Znajdź swoją miejscowość",
+        hub_desc="Porównaj ceny benzyny i diesla w {n} miejscowościach w Polsce.",
+        th_when={"snapshot": "Dane źródła", "fetched": "Pobrano", "price": "Zaktualizowano"},
+        foot_ts={"snapshot": "Czas to stan danych źródła, a nie moment zmiany ceny na stacji.",
+                 "fetched": "Czas to moment pobrania przez nas; źródło nie podaje czasu ceny.",
+                 "price": "Czas to ostatnia zmiana ceny według źródła."},
+        foot_src="Źródło: {src}. Ceny mogą się różnić – sprawdź na stacji.",
+        foot_unofficial="Źródło: dane ANWB (nieoficjalne źródło zewnętrzne). Ceny mogą się różnić – sprawdź na stacji.",
+        foot_grades="Jak oceniamy źródła", foot_osm="Nazwy miejscowości ©", foot_osm_who="współtwórcy OpenStreetMap",
+        foot_upd="Ostatnia aktualizacja", ad=""),
 }
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def slugify(name: str, lang: str) -> str:
-    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "nl": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}}[lang]
+    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "nl": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}, "it": {}, "pl": {"ł": "l"}}[lang]
     s = name.lower()
     for k, v in rep.items():
         s = s.replace(k, v)
@@ -294,7 +355,7 @@ def fmt_when(dt: Optional[datetime], lang: str) -> str:
 
 
 def fmt_price(v: float, cfg: Dict) -> str:
-    s = f"{v:.2f}" if cfg["currency"] in ("SEK",) else f"{v:.3f}"
+    s = f"{v:.2f}" if cfg["currency"] in ("SEK", "PLN") else f"{v:.3f}"
     return s.replace(".", ",")
 
 
@@ -343,6 +404,8 @@ def fresh_price(station: Dict[str, Any], fuel: str, now: datetime, cfg: Dict) ->
             continue
         when = parse_iso(p.get("updated_at"))
         if when and (now - when).total_seconds() > cfg.get("max_age_h", MAX_PRICE_AGE_H) * 3600:
+            continue
+        if price == cfg.get("_ceil", {}).get(fuel):   # a legal maximum shown as if it were a station price
             continue
         if best is None or price < best[0]:
             best = (price, when)
@@ -617,7 +680,7 @@ def footer_html(c: Ctx, unofficial: bool = False) -> str:
 # ── build one country ────────────────────────────────────────────────────────
 
 def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str, str]]]:
-    f = DATA_DIR / f"{cc}.json"
+    f = DATA_DIR / f"{cfg.get('data', cc)}.json"
     if not f.exists():
         print(f"seo_pages[{cc}]: {f.name} missing - skipped")
         return None
@@ -633,6 +696,13 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
     lang, x = cfg["lang"], TXT[cfg["lang"]]
     fetched = parse_iso(meta.get("fetched_at")) or now
     c = Ctx(cc, cfg, now, fetched, {})
+    cfg["_ceil"] = {}
+    if cfg.get("ceiling_share"):   # BE: most stations in the ANWB feed carry the government maximum price (one identical value for >= half of them), not their own
+        for fuel, _ in cfg["fuels"]:
+            vals = [fp[0] for s in stations if (fp := fresh_price(s, fuel, now, cfg))]
+            top = Counter(vals).most_common(1)
+            if vals and top[0][1] / len(vals) >= cfg["ceiling_share"]:
+                cfg["_ceil"][fuel] = top[0][0]
     for fuel, _ in cfg["fuels"]:
         vals = [fp[0] for s in stations if (fp := fresh_price(s, fuel, now, cfg))]
         if len(vals) >= 5:
@@ -703,7 +773,7 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
 
         stations_ld = [{"@type": "GasStation", "name": station_label(s)[0],
                         "geo": {"@type": "GeoCoordinates", "latitude": s["lat"], "longitude": s["lon"]},
-                        "address": {"@type": "PostalAddress", "addressLocality": name, "addressCountry": cc.upper()}}
+                        "address": {"@type": "PostalAddress", "addressLocality": name, "addressCountry": cfg.get("iso", cc.upper())}}
                        for s, _ in rows[:20]]
         ld = [breadcrumb_ld([(x["home"], SITE + "/"), (cfg["hub"], hub_url), (disp, canonical)]),
               {"@context": "https://schema.org", "@type": "ItemList", "name": x["h_stations"].format(town=disp),
@@ -741,16 +811,16 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         if cheapest:
             li = "".join(f'<tr><td class="n">{escape(station_label(s)[0])}<span class="sub">{escape(town_of.get(s["id"]) or s.get("city") or "")}</span></td>'
                          f'<td class="p">{escape(money(pr, cfg))}</td></tr>' for pr, s in cheapest)
-            top.append(f"<h2>{escape(x['h_cheapest'].format(f=labels[fuel]))}</h2><div class=\"tw\"><table><tbody>{li}</tbody></table></div>")
+            top.append(f"<h2>{escape((cfg.get('h_cheapest') or x['h_cheapest']).format(f=labels[fuel]))}</h2><div class=\"tw\"><table><tbody>{li}</tbody></table></div>")
     by_letter: Dict[str, List[str]] = defaultdict(list)
     for disp, slug, low in sorted(hub_rows, key=lambda r: r[0]):
         extra = f' <span class="sub" style="display:inline">{escape(money(low, cfg))}</span>' if low else ""
         by_letter[disp[0].upper()].append(f'<li><a href="/{cc}/{slug}/">{escape(disp)}</a>{extra}</li>')
     towns_html = "".join(f'<h2>{escape(l)}</h2><ul class="links">{"".join(v)}</ul>' for l, v in sorted(by_letter.items()))
     rank_link = f'<p><a href="/{cc}/{cfg["rank"]["slug"]}/">{escape(cfg["rank"]["h1"])} →</a></p>' if cfg.get("rank") and town_lows else ""
-    hub_body = f'<p class="lede">{x["hub_lede"].format(n=len(hub_rows))}</p>' + rank_link + "".join(top) + f"<h2>{escape(x['h_find'])}</h2>{towns_html}"
+    hub_body = f'<p class="lede">{(cfg.get("hub_lede") or x["hub_lede"]).format(n=len(hub_rows))}</p>' + rank_link + "".join(top) + f"<h2>{escape(x['h_find'])}</h2>{towns_html}"
     (out / "index.html").write_text(
-        page(cfg, cfg["hub_title"], x["hub_desc"].format(n=len(hub_rows)), hub_url, cfg["hub"], hub_body,
+        page(cfg, cfg["hub_title"], (cfg.get("hub_desc") or x["hub_desc"]).format(n=len(hub_rows)), hub_url, cfg["hub"], hub_body,
              [breadcrumb_ld([(x["home"], SITE + "/"), (cfg["hub"], hub_url)])],
              crumbs_html(lang, [(x["home"], "/"), (cfg["hub"], None)]), modified, foot),
         encoding="utf-8")
