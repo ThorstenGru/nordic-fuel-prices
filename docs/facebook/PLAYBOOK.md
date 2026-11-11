@@ -5,7 +5,8 @@ Scope of the standing OK: **one public post per day**, produced by `tools/fb_dai
 no messages, no personal data, no changes to Page settings, no replies to people (see "Comments").
 
 ## Each run
-1. `cd "C:\Users\thgrund\OneDrive - Digia\Desktop\Claude Code Folder\EuroFuelPrices"` and run `python tools/fb_daily.py`.
+1. `cd "C:\Users\thgrund\OneDrive - Digia\Desktop\Claude Code Folder\EuroFuelPrices"`, run `git pull --rebase origin main` (GitHub may already have posted today), then `python tools/fb_daily.py`.
+   NOTE: this browser route is only the stop-gap until the GitHub route (docs/facebook/GRAPH_API_SETUP.md) has its secrets; then this task is disabled.
 2. It prints one JSON line. If it contains `"skip"`: do **not** post. Append `date,skip,<reason>` to `docs/facebook/post_log.csv` and finish with a one-line report.
 3. Otherwise post exactly `text` with the picture at `image` (do not edit the wording; do not add hashtags or tags).
    Using the Claude in Chrome tools (load them with ToolSearch if deferred):
