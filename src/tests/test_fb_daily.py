@@ -13,9 +13,14 @@ def doc(rows):
 
 
 class Posts(unittest.TestCase):
-    def test_medians_drop_thin_and_crowd_data(self):
+    def test_medians_drop_thin_data_but_keep_estimates(self):
         m = fb.medians(doc([("DE", "p95", 1.9, 500, "C"), ("SE", "p95", 1.4, 900, "D"), ("PL", "p95", 1.4, 10, "C")]))
-        self.assertEqual(list(m), [("DE", "p95")])
+        self.assertEqual(sorted(m), [("DE", "p95"), ("SE", "p95")])       # grade D is quoted, thin data is not
+
+    def test_grade_d_is_marked_as_estimate(self):
+        m = fb.medians(doc([("SE", "p95", 1.4, 900, "D"), ("NO", "p95", 2.2, 900, "C")]))
+        text = fb.pair_post(m, "SE", "NO")[0]
+        self.assertIn("estimates from community reports", text)
 
     def test_pair_post_names_cheaper_country_and_notes_grade(self):
         m = fb.medians(doc([("DE", "p95", 2.0, 500, "C"), ("PL", "p95", 1.5, 500, "A")]))

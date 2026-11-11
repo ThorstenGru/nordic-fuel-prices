@@ -2,7 +2,7 @@
 
 Aggregate only: the town comes from a rotating list of big towns, from the Page's aggregate follower-city insight, or from a town a
 person typed into a comment on our "comment your town" post. Nothing about individuals is looked up or stored.
-Only countries with source grade A/B/C are used (never crowd-sourced D), and prices follow the same freshness rules as the website pages.
+Countries with source grade D (community estimates) are included but always marked as estimates; prices follow the same freshness rules as the website pages.
 """
 import json
 import re
@@ -19,10 +19,10 @@ SITE = "https://eurofuelprices.com"
 RADIUS_KM = 10
 TOP_N = 3
 # countries with their own town pages and a source grade we are willing to quote
-SUPPORTED = ["de", "at", "ch", "fr", "es", "pt", "dk", "nl"]
+SUPPORTED = ["de", "ch", "fr", "es", "pt", "dk", "nl", "se"]   # AT has no city field in its feed
 CITIES = [("de", "Hamburg"), ("de", "Berlin"), ("de", "München"), ("de", "Köln"), ("de", "Flensburg"), ("de", "Frankfurt am Main"),
           ("dk", "København"), ("dk", "Aarhus"), ("dk", "Aalborg"), ("dk", "Odense"),
-          ("at", "Wien"), ("at", "Graz"), ("at", "Salzburg"), ("ch", "Zürich"), ("ch", "Basel"), ("ch", "Bern"),
+          ("se", "Stockholm"), ("se", "Göteborg"), ("se", "Malmö"), ("se", "Uppsala"), ("se", "Linköping"), ("ch", "Zürich"), ("ch", "Basel"), ("ch", "Bern"),
           ("fr", "Paris"), ("fr", "Lyon"), ("fr", "Marseille"), ("fr", "Strasbourg"),
           ("es", "Madrid"), ("es", "Barcelona"), ("es", "Valencia"), ("es", "Sevilla"),
           ("pt", "Lisboa"), ("pt", "Porto"), ("nl", "Amsterdam"), ("nl", "Rotterdam"), ("nl", "Utrecht")]
@@ -78,9 +78,11 @@ def format_lines(cc, found):
     return lines
 
 
-def local_text(cc, town, found, lead):
+def local_text(cc, town, found, lead, grade="C"):
     url = f"{SITE}/{cc}/{town['slug']}/"
-    return f"{lead}\n" + "\n".join(format_lines(cc, found)) + f"\nPrices as listed on our map; check at the pump. More: {url}"
+    note = ("Estimates from community reports, not official prices; check at the pump." if grade == "D"
+            else "Prices as listed on our map; check at the pump.")
+    return f"{lead}\n" + "\n".join(format_lines(cc, found)) + f"\n{note} More: {url}"
 
 
 def usable(found):
@@ -106,7 +108,7 @@ def spotlight(fetch, used, today, audience=None, days=30):
     cache = {}
     for cc, name in candidates:
         key = f"{cc}-{sp.slugify(name, sp.COUNTRIES[cc]['lang'])}"
-        if key in recent or grades.get(cc) not in ("A", "B", "C"):
+        if key in recent or grades.get(cc) not in ("A", "B", "C", "D"):
             continue
         if cc not in cache:
             raw = fetch(f"{SITE}/{cc}.json", timeout=120)
@@ -116,7 +118,7 @@ def spotlight(fetch, used, today, audience=None, days=30):
             continue
         found = cheapest_near(cache[cc], cc, town)
         if usable(found):
-            return local_text(cc, town, found, f"Cheapest fuel within {RADIUS_KM} km of {town['name']} today:"), key
+            return local_text(cc, town, found, f"Cheapest fuel within {RADIUS_KM} km of {town['name']} today:", grades.get(cc)), key
     return None
 
 
@@ -136,7 +138,7 @@ def match_comment(text, supported=SUPPORTED):
     return (name, cc) if name else None
 
 
-def answer_for(name, cc, fetch, now=None):
+def answer_for(name, cc, fetch, now=None, grades=None):
     """Reply text for a comment, or None if the town cannot be found uniquely in a supported country."""
     options = [cc] if cc else SUPPORTED
     hits = []
@@ -154,4 +156,11 @@ def answer_for(name, cc, fetch, now=None):
     found = cheapest_near(stations, c, town, now)
     if not usable(found):
         return None
-    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:")
+    if grades is None:
+        try:
+            grades = {x["country"].lower(): x.get("grade") for x in json.loads(fetch(SITE + "/meta.json")).get("countries", [])}
+        except Exception:
+            grades = {}
+    if grades and grades.get(c) not in ("A", "B", "C", "D"):
+        return None                                          # no usable source grade: say nothing rather than guess
+    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:", (grades or {}).get(c, "C"))

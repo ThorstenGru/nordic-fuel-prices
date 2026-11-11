@@ -31,6 +31,6 @@ Do not reply automatically. The report lists how many new comments there are; th
 (drafts can be prepared on request). Never delete or hide comments.
 
 ## Content rules (enforced by the script)
-One post per day; weekday plan Mon ranking, Tue border pair, Wed quiz, Thu feature tip, Fri weekend border run, Sat reader question,
-Sun feature tip. Only grade A/B/C country medians with >= 300 priced stations are quoted (never crowd-sourced D), always as
+One post per day; weekday plan Mon ranking, Tue border pair, Wed quiz, Thu feature tip, Fri local spotlight (cheapest within 10 km of a town), Sat "comment your town" (answered by the GitHub bot),
+Sun feature tip. Country medians with >= 300 priced stations are quoted (grade D too, marked as estimates), always as
 "median station price", with a note when the source is unofficial. No "like/share" bait. Pairs/features are not repeated within 14 days.

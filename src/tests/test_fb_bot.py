@@ -55,7 +55,7 @@ class Local(unittest.TestCase):
         self.assertEqual(fb_local.match_comment("Hamburg, Germany"), ("Hamburg", "de"))
         self.assertEqual(fb_local.match_comment("Wien"), ("Wien", None))
         self.assertIsNone(fb_local.match_comment("great idea, thanks for building this tool for everybody"))
-        self.assertIsNone(fb_local.match_comment("Stockholm, Sweden"))        # not a supported (grade A/B/C) country
+        self.assertIsNone(fb_local.match_comment("Oslo, Norway"))             # country without town pages in our supported list
 
     def test_answer_only_quotes_stations_within_10_km(self):
         text = fb_local.answer_for("Hamburg", "de", fetch)
