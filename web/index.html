@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#0E1A29" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="EuroFuelPrices">
 <meta name="description" content="Live fuel prices at petrol stations across all of Europe. Find the cheapest fuel near you.">
@@ -43,9 +44,9 @@
 <link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="meta.json" as="fetch" crossorigin>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
+<link rel="icon" type="image/svg+xml" href="icon.svg?v=3">
 <title>EuroFuelPrices — Live European Fuel Prices</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>   <!-- Leaflet 1.9.4 (BSD-2, vendor/leaflet/LICENSE), self-hosted: an unpkg outage must not blank the app -->
 <style>
@@ -8048,10 +8049,22 @@ map.on('moveend', () => {
 // ════════════════════════════════════════════════════
 // PWA
 // ════════════════════════════════════════════════════
+Object.assign(I18N.en, { installMenu:'Open your browser menu and choose “Install app” or “Add to Home screen”.' });
+Object.assign(I18N.sv, { installMenu:'Öppna webbläsarens meny och välj ”Installera app” eller ”Lägg till på hemskärmen”.' });
+Object.assign(I18N.de, { installMenu:'Öffne das Browsermenü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.' });
+let swReg = null;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () =>
-    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e))
+    navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(e => console.warn('SW:', e))
   );
+  // A home-screen app is resumed from memory, not reloaded, so it could keep an old layout for days. When it comes back to the
+  // front: ask for a new service worker (at most every 30 min), and reload a page that has been in the background for 6 h or more.
+  let hiddenAt = 0, lastUpd = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (swReg && Date.now() - lastUpd > 30 * 60e3) { lastUpd = Date.now(); swReg.update().catch(() => {}); }
+    if (hiddenAt && Date.now() - hiddenAt > 6 * 3600e3 && !isTextField(document.activeElement)) location.reload();
+  });
 }
 let _installEvt = null;
 const IS_STANDALONE = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -8059,7 +8072,7 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); _insta
 function showInstallRow() { const r = document.getElementById('install-row'); if (r && !IS_STANDALONE) r.style.display = 'block'; }
 async function installApp() {
   if (_installEvt) { _installEvt.prompt(); try { await _installEvt.userChoice; } catch (_) {} _installEvt = null; return; }
-  toast(t('iosInstall'), 6500);
+  toast(t(IS_IOS ? 'iosInstall' : 'installMenu'), 6500);   // no install event: iOS has its own steps, other browsers use their menu
 }
 window.addEventListener('appinstalled', () => { const r = document.getElementById('install-row'); if (r) r.style.display = 'none'; });
 // Gentle install nudge: from the 2nd visit on, once per 3 weeks, never when already installed; dismissal is remembered.
