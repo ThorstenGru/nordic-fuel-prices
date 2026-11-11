@@ -65,6 +65,8 @@ def run_post(dry: bool, graph=fb_graph, today=None) -> int:
     if not c and not dry:
         return 0
     pid, tok = c or ("", "")
+    if c:
+        print(f"fb_bot: token belongs to Page '{graph.verify_page(pid, tok)}'")   # read-only check, also in a dry run; aborts for any other account
     audience = graph.follower_cities(pid, tok) if c else {}
     res = fb_daily.build(today, Path("."), audience=audience, download=False)
     if "skip" in res:
@@ -76,8 +78,7 @@ def run_post(dry: bool, graph=fb_graph, today=None) -> int:
     print(f"fb_bot: {res['format']} / {res['key']}\n{res['text']}")
     if dry:
         return 0
-    graph.verify_page(pid, tok)
-    post_id = graph.post_photo(pid, tok, res["text"], res["image_url"])
+    post_id =graph.post_photo(pid, tok, res["text"], res["image_url"])
     append_log({**res, "post_id": post_id})
     print(f"fb_bot: posted {post_id}")
     return 0
