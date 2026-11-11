@@ -349,8 +349,10 @@ def towns_from_places(stations: List[Dict], cc: str) -> List[Town]:
     return [t for t in towns if t["rows"]]
 
 
-def clean_city(name: str) -> str:
+def clean_city(name: str, lang: str = "") -> str:
     n = re.sub(r"\s+", " ", (name or "").strip())
+    if lang == "da":   # Danish postal districts: "Aarhus C", "København SV", "Aalborg Øst" are one town for searchers
+        n = re.sub(r"\s+(C|N|V|S|Ø|SV|SØ|NV|NØ|Syd|Nord|Øst|Vest|Sv|Sø|Nv|Nø)$", "", n)
     n = re.sub(r"\s+\d{1,2}(er|e|ème)?\s*(arrondissement)?$", "", n, flags=re.I)   # "Paris 15e" -> "Paris"
     if n.isupper() or n.islower():
         n = n.title()
@@ -361,7 +363,7 @@ def towns_from_city(stations: List[Dict], lang: str) -> List[Town]:
     groups: Dict[str, List[Dict]] = defaultdict(list)
     spelling: Dict[str, Counter] = defaultdict(Counter)
     for s in stations:
-        c = clean_city(s.get("city") or "")
+        c = clean_city(s.get("city") or "", lang)
         if not c or "lat" not in s:
             continue
         key = slugify(c, lang)                       # "Zürich" and "Zuerich" are one town
