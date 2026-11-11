@@ -3,7 +3,12 @@
 No paid campaigns (project rule: everything free). Owner creates the Page and posts; Claude drafts.
 Numbers below are medians from https://eurofuelprices.com/europe/ on 2026-11-11 (EUR per litre) — **refresh them from that page right before posting**.
 
-## 1. Create the Page (owner, ~5 minutes)
+## Status 2026-11-11
+Page created by Claude at the owner's request: **Euro Fuel Prices** (Facebook rejects mixed capitals, so not "EuroFuelPrices"), category Website, bio and website set, profile + cover uploaded, no posts yet, no phone/email/address added, no invitations sent.
+URL: https://www.facebook.com/profile.php?id=61596370264452 . Still to do: username `eurofuelprices` (if free), CTA button, first post (needs owner OK).
+`docs/facebook/cover.png` was regenerated with the text clear of the profile circle; the uploaded cover is the first version (fine on the live page).
+
+## 1. Create the Page (done, kept for reference)
 1. facebook.com -> menu -> **Pages** -> **Create new Page** (or facebook.com/pages/create).
 2. **Page name:** `EuroFuelPrices`  ·  **Category:** `Website` (or `Product/Service`).
 3. **Bio (max 101 characters):** `Live fuel prices across Europe. Free map, no account, no ads. eurofuelprices.com`
