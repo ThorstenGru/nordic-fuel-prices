@@ -71,6 +71,8 @@ class Pairs(unittest.TestCase):
                 ei.load_history = orig
             self.assertTrue((d / "europe" / "index.html").exists())
             self.assertTrue((d / "europe" / "fuel-prices-sweden-vs-denmark" / "index.html").exists())
+            for lang in ("sv", "de", "da"):
+                self.assertIn(f'<html lang="{lang}">', (d / "europe" / lang / "index.html").read_text(encoding="utf-8"))
             self.assertIn("country,name,fuel", (d / "open-data" / "national-averages.csv").read_text(encoding="utf-8"))
 
     def test_too_few_countries_keeps_previous_page(self):

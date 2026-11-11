@@ -42,7 +42,7 @@ Tone: professional and polite. Send from your own address.
 ## Roadmap (not done in this pass)
 - **Price-drop alerts (push).** Needs a Cloudflare Worker + KV (free tier) with Web Push (VAPID keys as Worker secrets) and a "tell me when diesel near X is below Y" form. iOS only delivers push to installed PWAs. Design: subscription stored by hashed endpoint, nightly check against `{cc}.json`, no account. **OWNER**: Cloudflare login for the Worker deploy and VAPID key generation.
 - Per-page share image (OG PNG) per country/town; needs a render step in the scrape job.
-- More town-page countries: NL, BE, PL, IT (IT blocked while mimit feed is stale), NO/FI once priced share improves.
+- More town-page countries: BE (bilingual city names), PL (ANWB city names lose diacritics), IT (blocked while mimit feed is stale), NO/FI once priced share improves. NL shipped 2026-11-11.
 - `hreflang` is not needed (one language per country section) but a language switcher on `/europe/` would help; add Swedish/German/Danish versions of the index.
 - IndexNow ping for new pages (free, Bing/Yandex); only worth it once the weekly index has history.
 - Weekly short video generated from the index (TikTok/Shorts).

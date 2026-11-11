@@ -88,6 +88,10 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
                fuels=[("P95", "Benzin 95"), ("P98", "Benzin 98"), ("DIESEL", "Diesel")],
                cheapest=("P95", "DIESEL"), src="OK, Q8, Shell og Go’on (åbne API’er)", osm=False,
                nation="landsmedian"),
+    "nl": dict(lang="nl", currency="EUR", sym="€", mode="city", ts_kind="fetched", fallback_nearby=False,
+               hub="Brandstofprijzen Nederland", hub_title="Brandstofprijzen Nederland vandaag – goedkoopste benzine en diesel",
+               fuels=[("P95", "Euro 95"), ("P98", "Euro 98"), ("DIESEL", "Diesel"), ("LPG", "LPG")],
+               cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="landelijke mediaan"),
 }
 
 MONTHS = {
@@ -97,6 +101,7 @@ MONTHS = {
     "es": ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
     "pt": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
     "da": ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
+    "nl": ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
 }
 
 TXT: Dict[str, Dict[str, str]] = {
@@ -217,13 +222,32 @@ foot_unofficial="Källa: ANWB-data (inofficiell tredjepartskälla). Priserna kan
         foot_unofficial="Kilde: ANWB-data (uofficiel tredjepartskilde). Priserne kan afvige – tjek ved pumpen.",
         foot_grades="Sådan vurderer vi kilderne", foot_osm="Stednavne ©", foot_osm_who="OpenStreetMap-bidragsydere",
         foot_upd="Senest opdateret", ad=""),
+    "nl": dict(
+        locale="nl_NL", home="Home", map="Open de kaart →", crumbs="Kruimelpad",
+        cheapest="Goedkoopste {f}", vs="{d} {sym} t.o.v. {nation}",
+        lede="Actuele prijzen bij {n} van {total} tankstations in en rond {town}, de goedkoopste eerst.",
+        lede_none="", h_stations="Tankstations in {town}", h_near_priced="", h_nearby="Brandstofprijzen in de buurt",
+        h1="Brandstofprijzen in {town}", t_priced="Benzine en diesel in {town} vandaag – prijzen",
+        t_none="", d_priced="Goedkoopste benzine en diesel in {town}: vergelijk de prijzen bij {n} tankstations.",
+        d_none="", th_station="Tankstation", km_from="ca. {d} km van het centrum", central="centrum", km="ca. {d} km", near="bij",
+        note_none="", hub_lede="Brandstofprijzen en tankstations in {n} plaatsen in Nederland. Kies uw plaats voor de goedkoopste benzine en diesel in de buurt, of open de <a href=\"/\">live kaart</a>.",
+        h_cheapest="Goedkoopste {f} in Nederland", h_find="Zoek uw plaats",
+        hub_desc="Vergelijk benzine- en dieselprijzen in {n} Nederlandse plaatsen.",
+        th_when={"snapshot": "Brongegevens", "fetched": "Opgehaald", "price": "Bijgewerkt"},
+        foot_ts={"snapshot": "De tijd is die van de brongegevens, niet het moment waarop de prijs bij het station veranderde.",
+                 "fetched": "De tijd is het moment waarop wij de prijs ophaalden; de bron geeft geen prijstijd.",
+                 "price": "De tijd is de laatste prijswijziging volgens de bron."},
+        foot_src="Bron: {src}. Prijzen kunnen afwijken – controleer ze bij de pomp.",
+        foot_unofficial="Bron: ANWB-gegevens (niet-officiële bron van derden). Prijzen kunnen afwijken – controleer ze bij de pomp.",
+        foot_grades="Zo beoordelen we bronnen", foot_osm="Plaatsnamen ©", foot_osm_who="OpenStreetMap-bijdragers",
+        foot_upd="Laatst bijgewerkt", ad=""),
 }
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def slugify(name: str, lang: str) -> str:
-    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}}[lang]
+    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "nl": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}}[lang]
     s = name.lower()
     for k, v in rep.items():
         s = s.replace(k, v)

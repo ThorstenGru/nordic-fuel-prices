@@ -115,10 +115,11 @@ def eur(v: float) -> str:
     return f"{v:.3f}"
 
 
-def head(title: str, desc: str, canonical: str, ld: List[Dict]) -> str:
+def head(title: str, desc: str, canonical: str, ld: List[Dict], lang: str = "en", locale: str = "en_GB",
+         back: str = "Open the live map →", alts: str = "") -> str:
     lds = "\n".join('<script type="application/ld+json">' + json.dumps(o, ensure_ascii=False).replace("</", "<\\/") + "</script>" for o in ld)
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -126,7 +127,8 @@ def head(title: str, desc: str, canonical: str, ld: List[Dict]) -> str:
 <meta name="description" content="{escape(desc)}">
 <link rel="canonical" href="{canonical}">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="en_GB">
+<meta property="og:locale" content="{locale}">
+{alts}
 <meta property="og:site_name" content="EuroFuelPrices">
 <meta property="og:title" content="{escape(title)}">
 <meta property="og:description" content="{escape(desc)}">
@@ -144,7 +146,7 @@ def head(title: str, desc: str, canonical: str, ld: List[Dict]) -> str:
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{{"token": "4266c1f5c19845839b3163f64446320f"}}'></script>
 </head>
 <body>
-<header><a class="logo" href="/"><img src="/icon.svg" alt="" width="22" height="22" style="vertical-align:-4px"> EuroFuelPrices</a><a class="back" href="/">Open the live map →</a></header>
+<header><a class="logo" href="/"><img src="/icon.svg" alt="" width="22" height="22" style="vertical-align:-4px"> EuroFuelPrices</a><a class="back" href="/">{back}</a></header>
 """
 
 
@@ -220,7 +222,92 @@ def build_index(elig, hist, today: str, updated: str) -> str:
            "dateModified": updated[:10], "isAccessibleForFree": True,
            "distribution": [{"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": SITE + "/open-data/national-averages.json"},
                             {"@type": "DataDownload", "encodingFormat": "text/csv", "contentUrl": SITE + "/open-data/national-averages.csv"}]}]
-    return head(title, desc, url, ld) + body + foot(updated)
+    alts = "\n".join([f'<link rel="alternate" hreflang="en" href="{SITE}/europe/">'] +
+                     [f'<link rel="alternate" hreflang="{l}" href="{SITE}/europe/{l}/">' for l in LANG_TXT] +
+                     [f'<link rel="alternate" hreflang="x-default" href="{SITE}/europe/">'])
+    return head(title, desc, url, ld, alts=alts) + body + foot(updated)
+
+
+# ── translated index pages (/europe/sv|de|da/) ─────────────────────────────────
+def _names(spec: str) -> Dict[str, str]:
+    return dict(x.split("=", 1) for x in spec.split(";"))
+
+
+LANG_TXT = {
+    "sv": dict(locale="sv_SE", back="Öppna live-kartan →", home="Hem", crumb="Bensinpriser i Europa",
+               title="Bensinpriser i Europa idag – billigaste och dyraste länderna",
+               desc="Bensin- och dieselpriser i {n} europeiska länder, rankade från billigast till dyrast. Uppdateras dagligen.",
+               h1="Bensinpriser i Europa idag",
+               lede="Medianpris för bensin och diesel i {n} europeiska länder, från live-data på EuroFuelPrices. Billigast först; förändring över 7 dagar visas när en vecka historik finns.",
+               h95="Bensin 95 – billigast till dyrast", hdi="Diesel – billigast till dyrast", hb="Är det billigare över gränsen?",
+               cheap="Billigaste bensin 95", dear="Dyraste bensin 95", c="Land", m="€/L (median)", ch="Ändring 7 dagar", st="Stationer", g="Klass",
+               note='Det här är medianpriser per land, inte priset vid en viss station. Öppna <a href="/">live-kartan</a> för att hitta billigaste macken nära dig.',
+               foot=("Siffrorna är <strong>medianpriset</strong> per land, omräknat till euro enligt ECB:s kurs. Källklasser: A/B officiell, C inofficiell eller sammanslagen, D community — "
+                     '<a href="/about.html">så graderar vi källor</a>. Länder med färre än {min_n} stationer med pris, ett fel i källan eller data äldre än {age} h utelämnas. Priserna är vägledande; kontrollera vid pumpen.'),
+               upd="Senast uppdaterad", reuse="Fri att återanvända med länk till eurofuelprices.com", widget="gratis widget",
+               names="AD=Andorra;AL=Albanien;AT=Österrike;BA=Bosnien och Hercegovina;BE=Belgien;BG=Bulgarien;CH=Schweiz;CY=Cypern;CZ=Tjeckien;DE=Tyskland;DK=Danmark;EE=Estland;ES=Spanien;FI=Finland;FR=Frankrike;GB=Storbritannien;GR=Grekland;HR=Kroatien;HU=Ungern;IE=Irland;IS=Island;IT=Italien;LI=Liechtenstein;LT=Litauen;LU=Luxemburg;LV=Lettland;MC=Monaco;MD=Moldavien;ME=Montenegro;MK=Nordmakedonien;MT=Malta;NL=Nederländerna;NO=Norge;PL=Polen;PT=Portugal;RO=Rumänien;RS=Serbien;SE=Sverige;SI=Slovenien;SK=Slovakien;SM=San Marino;XK=Kosovo"),
+    "de": dict(locale="de_DE", back="Zur Live-Karte →", home="Startseite", crumb="Spritpreise in Europa",
+               title="Spritpreise in Europa heute – günstigste und teuerste Länder",
+               desc="Benzin- und Dieselpreise in {n} europäischen Ländern, vom günstigsten zum teuersten Land. Täglich aktualisiert.",
+               h1="Spritpreise in Europa heute",
+               lede="Mediane Benzin- und Dieselpreise in {n} europäischen Ländern, aus den Live-Daten von EuroFuelPrices. Günstigste zuerst; die 7-Tage-Änderung erscheint, sobald eine Woche Verlauf vorliegt.",
+               h95="Super 95 – günstigste bis teuerste", hdi="Diesel – günstigste bis teuerste", hb="Lohnt sich das Tanken im Nachbarland?",
+               cheap="Günstigstes Super 95", dear="Teuerstes Super 95", c="Land", m="€/L (Median)", ch="Änderung 7 Tage", st="Tankstellen", g="Klasse",
+               note='Dies sind Medianpreise je Land, nicht der Preis an einer bestimmten Tankstelle. Auf der <a href="/">Live-Karte</a> finden Sie die günstigste Tankstelle in Ihrer Nähe.',
+               foot=("Die Werte sind der <strong>Medianpreis</strong> je Land, zum EZB-Kurs in Euro umgerechnet. Quellenklassen: A/B amtlich, C inoffiziell oder zusammengeführt, D Community — "
+                     '<a href="/about.html">so bewerten wir Quellen</a>. Länder mit weniger als {min_n} Tankstellen mit Preis, ausgefallener Quelle oder Daten älter als {age} h werden weggelassen. Preise sind Richtwerte; bitte vor Ort prüfen.'),
+               upd="Zuletzt aktualisiert", reuse="Frei nutzbar mit Link auf eurofuelprices.com", widget="kostenloses Widget",
+               names="AD=Andorra;AL=Albanien;AT=Österreich;BA=Bosnien und Herzegowina;BE=Belgien;BG=Bulgarien;CH=Schweiz;CY=Zypern;CZ=Tschechien;DE=Deutschland;DK=Dänemark;EE=Estland;ES=Spanien;FI=Finnland;FR=Frankreich;GB=Vereinigtes Königreich;GR=Griechenland;HR=Kroatien;HU=Ungarn;IE=Irland;IS=Island;IT=Italien;LI=Liechtenstein;LT=Litauen;LU=Luxemburg;LV=Lettland;MC=Monaco;MD=Moldau;ME=Montenegro;MK=Nordmazedonien;MT=Malta;NL=Niederlande;NO=Norwegen;PL=Polen;PT=Portugal;RO=Rumänien;RS=Serbien;SE=Schweden;SI=Slowenien;SK=Slowakei;SM=San Marino;XK=Kosovo"),
+    "da": dict(locale="da_DK", back="Åbn live-kortet →", home="Forside", crumb="Benzinpriser i Europa",
+               title="Benzinpriser i Europa i dag – billigste og dyreste lande",
+               desc="Benzin- og dieselpriser i {n} europæiske lande, rangeret fra billigste til dyreste. Opdateres dagligt.",
+               h1="Benzinpriser i Europa i dag",
+               lede="Medianpriser for benzin og diesel i {n} europæiske lande, fra live-data på EuroFuelPrices. Billigste først; ændringen over 7 dage vises, når der er en uges historik.",
+               h95="Benzin 95 – billigste til dyreste", hdi="Diesel – billigste til dyreste", hb="Er det billigere på den anden side af grænsen?",
+               cheap="Billigste benzin 95", dear="Dyreste benzin 95", c="Land", m="€/L (median)", ch="Ændring 7 dage", st="Stationer", g="Klasse",
+               note='Det er medianpriser pr. land, ikke prisen på en bestemt station. Åbn <a href="/">live-kortet</a> for at finde den billigste station i nærheden.',
+               foot=("Tallene er <strong>medianprisen</strong> pr. land, omregnet til euro efter ECB-kursen. Kildeklasser: A/B officiel, C uofficiel eller sammenlagt, D community — "
+                     '<a href="/about.html">sådan vurderer vi kilder</a>. Lande med under {min_n} stationer med pris, en fejlet kilde eller data ældre end {age} t udelades. Priserne er vejledende; tjek ved pumpen.'),
+               upd="Senest opdateret", reuse="Frit at genbruge med link til eurofuelprices.com", widget="gratis widget",
+               names="AD=Andorra;AL=Albanien;AT=Østrig;BA=Bosnien-Hercegovina;BE=Belgien;BG=Bulgarien;CH=Schweiz;CY=Cypern;CZ=Tjekkiet;DE=Tyskland;DK=Danmark;EE=Estland;ES=Spanien;FI=Finland;FR=Frankrig;GB=Storbritannien;GR=Grækenland;HR=Kroatien;HU=Ungarn;IE=Irland;IS=Island;IT=Italien;LI=Liechtenstein;LT=Litauen;LU=Luxembourg;LV=Letland;MC=Monaco;MD=Moldova;ME=Montenegro;MK=Nordmakedonien;MT=Malta;NL=Holland;NO=Norge;PL=Polen;PT=Portugal;RO=Rumænien;RS=Serbien;SE=Sverige;SI=Slovenien;SK=Slovakiet;SM=San Marino;XK=Kosovo"),
+}
+
+
+def build_index_lang(lang: str, elig, hist, today: str, updated: str) -> str:
+    x = LANG_TXT[lang]
+    nm = _names(x["names"])
+    url = f"{SITE}/europe/{lang}/"
+    n = len(elig)
+
+    def table(fuel: str) -> str:
+        rows = sorted(((v[fuel]["median"], cc) for cc, v in elig.items() if fuel in v))
+        out = []
+        for i, (m, cc) in enumerate(rows, 1):
+            d = change_7d_value(hist, today, fuel, cc, m)
+            chg = "<td>–</td>" if d is None else f'<td class="{"up" if d > 0 else "dn"}">{d:+.3f}</td>'
+            v = elig[cc][fuel]
+            out.append(f'<tr><td>{i}</td><td class="n">{escape(nm.get(cc, NAMES[cc]))}</td><td class="p">{eur(m)}</td>{chg}'
+                       f'<td>{v["n"]}</td><td><span class="grade">{escape(str(v["grade"]))}</span></td></tr>')
+        return (f'<div class="tw"><table><thead><tr><th>#</th><th>{x["c"]}</th><th>{x["m"]}</th><th>{x["ch"]}</th><th>{x["st"]}</th><th>{x["g"]}</th></tr></thead>'
+                f'<tbody>{"".join(out)}</tbody></table></div>')
+
+    lo = min(((v["p95"]["median"], cc) for cc, v in elig.items() if "p95" in v), default=None)
+    hi = max(((v["p95"]["median"], cc) for cc, v in elig.items() if "p95" in v), default=None)
+    cards = ""
+    if lo and hi:
+        cards = (f'<div class="cards"><div class="card"><div class="k">{x["cheap"]}</div><div class="v">€{eur(lo[0])}</div><div class="s">{escape(nm.get(lo[1], NAMES[lo[1]]))}</div></div>'
+                 f'<div class="card"><div class="k">{x["dear"]}</div><div class="v">€{eur(hi[0])}</div><div class="s">{escape(nm.get(hi[1], NAMES[hi[1]]))}</div></div></div>')
+    pairs = [(a, b) for a, b in BORDER_PAIRS if pair_rows(elig, a, b)]
+    pl = "".join(f'<li><a href="/europe/{pair_slug(a, b)}/">{escape(nm.get(a, NAMES[a]))} – {escape(nm.get(b, NAMES[b]))}</a></li>' for a, b in pairs)
+    body = (crumbs([(x["home"], "/"), (x["crumb"], None)]) + f"<h1>{x['h1']}</h1>"
+            f'<p class="lede">{x["lede"].format(n=n)}</p>{cards}<h2>{x["h95"]}</h2>{table("p95")}<h2>{x["hdi"]}</h2>{table("diesel")}'
+            + (f'<h2>{x["hb"]}</h2><ul class="links">{pl}</ul>' if pl else "") + f'<p class="note">{x["note"]}</p>')
+    alts = "\n".join([f'<link rel="alternate" hreflang="en" href="{SITE}/europe/">'] +
+                     [f'<link rel="alternate" hreflang="{l}" href="{SITE}/europe/{l}/">' for l in LANG_TXT])
+    ld = [breadcrumb_ld([(x["home"], SITE + "/"), (x["crumb"], url)])]
+    foot_html = (f'<footer><p>{x["foot"].format(min_n=MIN_N, age=MAX_AGE_H)}</p><p>{x["upd"]}: {escape(updated)} UTC. {x["reuse"]} — '
+                 f'<a href="/open-data/national-averages.json">JSON</a> · <a href="/open-data/national-averages.csv">CSV</a> · <a href="/embed.html">{x["widget"]}</a>.</p></footer>\n</body>\n</html>\n')
+    return head(x["title"], x["desc"].format(n=n), url, ld, lang=lang, locale=x["locale"], back=x["back"], alts=alts) + body + foot_html
 
 
 def build_pair(a: str, b: str, elig, updated: str) -> str:
@@ -264,6 +351,9 @@ def main(data_dir: Path = DATA_DIR) -> int:
 
     write(data_dir / "europe" / "index.html", build_index(elig, hist, today, updated))
     urls = [(SITE + "/europe/", today)]
+    for lang in LANG_TXT:
+        write(data_dir / "europe" / lang / "index.html", build_index_lang(lang, elig, hist, today, updated))
+        urls.append((f"{SITE}/europe/{lang}/", today))
     for a, b in BORDER_PAIRS:
         if pair_rows(elig, a, b):
             write(data_dir / "europe" / pair_slug(a, b) / "index.html", build_pair(a, b, elig, updated))
