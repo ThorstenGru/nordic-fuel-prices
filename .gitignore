@@ -19,3 +19,4 @@ data/nl/
 
 # wrangler local state (holds account ids)
 .wrangler/
+docs/facebook/daily/
