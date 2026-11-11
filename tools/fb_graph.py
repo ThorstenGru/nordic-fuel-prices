@@ -45,8 +45,8 @@ def verify_page(page_id: str, token: str, call_fn=call) -> str:
     return me["name"]
 
 
-def post_photo(page_id: str, token: str, message: str, image_url: str, call_fn=call) -> str:
-    r = call_fn("POST", f"{page_id}/photos", token, {"url": image_url, "caption": message, "published": "true"})
+def post_photo(page_id: str, token: str, message: str, image_url: str, call_fn=call, published: bool = True) -> str:
+    r = call_fn("POST", f"{page_id}/photos", token, {"url": image_url, "caption": message, "published": "true" if published else "false"})
     return r.get("post_id") or r.get("id") or ""
 
 
@@ -67,3 +67,7 @@ def follower_cities(page_id: str, token: str, call_fn=call) -> dict:
         return vals if isinstance(vals, dict) else {}
     except Exception:
         return {}
+
+
+def delete(object_id: str, token: str, call_fn=call) -> bool:
+    return bool(call_fn("DELETE", object_id, token).get("success"))

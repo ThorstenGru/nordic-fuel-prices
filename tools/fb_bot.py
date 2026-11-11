@@ -119,11 +119,31 @@ def run_replies(dry: bool, graph=fb_graph, fetch=fb_daily.fetch, today=None) -> 
     return 0
 
 
+def run_selftest(graph=fb_graph) -> int:
+    """Checks every permission the routine needs without publishing anything: verifies the Page token, reads the feed and the comments
+    API, creates an UNPUBLISHED photo (pages_manage_posts) and deletes it again."""
+    c = creds()
+    if not c:
+        return 0
+    pid, tok = c
+    print(f"fb_bot: token belongs to Page '{graph.verify_page(pid, tok)}'")
+    feed = graph.call("GET", f"{pid}/feed", tok, {"limit": "1"})
+    print(f"fb_bot: feed readable ({len(feed.get('data', []))} item)")
+    pid_unpub = graph.post_photo(pid, tok, "selftest (never published)", fb_daily.SITE + "/og-image.png", published=False)
+    print(f"fb_bot: unpublished photo created: {bool(pid_unpub)}")
+    if pid_unpub:
+        print(f"fb_bot: unpublished photo deleted: {graph.delete(pid_unpub.split('_')[-1], tok)}")
+    print("fb_bot: selftest OK")
+    return 0
+
+
 def main() -> int:
     a = sys.argv[1:]
     dry = "--dry-run" in a
     mode = next((x for x in a if not x.startswith("--")), "")
     try:
+        if mode == "selftest":
+            return run_selftest()
         if mode == "post":
             return run_post(dry)
         if mode == "replies":
