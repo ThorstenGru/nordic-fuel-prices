@@ -75,6 +75,14 @@ class Pairs(unittest.TestCase):
                 self.assertIn(f'<html lang="{lang}">', (d / "europe" / lang / "index.html").read_text(encoding="utf-8"))
             self.assertIn("country,name,fuel", (d / "open-data" / "national-averages.csv").read_text(encoding="utf-8"))
 
+    def test_share_card_png(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "og" / "x.png"
+            if ei.make_card(f, "Fuel prices: Sweden vs Denmark", "Diesel is cheaper in Sweden", "= 10 on a 50 L fill-up"):
+                self.assertEqual(f.read_bytes()[:4], b"PNG")
+            else:
+                self.assertFalse(f.exists())      # no Pillow: no file, page falls back to the default image
+
     def test_too_few_countries_keeps_previous_page(self):
         import json
         with tempfile.TemporaryDirectory() as d:

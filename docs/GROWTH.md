@@ -14,6 +14,13 @@ Everything here costs nothing. Items marked **OWNER** need a login or a send but
 
 Already existed (not rebuilt): sitemap index + robots, JSON-LD on pages, Search Console verification file, trip/border-run calculator and route planner, PWA manifest + service worker, share links.
 
+## Added 2026-11-11 (second pass)
+- NL town pages; Europe index in sv/de/da with hreflang; Danish postal districts merged.
+- 37 border-pair pages, each with its own share picture (`/og/<page>.png`, Pillow, skipped silently if unavailable).
+- `/se/billigaste-orter/` ranking of Swedish towns by lowest price.
+- IndexNow (`src/indexnow.py`, key file in `web/`): daily ping at 07:00 UTC for Europe pages and country hubs.
+- Search Console and Bing Webmaster Tools: sitemaps submitted/imported 2026-11-11.
+
 ## OWNER steps (10 minutes, once)
 1. **Google Search Console** (property already verified via `google9b79c7d4878035d4.html`): Sitemaps -> add `sitemap-seo.xml` and `sitemap.xml`. Re-check in 7 days: "Pages" -> indexed vs discovered.
 2. **Bing Webmaster Tools**: sign in, "Import from Google Search Console". Bing also feeds DuckDuckGo, Ecosia and Copilot.

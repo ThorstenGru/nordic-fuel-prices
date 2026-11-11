@@ -114,6 +114,10 @@ jobs:
         continue-on-error: true
         run: python src/europe_index.py
 
+      - name: IndexNow ping (once a day, free; never fails the deploy)
+        continue-on-error: true
+        run: python src/indexnow.py
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.0.0
         with:

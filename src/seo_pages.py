@@ -54,7 +54,12 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
     "se": dict(lang="sv", currency="SEK", sym="kr", mode="places", ts_kind="snapshot", fallback_nearby=True,
                hub="Bensinpriser Sverige", hub_title="Bensinpriser Sverige idag – billigaste bensin & diesel",
                fuels=[("P95", "Bensin 95"), ("P98", "Bensin 98"), ("DIESEL", "Diesel"), ("E85", "E85")],
-               cheapest=("P95", "DIESEL"), src="bensinpriser.nu", osm=True),
+               cheapest=("P95", "DIESEL"), src="bensinpriser.nu", osm=True,
+               rank=dict(slug="billigaste-orter", title="Billigaste bensinen i Sverige – orter med lägst pris idag",
+                         h1="Billigaste orterna för bensin och diesel i Sverige",
+                         desc="Rankning av svenska orter efter lägsta bensin- och dieselpris just nu. Uppdateras löpande.",
+                         lede="Orterna nedan har lägst rapporterat pris på någon station i orten just nu. Bara orter med minst {min} stationer och ett aktuellt pris tas med.",
+                         h95="Bensin 95 – billigaste orterna", hdi="Diesel – billigaste orterna", col="Ort", n="Stationer med pris")),
     "at": dict(lang="de", currency="EUR", sym="€", mode="places", ts_kind="fetched", fallback_nearby=False,
                hub="Spritpreise Österreich", hub_title="Spritpreise Österreich aktuell – günstig tanken",
                fuels=[("P95", "Super 95"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
@@ -654,6 +659,7 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
     foot = footer_html(c, unofficial)
     urls = [(hub_url, lastmod)]
     hub_rows = []
+    town_lows: List[Tuple[str, str, int, Optional[float], Optional[float]]] = []
 
     for t in sorted(towns, key=lambda t: t["name"]):
         name, disp, slug, rows = t["name"], t["display"], t["slug"], t["rows"]
@@ -669,6 +675,9 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
             desc = x["d_priced"].format(town=disp, n=len(priced_rows))
             low = min((fp[0] for s, _ in priced_rows if (fp := fresh_price(s, cfg["cheapest"][0], now, cfg))), default=None)
             hub_rows.append((disp, slug, low))
+            town_lows.append((disp, slug, len(priced_rows),
+                              min((fp[0] for s, _ in priced_rows if (fp := fresh_price(s, "P95", now, cfg))), default=None),
+                              min((fp[0] for s, _ in priced_rows if (fp := fresh_price(s, "DIESEL", now, cfg))), default=None)))
         else:
             near = sorted(((s, haversine_km(t["lat"], t["lon"], float(s["lat"]), float(s["lon"]))) for s, _ in priced_all),
                           key=lambda r: r[1])
@@ -707,6 +716,23 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
             encoding="utf-8")
         urls.append((canonical, lastmod))
 
+    rk = cfg.get("rank")
+    if rk and town_lows:
+        def tbl(idx: int) -> str:
+            rows_ = sorted((t for t in town_lows if t[idx] is not None), key=lambda t: t[idx])[:30]
+            tr = "".join(f'<tr><td>{i}</td><td class="n"><a href="/{cc}/{t[1]}/">{escape(t[0])}</a></td>'
+                         f'<td class="p">{escape(money(t[idx], cfg))}</td><td>{t[2]}</td></tr>' for i, t in enumerate(rows_, 1))
+            return f'<div class="tw"><table><thead><tr><th>#</th><th>{rk["col"]}</th><th>{cfg["sym"]}/L</th><th>{rk["n"]}</th></tr></thead><tbody>{tr}</tbody></table></div>'
+        rurl = f"{SITE}/{cc}/{rk['slug']}/"
+        rbody = (f'<p class="lede">{escape(rk["lede"].format(min=MIN_STATIONS))}</p>'
+                 f'<h2>{escape(rk["h95"])}</h2>{tbl(3)}<h2>{escape(rk["hdi"])}</h2>{tbl(4)}')
+        write_page = page(cfg, rk["title"], rk["desc"], rurl, rk["h1"], rbody,
+                          [breadcrumb_ld([(x["home"], SITE + "/"), (cfg["hub"], hub_url), (rk["h1"], rurl)])],
+                          crumbs_html(lang, [(x["home"], "/"), (cfg["hub"], hub_url), (rk["h1"], None)]), modified, foot)
+        (out / rk["slug"]).mkdir(parents=True, exist_ok=True)
+        (out / rk["slug"] / "index.html").write_text(write_page, encoding="utf-8")
+        urls.append((rurl, lastmod))
+
     # hub
     top = []
     labels = dict(cfg["fuels"])
@@ -721,7 +747,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         extra = f' <span class="sub" style="display:inline">{escape(money(low, cfg))}</span>' if low else ""
         by_letter[disp[0].upper()].append(f'<li><a href="/{cc}/{slug}/">{escape(disp)}</a>{extra}</li>')
     towns_html = "".join(f'<h2>{escape(l)}</h2><ul class="links">{"".join(v)}</ul>' for l, v in sorted(by_letter.items()))
-    hub_body = f'<p class="lede">{x["hub_lede"].format(n=len(hub_rows))}</p>' + "".join(top) + f"<h2>{escape(x['h_find'])}</h2>{towns_html}"
+    rank_link = f'<p><a href="/{cc}/{cfg["rank"]["slug"]}/">{escape(cfg["rank"]["h1"])} →</a></p>' if cfg.get("rank") and town_lows else ""
+    hub_body = f'<p class="lede">{x["hub_lede"].format(n=len(hub_rows))}</p>' + rank_link + "".join(top) + f"<h2>{escape(x['h_find'])}</h2>{towns_html}"
     (out / "index.html").write_text(
         page(cfg, cfg["hub_title"], x["hub_desc"].format(n=len(hub_rows)), hub_url, cfg["hub"], hub_body,
              [breadcrumb_ld([(x["home"], SITE + "/"), (cfg["hub"], hub_url)])],

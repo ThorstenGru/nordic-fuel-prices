@@ -46,7 +46,10 @@ NAMES = {
 # Real land/short-sea borders where people actually fill up across the line.
 BORDER_PAIRS = [("SE", "DK"), ("DK", "DE"), ("NO", "SE"), ("DE", "PL"), ("DE", "NL"), ("DE", "AT"), ("DE", "CZ"),
                 ("DE", "FR"), ("DE", "LU"), ("DE", "CH"), ("FR", "ES"), ("FR", "BE"), ("ES", "PT"), ("AT", "CZ"),
-                ("AT", "SI"), ("FI", "EE"), ("IT", "SI"), ("IT", "CH"), ("HU", "SK"), ("PL", "CZ")]
+                ("AT", "SI"), ("FI", "EE"), ("IT", "SI"), ("IT", "CH"), ("HU", "SK"), ("PL", "CZ"),
+                ("BE", "NL"), ("BE", "LU"), ("BE", "DE"), ("FR", "LU"), ("FR", "CH"), ("FR", "IT"), ("AT", "CH"), ("AT", "IT"),
+                ("AT", "SK"), ("AT", "HU"), ("PL", "SK"), ("PL", "LT"), ("LT", "LV"), ("LV", "EE"), ("FI", "SE"), ("FI", "NO"),
+                ("HR", "SI"), ("HR", "HU"), ("RO", "HU"), ("BG", "RO"), ("GR", "BG"), ("ES", "AD"), ("FR", "AD")]
 
 
 def slug(cc: str) -> str:
@@ -115,8 +118,58 @@ def eur(v: float) -> str:
     return f"{v:.3f}"
 
 
+
+def make_card(path: Path, title: str, line1: str, line2: str = "") -> bool:
+    """1200x630 share picture for og:image. Returns False (and writes nothing) if Pillow/fonts are unavailable."""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        return False
+
+    def font(size: int, bold: bool = True):
+        for name in (("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"), "arialbd.ttf" if bold else "arial.ttf"):
+            try:
+                return ImageFont.truetype(name, size)
+            except OSError:
+                continue
+        try:
+            return ImageFont.load_default(size)
+        except TypeError:
+            return ImageFont.load_default()
+
+    img = Image.new("RGB", (1200, 630), "#0E1A29")
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, 18, 630], fill="#0B8F6E")
+
+    def wrap(text: str, f, width: int) -> List[str]:
+        lines, cur = [], ""
+        for w in text.split():
+            t = (cur + " " + w).strip()
+            if d.textlength(t, font=f) <= width or not cur:
+                cur = t
+            else:
+                lines.append(cur)
+                cur = w
+        return lines + [cur] if cur else lines
+
+    y = 70
+    for ln in wrap(title, font(62), 1040)[:3]:
+        d.text((80, y), ln, font=font(62), fill="#F8FAFC")
+        y += 78
+    y = max(y + 20, 330)
+    for ln in wrap(line1, font(44), 1040)[:2]:
+        d.text((80, y), ln, font=font(44), fill="#5EEAD4")
+        y += 58
+    if line2:
+        d.text((80, y + 8), line2, font=font(34, False), fill="#9FB0C0")
+    d.text((80, 548), "eurofuelprices.com", font=font(38), fill="#E9EEF3")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(path, "PNG", optimize=True)
+    return True
+
+
 def head(title: str, desc: str, canonical: str, ld: List[Dict], lang: str = "en", locale: str = "en_GB",
-         back: str = "Open the live map →", alts: str = "") -> str:
+         back: str = "Open the live map →", alts: str = "", image: str = "") -> str:
     lds = "\n".join('<script type="application/ld+json">' + json.dumps(o, ensure_ascii=False).replace("</", "<\\/") + "</script>" for o in ld)
     return f"""<!DOCTYPE html>
 <html lang="{lang}">
@@ -133,7 +186,7 @@ def head(title: str, desc: str, canonical: str, ld: List[Dict], lang: str = "en"
 <meta property="og:title" content="{escape(title)}">
 <meta property="og:description" content="{escape(desc)}">
 <meta property="og:url" content="{canonical}">
-<meta property="og:image" content="{SITE}/og-image.png">
+<meta property="og:image" content="{image or SITE + "/og-image.png"}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
@@ -195,7 +248,7 @@ def pair_sentence(a: str, b: str, rows) -> str:
     return "On the median station, " + " and ".join(bits) + "." if bits else ""
 
 
-def build_index(elig, hist, today: str, updated: str) -> str:
+def build_index(elig, hist, today: str, updated: str, image: str = "") -> str:
     url = f"{SITE}/europe/"
     title = "European Fuel Prices Today – Cheapest & Most Expensive Countries"
     n = len(elig)
@@ -225,7 +278,7 @@ def build_index(elig, hist, today: str, updated: str) -> str:
     alts = "\n".join([f'<link rel="alternate" hreflang="en" href="{SITE}/europe/">'] +
                      [f'<link rel="alternate" hreflang="{l}" href="{SITE}/europe/{l}/">' for l in LANG_TXT] +
                      [f'<link rel="alternate" hreflang="x-default" href="{SITE}/europe/">'])
-    return head(title, desc, url, ld, alts=alts) + body + foot(updated)
+    return head(title, desc, url, ld, alts=alts, image=image) + body + foot(updated)
 
 
 # ── translated index pages (/europe/sv|de|da/) ─────────────────────────────────
@@ -310,7 +363,7 @@ def build_index_lang(lang: str, elig, hist, today: str, updated: str) -> str:
     return head(x["title"], x["desc"].format(n=n), url, ld, lang=lang, locale=x["locale"], back=x["back"], alts=alts) + body + foot_html
 
 
-def build_pair(a: str, b: str, elig, updated: str) -> str:
+def build_pair(a: str, b: str, elig, updated: str, image: str = "") -> str:
     rows = pair_rows(elig, a, b)
     url = f"{SITE}/europe/{pair_slug(a, b)}/"
     na, nb = NAMES[a], NAMES[b]
@@ -326,7 +379,7 @@ def build_pair(a: str, b: str, elig, updated: str) -> str:
             f'Medians are country-wide; border-region prices can differ — check the <a href="/">live map</a> for the stations you would actually use.</p>'
             f'<h2>More comparisons</h2><ul class="links"><li><a href="/europe/">All European countries</a></li></ul>')
     ld = [breadcrumb_ld([("Home", SITE + "/"), ("Europe fuel price index", SITE + "/europe/"), (f"{na} vs {nb}", url)])]
-    return head(title, desc, url, ld) + body + foot(updated)
+    return head(title, desc, url, ld, image=image) + body + foot(updated)
 
 
 def write(path: Path, text: str) -> None:
@@ -349,14 +402,27 @@ def main(data_dir: Path = DATA_DIR) -> int:
     hist = update_history(load_history(), elig, today)
     write(data_dir / "index_history.json", json.dumps(hist, separators=(",", ":")))
 
-    write(data_dir / "europe" / "index.html", build_index(elig, hist, today, updated))
+    lo = min(((v["p95"]["median"], cc) for cc, v in elig.items() if "p95" in v), default=None)
+    hi = max(((v["p95"]["median"], cc) for cc, v in elig.items() if "p95" in v), default=None)
+    img = ""
+    if lo and hi and make_card(data_dir / "og" / "europe.png", "European fuel prices today",
+                               f"Cheapest petrol 95: {NAMES[lo[1]]} €{lo[0]:.3f}/L", f"Most expensive: {NAMES[hi[1]]} €{hi[0]:.3f}/L"):
+        img = SITE + "/og/europe.png"
+    write(data_dir / "europe" / "index.html", build_index(elig, hist, today, updated, img))
     urls = [(SITE + "/europe/", today)]
     for lang in LANG_TXT:
         write(data_dir / "europe" / lang / "index.html", build_index_lang(lang, elig, hist, today, updated))
         urls.append((f"{SITE}/europe/{lang}/", today))
     for a, b in BORDER_PAIRS:
         if pair_rows(elig, a, b):
-            write(data_dir / "europe" / pair_slug(a, b) / "index.html", build_pair(a, b, elig, updated))
+            rows = pair_rows(elig, a, b)
+            pimg = ""
+            best = max(rows, key=lambda r: abs(r[3]))
+            cheaper = NAMES[a] if best[3] > 0 else NAMES[b]
+            if make_card(data_dir / "og" / f"{pair_slug(a, b)}.png", f"Fuel prices: {NAMES[a]} vs {NAMES[b]}",
+                         f"{best[0]} is €{abs(best[3]):.2f}/L cheaper in {cheaper}", f"= €{abs(best[3]) * FILL_L:.2f} on a {FILL_L} L fill-up"):
+                pimg = f"{SITE}/og/{pair_slug(a, b)}.png"
+            write(data_dir / "europe" / pair_slug(a, b) / "index.html", build_pair(a, b, elig, updated, pimg))
             urls.append((f"{SITE}/europe/{pair_slug(a, b)}/", today))
     write_sitemap(data_dir / "sitemap-europe.xml", urls)
 

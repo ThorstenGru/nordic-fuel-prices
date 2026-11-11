@@ -13,6 +13,8 @@ data/pt/
 data/dk/
 data/europe/
 data/open-data/
+data/og/
+data/nl/
 .claude/launch.json
 
 # wrangler local state (holds account ids)
