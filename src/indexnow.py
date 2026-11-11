@@ -13,7 +13,7 @@ from pathlib import Path
 SITE = "https://eurofuelprices.com"
 KEY = "9de760974b2bdc3ec308ea9adc970583"
 DATA = Path(__file__).resolve().parent.parent / "data"
-HUBS = ["se", "at", "de", "ch", "fr", "es", "pt", "dk", "nl"]
+HUBS = ["se", "at", "de", "ch", "fr", "es", "pt", "dk", "nl", "be", "be-fr", "pl", "it"]
 
 
 def urls():
