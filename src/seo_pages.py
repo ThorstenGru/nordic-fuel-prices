@@ -114,7 +114,7 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
                hub="Ceny paliw w Polsce", hub_title="Ceny paliw w Polsce dziś – najtańsza benzyna i diesel",
                fuels=[("P95", "Benzyna 95"), ("P98", "Benzyna 98"), ("DIESEL", "Diesel (ON)"), ("LPG", "Autogaz (LPG)")],
                cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="mediany krajowej"),
-    "it": dict(lang="it", currency="EUR", sym="€", mode="city", ts_kind="price", fallback_nearby=False,
+    "it": dict(lang="it", currency="EUR", sym="€", mode="city", ts_kind="price", fallback_nearby=False, max_age_h=240,
                hub="Prezzi carburanti in Italia", hub_title="Prezzi carburanti in Italia oggi – benzina e gasolio più economici",
                fuels=[("P95", "Benzina"), ("DIESEL", "Gasolio"), ("LPG", "GPL")],
                cheapest=("P95", "DIESEL"), src="MIMIT – Osservaprezzi Carburanti", osm=False, nation="mediana nazionale"),
@@ -672,6 +672,8 @@ def footer_html(c: Ctx, unofficial: bool = False) -> str:
     src_line = x["foot_unofficial"] if unofficial else x["foot_src"].format(src=cfg["src"])
     parts = [escape(src_line), escape(x["foot_ts"][cfg["ts_kind"]]),
              f'<a href="/about.html">{escape(x["foot_grades"])}</a>.']
+    if cfg.get("credit"):
+        parts.append('Data: <a href="https://www.fuel-prices.eu/" rel="noopener">fuel-prices.eu</a>, CC BY 4.0.')
     if cfg["osm"]:
         parts.append(f'{escape(x["foot_osm"])} <a href="https://www.openstreetmap.org/copyright">{escape(x["foot_osm_who"])}</a>.')
     return " ".join(parts)
@@ -693,6 +695,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         return None
     if meta.get("status") == "stale":   # keep the pages (a 404 on every indexed URL is worse); they show the real fetch date and fresh_price drops timestamped prices older than 72 h
         print(f"seo_pages[{cc}]: source stale - pages kept with the last fetch date")
+    if "fuel-prices.eu" in src_name:   # credit required by their licence page: "Data: fuel-prices.eu", linked
+        cfg = dict(cfg, credit=True)
     lang, x = cfg["lang"], TXT[cfg["lang"]]
     fetched = parse_iso(meta.get("fetched_at")) or now
     c = Ctx(cc, cfg, now, fetched, {})

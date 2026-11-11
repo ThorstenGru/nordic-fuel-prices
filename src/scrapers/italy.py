@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import csv
+import math
 import time
 import io
 from typing import List, Dict, Any
@@ -27,13 +28,50 @@ FUEL_MAP = {
 }
 
 
+# Fallback: fuel-prices.eu republishes the same MIMIT data (IODL 2.0) and has given the owner written consent to use it.
+# Its station endpoint returns at most 100 stations per call, so Italy is covered with a quadtree of circles. Polite by design:
+# a User-Agent naming us, ~1.5 requests/s, one crawl a day (REFRESH_MINUTES), and give up early when the API misbehaves.
+FPEU_API = "https://www.fuel-prices.eu/live/api.php"
+FPEU_UA = "EuroFuelPrices/2.0 (+https://eurofuelprices.com)"
+FPEU_SOURCE = "fuel-prices.eu (MIMIT data, IODL 2.0)"
+FPEU_FUELS = {                       # their key -> (fuel_type, unit, octane); lng is not shown in the app
+    "diesel": ("DIESEL", "L", None), "sp95": ("E5", "L", 95), "sp98": ("98", "L", 98),
+    "gpl": ("LPG", "L", None), "cng": ("CNG", "kg", None),
+}
+FPEU_CAP = 100                       # their per-call limit: a full answer means "split this circle"
+FPEU_MIN_RADIUS_KM = 1.2
+FPEU_BUDGET_S = 25 * 60              # a partial crawl is worse than none: past this, keep the last good data
+FPEU_GAP_S = 0.6
+
+
+def fpeu_cells():
+    """Coarse cover of Italy (0.6 x 0.8 degree cells -> circles of ~47 km that contain each cell)."""
+    out = []
+    lat = 35.4
+    while lat < 47.2:
+        lon = 6.6
+        while lon < 18.9:
+            clat, clon = lat + 0.3, lon + 0.4
+            out.append((clat, clon, math.hypot(0.3 * 111.2, 0.4 * 111.2 * math.cos(math.radians(clat)))))
+            lon += 0.8
+        lat += 0.6
+    return out
+
+
+def fpeu_split(lat, lon, radius):
+    """Four child circles of half the radius that together contain the parent's square."""
+    dlat = radius / 2 / math.sqrt(2) / 111.2
+    dlon = dlat / math.cos(math.radians(lat))
+    return [(lat + a * dlat, lon + b * dlon, radius / 2) for a in (-1, 1) for b in (-1, 1)]
+
+
 class ItalyScraper(BaseScraper):
     COUNTRY = "IT"
     CURRENCY = "EUR"
     SOURCE = "mimit.gov.it"
     CONFIDENCE = 0.90
     GRADE = "B"             # statutory duty (update on every change) but published as a daily CSV snapshot
-    REFRESH_MINUTES = 120   # MIMIT publishes its CSV once a day (~08:00)
+    REFRESH_MINUTES = 1380  # MIMIT publishes once a day (~08:00); also keeps the fuel-prices.eu fallback crawl to once a day
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         registry_text, prices_text = await asyncio.gather(
@@ -41,7 +79,8 @@ class ItalyScraper(BaseScraper):
             self._fetch_csv(PRICES_URL),
         )
         if not registry_text or not prices_text:
-            return []
+            print("[IT] MIMIT not reachable - trying fuel-prices.eu (same data, with their consent)")
+            return await self._fetch_fpeu()
 
         # Parse station registry
         # Columns: idImpianto|Gestore|Bandiera|Tipo Impianto|Nome Impianto|Indirizzo|Comune|Provincia|Latitudine|Longitudine
@@ -158,3 +197,65 @@ class ItalyScraper(BaseScraper):
                 else:
                     print(f"[IT] giving up, {msg} — {url}")
         return ""
+
+    async def _fpeu_query(self, lat: float, lon: float, radius: float):
+        """One API call -> list of stations, or None when the API failed (3 tries)."""
+        url = f"{FPEU_API}?action=stations&country=IT&lat={lat:.4f}&lng={lon:.4f}&radius={radius:.1f}&limit={FPEU_CAP}"
+        for attempt in range(3):
+            try:
+                async with self.session.get(url, headers={"User-Agent": FPEU_UA}, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                    if resp.status == 200:
+                        d = await resp.json(content_type=None)
+                        if d.get("ok"):
+                            await asyncio.sleep(FPEU_GAP_S)
+                            return (d.get("data") or {}).get("stations") or []
+                    elif resp.status in (403, 429):
+                        return None                       # they said no: stop, do not retry
+            except Exception:  # noqa: BLE001 - a failed call is handled below
+                pass
+            await asyncio.sleep(3 * (attempt + 1))
+        return None
+
+    async def _fetch_fpeu(self) -> List[Dict[str, Any]]:
+        t0, calls, fails = time.monotonic(), 0, 0
+        found: Dict[Any, Dict] = {}
+        todo = fpeu_cells()
+        while todo:
+            if time.monotonic() - t0 > FPEU_BUDGET_S or fails >= 5:
+                print(f"[IT/fuel-prices.eu] giving up after {calls} calls ({fails} failed, {time.monotonic() - t0:.0f}s) - keeping last good data")
+                return []
+            lat, lon, rad = todo.pop()
+            res = await self._fpeu_query(lat, lon, rad)
+            calls += 1
+            if res is None:
+                fails += 1
+                continue
+            for st in res:
+                found[st.get("id")] = st
+            if len(res) >= FPEU_CAP and rad / 2 >= FPEU_MIN_RADIUS_KM:
+                todo.extend(fpeu_split(lat, lon, rad))
+        out = []
+        for sid, st in found.items():
+            try:
+                lat, lon = float(st["lat"]), float(st["lng"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if not (35 <= lat <= 48) or not (6 <= lon <= 19):
+                continue
+            prices = []
+            for key, (ft, unit, octane) in FPEU_FUELS.items():
+                p = (st.get("prices") or {}).get(key) or {}
+                try:
+                    price = float(p["price"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if price > 0:
+                    prices.append(self.price_entry(ft, price, unit, updated_at=p.get("ts"), octane=octane))
+            if prices:
+                out.append({"id": f"it_fp{sid}", "country": "IT", "name": (st.get("name") or "").strip(),
+                            "brand": (st.get("brand") or "").strip(), "address": (st.get("address") or "").strip(),
+                            "city": (st.get("city") or "").strip(), "lat": lat, "lon": lon,
+                            "source": FPEU_SOURCE, "confidence": self.CONFIDENCE, "prices": prices})
+        self.SOURCE = FPEU_SOURCE
+        print(f"[IT/fuel-prices.eu] {len(out)} stations from {calls} calls in {time.monotonic() - t0:.0f}s")
+        return out
