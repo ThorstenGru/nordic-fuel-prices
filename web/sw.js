@@ -118,8 +118,11 @@ async function networkFirst(request, cacheName, timeoutMs, cacheKey = request) {
     return res;
   });
   net.catch(() => {});                       // a late failure after the race must not surface
-  const offline = () => new Response(JSON.stringify({ error: 'offline' }), {
-    status: 503, headers: { 'Content-Type': 'application/json' } });
+  // A page the person asked for gets a readable message, not raw JSON; data requests keep the JSON the app expects.
+  const offline = () => request.mode === 'navigate'
+    ? new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EuroFuelPrices – offline</title><body style="font:16px system-ui;max-width:32rem;margin:15vh auto;padding:0 16px"><h1>No connection</h1><p>EuroFuelPrices could not reach the server. Check your internet connection (or DNS/VPN) and reload this page.</p><p><a href="/">Reload</a></p>',
+        { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+    : new Response(JSON.stringify({ error: 'offline' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
   try {
     if (!timeoutMs || !(await cache.match(cacheKey))) return await net;
     return await Promise.race([net, new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), timeoutMs))]);
