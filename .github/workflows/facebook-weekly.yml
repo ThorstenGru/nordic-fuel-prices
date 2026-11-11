@@ -35,8 +35,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Pillow
-        run: pip install "Pillow>=10.1,<13"
+      - name: Install Pillow and ffmpeg
+        run: |
+          pip install "Pillow>=10.1,<13"
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core)
 
       - name: Render and post the weekly video
         env:
