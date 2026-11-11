@@ -310,6 +310,68 @@ foot_unofficial="Källa: ANWB-data (inofficiell tredjepartskälla). Priserna kan
 }
 
 
+# Added 2026-11-11 (town-page upgrade): price in the title, "checked" line, FAQ, change vs previous day, nearby counts.
+# Placeholders: {town} {d} {p} {u}=currency/L {fuel} {station} {n} {total} {nation} {checked} {foot} {when}.
+NEW_TXT: Dict[str, Dict[str, str]] = {
+    "sv": dict(t_dp="Diesel {town}: från {d} {u} · bensin från {p} {u}", checked="Kontrollerad", latest="senaste prisrapport", stns="stationer",
+               chg="Förändring sedan {when}: {d} {u}", nat="Riksmedian", faq_h="Vanliga frågor",
+               q1="Vad är lägsta priset på {fuel} i {town} idag?", a1="Idag är lägsta priset på {fuel} i {town} {p} {u} ({station}).",
+               q2="Hur ligger {town} jämfört med riksnivån?", a2="Lägsta pris på {fuel} i {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Hur många bensinstationer finns i {town}?", a3="Vi känner till {total} stationer i {town}, {n} med aktuellt pris.",
+               q4="Hur ofta uppdateras priserna?", a4="Senaste kontroll av källan: {checked}. {foot}"),
+    "de": dict(t_dp="Diesel {town}: ab {d} {u} · Benzin ab {p} {u}", checked="Geprüft", latest="letzte Preismeldung", stns="Tankstellen",
+               chg="Änderung seit {when}: {d} {u}", nat="Median", faq_h="Häufige Fragen",
+               q1="Wie niedrig ist der Preis für {fuel} in {town} heute?", a1="Heute liegt der niedrigste Preis für {fuel} in {town} bei {p} {u} ({station}).",
+               q2="Wie schneidet {town} im Vergleich zum Landesdurchschnitt ab?", a2="Niedrigster Preis für {fuel} in {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Wie viele Tankstellen gibt es in {town}?", a3="Wir kennen {total} Tankstellen in {town}, {n} mit aktuellem Preis.",
+               q4="Wie oft werden die Preise aktualisiert?", a4="Letzte Prüfung der Quelle: {checked}. {foot}"),
+    "fr": dict(t_dp="Gazole {town} : dès {d} {u} · essence dès {p} {u}", checked="Vérifié", latest="dernier prix signalé", stns="stations",
+               chg="Variation depuis le {when} : {d} {u}", nat="Médiane nationale", faq_h="Questions fréquentes",
+               q1="Quel est le prix le plus bas du {fuel} à {town} aujourd’hui ?", a1="Aujourd’hui, le prix le plus bas du {fuel} à {town} est de {p} {u} ({station}).",
+               q2="Comment {town} se situe-t-elle par rapport à la médiane nationale ?", a2="Prix le plus bas du {fuel} à {town} : {p} {u}. {nation} : {n} {u}.",
+               q3="Combien y a-t-il de stations-service à {town} ?", a3="Nous recensons {total} stations à {town}, dont {n} avec un prix actuel.",
+               q4="À quelle fréquence les prix sont-ils mis à jour ?", a4="Dernière vérification de la source : {checked}. {foot}"),
+    "es": dict(t_dp="Gasóleo {town}: desde {d} {u} · gasolina desde {p} {u}", checked="Consultado", latest="último precio comunicado", stns="gasolineras",
+               chg="Variación desde el {when}: {d} {u}", nat="Mediana nacional", faq_h="Preguntas frecuentes",
+               q1="¿Cuál es el precio más bajo de {fuel} en {town} hoy?", a1="Hoy el precio más bajo de {fuel} en {town} es {p} {u} ({station}).",
+               q2="¿Cómo está {town} frente a la media nacional?", a2="Precio más bajo de {fuel} en {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="¿Cuántas gasolineras hay en {town}?", a3="Conocemos {total} gasolineras en {town}, {n} con precio actual.",
+               q4="¿Con qué frecuencia se actualizan los precios?", a4="Última consulta de la fuente: {checked}. {foot}"),
+    "pt": dict(t_dp="Gasóleo {town}: desde {d} {u} · gasolina desde {p} {u}", checked="Consultado", latest="último preço comunicado", stns="postos",
+               chg="Variação desde {when}: {d} {u}", nat="Mediana nacional", faq_h="Perguntas frequentes",
+               q1="Qual é o preço mais baixo de {fuel} em {town} hoje?", a1="Hoje o preço mais baixo de {fuel} em {town} é {p} {u} ({station}).",
+               q2="Como está {town} face à mediana nacional?", a2="Preço mais baixo de {fuel} em {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Quantos postos de abastecimento há em {town}?", a3="Conhecemos {total} postos em {town}, {n} com preço atual.",
+               q4="Com que frequência são atualizados os preços?", a4="Última consulta da fonte: {checked}. {foot}"),
+    "da": dict(t_dp="Diesel {town}: fra {d} {u} · benzin fra {p} {u}", checked="Tjekket", latest="seneste prisrapport", stns="tankstationer",
+               chg="Ændring siden {when}: {d} {u}", nat="Landsmedian", faq_h="Ofte stillede spørgsmål",
+               q1="Hvad er den laveste pris på {fuel} i {town} i dag?", a1="I dag er den laveste pris på {fuel} i {town} {p} {u} ({station}).",
+               q2="Hvordan ligger {town} i forhold til landsmedianen?", a2="Laveste pris på {fuel} i {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Hvor mange tankstationer er der i {town}?", a3="Vi kender {total} tankstationer i {town}, {n} med aktuel pris.",
+               q4="Hvor ofte opdateres priserne?", a4="Seneste tjek af kilden: {checked}. {foot}"),
+    "nl": dict(t_dp="Diesel {town}: vanaf {d} {u} · benzine vanaf {p} {u}", checked="Gecontroleerd", latest="laatste prijsmelding", stns="tankstations",
+               chg="Verandering sinds {when}: {d} {u}", nat="Landelijke mediaan", faq_h="Veelgestelde vragen",
+               q1="Wat is de laagste prijs voor {fuel} in {town} vandaag?", a1="Vandaag is de laagste prijs voor {fuel} in {town} {p} {u} ({station}).",
+               q2="Hoe verhoudt {town} zich tot de landelijke mediaan?", a2="Laagste prijs voor {fuel} in {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Hoeveel tankstations zijn er in {town}?", a3="Wij kennen {total} tankstations in {town}, {n} met een actuele prijs.",
+               q4="Hoe vaak worden de prijzen bijgewerkt?", a4="Laatste controle van de bron: {checked}. {foot}"),
+    "it": dict(t_dp="Gasolio {town}: da {d} {u} · benzina da {p} {u}", checked="Controllato", latest="ultimo prezzo segnalato", stns="distributori",
+               chg="Variazione dal {when}: {d} {u}", nat="Mediana nazionale", faq_h="Domande frequenti",
+               q1="Qual è il prezzo più basso per {fuel} a {town} oggi?", a1="Oggi il prezzo più basso per {fuel} a {town} è {p} {u} ({station}).",
+               q2="Come si colloca {town} rispetto alla mediana nazionale?", a2="Prezzo più basso per {fuel} a {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Quanti distributori ci sono a {town}?", a3="Conosciamo {total} distributori a {town}, {n} con un prezzo attuale.",
+               q4="Ogni quanto si aggiornano i prezzi?", a4="Ultimo controllo della fonte: {checked}. {foot}"),
+    "pl": dict(t_dp="Diesel {town}: od {d} {u} · benzyna od {p} {u}", checked="Sprawdzono", latest="ostatnia zgłoszona cena", stns="stacji",
+               chg="Zmiana od {when}: {d} {u}", nat="Mediana krajowa", faq_h="Najczęstsze pytania",
+               q1="Jaka jest dziś najniższa cena ({fuel}) w miejscowości {town}?", a1="Dziś najniższa cena ({fuel}) w miejscowości {town} to {p} {u} ({station}).",
+               q2="Jak {town} wypada na tle mediany krajowej?", a2="Najniższa cena ({fuel}) w miejscowości {town}: {p} {u}. {nation}: {n} {u}.",
+               q3="Ile stacji paliw jest w miejscowości {town}?", a3="Znamy {total} stacji w miejscowości {town}, {n} z aktualną ceną.",
+               q4="Jak często aktualizowane są ceny?", a4="Ostatnie sprawdzenie źródła: {checked}. {foot}"),
+}
+for _lang, _d in NEW_TXT.items():
+    TXT[_lang].update(_d)
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def slugify(name: str, lang: str) -> str:
@@ -414,6 +476,43 @@ def fresh_price(station: Dict[str, Any], fuel: str, now: datetime, cfg: Dict) ->
 
 def has_price(s: Dict, now: datetime, cfg: Dict) -> bool:
     return any(fresh_price(s, f, now, cfg) for f, _ in cfg["fuels"])
+
+
+TREND_BASE: Optional[str] = SITE   # where the previous publish lives (tests set None); gives "change since" without a database
+TREND_DAYS = 8
+
+
+def fmt_day(date_str: str, lang: str) -> str:
+    y, m, d = (int(v) for v in date_str.split("-"))
+    return f"{d}{'.' if lang == 'de' else ''} {MONTHS[lang][m - 1]}"
+
+
+def load_trend(cc: str) -> Dict[str, Dict[str, Dict[str, float]]]:
+    """{town slug: {YYYY-MM-DD: {fuel: median}}} from the last published /<cc>/trend.json; {} when unreachable."""
+    if not TREND_BASE:
+        return {}
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"{TREND_BASE}/{cc}/trend.json", headers={"User-Agent": "EuroFuelPrices-build (+https://eurofuelprices.com)"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.loads(r.read().decode("utf-8"))
+        return d.get("d", {}) if d.get("v") == 1 else {}
+    except Exception:   # noqa: BLE001 - no history is fine, the pages just show no change line
+        return {}
+
+
+def town_medians(rows: List[Tuple[Dict, float]], c: "Ctx") -> Dict[str, float]:
+    out: Dict[str, float] = {}
+    for f, _ in c.cfg["fuels"]:
+        v = [fp[0] for s, _ in rows if (fp := fresh_price(s, f, c.now, c.cfg))]
+        if v:
+            out[f] = statistics.median(v)
+    return out
+
+
+def previous_medians(hist: Dict[str, Dict[str, float]], today: str) -> Optional[Tuple[str, Dict[str, float]]]:
+    older = sorted(d for d in hist if d < today)
+    return (older[-1], hist[older[-1]]) if older else None
 
 
 # ── town model ───────────────────────────────────────────────────────────────
@@ -531,6 +630,10 @@ th, td { text-align:left; padding:9px 12px; border-top:1px solid var(--border); 
 th { border-top:0; font-size:.76rem; color:var(--text2); font-weight:500; }
 td.p { font-variant-numeric:tabular-nums; }
 td.n { white-space:normal; min-width:150px; }
+h3 { font-size:1rem; font-weight:600; margin:18px 0 4px; }
+.range { position:relative; height:6px; background:var(--border); border-radius:3px; margin:10px 0 4px; }
+.range b { position:absolute; top:0; height:6px; background:var(--green); border-radius:3px; min-width:4px; }
+.range i { position:absolute; top:-3px; width:2px; height:12px; background:var(--text2); }
 .sub { display:block; font-size:.76rem; color:var(--text3); }
 .note { font-size:.84rem; color:var(--text2); background:var(--surf); border:1px solid var(--border); border-radius:12px; padding:10px 14px; }
 ul.links { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:8px; }
@@ -649,7 +752,8 @@ def station_table(rows: List[Tuple[Dict, float]], c: Ctx, show_town: Optional[Di
             f'<th>{escape(x["th_when"][cfg["ts_kind"]])}</th></tr></thead><tbody>{"".join(body)}</tbody></table></div>')
 
 
-def summary_cards(rows: List[Tuple[Dict, float]], c: Ctx) -> str:
+def summary_cards(rows: List[Tuple[Dict, float]], c: Ctx, prev: Optional[Tuple[str, Dict[str, float]]] = None,
+                  now_med: Optional[Dict[str, float]] = None) -> str:
     cfg, x = c.cfg, c.x
     cards = []
     for f, label in cfg["fuels"]:
@@ -662,9 +766,41 @@ def summary_cards(rows: List[Tuple[Dict, float]], c: Ctx) -> str:
             dd = low - c.national[f]
             amount = f"{'+' if dd >= 0 else '−'}{fmt_price(abs(dd), cfg)}"
             diff = " · " + x["vs"].format(d=amount, sym=cfg["sym"], nation=cfg.get("nation", ""))
+        prices = [v[0] for v in vals]
+        hi = max(prices)
+        nat = c.national.get(f)
+        lo_s, hi_s = min(low, nat if nat else low), max(hi, nat if nat else hi)
+        extra = ""
+        if hi_s - lo_s >= 0.005:   # range of this town, tick = national median; the numbers below say the same in text
+            pos = lambda v: 100 * (v - lo_s) / (hi_s - lo_s)   # noqa: E731
+            tick = f'<i style="left:{pos(nat):.1f}%"></i>' if nat else ""
+            extra = (f'<div class="range" aria-hidden="true"><b style="left:{pos(low):.1f}%;width:{max(pos(hi) - pos(low), 0):.1f}%"></b>{tick}</div>'
+                     f'<div class="s">{escape(fmt_price(low, cfg))}–{escape(fmt_price(hi, cfg))} {escape(cfg["sym"])}</div>')
+        if prev and now_med and f in now_med and f in prev[1] and abs(now_med[f] - prev[1][f]) >= 0.0005:
+            dd = now_med[f] - prev[1][f]
+            amount = f"{'+' if dd > 0 else '−'}{fmt_price(abs(dd), cfg)}"
+            extra += f'<div class="s">{escape(x["chg"].format(when=fmt_day(prev[0], c.lang), d=amount, u=cfg["sym"] + "/L"))}</div>'
         cards.append(f'<div class="card"><div class="k">{escape(x["cheapest"].format(f=label))}</div>'
-                     f'<div class="v">{escape(money(low, cfg))}</div><div class="s">{escape(station_label(st)[0])}{escape(diff)}</div></div>')
+                     f'<div class="v">{escape(money(low, cfg))}</div><div class="s">{escape(station_label(st)[0])}{escape(diff)}</div>{extra}</div>')
     return f'<div class="cards">{"".join(cards)}</div>' if cards else ""
+
+
+def faq_items(c: Ctx, disp: str, rows: List[Tuple[Dict, float]], priced_rows: List[Tuple[Dict, float]], modified: str) -> List[Tuple[str, str]]:
+    """Questions people search for, answered from this page's own numbers (also emitted as FAQPage markup)."""
+    cfg, x = c.cfg, c.x
+    u = cfg["sym"] + "/L"
+    fuel = cfg["cheapest"][1]
+    label = dict(cfg["fuels"]).get(fuel, fuel)
+    cands = [(fp[0], s) for s, _ in priced_rows if (fp := fresh_price(s, fuel, c.now, cfg))]
+    out: List[Tuple[str, str]] = []
+    if cands:
+        low, st = min(cands, key=lambda v: v[0])
+        out.append((x["q1"].format(fuel=label, town=disp), x["a1"].format(fuel=label, town=disp, p=fmt_price(low, cfg), u=u, station=" – ".join(p for p in station_label(st) if p))))
+        if fuel in c.national:
+            out.append((x["q2"].format(town=disp), x["a2"].format(fuel=label, town=disp, p=fmt_price(low, cfg), u=u, nation=x["nat"], n=fmt_price(c.national[fuel], cfg))))
+    out.append((x["q3"].format(town=disp), x["a3"].format(town=disp, total=len(rows), n=len(priced_rows))))
+    out.append((x["q4"], x["a4"].format(checked=modified, foot=x["foot_ts"][cfg["ts_kind"]])))
+    return out
 
 
 def footer_html(c: Ctx, unofficial: bool = False) -> str:
@@ -712,6 +848,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         if len(vals) >= 5:
             c.national[fuel] = statistics.median(vals)
 
+    trend = load_trend(cc)
+    today_s = now.date().isoformat()
     towns = towns_from_places(stations, cc) if cfg["mode"] == "places" else towns_from_city(stations, lang)
     towns = [t for t in towns if len(t["rows"]) >= MIN_STATIONS]
     priced_all = [(s, t) for t in towns for s, _ in t["rows"] if has_price(s, now, cfg)]
@@ -735,6 +873,7 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
     hub_rows = []
     town_lows: List[Tuple[str, str, int, Optional[float], Optional[float]]] = []
 
+    trend_out: Dict[str, Dict[str, Dict[str, float]]] = {}
     for t in sorted(towns, key=lambda t: t["name"]):
         name, disp, slug, rows = t["name"], t["display"], t["slug"], t["rows"]
         canonical = f"{SITE}/{cc}/{slug}/"
@@ -742,10 +881,21 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         body = []
         if priced_rows:
             body.append(f'<p class="lede">{escape(x["lede"].format(n=len(priced_rows), total=len(rows), town=disp))}</p>')
-            body.append(summary_cards(rows, c))
+            med = town_medians(priced_rows, c)
+            newest = max((fp[1] for s, _ in priced_rows for f, _l in cfg["fuels"] if (fp := fresh_price(s, f, now, cfg)) and fp[1]), default=None)
+            trust = f'{x["checked"]} {modified}' + (f' · {x["latest"]} {fmt_when(newest, lang)}' if newest else "")
+            body.append(f'<p class="note">{escape(trust)}</p>')
+            body.append(summary_cards(rows, c, previous_medians(trend.get(slug, {}), today_s), med))
             body.append(f"<h2>{escape(x['h_stations'].format(town=disp))}</h2>")
             body.append(station_table(rows, c))
-            title = x["t_priced"].format(town=disp)
+            trend_out[slug] = {**{d: v for d, v in trend.get(slug, {}).items() if d != today_s}, today_s: {f: round(v, 4) for f, v in med.items()}}
+            u = cfg["sym"] + "/L"
+            lows = {k: min((fp[0] for s, _ in priced_rows if (fp := fresh_price(s, k, now, cfg))), default=None) for k in ("P95", "DIESEL")}
+            title = (x["t_dp"].format(town=disp, d=fmt_price(lows["DIESEL"], cfg), p=fmt_price(lows["P95"], cfg), u=u)
+                     if lows["P95"] is not None and lows["DIESEL"] is not None else x["t_priced"].format(town=disp))
+            faq = faq_items(c, disp, rows, priced_rows, modified)
+            if faq:
+                body.append(f"<h2>{escape(x['faq_h'])}</h2>" + "".join(f"<h3>{escape(q)}</h3><p>{escape(a)}</p>" for q, a in faq))
             desc = x["d_priced"].format(town=disp, n=len(priced_rows))
             low = min((fp[0] for s, _ in priced_rows if (fp := fresh_price(s, cfg["cheapest"][0], now, cfg))), default=None)
             hub_rows.append((disp, slug, low))
@@ -772,7 +922,9 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         nb = sorted((o for o in towns if o is not t),
                     key=lambda o: haversine_km(t["lat"], t["lon"], o["lat"], o["lon"]))[:8]
         if nb:
-            links = "".join(f'<li><a href="/{cc}/{o["slug"]}/">{escape(o["display"])}</a></li>' for o in nb)
+            links = "".join(
+                f'<li><a href="/{cc}/{o["slug"]}/">{escape(o["display"])}</a> <span class="sub" style="display:inline">'
+                f'{haversine_km(t["lat"], t["lon"], o["lat"], o["lon"]):.0f} km · {len(o["rows"])} {escape(x["stns"])}</span></li>' for o in nb)
             body.append(f"<h2>{escape(x['h_nearby'])}</h2><ul class=\"links\">{links}</ul>")
 
         stations_ld = [{"@type": "GasStation", "name": station_label(s)[0],
@@ -782,6 +934,9 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         ld = [breadcrumb_ld([(x["home"], SITE + "/"), (cfg["hub"], hub_url), (disp, canonical)]),
               {"@context": "https://schema.org", "@type": "ItemList", "name": x["h_stations"].format(town=disp),
                "itemListElement": [{"@type": "ListItem", "position": k + 1, "item": it} for k, it in enumerate(stations_ld)]}]
+        if priced_rows and faq:
+            ld.append({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+                {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]})
         d = out / slug
         d.mkdir(parents=True, exist_ok=True)
         (d / "index.html").write_text(
@@ -829,6 +984,9 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
              crumbs_html(lang, [(x["home"], "/"), (cfg["hub"], None)]), modified, foot),
         encoding="utf-8")
 
+    cutoff = sorted({d for h in trend_out.values() for d in h})[-TREND_DAYS:]
+    (out / "trend.json").write_text(json.dumps({"v": 1, "d": {k: {d: v for d, v in h.items() if d in cutoff} for k, h in trend_out.items()}},
+                                               separators=(",", ":")), encoding="utf-8")
     write_sitemap(DATA_DIR / f"sitemap-{cc}.xml", urls)
     print(f"seo_pages[{cc}]: {len(urls) - 1} town pages + hub ({len(priced_all)} priced stations)")
     return urls

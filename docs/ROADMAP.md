@@ -110,6 +110,23 @@ Plan a route (A -> B, optional via points) and list the cheapest pumps *along* i
 
 Decided: stays on the roadmap, not built yet. Plan when picked up: phase 1 = Telegram channel per country plus RSS/Atom feed per town (no personal data, no server; a drop of >= 3 cents in a town's cheapest price vs its 7-day median, grade A/B data only, never grade D); phase 2 = web push through `sw.js` and a Cloudflare Worker with KV (iPhone needs the site on the Home Screen).
 
+### ROADMAP (owner, 2026-11-11) - Town-page ideas from fuel-prices.eu, not yet built
+
+Built 2026-11-11: price in the page title, "checked" line, nearby towns with distance and station count, change since the previous day with a range bar, FAQ block with FAQ markup. Still to do, in the order they were listed:
+
+| # | Idea | Effort |
+|---|---|---|
+| 2 | "Cheapest right now" block: two big numbers, the station, "reported 2 days ago" | small-medium |
+| 7 | Fuel filter on the station table (needs a small script file; pages block inline scripts) | medium |
+| 8 | Radius chips (town, +2, +5, +10 km) as separate aggregated pages | large |
+| 9 | Price-pin map on each town page (needs OSM tiles allowed in the page security policy) | large |
+| 10 | One page per station (100k+ pages; thin-content risk) | large |
+| 11 | Brand pages, e.g. "Pompe Bianche prices" | medium |
+| 12 | `hreflang` between the Belgian nl/fr pages (small); language switcher (large) | small / large |
+| 13 | Weekly EU price history charts on country pages (EU Weekly Oil Bulletin, CC BY 4.0); also feeds the price-drop alerts | medium |
+
+Also open: Italy petrol prices well below the rest (about 32 under 1.60 EUR/L) may be source errors; fuel-prices.eu hides at least one of them. Look at a plausibility rule before relying on "cheapest" for Italy.
+
 ### IDEA (owner, 2026-10-07) - EV charging and other alternative energy
 Research report: `docs/EV_ALT_ENERGY_RESEARCH.md` (commissioned 2026-10-07; read it before deciding).
 
