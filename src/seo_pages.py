@@ -514,7 +514,7 @@ def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, j
 {body}
 <footer>
 <p>{foot}</p>
-<p>{escape(x['foot_upd'])}: {escape(modified)}.</p>
+<p>{escape(x['foot_upd'])}: {escape(modified)}. · <a href="https://www.facebook.com/profile.php?id=61596370264452" rel="me noopener">Facebook</a></p>
 </footer>
 </body>
 </html>

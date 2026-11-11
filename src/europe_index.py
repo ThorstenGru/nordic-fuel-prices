@@ -209,7 +209,7 @@ def foot(updated: str) -> str:
             f'Countries with fewer than {MIN_N} priced stations, a failed feed or data older than {MAX_AGE_H} h are left out. '
             f'Prices are indicative; check at the pump.</p><p>Last updated: {escape(updated)} UTC. '
             f'Free to reuse with a link to eurofuelprices.com — <a href="/open-data/national-averages.json">JSON</a> · '
-            f'<a href="/open-data/national-averages.csv">CSV</a> · <a href="/embed.html">free widget</a>.</p></footer>\n</body>\n</html>\n')
+            f'<a href="/open-data/national-averages.csv">CSV</a> · <a href="/embed.html">free widget</a> · <a href="https://www.facebook.com/profile.php?id=61596370264452" rel="me noopener">Facebook</a>.</p></footer>\n</body>\n</html>\n')
 
 
 def crumbs(items: List[Tuple[str, Optional[str]]]) -> str:
@@ -359,7 +359,7 @@ def build_index_lang(lang: str, elig, hist, today: str, updated: str) -> str:
                      [f'<link rel="alternate" hreflang="{l}" href="{SITE}/europe/{l}/">' for l in LANG_TXT])
     ld = [breadcrumb_ld([(x["home"], SITE + "/"), (x["crumb"], url)])]
     foot_html = (f'<footer><p>{x["foot"].format(min_n=MIN_N, age=MAX_AGE_H)}</p><p>{x["upd"]}: {escape(updated)} UTC. {x["reuse"]} — '
-                 f'<a href="/open-data/national-averages.json">JSON</a> · <a href="/open-data/national-averages.csv">CSV</a> · <a href="/embed.html">{x["widget"]}</a>.</p></footer>\n</body>\n</html>\n')
+                 f'<a href="/open-data/national-averages.json">JSON</a> · <a href="/open-data/national-averages.csv">CSV</a> · <a href="/embed.html">{x["widget"]}</a> · <a href="https://www.facebook.com/profile.php?id=61596370264452" rel="me noopener">Facebook</a>.</p></footer>\n</body>\n</html>\n')
     return head(x["title"], x["desc"].format(n=n), url, ld, lang=lang, locale=x["locale"], back=x["back"], alts=alts) + body + foot_html
 
 
