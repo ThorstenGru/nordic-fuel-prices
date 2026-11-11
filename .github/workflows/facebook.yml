@@ -1,0 +1,59 @@
+name: Facebook — daily post and replies (Euro Fuel Prices Page)
+
+# Runs on GitHub, so it needs no computer, app or person. Everything is posted by the Page itself with a Page access token
+# (secrets FB_PAGE_ID and FB_PAGE_TOKEN). Without the secrets the job exits quietly. Setup: docs/facebook/GRAPH_API_SETUP.md
+
+on:
+  schedule:
+    - cron: '0 7 * * *'     # daily post (08:00/09:00 in Sweden)
+    - cron: '0 11 * * *'    # retry of the daily post if the first run had to skip (a post is never made twice: the log is checked)
+    - cron: '30 * * * *'    # answers to "comment your town" comments
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'post or replies'
+        default: 'post'
+      dry_run:
+        description: 'dry run (no posting)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: facebook-bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run the Facebook routine
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '30 * * * *' && 'replies' || 'post') }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+        run: python tools/fb_bot.py "$MODE" $DRY
+
+      - name: Commit the logs
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/facebook/post_log.csv docs/facebook/replied.csv 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Facebook log [skip ci]"
+            for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break || sleep 5; done
+          fi

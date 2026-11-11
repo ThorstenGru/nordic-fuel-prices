@@ -8,7 +8,7 @@ and tested. Prints one JSON object: {"skip": "<reason>"} or {"text", "image", "f
 Rules baked in: one post a day (the log in docs/facebook/post_log.csv is checked), data older than 36 h -> skip,
 no engagement bait ("like/share"), figures are always "median station price", the data grade is mentioned when it is not A/B,
 a pair/country is not repeated within 14 days. Weekday plan: Mon ranking, Tue border pair, Wed price quiz, Thu feature tip,
-Fri weekend border run, Sat reader question, Sun feature tip.
+Fri local spotlight (cheapest within 10 km of a town), Sat "comment your town", Sun feature tip.
 """
 import csv
 import json
@@ -110,9 +110,9 @@ def pair_post(m, a, b, quiz=False):
     return text, f"{SITE}/og/{pair_slug(a, b)}.png", url
 
 
-def build(today: date, out: Path):
+def build(today: date, out: Path, audience=None, download=True):
     used = read_log()
-    if any(r["date"] == today.isoformat() for r in used):
+    if any(r["date"] == today.isoformat() and r.get("format") != "skip" for r in used):
         return {"skip": "already posted today"}
     raw = fetch(SITE + "/open-data/national-averages.json")
     if not raw:
@@ -135,29 +135,37 @@ def build(today: date, out: Path):
             text = (f"Petrol 95 across Europe today: cheapest {NAMES[lo[1]]} at €{lo[0]:.2f}/L, most expensive {NAMES[hi[1]]} at €{hi[0]:.2f}/L "
                     f"(median station prices{note}). Does your country’s price surprise you? Full ranking: {SITE}/europe/")
             result = (text, f"{SITE}/og/europe.png", "ranking", "europe")
-    elif wd in (1, 2, 4):   # border pair / quiz / weekend border run
+    elif wd == 4:   # local spotlight: cheapest within 10 km of a town (aggregate: rotating town or where followers are)
+        import fb_local
+        built = fb_local.spotlight(fetch, used, today, audience)
+        if built:
+            result = (built[0], f"{SITE}/og-image.png", "spotlight", built[1])
+    elif wd == 5:   # opt-in: people comment their town, the bot replies with the cheapest nearby
+        result = ("Where do you fill up? Comment your town (and country, e.g. “Hamburg, Germany”) and we will reply with the cheapest petrol and diesel "
+                  f"stations within 10 km, as listed on our map. Covered: DE, AT, CH, FR, ES, PT, DK, NL. {SITE}", f"{SITE}/og-image.png", "local-ask", "local-ask")
+    elif wd in (1, 2):   # border pair / quiz
         ranked = sorted(pairs, key=lambda p: -max(abs(r[2][0] - r[1][0]) for r in pair_data(m, *p)))
         keys = [pair_slug(*p) for p in ranked]
         key = pick(keys, used, today)
         a, b = next(p for p in ranked if pair_slug(*p) == key)
         built = pair_post(m, a, b, quiz=(wd == 2))
         if built:
-            result = (built[0], built[1], {1: "border-pair", 2: "quiz", 4: "weekend-border"}[wd], key)
+            result = (built[0], built[1], {1: "border-pair", 2: "quiz"}[wd], key)
     elif wd in (3, 6):   # feature tips (how to use)
         key = pick([f[0] for f in FEATURES], used, today, days=len(FEATURES) - 1)
         f = next(x for x in FEATURES if x[0] == key)
         result = (f"{f[1]}. {f[2]} {SITE}{f[3]}", f"{SITE}/og-image.png", "feature", key)
-    else:         # Saturday: reader question
-        result = (f"Spotted a price on the map that looks wrong or a station that is missing? Tell us the town in the comments and we will check it. "
-                  f"The map is free, with no account: {SITE}", f"{SITE}/og-image.png", "reader-question", "reader-question")
     if not result:
         return {"skip": "not enough data for today's format"}
     text, img_url, fmt, key = result
-    out.mkdir(parents=True, exist_ok=True)
-    img = out / f"fb_{today.isoformat()}.png"
-    if not fetch(img_url, img):
-        return {"skip": f"image not available: {img_url}"}
-    return {"text": text, "image": str(img), "format": fmt, "key": key, "date": today.isoformat()}
+    res = {"text": text, "image_url": img_url, "format": fmt, "key": key, "date": today.isoformat()}
+    if download:                      # the browser route needs a local file; the Graph API route posts the public URL
+        out.mkdir(parents=True, exist_ok=True)
+        img = out / f"fb_{today.isoformat()}.png"
+        if not fetch(img_url, img):
+            return {"skip": f"image not available: {img_url}"}
+        res["image"] = str(img)
+    return res
 
 
 def main():
