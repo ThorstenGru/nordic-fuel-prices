@@ -69,7 +69,7 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
     "de": dict(lang="de", currency="EUR", sym="€", mode="city", ts_kind="fetched", fallback_nearby=False,
                hub="Spritpreise Deutschland", hub_title="Spritpreise Deutschland aktuell – günstig tanken",
                fuels=[("E10", "Super E10"), ("E5_95", "Super E5"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
-               cheapest=("E10", "DIESEL"), src="Tankerkönig / MTS-K", osm=False, nation="Deutschland-Median"),
+               cheapest=("E10", "DIESEL"), src="Tankerkönig / MTS-K, Bundeskartellamt (CC BY 4.0)", osm=False, nation="Deutschland-Median"),
     "ch": dict(lang="de", currency="CHF", sym="CHF", mode="city", ts_kind="fetched", fallback_nearby=False,
                hub="Benzinpreise Schweiz", hub_title="Benzinpreise Schweiz aktuell – günstig tanken",
                fuels=[("E10", "Bleifrei 95 (E10)"), ("E5_95", "Bleifrei 95 (E5)"), ("P98", "Bleifrei 98"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
