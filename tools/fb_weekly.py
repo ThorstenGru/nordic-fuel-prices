@@ -19,21 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import fb_daily  # noqa: E402
 import fb_graph  # noqa: E402
-from europe_index import BORDER_PAIRS, NAMES  # noqa: E402
+from europe_index import BORDER_PAIRS, NAMES, pil_font as font  # noqa: E402
 
 W, H = 1080, 1920
 SECONDS = 4
 BG, FG, DIM, GREEN, BAR = (14, 26, 41), (255, 255, 255), (150, 165, 185), (74, 222, 128), (38, 70, 104)
-
-
-def font(size: int, bold: bool = True):
-    from PIL import ImageFont
-    for name in ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf", "arialbd.ttf" if bold else "arial.ttf"):
-        try:
-            return ImageFont.truetype(name, size)
-        except OSError:
-            continue
-    return ImageFont.load_default(size)
 
 
 def scenes(doc: dict) -> list:

@@ -119,6 +119,20 @@ def eur(v: float) -> str:
 
 
 
+def pil_font(size: int, bold: bool = True):
+    """DejaVu (Linux runner) or Arial (Windows), else Pillow's built-in font. Shared by the share cards and the weekly video."""
+    from PIL import ImageFont
+    for name in (("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"), "arialbd.ttf" if bold else "arial.ttf"):
+        try:
+            return ImageFont.truetype(name, size)
+        except OSError:
+            continue
+    try:
+        return ImageFont.load_default(size)
+    except TypeError:
+        return ImageFont.load_default()
+
+
 def make_card(path: Path, title: str, line1: str, line2: str = "") -> bool:
     """1200x630 share picture for og:image. Returns False (and writes nothing) if Pillow/fonts are unavailable."""
     try:
@@ -126,16 +140,7 @@ def make_card(path: Path, title: str, line1: str, line2: str = "") -> bool:
     except ImportError:
         return False
 
-    def font(size: int, bold: bool = True):
-        for name in (("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"), "arialbd.ttf" if bold else "arial.ttf"):
-            try:
-                return ImageFont.truetype(name, size)
-            except OSError:
-                continue
-        try:
-            return ImageFont.load_default(size)
-        except TypeError:
-            return ImageFont.load_default()
+    font = pil_font
 
     img = Image.new("RGB", (1200, 630), "#0E1A29")
     d = ImageDraw.Draw(img)
