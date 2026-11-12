@@ -162,16 +162,7 @@ class ItalyScraper(BaseScraper):
         return result
 
     async def _fetch_csv(self, url: str) -> str:
-        _HEADERS = {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0 Safari/537.36"
-            ),
-            "Accept": "text/csv,text/plain,*/*",
-            "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
-            "Referer": "https://www.mimit.gov.it/",
-        }
+        _HEADERS = {"User-Agent": FPEU_UA, "Accept": "text/csv,text/plain,*/*"}   # an honest client name, no browser disguise
         for attempt in range(3):
             t0 = time.monotonic()
             try:

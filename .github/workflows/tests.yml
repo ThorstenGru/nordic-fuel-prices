@@ -22,7 +22,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pyflakes
+        run: pip install -r requirements.txt pyflakes pyyaml
+
+      - name: Workflow files parse as YAML (a broken one silently stops the scrape chain)
+        run: python -c "import glob,yaml; [yaml.safe_load(open(f, encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"
 
       - name: Python unit tests
         working-directory: src

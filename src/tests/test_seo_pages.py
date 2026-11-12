@@ -97,5 +97,24 @@ class GermanAccuracyLine(unittest.TestCase):
         self.assertIn("85,3 % von 26209 Stichproben", html)
 
 
+class StaleSource(unittest.TestCase):
+    def test_pages_survive_a_stale_timestamped_source(self):
+        import json, tempfile, pathlib
+        from datetime import datetime, timezone
+        d = pathlib.Path(tempfile.mkdtemp())
+        old = "2026-10-01T06:00:00+00:00"   # six weeks before 'now': every price is past the age limit
+        st = [dict(id=f"i{i}", lat=41.9 + i * 0.001, lon=12.5, city="Roma", brand="X", address="Via 1",
+                   prices=[dict(fuel_type="E5", octane=95, price=1.99, currency="EUR", unit="L", updated_at=old), dict(fuel_type="DIESEL", price=2.1, currency="EUR", unit="L", updated_at=old)]) for i in range(4)]
+        (d / "it.json").write_text(json.dumps(dict(meta=dict(source="mimit.gov.it", status="stale", fetched_at=old), stations=st)))
+        old_dir, old_load = sp.DATA_DIR, sp.load_trend
+        sp.DATA_DIR, sp.load_trend = d, lambda cc: {}
+        try:
+            out = sp.build_country("it", dict(sp.COUNTRIES["it"]), datetime(2026, 11, 12, 9, tzinfo=timezone.utc))
+        finally:
+            sp.DATA_DIR, sp.load_trend = old_dir, old_load
+        self.assertTrue(out)                                    # used to be "no eligible towns - skipped"
+        self.assertTrue((d / "it" / "roma" / "index.html").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

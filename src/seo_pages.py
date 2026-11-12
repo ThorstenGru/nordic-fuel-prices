@@ -831,8 +831,9 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
     if unofficial and EXCLUDE_ANWB:
         print(f"seo_pages[{cc}]: excluded by SEO_EXCLUDE_ANWB (source {meta.get('source')!r})")
         return None
-    if meta.get("status") == "stale":   # keep the pages (a 404 on every indexed URL is worse); they show the real fetch date and fresh_price drops timestamped prices older than 72 h
-        print(f"seo_pages[{cc}]: source stale - pages kept with the last fetch date")
+    if meta.get("status") == "stale":   # keep the pages (a 404 on every indexed URL is worse): build them from the last data, no age filter; they show the real fetch date
+        print(f"seo_pages[{cc}]: source stale - pages kept with the last data and fetch date")
+        cfg = dict(cfg, max_age_h=10 ** 6)
     if cfg.get("acc"):   # measured accuracy of the unofficial feed against the official one (written by scrapers/germany.py)
         try:
             a = json.loads((DATA_DIR / cfg["acc"]).read_text(encoding="utf-8")).get("summary") or {}

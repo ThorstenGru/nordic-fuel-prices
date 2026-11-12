@@ -55,5 +55,7 @@ jobs:
           git add docs/facebook/post_log.csv docs/facebook/replied.csv 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Facebook log [skip ci]"
-            for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break || sleep 5; done
+            ok=0
+            for i in 1 2 3; do if git pull --rebase origin main && git push origin HEAD:main; then ok=1; break; fi; sleep 5; done
+            if [ "$ok" != 1 ]; then echo "::error::the log row could not be saved - the next run may post again"; exit 1; fi
           fi

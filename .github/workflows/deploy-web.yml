@@ -47,7 +47,9 @@ jobs:
           for i in 1 2 3 4 5; do
             git -C gh-pages-dir fetch --depth 1 origin gh-pages
             git -C gh-pages-dir reset --hard origin/gh-pages
-            rsync -a --delete --filter='P /*.json' --exclude='.git' --exclude='.nojekyll' --exclude='se/' --exclude='at/' --exclude='de/' --exclude='ch/' --exclude='fr/' --exclude='es/' --exclude='pt/' --exclude='dk/' --exclude='europe/' --exclude='open-data/' --exclude='og/' --exclude='nl/' --exclude='be/' --exclude='be-fr/' --exclude='pl/' --exclude='it/' --exclude='sitemap-*.xml' web/. gh-pages-dir/
+            # generated top-level folders (country pages, europe/, og/, open-data/ ...) exist only on gh-pages: keep every folder that web/ does not have
+            keep=""; for d in gh-pages-dir/*/; do n=$(basename "$d"); [ -e "web/$n" ] || keep="$keep --exclude=$n/"; done
+            rsync -a --delete --filter='P /*.json' --exclude='.git' --exclude='.nojekyll' $keep --exclude='sitemap-*.xml' web/. gh-pages-dir/
             git -C gh-pages-dir add -A
             git -C gh-pages-dir diff-index --quiet HEAD || git -C gh-pages-dir commit -m "Deploy web files from main [skip ci]"
             if git -C gh-pages-dir push origin HEAD:gh-pages; then exit 0; fi
