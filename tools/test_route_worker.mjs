@@ -30,7 +30,14 @@ r = await call({ Referer: 'https://eurofuelprices.com/' }, url);
 assert.equal(r.headers.get('x-cache'), 'HIT'); assert.equal(upstream, 1);                    // second call served from cache
 mode = 'fail'; store.clear();
 assert.equal((await call({ 'Sec-Fetch-Site': 'same-origin' }, url)).status, 502);
-assert.equal(store.size, 0);                                                                  // failures are not cached
+assert.equal([...store.keys()].filter(k => !k.includes('/rl/')).length, 0);                    // failures are not cached (rate counters are not routes)
+// rate limit: more than RL_MAX uncached requests from one visitor in a minute -> 429, before the upstream is called again
+store.clear(); mode = 'ok'; upstream = 0;
+const via = (ip, i) => call({ 'Sec-Fetch-Site': 'same-origin', 'CF-Connecting-IP': ip }, 'https://eurofuelprices.com/api/route?json=' + encodeURIComponent(JSON.stringify({ ...ok, locations: [{ lat: 55.6 + i / 1000, lon: 13.0 }, ok.locations[1]] })));
+for (let i = 0; i < 20; i++) assert.equal((await via('1.2.3.4', i)).status, 200);
+const before = upstream; r = await via('1.2.3.4', 99);
+assert.equal(r.status, 429); assert.equal(r.headers.get('retry-after'), '60'); assert.equal(upstream, before);
+assert.equal((await via('5.6.7.8', 0)).status, 200);                                          // another visitor is not affected
 assert.equal((await w.fetch(new Request(url, { method: 'POST' }), {}, ctx)).status, 405);
 // ── ORS backup: conversion to the Valhalla shape the app reads
 import { orsToValhalla } from '../worker/route/index.mjs';

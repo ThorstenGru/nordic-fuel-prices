@@ -4,7 +4,8 @@
 const UPSTREAM = 'https://valhalla1.openstreetmap.de/route';   // FOSSGIS public Valhalla: ferries included. Swap provider here only.
 const SITE = /^https:\/\/(www\.)?eurofuelprices\.com(\/|$)/;
 const EUROPE = { la: [27, 72], lo: [-32, 45] };                  // rough bounding box; everything outside is refused
-const TTL = 6 * 3600;                                           // a route does not change within hours; prices are priced client-side
+const TTL = 6 * 3600;
+const RL_MAX = 20;                                              // uncached (= upstream) requests per visitor and minute; a trip needs 1-3. Best effort per data centre: the origin check below can be faked by a script                                           // a route does not change within hours; prices are priced client-side
 
 const json = (o, status, extra) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...extra } });
 const num = (v, [lo, hi]) => typeof v === 'number' && isFinite(v) && v >= lo && v <= hi;
@@ -45,6 +46,16 @@ export function orsToValhalla(j) {
     legs: [{ shape: encode6(c.map(([lo, la]) => [la, lo])), maneuvers, summary: { has_ferry: hasFerry, has_toll: toll } }] } };
 }
 
+// Per-visitor counter in the Worker cache (no KV, free). Not exact (read-then-write), which is fine for a safety valve.
+export async function overLimit(req, now = Date.now()) {
+  const ip = req.headers.get('CF-Connecting-IP') || 'none';
+  const key = new Request('https://eurofuelprices.com/api/route/rl/' + encodeURIComponent(ip) + '/' + Math.floor(now / 60000));
+  const hit = await caches.default.match(key);
+  const n = hit ? (+(await hit.text()) || 0) + 1 : 1;
+  await caches.default.put(key, new Response(String(n), { headers: { 'cache-control': 'max-age=120' } }));
+  return n > RL_MAX;
+}
+
 export default {
   async fetch(req, env, ctx) {
     if (req.method !== 'GET') return json({ error: 'method' }, 405);
@@ -58,6 +69,7 @@ export default {
     const hit = await caches.default.match(key);
     if (hit) return new Response(hit.body, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'HIT' } });
 
+    if (await overLimit(req)) return json({ error: 'rate' }, 429, { 'retry-after': '60' });   // before any upstream call; cache hits above are free
     let text = null, src = 'valhalla';
     try {
       const r = await fetch(UPSTREAM + '?json=' + encodeURIComponent(body), { headers: { 'user-agent': 'eurofuelprices.com route proxy' }, signal: AbortSignal.timeout(12000) });
