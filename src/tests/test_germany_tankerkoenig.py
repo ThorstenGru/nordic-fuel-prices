@@ -312,5 +312,18 @@ class RiskyBrands(unittest.TestCase):
         self.assertFalse(any(s.get("uncertain") for s in st))
 
 
+class CheckedAt(unittest.TestCase):
+    def test_official_prices_carry_the_read_time_but_no_updated_at(self):
+        tk = parse_tk_stations(tk_body((52.5, 13.4, 1.90, 1.85, 1.75)), GermanyScraper(FakeSession()).price_entry, "2026-11-12T10:00:00+00:00")
+        self.assertTrue(all(p["checked_at"] == "2026-11-12T10:00:00+00:00" and p["updated_at"] is None for p in tk[0]["prices"]))
+        self.assertNotIn("checked_at", parse_tk_stations(tk_body((52.5, 13.4, 1.90, 1.85, 1.75)), GermanyScraper(FakeSession()).price_entry)[0]["prices"][0])
+
+    def test_run_marks_upgraded_stations_checked(self):
+        sc, _ = make("test", FakeSession([(200, tk_body((52.5, 13.4, 1.90, 1.85, 1.75)))]), ft=FakeTime(wall=1_700_000_000))
+        out = run(sc, [anwb_station(1, 52.5, 13.4)])
+        tkp = [p for p in out[0]["prices"] if p.get("source") == "tankerkoenig"]
+        self.assertTrue(tkp and all(p["checked_at"].startswith("2023-11-14") for p in tkp))
+
+
 if __name__ == "__main__":
     unittest.main()

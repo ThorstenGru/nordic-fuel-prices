@@ -125,7 +125,7 @@ def _cover_circles(stations: List[Dict], r_km: float) -> List[Tuple[float, float
     return [(a, b) for _, a, b in out]
 
 
-def parse_tk_stations(data: Dict, price_entry) -> List[Dict[str, Any]]:
+def parse_tk_stations(data: Dict, price_entry, read_at: Optional[str] = None) -> List[Dict[str, Any]]:
     """Parse a Tankerkoenig list.php response (free-API field names).
 
     The commercial API's response format is not yet known (contract and docs pending). If it differs,
@@ -140,6 +140,8 @@ def parse_tk_stations(data: Dict, price_entry) -> List[Dict[str, Any]]:
             if isinstance(val, (int, float)) and not isinstance(val, bool) and val > 0:
                 e = price_entry(ft, float(val), unit, octane=95 if ft in ("E5", "E10") else None)
                 e["source"] = "tankerkoenig"
+                if read_at:   # NOT updated_at (that is the time the source says the price was set, which the free API does not give);
+                    e["checked_at"] = read_at   # the official feed is near real time, so this is when the price was read from it
                 prices.append(e)
         brand, name = s.get("brand") or "", s.get("name") or ""
         out.append({
@@ -447,7 +449,8 @@ class GermanyScraper(BaseScraper):
             if not isinstance(data, dict):
                 raise ValueError("unexpected response shape")
             ok = bool(data.get("ok"))
-            parsed = parse_tk_stations(data, self.price_entry) if ok else []
+            parsed = parse_tk_stations(data, self.price_entry,
+                                       datetime.fromtimestamp(self._wall(), tz=timezone.utc).isoformat()) if ok else []
         except Exception as e:  # noqa: BLE001
             info["errors"] += 1
             print(f"[DE] tankerkoenig ({lat:.2f},{lon:.2f}): {type(e).__name__}: {self._scrub(e)}")

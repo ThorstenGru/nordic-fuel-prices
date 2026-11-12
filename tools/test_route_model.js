@@ -50,6 +50,8 @@ assert.strictEqual(rtMedian([]), null);
 assert.strictEqual(rtTier({ age: 49 }), 2); assert.strictEqual(rtTier({ age: 20 }), 0);       // no 10 h cliff any more: 20 h old is still usable, only 48 h+ is not verified
 // R3: price band grows with age; undated is the widest
 assert(rtBand(1) < rtBand(8) && rtBand(8) < rtBand(20) && rtBand(20) < rtBand(40) && rtBand(40) < rtBand(null));
+// measured error of an undated source narrows ONLY the undated band, within 0.02 .. 0.10
+near(rtBand(null, 0.04), 0.04, 1e-9); near(rtBand(null, 0.001), 0.02, 1e-9); near(rtBand(null, 0.5), 0.10, 1e-9); near(rtBand(null), 0.10, 1e-9); near(rtBand(5, 0.04), rtBand(5), 1e-9);
 let fr = rtFresh([{ age: 1 }, { age: 6 }, { age: null }]); assert.deepStrictEqual([fr.n, fr.nDated, fr.minH, fr.maxH], [3, 2, 1, 6]);
 assert.strictEqual(rtFresh([{ age: null }]).minH, null);
 // R7: speed -> energy per km; 1.0 at 110, less when slower, more when faster; clamped

@@ -6659,7 +6659,8 @@ const RT_MAX_STOPS = 3, RT_LITRES_SMALL = 8;
 const rtMinFill = tank => Math.min(tank, Math.max(10, Math.round(tank * 0.3)));   // a stop buys at least ~30 % of the tank (about 14 L on 47 L)
 const rtSpeedF = v => (1 - RT_AERO) + RT_AERO * Math.pow(Math.min(140, Math.max(70, v)) / RT_V_REF, 2);
 // R3: half-width of the price range in EUR/L by price age (hours); null = undated. Replaces the old 10 h cliff.
-const rtBand = age => age == null ? 0.10 : age <= 3 ? 0.01 : age <= 12 ? 0.02 : age <= 24 ? 0.04 : 0.07;
+// `unc` (EUR/L) = measured error of an undated source (Germany via ANWB, from de_accuracy.json); only used for undated prices, never wider than the 0.10 default or narrower than 0.02
+const rtBand = (age, unc) => age == null ? (unc > 0 ? Math.min(0.10, Math.max(0.02, unc)) : 0.10) : age <= 3 ? 0.01 : age <= 12 ? 0.02 : age <= 24 ? 0.04 : 0.07;
 function rtFresh(list) {                 // list of { age } -> how current the prices behind a plan are
   const d = list.filter(x => x.age != null).map(x => x.age);
   return { n: list.length, nDated: d.length, minH: d.length ? Math.min(...d) : null, maxH: d.length ? Math.max(...d) : null };
@@ -6749,7 +6750,7 @@ function rtMakePlan(inp) {
     const bk = new Map();
     for (const c of inp.cands || []) {
       if ((c.tier > maxTier && !(c.tier === 1 && c.cu)) || c.along < 0 || c.along > o.km) continue;
-      const band = rtBand(c.age), key = Math.floor(c.along / slice), eff = c.eur + band / 2 + c.detourKm * 0.02;
+      const band = rtBand(c.age, c.unc), key = Math.floor(c.along / slice), eff = c.eur + band / 2 + c.detourKm * 0.02;
       if (!bk.has(key) || eff < bk.get(key).eff) bk.set(key, { ...c, band, eff });
     }
     return [...bk.values()].sort((a, b) => a.along - b.along).map(c => {
@@ -7359,8 +7360,11 @@ function rtRate(cc) { return fxRank(cc); }
 function rtPlanNow(rows) {
   const R = rt.res, o = R.o, asm = { cruise: rt.cruise, vot: rt.vot, fuelPct: rt.fuelPct, battPct: rt.battPct }, ref = R.median;
   const dated = {};                      // a country whose feed carries no price times at all (Germany via ANWB) would otherwise never be planned while any dated country is on the route
-  for (const r of rows) { const d = dated[r.s.country] ??= { n: 0, k: 0 }; d.n++; if (r.age != null) d.k++; }
+  // "dated" counts REAL source timestamps only: German pumps read from the official feed carry checked_at (a read time) and must not
+  // tip the whole country into "has dated pumps", which would stop the planner from using the undated ANWB pumps around them
+  for (const r of rows) { const d = dated[r.s.country] ??= { n: 0, k: 0 }; d.n++; if (r.p.updated_at) d.k++; }
   const cands = rows.map(r => ({ id: r.s.id, s: r.s, p: r.p, along: r.along, eur: r.eur, detourKm: r.detourKm, age: r.age,
+    unc: r.age == null ? rtUnc(r.s.country, R.fuel) : null,
     cu: dated[r.s.country].k / dated[r.s.country].n < 0.1,
     tier: rtTier({ age: r.age, ps: r.s.ps, sus: suspectLow(r.s.country, r.p), stale: R.stale.includes(r.s.country) }) }));
   R.plan = rtMakePlan({ o, segs: R.segs, min: R.min, cands, ref, asm });
@@ -7368,14 +7372,28 @@ function rtPlanNow(rows) {
   R.priced = cands;                      // wave 2: every priced pump near the route (tier, along, eur, detourKm, s) for the border tip
   rtCostsNow(R);                         // wave 2: R.costs = { routes, costs, pick, unit }
 }
+// Measured error of the German ANWB prices against the official feed (de_accuracy.json, written by the scrape job): 90th percentile of |difference| per fuel
+let rtAccData = null, rtAccTried = false;
+async function rtAccLoad() {
+  try { const r = await fetch('de_accuracy.json'); if (!r.ok) return false; const j = await r.json(); rtAccData = j && j.summary && j.summary.n >= 500 ? j.summary : null; } catch (_) { rtAccData = null; }
+  return !!rtAccData;
+}
+function rtUnc(cc, fuel) {
+  if (cc !== 'DE' || !rtAccData) return null;
+  const f = fuel === 'DIESEL' ? 'diesel' : 'petrol';
+  const p = Object.entries(rtAccData.by || {}).filter(([k, v]) => k.startsWith(f + '|') && v.n >= 100).map(([, v]) => v.abs_p90_ct);
+  return p.length ? Math.max(...p) / 100 : null;
+}
 function rtRank() {
   const R = rt.res; if (!R || R.error) return;
+  if (!rtAccTried && R.countries.includes('DE')) { rtAccTried = true; rtAccLoad().then(ok => { if (ok && rt.res === R) { rtRank(); renderRoute(); } }); }
   const o = rtInputs(); o.km = R.km; R.o = o;
   const rates = {}, stale = new Set(R.countries.filter(cc => metaOf[cc]?.status === 'stale'));
   let beyond = 0;
   const rows = [];
   for (const c of R.cands) {
-    const age = c.p.updated_at ? (Date.now() - tsDate(c.p.updated_at)) / 3600000 : null;
+    const ts = c.p.updated_at || c.p.checked_at;   // checked_at: read from a near real time official feed (Tankerkönig), see src/scrapers/germany.py
+    const age = ts ? (Date.now() - tsDate(ts)) / 3600000 : null;
     if (age == null && rt.hideUnknown) continue;
     const cc = c.s.country;
     if (!(cc in rates)) rates[cc] = rtRate(cc);
