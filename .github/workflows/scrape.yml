@@ -58,9 +58,12 @@ jobs:
           for f in tools/test_*.js; do node "$f" || exit 1; done
           node tools/check_fares.js && node tools/check_ac_tariffs.js
 
-      - name: Last published accuracy meter (data/de_accuracy.json; the German step adds this run's ANWB-vs-MTS-K differences to it)
+      - name: Last published state files (data/de_accuracy.json = German accuracy meter, data/it_crawl.json = Italian crawl cool-down)
         continue-on-error: true
-        run: mkdir -p data && (curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/de_accuracy.json -o data/de_accuracy.json || rm -f data/de_accuracy.json)
+        run: |
+          mkdir -p data
+          curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/de_accuracy.json -o data/de_accuracy.json || rm -f data/de_accuracy.json
+          curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/it_crawl.json -o data/it_crawl.json || rm -f data/it_crawl.json
 
       - name: Run scrapers
         env:

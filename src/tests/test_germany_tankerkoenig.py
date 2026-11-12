@@ -272,9 +272,11 @@ class Baseline(unittest.TestCase):
 class AccuracyMeter(unittest.TestCase):
     def test_histograms_summary_and_pruning(self):
         store = {}
-        pairs = [("petrol", "metro", "ESSO", 0.0)] * 6 + [("petrol", "rural", "ESSO", 1.0), ("diesel", "rural", "ARAL", -2.0),
-                                                           ("diesel", "metro", "ARAL", 12.0), ("diesel", "metro", "ARAL", 0.4)]
+        pairs = [("petrol", "metro", "ESSO", 0.0, i) for i in range(6)] + [("petrol", "rural", "ESSO", 1.0, 10), ("diesel", "rural", "ARAL", -2.0, 11),
+                                                                            ("diesel", "metro", "ARAL", 12.0, 12), ("diesel", "metro", "ARAL", 0.4, 13)]
         accuracy_update(store, pairs, "2026-11-11")
+        accuracy_update(store, pairs, "2026-11-11")             # the same stations read again later the same day: not new evidence
+        self.assertEqual(accuracy_summary(store)["n"], 10)
         sm = accuracy_summary(store)
         self.assertEqual(sm["n"], 10)
         self.assertEqual(sm["within_1ct_pct"], 80.0)         # 6 zeros + 0.4 + 1.0 within 1 ct; -2 and 12 are not
@@ -282,7 +284,7 @@ class AccuracyMeter(unittest.TestCase):
         self.assertIn("80.0%", sm["line"])
         self.assertEqual(sm["by"]["petrol|rural"]["n"], 1)
         for d in range(12, 30):                                # older days fall out after 14 days
-            accuracy_update(store, [("petrol", "metro", "X", 0.0)], f"2026-11-{d:02d}")
+            accuracy_update(store, [("petrol", "metro", "X", 0.0, 100 + d)], f"2026-11-{d:02d}")
         self.assertEqual(len(store["days"]), 14)
         self.assertNotIn("2026-11-11", store["days"])
 
@@ -292,7 +294,8 @@ class AccuracyMeter(unittest.TestCase):
         tk[0]["_stratum"] = "rural"
         acc = []
         GermanyScraper._merge(base, tk, add_extras=False, acc=acc)
-        self.assertEqual(acc, [("petrol", "rural", "ARAL", 0.9), ("diesel", "rural", "ARAL", 0.9)])   # ANWB minus official, in ct
+        import zlib
+        self.assertEqual(acc, [("petrol", "rural", "ARAL", 0.9, zlib.crc32(b"de_tk_tk0|petrol")), ("diesel", "rural", "ARAL", 0.9, zlib.crc32(b"de_tk_tk0|diesel"))])   # ANWB minus official, in ct, + dedupe key
 
 
 class RiskyBrands(unittest.TestCase):

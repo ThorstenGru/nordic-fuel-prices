@@ -22,6 +22,7 @@ Data licence: CC BY 4.0 (attribution "Tankerkoenig / MTS-K, Bundeskartellamt").
 
 import asyncio
 import json
+import zlib
 import math
 import os
 import re
@@ -161,12 +162,17 @@ def parse_tk_stations(data: Dict, price_entry, read_at: Optional[str] = None) ->
     return out
 
 
-def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float]], day: str) -> Dict:
-    """Add one run's (fuel, stratum, BRAND, diff_ct) pairs to the per-day histograms and drop days older than ACC_DAYS.
-    diff_ct = ANWB price minus official MTS-K price, in cents. Same-day runs add up (stations are re-measured on later visits)."""
+def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float, int]], day: str) -> Dict:
+    """Add one run's (fuel, stratum, BRAND, diff_ct, key) pairs to the per-day histograms and drop days older than ACC_DAYS.
+    diff_ct = ANWB price minus official MTS-K price, in cents. Each station and fuel counts ONCE per day (the first reading wins):
+    stations are re-read on every visit of their circle, and repeats are not new evidence. `key` is a hash of station id + fuel."""
     days = store.setdefault("days", {})
     d = days.setdefault(day, {"bins": {}, "brands": {}})
-    for fuel, stratum, brand, diff in pairs:
+    seen = set(d.get("seen", []))
+    for fuel, stratum, brand, diff, key in pairs:
+        if key in seen:
+            continue
+        seen.add(key)
         k = f"{fuel}|{stratum}"
         b = d["bins"].setdefault(k, {})
         bin_ = str(max(-ACC_CLIP, min(ACC_CLIP, round(diff))))
@@ -175,6 +181,10 @@ def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float]], day: 
         t[0] += 1
         if abs(diff) >= 2:
             t[1] += 1
+    d["seen"] = sorted(seen)
+    for old_day, v in days.items():   # the seen-list is only needed for today: keeps the published file small
+        if old_day != day:
+            v.pop("seen", None)
     for old in sorted(days)[:-ACC_DAYS]:
         del days[old]
     return store
@@ -288,7 +298,7 @@ class GermanyScraper(BaseScraper):
         try:
             tk = await self._fetch_tankerkoenig(stations, budget)
             if tk:
-                pairs: List[Tuple[str, str, str, float]] = []
+                pairs: List[Tuple[str, str, str, float, int]] = []
                 self._merge(stations, tk, add_extras=self.mode == "commercial", info=self.tk_info, acc=pairs)
                 self._label(len(tk))
                 self._record_accuracy(pairs)
@@ -321,19 +331,19 @@ class GermanyScraper(BaseScraper):
         self.tk_info["risky_brands"] = sorted(risky)
         print(f"[DE] {n} ANWB-only stations of {len(risky)} often-wrong brands flagged uncertain: {', '.join(sorted(risky))}")
 
-    def _record_accuracy(self, pairs: List[Tuple[str, str, str, float]]) -> None:
+    def _record_accuracy(self, pairs: List[Tuple[str, str, str, float, int]]) -> None:
         """Fold this run's differences into the rolling 14-day file and put the summary into the health report."""
         if not pairs or self.acc_path is None:
             return
         try:
             try:
                 store = json.loads(self.acc_path.read_text(encoding="utf-8"))
-                if store.get("v") != 1:
+                if store.get("v") != 2:   # v1 counted every re-reading of the same station as a new check
                     store = {}
             except (OSError, ValueError):
                 store = {}
             day = datetime.fromtimestamp(self._wall(), tz=timezone.utc).date().isoformat()
-            store["v"] = 1
+            store["v"] = 2
             accuracy_update(store, pairs, day)
             summ = accuracy_summary(store)
             store["updated"] = datetime.fromtimestamp(self._wall(), tz=timezone.utc).isoformat()
@@ -510,7 +520,7 @@ class GermanyScraper(BaseScraper):
                     continue
                 if acc is not None:
                     acc.append((fuel, t.get("_stratum", "other"), (t.get("brand") or "?").strip().upper()[:40],
-                                round((a["price"] - p["price"]) * 100, 1)))
+                                round((a["price"] - p["price"]) * 100, 1), zlib.crc32(f"{t.get('id')}|{fuel}".encode())))
                 lo = min(a["price"], p["price"])
                 r = abs(a["price"] - p["price"]) / lo if lo > 0 else 0
                 if r >= cfg.alt_min_pct:

@@ -2,6 +2,7 @@ import asyncio
 import math
 import os
 import sys
+import time
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -30,6 +31,7 @@ class Cover(unittest.TestCase):
 class Fetch(unittest.IsolatedAsyncioTestCase):
     async def test_full_answer_is_split_and_stations_are_deduped_and_mapped(self):
         sc = italy.ItalyScraper(None)
+        sc.state_path = None
         calls = []
 
         def st(i):
@@ -57,12 +59,33 @@ class Fetch(unittest.IsolatedAsyncioTestCase):
 
     async def test_gives_up_after_repeated_api_failures(self):
         sc = italy.ItalyScraper(None)
+        sc.state_path = None
 
         async def fail(lat, lon, r):
             return None
 
         sc._fpeu_query = fail
         self.assertEqual(await sc._fetch_fpeu(), [])
+
+    async def test_failed_crawl_starts_a_cool_down_and_success_ends_it(self):
+        import pathlib, tempfile
+        sc = italy.ItalyScraper(None)
+        sc.state_path = pathlib.Path(tempfile.mkdtemp()) / "it_crawl.json"
+        calls = []
+
+        async def fail(lat, lon, r):
+            calls.append(1)
+            return None
+
+        sc._fpeu_query = fail
+        await sc._fetch_fpeu()
+        n = len(calls)
+        self.assertGreater(n, 0)
+        await sc._fetch_fpeu()                                  # within 3 h: no new crawl at all
+        self.assertEqual(len(calls), n)
+        sc._wall = lambda: time.time() + italy.FPEU_COOLDOWN_S + 60
+        await sc._fetch_fpeu()                                  # cool-down over: tries again
+        self.assertGreater(len(calls), n)
 
 
 if __name__ == "__main__":

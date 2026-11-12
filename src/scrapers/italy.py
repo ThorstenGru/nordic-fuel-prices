@@ -1,10 +1,13 @@
 import aiohttp
 import asyncio
 import csv
+import json
 import math
+import os
 import time
 import io
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import List, Dict, Any, Optional
 from .base import BaseScraper
 
 # Italian mandatory fuel price reporting via MIMIT
@@ -42,6 +45,7 @@ FPEU_CAP = 100                       # their per-call limit: a full answer means
 FPEU_MIN_RADIUS_KM = 1.2
 FPEU_BUDGET_S = 25 * 60              # a partial crawl is worse than none: past this, keep the last good data
 FPEU_GAP_S = 0.6
+FPEU_COOLDOWN_S = 3 * 3600            # after a failed crawl: no new crawl for 3 h (the workflow hands the state file from run to run)
 
 
 def fpeu_cells():
@@ -73,6 +77,30 @@ class ItalyScraper(BaseScraper):
     GRADE = "B"             # statutory duty (update on every change) but published as a daily CSV snapshot
     TIMEOUT_S = 1800        # the fuel-prices.eu fallback crawl needs ~17 min (main.py default is 15 min)
     REFRESH_MINUTES = 1380  # MIMIT publishes once a day (~08:00); also keeps the fuel-prices.eu fallback crawl to once a day
+
+    def __init__(self, session):
+        super().__init__(session)
+        self._wall = time.time
+        # {"failed_at": epoch or null}; published as /it_crawl.json, downloaded again before the next run. None = no cool-down (tests)
+        self.state_path: Optional[Path] = Path(os.environ.get("IT_CRAWL_STATE") or Path(__file__).resolve().parents[2] / "data" / "it_crawl.json")
+
+    def _cooldown_left(self) -> float:
+        if self.state_path is None:
+            return 0.0
+        try:
+            failed = json.loads(self.state_path.read_text(encoding="utf-8")).get("failed_at")
+            return max(0.0, FPEU_COOLDOWN_S - (self._wall() - float(failed))) if failed else 0.0
+        except (OSError, ValueError, TypeError):
+            return 0.0
+
+    def _save_state(self, failed: bool) -> None:
+        if self.state_path is None:
+            return
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            self.state_path.write_text(json.dumps({"failed_at": self._wall() if failed else None}), encoding="utf-8")
+        except OSError:
+            pass
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         registry_text, prices_text = await asyncio.gather(
@@ -209,6 +237,15 @@ class ItalyScraper(BaseScraper):
         return None
 
     async def _fetch_fpeu(self) -> List[Dict[str, Any]]:
+        left = self._cooldown_left()
+        if left > 0:
+            print(f"[IT/fuel-prices.eu] last crawl failed - cooling down for another {left / 60:.0f} min")
+            return []
+        out = await self._crawl_fpeu()
+        self._save_state(failed=not out)
+        return out
+
+    async def _crawl_fpeu(self) -> List[Dict[str, Any]]:
         t0, calls, fails = time.monotonic(), 0, 0
         found: Dict[Any, Dict] = {}
         todo = fpeu_cells()
