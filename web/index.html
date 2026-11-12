@@ -343,6 +343,7 @@ body.hint-handle .panel.open .drag-handle::after { animation:handleNudge 1.1s ea
 .pc.np .npl { color:var(--warn-t); font-size:.64rem; font-weight:700; }
 .fill-line { margin-top:6px; font-size:.76rem; color:var(--sub); display:flex; align-items:center; gap:5px; }
 .fill-line b { color:var(--ink); font-family:var(--f-disp); font-variant-numeric:tabular-nums; }
+.unc-note { font-size:.74rem; color:var(--warn-t); margin-top:4px; }
 .age-line { font-size:.7rem; color:var(--sub); margin-top:5px; line-height:1.5; }
 .stale-note { margin-top:5px; padding:4px 8px; border-radius:var(--r-s); background:var(--banner-bg); color:var(--bad-t); font-size:.68rem; display:flex; align-items:center; gap:5px; }
 .gb { display:inline-flex; align-items:center; gap:3px; padding:1px 7px; border-radius:var(--r-s); font-size:.62rem; font-weight:800; letter-spacing:.2px; color:#0F2037; vertical-align:middle; }
@@ -4199,7 +4200,7 @@ function ageHtml(s) {
     : t('priceSetAt', { t: fmtAgo(new Date(Date.now() - h*3600000).toISOString()) });
   const stale = m.status === 'stale'
     ? `<div class="stale-note">${t('staleNote', { t: fmtAgo(m.fetched_at) })}</div>` : '';
-  return `<div class="age-line"><button type="button" class="gb g${g}" aria-label="${esc(t('gradeInfo'))}" onclick="event.stopPropagation();openTrust()">${g} ${ico('info', 'sm')}</button> ${gradeTxt(g)}<br>${ico('clock', 'sm')} ${when}</div>${stale}`;
+  return `<div class="age-line"><button type="button" class="gb g${g}" aria-label="${esc(t('gradeInfo'))}" onclick="event.stopPropagation();openTrust()">${g} ${ico('info', 'sm')}</button> ${gradeTxt(g)}<br>${ico('clock', 'sm')} ${when}</div>${s.uncertain ? `<div class="unc-note">${esc(t('brandUncertain'))}</div>` : ''}${stale}`;
 }
 
 function fmtDate(iso) {
@@ -8080,6 +8081,9 @@ map.on('moveend', () => {
 // ════════════════════════════════════════════════════
 // PWA
 // ════════════════════════════════════════════════════
+Object.assign(I18N.en, { brandUncertain:'This brand is often a few cents off in our checks against the official feed.' });
+Object.assign(I18N.sv, { brandUncertain:'Det här varumärket avviker ofta några ören i våra kontroller mot den officiella källan.' });
+Object.assign(I18N.de, { brandUncertain:'Diese Marke weicht in unseren Prüfungen gegen die amtliche Quelle oft um einige Cent ab.' });
 Object.assign(I18N.en, { installMenu:'Open your browser menu and choose “Install app” or “Add to Home screen”.' });
 Object.assign(I18N.sv, { installMenu:'Öppna webbläsarens meny och välj ”Installera app” eller ”Lägg till på hemskärmen”.' });
 Object.assign(I18N.de, { installMenu:'Öffne das Browsermenü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.' });

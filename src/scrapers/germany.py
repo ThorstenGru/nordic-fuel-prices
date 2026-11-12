@@ -83,6 +83,7 @@ METRO_PER_RUN, RURAL_PER_RUN = 2, 3        # = TEST_MAX_CIRCLES
 RURAL_SET = set(RURAL)
 
 # Accuracy meter (A): every ANWB-versus-MTS-K difference is counted in 1-cent bins, per day, so we can say how far ANWB is off.
+RISKY_MIN_N, RISKY_PCT = 20, 30.0          # a brand is "often a few cents off" with >= 20 checks and >= 30 % of them 2 ct or more away
 ACC_DAYS = 14
 ACC_CLIP = 25                              # bins beyond +-25 ct are pooled
 
@@ -213,7 +214,7 @@ def accuracy_summary(store: Dict) -> Dict:
             brands[br][0] += n
             brands[br][1] += o
     out = {"days": len(days), **stats(allh), "by": {k: stats(h) for k, h in sorted(per.items())}}
-    worst = sorted(((100 * o / n, br, n) for br, (n, o) in brands.items() if n >= 20), reverse=True)[:5]
+    worst = sorted(((100 * o / n, br, n) for br, (n, o) in brands.items() if n >= RISKY_MIN_N), reverse=True)[:15]
     out["worst_brands"] = [{"brand": br, "n": n, "over_2ct_pct": round(r, 1)} for r, br, n in worst]
     if out["n"]:
         out["line"] = (f"ANWB matched the official MTS-K price to within 1 cent for {out['within_1ct_pct']}% of {out['n']} checks "
@@ -292,8 +293,31 @@ class GermanyScraper(BaseScraper):
         except Exception as e:  # noqa: BLE001 - the ANWB baseline must survive any Tankerkoenig failure
             print(f"[DE] Tankerkoenig step failed, keeping ANWB baseline: {type(e).__name__}: {self._scrub(e)}")
             self.tk_info["error"] = type(e).__name__
+        self._flag_risky(stations)
         self._report(stations)
         return stations
+
+    def _flag_risky(self, stations: List[Dict]) -> None:
+        """Mark ANWB-only stations of brands that the accuracy meter found to be often wrong (station["uncertain"] = True).
+        The price is not changed; the app adds a note. Stations upgraded to the official feed are never flagged."""
+        for s in stations:
+            s.pop("uncertain", None)
+        if self.acc_path is None:
+            return
+        try:
+            worst = json.loads(self.acc_path.read_text(encoding="utf-8")).get("summary", {}).get("worst_brands") or []
+        except (OSError, ValueError):
+            return
+        risky = {w["brand"] for w in worst if w.get("n", 0) >= RISKY_MIN_N and w.get("over_2ct_pct", 0) >= RISKY_PCT}
+        if not risky:
+            return
+        n = 0
+        for s in stations:
+            if s.get("source") != TK_SOURCE and (s.get("brand") or "").strip().upper()[:40] in risky:
+                s["uncertain"] = True
+                n += 1
+        self.tk_info["risky_brands"] = sorted(risky)
+        print(f"[DE] {n} ANWB-only stations of {len(risky)} often-wrong brands flagged uncertain: {', '.join(sorted(risky))}")
 
     def _record_accuracy(self, pairs: List[Tuple[str, str, str, float]]) -> None:
         """Fold this run's differences into the rolling 14-day file and put the summary into the health report."""

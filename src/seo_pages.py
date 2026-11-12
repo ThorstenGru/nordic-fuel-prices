@@ -69,7 +69,7 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
     "de": dict(lang="de", currency="EUR", sym="€", mode="city", ts_kind="fetched", fallback_nearby=False,
                hub="Spritpreise Deutschland", hub_title="Spritpreise Deutschland aktuell – günstig tanken",
                fuels=[("E10", "Super E10"), ("E5_95", "Super E5"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
-               cheapest=("E10", "DIESEL"), src="Tankerkönig / MTS-K, Bundeskartellamt (CC BY 4.0)", osm=False, nation="Deutschland-Median"),
+               cheapest=("E10", "DIESEL"), src="Tankerkönig / MTS-K, Bundeskartellamt (CC BY 4.0)", osm=False, nation="Deutschland-Median", acc="de_accuracy.json"),
     "ch": dict(lang="de", currency="CHF", sym="CHF", mode="city", ts_kind="fetched", fallback_nearby=False,
                hub="Benzinpreise Schweiz", hub_title="Benzinpreise Schweiz aktuell – günstig tanken",
                fuels=[("E10", "Bleifrei 95 (E10)"), ("E5_95", "Bleifrei 95 (E5)"), ("P98", "Bleifrei 98"), ("DIESEL", "Diesel"), ("LPG", "Autogas (LPG)")],
@@ -808,6 +808,8 @@ def footer_html(c: Ctx, unofficial: bool = False) -> str:
     src_line = x["foot_unofficial"] if unofficial else x["foot_src"].format(src=cfg["src"])
     parts = [escape(src_line), escape(x["foot_ts"][cfg["ts_kind"]]),
              f'<a href="/about.html">{escape(x["foot_grades"])}</a>.']
+    if cfg.get("acc_line"):
+        parts.append(escape(cfg["acc_line"]))
     if cfg.get("credit"):
         parts.append('Data: <a href="https://www.fuel-prices.eu/" rel="noopener">fuel-prices.eu</a>, CC BY 4.0.')
     if cfg["osm"]:
@@ -831,6 +833,15 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         return None
     if meta.get("status") == "stale":   # keep the pages (a 404 on every indexed URL is worse); they show the real fetch date and fresh_price drops timestamped prices older than 72 h
         print(f"seo_pages[{cc}]: source stale - pages kept with the last fetch date")
+    if cfg.get("acc"):   # measured accuracy of the unofficial feed against the official one (written by scrapers/germany.py)
+        try:
+            a = json.loads((DATA_DIR / cfg["acc"]).read_text(encoding="utf-8")).get("summary") or {}
+            if a.get("n", 0) >= 500:
+                de = lambda v: f"{v:g}".replace(".", ",")   # noqa: E731
+                cfg = dict(cfg, acc_line=f"Genauigkeit: Verglichen mit dem amtlichen MTS-K-Preis stimmt der ANWB-Preis bei {de(a['within_1ct_pct'])} % von {a['n']} Stichproben "
+                                         f"auf 1 Cent genau (letzte {a['days']} Tage); 90 % der Stichproben liegen innerhalb von {de(a['abs_p90_ct'])} Cent.")
+        except (OSError, ValueError, KeyError):
+            pass
     if "fuel-prices.eu" in src_name:   # credit required by their licence page: "Data: fuel-prices.eu", linked
         cfg = dict(cfg, credit=True)
     lang, x = cfg["lang"], TXT[cfg["lang"]]

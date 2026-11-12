@@ -295,5 +295,22 @@ class AccuracyMeter(unittest.TestCase):
         self.assertEqual(acc, [("petrol", "rural", "ARAL", 0.9), ("diesel", "rural", "ARAL", 0.9)])   # ANWB minus official, in ct
 
 
+class RiskyBrands(unittest.TestCase):
+    def test_flags_only_anwb_stations_of_often_wrong_brands(self):
+        import json, tempfile, pathlib
+        f = pathlib.Path(tempfile.mkdtemp()) / "acc.json"
+        f.write_text(json.dumps({"summary": {"worst_brands": [
+            {"brand": "SPRINT", "n": 220, "over_2ct_pct": 35.0}, {"brand": "ARAL", "n": 900, "over_2ct_pct": 5.0}, {"brand": "TINY", "n": 5, "over_2ct_pct": 80.0}]}}))
+        sc, _ = make("test", FakeSession())
+        sc.acc_path = f
+        st = [dict(anwb_station(1, 52.5, 13.4), brand="Sprint"), dict(anwb_station(2, 52.6, 13.4), brand="Aral"), dict(anwb_station(3, 52.7, 13.4), brand="Tiny"),
+              dict(anwb_station(4, 52.8, 13.4), brand="Sprint", source=germany.TK_SOURCE), dict(anwb_station(5, 52.9, 13.4), brand="Sprint", uncertain=True)]
+        sc._flag_risky(st)
+        self.assertEqual([bool(s.get("uncertain")) for s in st], [True, False, False, False, True])
+        f.write_text(json.dumps({"summary": {"worst_brands": []}}))
+        sc._flag_risky(st)                                    # flags are recomputed every run: nothing risky any more
+        self.assertFalse(any(s.get("uncertain") for s in st))
+
+
 if __name__ == "__main__":
     unittest.main()

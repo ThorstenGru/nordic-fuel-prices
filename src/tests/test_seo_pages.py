@@ -78,5 +78,24 @@ class TownPageUpgrade(unittest.TestCase):
         self.assertNotIn("Verandering sinds", html)
 
 
+class GermanAccuracyLine(unittest.TestCase):
+    def test_footer_shows_measured_accuracy_when_the_file_exists(self):
+        import json, tempfile, pathlib
+        from datetime import datetime, timezone
+        d = pathlib.Path(tempfile.mkdtemp())
+        st = [dict(id=f"d{i}", lat=52.5 + i * 0.001, lon=13.4, city="Berlin", brand="X", address="Str 1",
+                   prices=[dict(fuel_type="E10", octane=95, price=1.80, currency="EUR", unit="L"), dict(fuel_type="DIESEL", price=1.90, currency="EUR", unit="L")]) for i in range(5)]
+        (d / "de.json").write_text(json.dumps(dict(meta=dict(source="anwb + tankerkoenig", fetched_at="2026-11-11T08:00:00+00:00"), stations=st)))
+        (d / "de_accuracy.json").write_text(json.dumps({"summary": {"n": 26209, "within_1ct_pct": 85.3, "days": 2, "abs_p90_ct": 4.0}}))
+        old_dir, old_load = sp.DATA_DIR, sp.load_trend
+        sp.DATA_DIR, sp.load_trend = d, lambda cc: {}
+        try:
+            sp.build_country("de", dict(sp.COUNTRIES["de"]), datetime(2026, 11, 11, 9, tzinfo=timezone.utc))
+        finally:
+            sp.DATA_DIR, sp.load_trend = old_dir, old_load
+        html = (d / "de" / "berlin" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("85,3 % von 26209 Stichproben", html)
+
+
 if __name__ == "__main__":
     unittest.main()
