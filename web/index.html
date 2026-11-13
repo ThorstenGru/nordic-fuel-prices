@@ -934,18 +934,18 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
       <label for="car-type" data-i18n="carType">What does your car run on?</label>
       <select id="car-type" aria-describedby="h-type" onchange="carSet('type',this.value)"><option value="" data-i18n="carNone">Choose...</option><option value="petrol" data-i18n="carPetrol">Petrol</option><option value="diesel" data-i18n="fuelOptDiesel">Diesel</option><option value="phev" data-i18n="carPhev">Plug-in hybrid</option></select>
       <p class="mc-hint" id="h-type" data-i18n="mcTypeH">Only plug-in hybrids can be compared with electricity.</p>
-      <label for="car-tank" data-i18n="carTank">Fuel tank size (litres)</label><input id="car-tank" aria-describedby="h-tank" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('tank',this.value)">
+      <label for="car-tank" data-i18n="carTank">Fuel tank size (litres)</label><input id="car-tank" aria-describedby="h-tank" type="text" inputmode="decimal" autocomplete="off" min="1" step="1" onchange="carSet('tank',this.value)">
       <p class="mc-hint" id="h-tank" data-i18n="mcTankH">Most cars: 40 to 60 litres. Or tap a quick pick:</p>
       <div class="tank-row" id="tank-row" role="group" data-i18n-aria="carTank" aria-label="Fuel tank size">
         <button type="button" data-l="20" onclick="tankPick(20)">20 L</button><button type="button" data-l="30" onclick="tankPick(30)">30 L</button><button type="button" data-l="40" onclick="tankPick(40)">40 L</button><button type="button" data-l="50" onclick="tankPick(50)">50 L</button><button type="button" data-l="70" onclick="tankPick(70)">70 L</button>
       </div>
-      <label for="car-cons" data-i18n="carCons">Petrol use (litres per 100 km)</label><input id="car-cons" aria-describedby="h-cons" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('cons',this.value)">
+      <label for="car-cons" data-i18n="carCons">Petrol use (litres per 100 km)</label><input id="car-cons" aria-describedby="h-cons" type="text" inputmode="decimal" autocomplete="off" min="0.1" step="0.1" onchange="carSet('cons',this.value)">
       <p class="mc-hint" id="h-cons" data-i18n="mcConsH">Example: 7 means the car uses 7 litres of petrol to drive 100 km. For a plug-in hybrid, use the figure for when the battery is empty.</p>
       <div id="car-phev" style="display:none">
-        <label for="car-batt" data-i18n="carBatt">Battery size (kWh)</label><input id="car-batt" aria-describedby="h-batt" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('batt',this.value)">
+        <label for="car-batt" data-i18n="carBatt">Battery size (kWh)</label><input id="car-batt" aria-describedby="h-batt" type="text" inputmode="decimal" autocomplete="off" min="0.1" step="0.1" onchange="carSet('batt',this.value)">
         <p class="mc-hint" id="h-batt" data-i18n="mcBattH">kWh is a unit of energy, like litres for fuel. Plug-in hybrids have about 10 to 25 kWh.</p>
         <div data-hq="kwh"></div>
-        <label for="car-range" data-i18n="carRange">Range on a full battery (km)</label><input id="car-range" aria-describedby="h-range" type="number" inputmode="decimal" min="1" step="1" onchange="carSet('range',this.value)">
+        <label for="car-range" data-i18n="carRange">Range on a full battery (km)</label><input id="car-range" aria-describedby="h-range" type="text" inputmode="decimal" autocomplete="off" min="1" step="1" onchange="carSet('range',this.value)">
         <p class="mc-hint" id="h-range" data-i18n="mcRangeH">The official figure. In daily driving you get less, and in winter much less; the results below take that into account.</p>
         <div data-hq="range"></div>
       </div>
@@ -954,7 +954,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <section class="car-box mc-step" id="mc-s2" aria-labelledby="mc-h2" hidden>
       <h3 class="mc-h" id="mc-h2"><span class="mc-n" aria-hidden="true">2</span><span data-i18n="mcS2">Your electricity price</span><span class="mc-st" id="mc-st2"></span></h3>
       <p class="ev-note" data-i18n="mcS2i">This is the number that decides the result. Find it on your bill.</p>
-      <label for="car-elec"><span data-i18n="carElec">What you pay for electricity at home (per kWh, including VAT)</span> <select id="car-cur" class="cur-sel" aria-label="Currency" onchange="carCur('elec', this.value)"></select></label><input id="car-elec" aria-describedby="h-elec" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
+      <label for="car-elec"><span data-i18n="carElec">What you pay for electricity at home (per kWh, including VAT)</span> <select id="car-cur" class="cur-sel" aria-label="Currency" onchange="carCur('elec', this.value)"></select></label><input id="car-elec" aria-describedby="h-elec" type="text" inputmode="decimal" autocomplete="off" min="0.01" step="0.01" onchange="carSet('elec',this.value)">
       <p class="mc-hint" id="h-elec-w" hidden data-i18n="mcElecW">That looks high for euro. If you enter kronor, change the currency next to the field.</p>
       <p class="mc-hint" id="h-elec" data-i18n="mcElecH">Find it on your electricity bill. Sweden is roughly 1.50 to 3.50 kr per kWh including grid fees and tax. Not sure? Work it out below.</p>
       <div data-hq="price"></div>
@@ -981,16 +981,16 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <section class="car-box mc-step" id="mc-adv" aria-labelledby="mc-h5">
       <h3 class="mc-h" id="mc-h5" data-i18n="mcAdv">Advanced settings</h3><p class="ev-note" id="mc-adv-sum"></p>
       <div id="ev-in2"></div>
-      <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" aria-describedby="h-eff" type="number" inputmode="decimal" min="1" max="100" step="1" placeholder="87" onchange="carSet('eff',this.value)">
+      <label for="car-eff" data-i18n="carEff">Charging efficiency (%)</label><input id="car-eff" aria-describedby="h-eff" type="text" inputmode="decimal" autocomplete="off" min="1" max="100" step="1" placeholder="87" onchange="carSet('eff',this.value)">
       <p class="mc-hint" id="h-eff" data-i18n="mcEffH">Default: 90. Some electricity is lost as heat when charging, so 90 means 10 percent is lost.</p>
       <div data-hq="loss"></div>
       <div id="car-phev2" style="display:none">
-        <label for="car-chg" data-i18n="carChg">Charger rating on the road, kW</label><input id="car-chg" aria-describedby="h-chg" type="number" inputmode="decimal" min="0.1" step="0.1" onchange="carSet('chg',this.value)">
+        <label for="car-chg" data-i18n="carChg">Charger rating on the road, kW</label><input id="car-chg" aria-describedby="h-chg" type="text" inputmode="decimal" autocomplete="off" min="0.1" step="0.1" onchange="carSet('chg',this.value)">
         <p class="mc-hint" id="h-chg" data-i18n="mcChgH">Only used for the public charging verdict on the Route tab. Leave empty if unsure.</p>
-        <label for="car-acp"><span data-i18n="carAcp">Public AC charging price (per kWh, including VAT)</span> <select id="car-cur2" class="cur-sel" aria-label="Currency" onchange="carCur('acp', this.value)"></select></label><input id="car-acp" aria-describedby="h-acp" type="number" inputmode="decimal" min="0.01" step="0.01" onchange="carSet('acp',this.value)">
+        <label for="car-acp"><span data-i18n="carAcp">Public AC charging price (per kWh, including VAT)</span> <select id="car-cur2" class="cur-sel" aria-label="Currency" onchange="carCur('acp', this.value)"></select></label><input id="car-acp" aria-describedby="h-acp" type="text" inputmode="decimal" autocomplete="off" min="0.01" step="0.01" onchange="carSet('acp',this.value)">
         <p class="mc-hint" id="h-acp" data-i18n="mcAcpH">Only used for the public charging verdict. In Sweden 3.50 kr per kWh is assumed until you enter your own.</p>
       </div>
-      <label for="car-cardpct" data-i18n="cardLbl">Card currency fee (%)</label><input id="car-cardpct" aria-describedby="h-card" type="number" inputmode="decimal" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
+      <label for="car-cardpct" data-i18n="cardLbl">Card currency fee (%)</label><input id="car-cardpct" aria-describedby="h-card" type="text" inputmode="decimal" autocomplete="off" min="0" max="10" step="0.1" placeholder="0" onchange="cardSet(this.value)">
       <p class="mc-hint" id="h-card" data-i18n="cardHint">Only matters when you buy abroad. Check your bank; 0 to 3 percent is common. Stored on this device only.</p><p class="cmp-note fx-src" style="margin:2px 0 0"></p>
     </section>
     </details>
@@ -5774,7 +5774,7 @@ function ctyNote(cc) {
 let car = (v => v && typeof v === 'object' ? v : {})(store.get('efp_car', {}));
 const CAR_FUEL = { petrol:'P95', phev:'P95', diesel:'DIESEL' };
 function carInit() {
-  for (const k of ['type', 'cons', 'batt', 'range', 'elec', 'eff', 'chg', 'acp']) { const e = document.getElementById('car-' + k); if (e) e.value = car[k] != null ? car[k] : ''; }
+  for (const k of ['type', 'cons', 'batt', 'range', 'elec', 'eff', 'chg', 'acp']) { const e = document.getElementById('car-' + k); if (e) e.value = car[k] != null ? dec(String(car[k])) : ''; }
   const e = document.getElementById('car-tank'); if (e && car.tank) e.value = tank;
   carUi();
 }
@@ -6078,9 +6078,9 @@ function evRender0() {
   _mcAns = { cur, r, elec, missCar, missElec: elec == null, T: tn.T, mode, assumed };
   const chips = ['home', 'pub', ...(fcOk ? ['fc'] : [])].map(m => `<button type="button" id="ev-m-${m}" aria-pressed="${mode === m}" class="${mode === m ? 'on' : ''}" onclick="evSetMode('${m}')">${esc(t(m === 'home' ? 'evHome' : m === 'pub' ? 'evPub' : 'evFc'))}</button>`).join('');
   const inH = `<div class="tchips">${chips}</div>` + (mode === 'fc' ? `<label for="ev-fcm">${esc(t('evFcMonth'))}</label><select id="ev-fcm" onchange="evFcSel(this.value)">${(epRows() || []).map((x, i) => `<option value="${i}"${i === fcSel() ? ' selected' : ''}${x.p ? '' : ' disabled'}>${esc(monLabel(x.ym, true))}</option>`).join('')}</select><div id="ev-hint"></div>`
-    : mode === 'pub' ? `<label for="ev-price">${esc(t('evPricePub', { c: curLbl(cur) }))}</label><input id="ev-price" aria-describedby="ev-hint" type="number" inputmode="decimal" min="0.01" step="0.01" value="${price}" onchange="evSet('pub',this.value)"><div id="ev-hint"></div>`
+    : mode === 'pub' ? `<label for="ev-price">${esc(t('evPricePub', { c: curLbl(cur) }))}</label><input id="ev-price" aria-describedby="ev-hint" type="text" inputmode="decimal" autocomplete="off" min="0.01" step="0.01" value="${dec(String(price))}" onchange="evSet('pub',this.value)"><div id="ev-hint"></div>`
     : `<p class="mc-hint">${esc(elec != null ? t('mcHomeUse', { p: money(elec, cur) }) : t('mcHomeNone'))}</p>`);
-  const inH2 = `<label for="ev-km">${esc(t('evDist'))}</label><input id="ev-km" aria-describedby="ev-km-d" type="number" inputmode="decimal" min="1" step="10" value="${km}" onchange="evSet('km',this.value)"><div class="mc-def" id="ev-km-d">${esc(t('mcDefKm'))}${ev.km ? ` <button type="button" id="ev-km-r" class="ev-link" onclick="evReset('km')">${esc(t('mcReset'))}</button>` : ''}</div>`;
+  const inH2 = `<label for="ev-km">${esc(t('evDist'))}</label><input id="ev-km" aria-describedby="ev-km-d" type="text" inputmode="decimal" autocomplete="off" min="1" step="10" value="${km}" onchange="evSet('km',this.value)"><div class="mc-def" id="ev-km-d">${esc(t('mcDefKm'))}${ev.km ? ` <button type="button" id="ev-km-r" class="ev-link" onclick="evReset('km')">${esc(t('mcReset'))}</button>` : ''}</div>`;
   let vd = '';      // the conclusion in words first, then the two numbers
   if (r.cheaper) {
     const diff = Math.abs(r.petrol100 - r.elec100);
@@ -6196,7 +6196,7 @@ function evMixHtml(o) {
   const man = ev.tMode === 'manual', chip = (m, txt) => `<button type="button" id="mx-c-${m}" aria-pressed="${(man ? 'manual' : 'auto') === m}" class="${(man ? 'manual' : 'auto') === m ? 'on' : ''}" onclick="tmpMode('${m}')">${esc(txt)}</button>`;
   let h = `<h4 class="ev-sub">${esc(t('mxTitle'))}</h4>${nt('mxIntro')}<span class="mc-lbl" id="mx-tl">${esc(t('mxTemp'))}</span><div class="tchips" role="group" aria-labelledby="mx-tl">${chip('auto', t('mxAuto'))}${chip('manual', t('mxManual'))}</div>`;
   if (!man && !ev.tOk) h += `<p class="ev-note">${esc(t('mxPrivShort'))}</p><button type="button" id="mx-allow" class="mc-btn" onclick="tmpAllow()">${esc(t('mxAllow'))}</button>`;
-  if (man) h += `<div class="ev-in2"><label for="mx-t" style="margin:0">${esc(t('mxTempIn'))}</label><input id="mx-t" type="number" inputmode="decimal" step="1" min="-50" max="50" value="${tmpManual() ? ev.tOvr : ''}" onchange="tmpSetT(this.value)"></div>`;
+  if (man) h += `<div class="ev-in2"><label for="mx-t" style="margin:0">${esc(t('mxTempIn'))}</label><input id="mx-t" type="text" inputmode="decimal" autocomplete="off" step="1" min="-50" max="50" value="${tmpManual() ? ev.tOvr : ''}" onchange="tmpSetT(this.value)"></div>`;
   else if (tn.T != null) h += `<p class="ev-note">${esc(t('mxT', { t: Math.round(tn.T), s: t('mxSrc_' + tn.src) }))}${tmp.pos ? '<br>' + esc(t('mxPos', { p: tmp.pos[0].toFixed(1) + ', ' + tmp.pos[1].toFixed(1) })) + ` <button type="button" id="mx-posupd" class="ev-link" onclick="tmpPosUpdate()">${esc(t('mxPosUpd'))}</button>` : ''}</p>`;
   if (tn.T == null) h += nt(man ? 'mxNoneM' : 'mxNone');
   if (!man) h += mcQ('weather');
@@ -6211,7 +6211,7 @@ function evMixHtml(o) {
   h += mcQ('cold', `<table class="ev-tbl wide"><tr><th></th>${[-10, 0, 10, 20].map(T => `<th>${T} °C</th>`).join('')}</tr><tr><td>${esc(t('mxCost100'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(c0(b(100, T).per100))}</td>`).join('')}</tr>`
     + `<tr><td>${esc(t('mxEl'))}</td>${[-10, 0, 10, 20].map(T => `<td>${esc(t('mxKm', { k: Math.round(b(100, T).e) }))}</td>`).join('')}</tr></table>`);
   const dd = phevDay({ ...base, D, T: tn.T });
-  h += `<label for="ev-dkm">${esc(t('mxDaily'))}</label><input id="ev-dkm" aria-describedby="ev-dkm-d" type="number" inputmode="decimal" min="1" step="5" value="${D}" onchange="evSet('dkm',this.value)"><div class="mc-def" id="ev-dkm-d">${esc(t('mcDefDkm'))}${ev.dkm ? ` <button type="button" id="ev-dkm-r" class="ev-link" onclick="evReset('dkm')">${esc(t('mcReset'))}</button>` : ''}</div>`
+  h += `<label for="ev-dkm">${esc(t('mxDaily'))}</label><input id="ev-dkm" aria-describedby="ev-dkm-d" type="text" inputmode="decimal" autocomplete="off" min="1" step="5" value="${D}" onchange="evSet('dkm',this.value)"><div class="mc-def" id="ev-dkm-d">${esc(t('mcDefDkm'))}${ev.dkm ? ` <button type="button" id="ev-dkm-r" class="ev-link" onclick="evReset('dkm')">${esc(t('mcReset'))}</button>` : ''}</div>`
     + `<p class="ev-note">${esc(t(tn.T == null ? 'mxDay0' : 'mxDay', { d: D, s: Math.round(dd.share * 100), t: tn.T == null ? '' : Math.round(tn.T), m: c0(dd.day * 30.4) }))}</p>`;
   return h + evHowHtml();
 }
@@ -6226,7 +6226,7 @@ function tfRender() {
   if (f._k !== lang + tf.area) {
     f._k = lang + tf.area;
     f.innerHTML = `<p class="ev-note">${esc(t('tfIntro'))}</p><label for="tf-area">${esc(t('tfArea'))}</label><select id="tf-area" onchange="tfSet('area',this.value)">${[...new Set([...TF_AREAS, tf.area])].map(a => `<option${a === tf.area ? ' selected' : ''}>${a}</option>`).join('')}</select>` + mcQ('area') + `<p class="ev-note">${esc(t('tfFieldsNote'))}</p>`
-      + `<div class="tf-grid">${TF_FLD.map(([k, l]) => `<div><label for="tf-${k}">${esc(t(l))}</label><input id="tf-${k}" ${k.endsWith('Until') ? 'type="date"' : 'type="number" inputmode="decimal" min="0" step="any"'} value="${tf[k]}" onchange="tfSet('${k}',this.value)"></div>`).join('')}</div>`
+      + `<div class="tf-grid">${TF_FLD.map(([k, l]) => `<div><label for="tf-${k}">${esc(t(l))}</label><input id="tf-${k}" ${k.endsWith('Until') ? 'type="date"' : 'type="text" inputmode="decimal" autocomplete="off" min="0" step="any"'} value="${tf[k]}" onchange="tfSet('${k}',this.value)"></div>`).join('')}</div>`
       + `<button type="button" class="btn-line" style="margin-top:12px" onclick="tfReset()">${esc(t('tfReset'))}</button>`;
   }
   tfOut();
