@@ -97,8 +97,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 10
         env:
-          OCM_API_KEY: ${{ secrets.OCM_API_KEY }}
-          # optional: SE/NO merge; skipped silently when the secret does not exist. See docs/CHARGERS_PIPELINE.md
+          # SE/NO charger files come from NOBIL only (Open Charge Map was dropped); without the secret nothing is refreshed. See docs/CHARGERS_PIPELINE.md
           NOBIL_API_KEY: ${{ secrets.NOBIL_API_KEY }}
           FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
           ALLOW_SHRINK: ${{ inputs.allow_shrink }}

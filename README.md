@@ -88,7 +88,7 @@ node tools/check_fares.js && node tools/check_ac_tariffs.js && node tools/check_
 |---|---|---|
 | `FB_PAGE_ID`, `FB_PAGE_TOKEN` | secrets | Facebook routine (Page access token; see GRAPH_API_SETUP) |
 | `GOON_API_KEY` | secret | Denmark (Go'on) prices |
-| `OCM_API_KEY`, `NOBIL_API_KEY` | secrets | EV charging data |
+| `NOBIL_API_KEY` | secret | EV charging data (SE, NO) |
 | `TANKERKOENIG_API_KEY` + `TANKERKOENIG_MODE` (`off`/`test`/`commercial`) | secret + variable | Optional German upgrade, off by default |
 | `ROMANIA_SOURCE` (`peco`/`official`/`both`) | variable | Romanian source ([docs/ROMANIA_SETUP.md](docs/ROMANIA_SETUP.md)) |
 | `NTFY_TOPIC` | Cloudflare Worker secret | Stale-data alarm topic (random, acts as password) |

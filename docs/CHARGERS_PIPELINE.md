@@ -1,4 +1,6 @@
-# Charger pipeline: data/ev_<cc>.json (2026-11-07)
+# Charger pipeline: data/ev_<cc>.json (2026-11-07, changed 2026-11-13)
+
+**Change 2026-11-13 (owner decision): Open Charge Map is dropped** (old data, operator names missing). SE and NO now come from NOBIL only (official Nordic register, CC BY 4.0, key `NOBIL_API_KEY`, one datadump call per country: SE about 7.9k stations before dedupe, NO about 2.8k; the free key answers only SWE and NOR). **DK and DE are frozen**: their last Open Charge Map files are re-published unchanged (`FROZEN` in `src/chargers.py`) until ChargeFinder replaces them. ChargeFinder (chargefinder.com) has the owner's consent (see PERMISSIONS.md) but no public API: its API host is an API Gateway that answers 403 without an API key, so the next step is to ask info@chargefinder.com for a key or a data file; nothing from their site is fetched by code yet. The sections below still describe the old Open Charge Map design where they mention it.
 
 Backend for the "Chargers + typical prices" feature (Type 2 AC, Santa Fe PHEV). Design and measurements: `CHARGER_DATA_DESIGN_2026-11-07.md`. Code: `src/chargers.py`, tests `src/tests/test_chargers.py` (no network). No web/ code is touched by this step.
 
