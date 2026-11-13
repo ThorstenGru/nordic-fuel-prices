@@ -187,9 +187,9 @@ def encode(frames: list, out: Path) -> None:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", "-movflags", "+faststart", str(out)], check=True)
 
 
-def build(today: date, outdir: Path):
+def build(today: date, outdir: Path, ignore_log: bool = False):
     """-> {"skip": reason} or {"video": Path, "text": caption, "key": ISO week}."""
-    if any(r.get("format") == "weekly-video" and r.get("key") == week_key(today) for r in fb_daily.read_log()):
+    if not ignore_log and any(r.get("format") == "weekly-video" and r.get("key") == week_key(today) for r in fb_daily.read_log()):
         return {"skip": "already posted this week"}
     raw = fb_daily.fetch(fb_daily.SITE + "/open-data/national-averages.json")
     if not raw:
@@ -222,7 +222,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--out", default="weekly_out")
     a = ap.parse_args()
-    res = build(date.today(), Path(a.out))
+    res = build(date.today(), Path(a.out), ignore_log=a.dry_run)   # a dry run posts nothing, so "already posted this week" must not stop it
     if "skip" in res:
         print(f"fb_weekly: skip - {res['skip']}")
         return 0
