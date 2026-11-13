@@ -90,6 +90,15 @@ def nobil_cs(i, lat, lon, conn="32", cap="11 kW - 400V 3-phase max 16A", **st):
 
 
 class Nobil(unittest.TestCase):
+    def test_operator_is_the_network_not_the_property_owner(self):
+        cs = nobil_cs(1, 55.7, 13.2)
+        cs["csmd"]["Operator"] = "Vattenfall InCharge"          # who runs the post
+        cs["csmd"]["Owned_by"] = "Vendelsö AB"                  # who owns it
+        out, _ = chargers.reduce_nobil({"chargerstations": [cs]})
+        self.assertEqual(out[0]["op"], "Vattenfall InCharge")
+        out, _ = chargers.reduce_nobil({"chargerstations": [nobil_cs(2, 55.7, 13.2)]})   # no Operator field: falls back to the owner
+        self.assertEqual(out[0]["op"], "MER")
+
     def test_reduce(self):
         doc = {"chargerstations": [
             nobil_cs(1, 55.7, 13.2, **{"7": {"attrvalid": "1", "trans": "Yes"}}),

@@ -176,7 +176,7 @@ def reduce_nobil(doc: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], Dict[str, i
             title = ", ".join(x for x in [" ".join(filter(None, [str(md.get("Street") or "").strip(), str(md.get("House_number") or "").strip()])),
                                           str(md.get("City") or "").strip()] if x)
             ids = {re.sub(r"\D", "", str(md.get(k) or "")) for k in ("id", "International_id")} - {""}
-            out.append({"lat": float(m.group(1)), "lon": float(m.group(2)), "op": canon_op(md.get("Owned_by")),
+            out.append({"lat": float(m.group(1)), "lon": float(m.group(2)), "op": canon_op(md.get("Operator") or md.get("Owned_by")),   # the network that runs the post (Vattenfall InCharge), not the property owner (a landlord or a local utility)
                         "kw": max(kws) if kws else None, "pts": len(conns), "flags": flags, "yr": _year(md.get("Updated")),
                         "title": title or str(md.get("name") or "").strip(), "uc": "", "prov": 19, "ref": "", "ids": ids})
     st["kept"] = len(out)
