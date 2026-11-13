@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
         run: test -f data/price_cycles.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/price_cycles.json -o data/price_cycles.json || rm -f data/price_cycles.json
 
-      - name: Charging stations (data/ev_*.json; calls Open Charge Map/NOBIL only when the published file is older than 6 days; never fails the run)
+      - name: Charging stations (data/ev_*.json; calls NOBIL only when the published file is older than 6 days; never fails the run)
         continue-on-error: true
         timeout-minutes: 10
         env:
@@ -102,6 +102,16 @@ jobs:
           FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
           ALLOW_SHRINK: ${{ inputs.allow_shrink }}
         run: python src/chargers.py
+
+      - name: Charging stations DK/DE from ChargeFinder (weekly, only when the file is older than 6 days; never fails the run)
+        continue-on-error: true
+        timeout-minutes: 45
+        env:
+          # the app key ChargeFinder's own website uses; their written consent is in docs/PERMISSIONS.md. Without the secret nothing happens.
+          CHARGEFINDER_KEY: ${{ secrets.CHARGEFINDER_KEY }}
+          FORCE_REFRESH: ${{ inputs.force && '1' || '0' }}
+          ALLOW_SHRINK: ${{ inputs.allow_shrink }}
+        run: pip install cryptography==44.0.2 && python src/chargefinder.py
 
       - name: Keep last good ev_*.json if this run produced none
         continue-on-error: true
