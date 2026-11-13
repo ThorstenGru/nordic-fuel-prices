@@ -52,7 +52,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: weekly-video
-          path: weekly_out/*.mp4
+          path: |
+            weekly_out/*.mp4
+            weekly_out/f*.png
           retention-days: 7
           if-no-files-found: ignore
 

@@ -23,11 +23,15 @@ from europe_index import BORDER_PAIRS, NAMES, pil_font as font  # noqa: E402
 
 W, H = 1080, 1920
 SECONDS = 4
+SAFE_X = 90                        # side margin: no text gets closer to the edge than this
+BAND_TOP, BAND_BOT = 340, 1560     # the feed shows the middle 4:5 of the 9:16 video (y 285-1635) and Reels covers the bottom ~350 px with its own buttons
+MIN_PX, MIN_NOTE_PX = 40, 36       # 40 px of 1080 is about 14 px on a 375 px wide phone
 BG, FG, DIM, GREEN, BAR = (14, 26, 41), (255, 255, 255), (150, 165, 185), (74, 222, 128), (38, 70, 104)
 
 
 def scenes(doc: dict) -> list:
-    """List of scenes {title, rows[(name, value, bar 0..1)], note} from the national medians; [] when there is too little data."""
+    """List of scenes from the national medians; [] when there is too little data.
+    Data scenes: {title, rows[(name, value, bar 0..1)], note}. Border scene: {title, border{label, cheap, dear, d}, note}."""
     m = fb_daily.medians(doc)
     out = []
 
@@ -53,31 +57,117 @@ def scenes(doc: dict) -> list:
                     best = (d, label, cheap, dear, m[(a, fuel)][2], m[(b, fuel)][2])
     if best:
         d, label, cheap, dear, ga, gb = best
-        out.append(dict(title="Border run of the week", rows=[(f"{label}: {NAMES[cheap]}", f"€{d:.2f} cheaper", 1.0), (f"than in {NAMES[dear]}", f"≈ €{d * fb_daily.FILL_L:.0f} per {fb_daily.FILL_L} L", 1.0)],
+        out.append(dict(title="Border run of the week", border=dict(label=label, cheap=NAMES[cheap], dear=NAMES[dear], d=d),
                         note="Median station prices" + ("; some figures are estimates or from unofficial sources" if {ga, gb} - {"A", "B"} else "")))
     return out if len(out) == 4 else []
 
 
-def render(scene: dict, path: Path, kind: str = "data", headline: str = "", sub: str = "") -> None:
-    from PIL import Image, ImageDraw
+class Pen:
+    """Draws text and remembers where each piece landed, so a test can prove nothing leaves the safe area."""
+
+    def __init__(self, im):
+        from PIL import ImageDraw
+        self.d, self.log = ImageDraw.Draw(im), []
+
+    def width(self, t, f):
+        return self.d.textlength(t, font=f)
+
+    def text(self, xy, t, f, fill, anchor="la"):
+        self.d.text(xy, t, font=f, fill=fill, anchor=anchor)
+        x0, y0, x1, y1 = self.d.textbbox(xy, t, font=f, anchor=anchor)
+        self.log.append((t, x0, y0, x1, y1, f.size))
+
+
+def _wrap(pen, text, f, max_w):
+    lines, cur = [], ""
+    for word in text.split():
+        t = (cur + " " + word).strip()
+        if pen.width(t, f) <= max_w or not cur:
+            cur = t
+        else:
+            lines.append(cur)
+            cur = word
+    return lines + [cur] if cur else lines
+
+
+def fit(pen, text, max_w, size, min_size=MIN_PX, bold=True, max_lines=1):
+    """Largest font (<= size) in which `text` fits `max_w` in at most `max_lines` lines; wraps on spaces, shrinks 4 px at a time.
+    Measured with the font that really draws, so it holds on any machine. Last resort: cut with an ellipsis, never overflow."""
+    for sz in range(size, min_size - 1, -4):
+        f = font(sz, bold)
+        lines = _wrap(pen, text, f, max_w)
+        if len(lines) <= max_lines and all(pen.width(l, f) <= max_w for l in lines):
+            return f, lines
+    f = font(min_size, bold)
+    out = []
+    for l in _wrap(pen, text, f, max_w)[:max_lines]:
+        while pen.width(l, f) > max_w and len(l) > 1:
+            l = l[:-2].rstrip() + "…"
+        out.append(l)
+    return f, out
+
+
+def _block(pen, x, y, lines, f, fill, gap=1.18):
+    for l in lines:
+        pen.text((x, y), l, f, fill)
+        y += int(f.size * gap)
+    return y
+
+
+def _draw(kind, scene, headline, sub, k):
+    """One try at laying a scene out at size factor k (1.0 = full size). Returns (image, pen)."""
+    from PIL import Image
     im = Image.new("RGB", (W, H), BG)
-    d = ImageDraw.Draw(im)
-    d.text((60, 70), "EuroFuelPrices", font=font(46), fill=GREEN)
-    if kind == "data":
-        d.text((60, 300), scene["title"], font=font(84), fill=FG)
-        y = 560
+    pen = Pen(im)
+    wide = W - 2 * SAFE_X
+    sz = lambda v, lo=MIN_PX: max(int(v * k) // 2 * 2, lo)   # noqa: E731
+
+    def note(y, text):
+        for part in text.split("; "):
+            nf, nl = fit(pen, part[:1].upper() + part[1:], wide, sz(40, MIN_NOTE_PX), MIN_NOTE_PX, bold=False, max_lines=2)
+            y = _block(pen, SAFE_X, y, nl, nf, DIM)
+        return y
+
+    pen.text((SAFE_X, BAND_TOP), "EuroFuelPrices", font(44), GREEN)
+    if kind == "data" and scene.get("rows"):
+        f, lines = fit(pen, scene["title"], wide, sz(84), max_lines=2)
+        y = _block(pen, SAFE_X, BAND_TOP + 90, lines, f, FG) + int(50 * k)
+        card_h, gap, vf = int(140 * k), int(24 * k), font(sz(56))
         for name, val, bar in scene["rows"]:
-            d.rounded_rectangle((60, y, 60 + int(960 * bar), y + 130), 24, fill=BAR)
-            d.text((90, y + 36), name, font=font(48), fill=FG)
-            tw = d.textlength(val, font=font(52))
-            d.text((1020 - 30 - tw, y + 34), val, font=font(52), fill=GREEN)
-            y += 170
-        for k, line in enumerate(scene["note"].split("; ")):   # two short lines, above the Reels bottom overlay
-            d.text((60, H - 400 + k * 46), line[:1].upper() + line[1:], font=font(34, False), fill=DIM)
+            pen.d.rounded_rectangle((SAFE_X, y, W - SAFE_X, y + card_h), 24, fill=BAR)
+            vw = pen.width(val, vf)
+            pen.text((W - SAFE_X - 28, y + card_h * 0.4), val, vf, GREEN, anchor="rm")
+            nf, nl = fit(pen, name, wide - 28 - vw - 28 - 28, sz(52))
+            pen.text((SAFE_X + 28, y + card_h * 0.4), nl[0], nf, FG, anchor="lm")
+            pen.d.rounded_rectangle((SAFE_X + 28, y + card_h - 26, SAFE_X + 28 + int((wide - 56) * bar), y + card_h - 16), 5, fill=GREEN)   # the bar sits under the text, never behind a number
+            y += card_h + gap
+        note(y + 16, scene["note"])
+    elif kind == "data":                                       # border run: a sentence, not a table
+        b = scene["border"]
+        f, lines = fit(pen, scene["title"], wide, sz(84), max_lines=2)
+        y = _block(pen, SAFE_X, BAND_TOP + 90, lines, f, FG) + int(70 * k)
+        for text, size, fill, bold in ((f"{b['label']}: {b['cheap']}", 64, FG, True), (f"€{b['d']:.2f} cheaper", 120, GREEN, True),
+                                       (f"than in {b['dear']}", 64, FG, True), (f"≈ €{b['d'] * fb_daily.FILL_L:.0f} on a {fb_daily.FILL_L} L fill-up", 52, DIM, False)):
+            f, lines = fit(pen, text, wide, sz(size), bold=bold, max_lines=2)
+            y = _block(pen, SAFE_X, y, lines, f, fill) + int(30 * k)
+        note(y + int(30 * k), scene["note"])
     else:
-        d.text((60, 640), headline, font=font(96), fill=FG)
-        d.text((60, 900), sub, font=font(52, False), fill=GREEN if kind == "outro" else DIM)
+        f, lines = fit(pen, headline, wide, sz(100), max_lines=3)
+        y = _block(pen, SAFE_X, 700, lines, f, FG) + 40
+        nf, nl = fit(pen, sub, wide, sz(56), bold=False, max_lines=2)
+        _block(pen, SAFE_X, y, nl, nf, GREEN if kind == "outro" else DIM)
+    return im, pen
+
+
+def render(scene: dict, path: Path, kind: str = "data", headline: str = "", sub: str = "", log=None) -> None:
+    """Draw one frame. If the content does not fit the safe band at full size, everything is scaled down (never below MIN_PX) until it does."""
+    for k in (1.0, 0.92, 0.84, 0.76, 0.7):
+        im, pen = _draw(kind, scene, headline, sub, k)
+        if max((e[4] for e in pen.log), default=0) <= BAND_BOT:
+            break
     im.save(path)
+    if log is not None:
+        log.extend(pen.log)
 
 
 def week_key(today: date) -> str:

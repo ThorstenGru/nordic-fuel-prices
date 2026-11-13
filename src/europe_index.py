@@ -120,9 +120,12 @@ def eur(v: float) -> str:
 
 
 def pil_font(size: int, bold: bool = True):
-    """DejaVu (Linux runner) or Arial (Windows), else Pillow's built-in font. Shared by the share cards and the weekly video."""
+    """The DejaVu copy in tools/fonts (so a picture looks the same on every machine and on the GitHub runner), else the system's
+    DejaVu or Arial, else Pillow's built-in font. Shared by the share cards and the weekly video."""
     from PIL import ImageFont
-    for name in (("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"), "arialbd.ttf" if bold else "arial.ttf"):
+    own = Path(__file__).resolve().parent.parent / "tools" / "fonts"
+    dv = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+    for name in (str(own / dv), dv, "arialbd.ttf" if bold else "arial.ttf"):
         try:
             return ImageFont.truetype(name, size)
         except OSError:
