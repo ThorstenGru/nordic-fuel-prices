@@ -221,8 +221,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--out", default="weekly_out")
+    ap.add_argument("--replace-id", default="", help="Facebook video id to delete AFTER the new video is posted (replaces a faulty one)")
     a = ap.parse_args()
-    res = build(date.today(), Path(a.out), ignore_log=a.dry_run)   # a dry run posts nothing, so "already posted this week" must not stop it
+    if a.replace_id and not a.replace_id.isdigit():
+        print("fb_weekly: --replace-id must be a numeric Facebook video id")
+        return 2
+    res = build(date.today(), Path(a.out), ignore_log=a.dry_run or bool(a.replace_id))   # a dry run posts nothing, so "already posted this week" must not stop it
     if "skip" in res:
         print(f"fb_weekly: skip - {res['skip']}")
         return 0
@@ -235,6 +239,11 @@ def main() -> int:
     vid = fb_graph.post_video(pid, tok, res["text"], str(res["video"]))
     fb_bot.append_log({**res, "post_id": vid})
     print(f"fb_weekly: posted {vid}")
+    if a.replace_id and vid:   # only now, so the Page is never left without its video
+        try:
+            print(f"fb_weekly: old video {a.replace_id} deleted: {fb_graph.delete(a.replace_id, tok)}")
+        except fb_graph.GraphError as e:
+            print(f"fb_weekly: could not delete the old video {a.replace_id}: {e} - delete it by hand in Facebook")
     return 0
 
 

@@ -12,6 +12,10 @@ on:
         description: 'dry run (render only, no posting)'
         type: boolean
         default: true
+      replace_video_id:
+        description: 'Facebook video id to delete after the new one is posted (leave empty normally)'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -45,7 +49,8 @@ jobs:
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
           DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
-        run: python tools/fb_weekly.py $DRY --out weekly_out
+          REPLACE_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.replace_video_id || '' }}
+        run: python tools/fb_weekly.py $DRY ${REPLACE_ID:+--replace-id "$REPLACE_ID"} --out weekly_out
 
       - name: Keep the video of this run
         if: always()
