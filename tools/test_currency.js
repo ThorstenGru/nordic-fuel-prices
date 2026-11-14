@@ -30,11 +30,11 @@ assert(toEur(620, 'HUF', H, 0) < toEur(15.43, 'SEK', H, 0) * 1.2);
 // decimals: pumps price EUR/GBP in 3 decimals natively; converted amounts and other currencies 2
 assert.strictEqual(curDec('EUR', true), 3); assert.strictEqual(curDec('GBP', true), 3); assert.strictEqual(curDec('EUR', false), 2); assert.strictEqual(curDec('SEK', true), 2);
 
-// trip currency: one currency across the route -> it, mixed or unknown rate or EUR switch -> EUR
+// trip currency: one currency for the whole trip: the one most countries use (tie: the start country); unknown rate or EUR switch -> EUR
 { const m2 = src.match(/\/\/ CURTRIP-PURE-BEGIN[^\n]*\n([\s\S]*?)\/\/ CURTRIP-PURE-END/); assert(m2, 'curtrip block not found');
   const curForTrip = new Function(m2[1] + '; return curForTrip;')();
   const cur = { SE: 'SEK', DK: 'DKK', DE: 'EUR', PL: 'PLN' }, f = (ccs, mode = 'local', ok = () => true) => curForTrip(ccs, c => cur[c], mode, ok);
   assert.strictEqual(f(['SE']), 'SEK'); assert.strictEqual(f(['SE', 'SE']), 'SEK'); assert.strictEqual(f(['DE']), 'EUR');
-  assert.strictEqual(f(['SE', 'DK']), 'EUR'); assert.strictEqual(f(['SE', 'DE']), 'EUR'); assert.strictEqual(f([]), 'EUR');
+  assert.strictEqual(f(['SE', 'DK']), 'SEK'); assert.strictEqual(f(['DK', 'SE']), 'DKK'); assert.strictEqual(f(['SE', 'DE']), 'SEK'); assert.strictEqual(f(['DE', 'DK', 'DK']), 'DKK'); assert.strictEqual(f([]), 'EUR');
   assert.strictEqual(f(['SE'], 'eur'), 'EUR'); assert.strictEqual(f(['PL'], 'local', () => false), 'EUR'); }
 console.log('test_currency: ok');

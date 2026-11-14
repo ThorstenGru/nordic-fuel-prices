@@ -7430,22 +7430,23 @@ const rtX = ['cost', 'nav', 'costd', 'navd', 'tank', 'dep', 'alts', 'strip', 'ac
 const rtLet = i => 'ABC'[i] || String(i + 1);
 const rtL0 = v => Math.max(0, Math.round(v));
 const rtHm = m => { const h = Math.floor(Math.round(m) / 60), r = Math.round(m) % 60; return (h ? h + ' h ' : '') + r + ' min'; };
-// Trip currency: one currency for every country the route drives through -> that currency, otherwise EUR (and EUR when the Local|EUR switch says so).
+// Trip currency: ONE currency for the whole trip, never a mix. The currency of most of the countries on the route (a tie goes to the start country); EUR when the Local|EUR switch says so or the rate is unknown.
 // Amounts inside the planner are EUR; they are shown back in the trip currency at the same rate that converted the local prices.
 // CURTRIP-PURE-BEGIN
 function curForTrip(ccs, curOf, mode, hasRate) {
   if (mode === 'eur') return 'EUR';
-  const set = new Set((ccs || []).map(cc => curOf(cc) || 'EUR'));
-  if (set.size !== 1) return 'EUR';
-  const c = [...set][0];
-  return c === 'EUR' || hasRate(c) ? c : 'EUR';
+  const n = {}, order = [];
+  for (const cc of ccs || []) { const c = curOf(cc) || 'EUR'; if (!(c in n)) { n[c] = 0; order.push(c); } n[c]++; }
+  let c = order[0];
+  for (const x of order) if (n[x] > n[c]) c = x;
+  return !c || c === 'EUR' || hasRate(c) ? c || 'EUR' : 'EUR';
 }
 // CURTRIP-PURE-END
 let rtTripCur = 'EUR', rtTripRate = 1;   // rate = trip-currency units per EUR
 function rtSetCur(R) {
   const ccs = (R && R.cc) || [], cur = curForTrip(ccs, cc => metaOf[cc]?.currency || CUR_DEF[cc], curMode, c => rateOf(c) > 0);
   rtTripCur = cur;
-  const r0 = cur !== 'EUR' ? fxRank(ccs[0]) : 1;
+  const r0 = cur !== 'EUR' ? fxRank(ccs.find(cc => (metaOf[cc]?.currency || CUR_DEF[cc]) === cur)) : 1;
   rtTripRate = cur === 'EUR' ? 1 : (r0 > 0 ? 1 / r0 : rateOf(cur) || 1);
 }
 const rtLocal = v => v * rtTripRate;
@@ -7476,7 +7477,7 @@ const rtEurRng = x => rtRng(x.lo, x.hi);
 const rtDay = d => String(d).slice(0, 10);
 function rtFareLines(c) {                 // one line per matched entry, then the generic "unknown" line; every fare says "check operator"
   const f = c.fares, eur = v => rtM(v), L = [];
-  f.priced.forEach(x => L.push(t('rtFareItem', { n: esc(x.e.name), p: x.amount + ' ' + x.cur, e: x.cur === 'EUR' ? '' : ' (' + t('rtAbout') + ' ' + eur(x.eur) + ')', b: esc(x.e.trip_price.basis), d: rtDay(x.e.seen_on) })));
+  f.priced.forEach(x => L.push(t('rtFareItem', { n: esc(x.e.name), p: x.cur === rtTripCur || !(x.eur > 0) ? x.amount + ' ' + curLbl(x.cur) : rtM(x.eur), e: '', b: esc(x.e.trip_price.basis), d: rtDay(x.e.seen_on) })));
   f.unknown.forEach(x => L.push(x.old ? t('rtFareOld', { n: esc(x.e.name), d: rtDay(x.e.seen_on) }) : t('rtFareUnk', { n: esc(x.e.name) })));
   if (f.unmatched) L.push(t('rtFareUnkGen'));
   if (f.noFlags) L.push(t('rtFareOsrm'));
