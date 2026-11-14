@@ -72,16 +72,23 @@ async function facility(req, ctx) {
   const hit = await caches.default.match(key);
   if (hit) return new Response(hit.body, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'HIT' } });
   if (await overLimit(req)) return json({ error: 'rate' }, 429, { 'retry-after': '60' });
-  for (const m of OVERPASS) {
-    try {
-      const r = await fetch(m, { method: 'POST', body: 'data=' + encodeURIComponent(f.q), headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'eurofuelprices.com facilities proxy' }, signal: AbortSignal.timeout(7000) });
-      if (!r.ok) continue;
-      const text = await r.text();
-      JSON.parse(text);
-      ctx.waitUntil(caches.default.put(key, new Response(text, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + FAC_TTL } })));
-      return new Response(text, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'MISS' } });
-    } catch (_) {}
-  }
+  // The mirrors are often at capacity. The search keeps going after the browser was answered (waitUntil) and fills the cache, so the browser's retry button finds it.
+  const work = (async () => {
+    for (const m of OVERPASS) {
+      try {
+        const r = await fetch(m, { method: 'POST', body: 'data=' + encodeURIComponent(f.q), headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'eurofuelprices.com facilities proxy' }, signal: AbortSignal.timeout(7000) });
+        if (!r.ok) continue;
+        const text = await r.text();
+        JSON.parse(text);
+        await caches.default.put(key, new Response(text, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + FAC_TTL } }));
+        return text;
+      } catch (_) {}
+    }
+    return null;
+  })();
+  ctx.waitUntil(work);
+  const text = await Promise.race([work, new Promise(res => setTimeout(() => res(null), 8000))]);
+  if (text) return new Response(text, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'MISS' } });
   return json({ error: 'upstream' }, 502);   // never cached; the browser then tries the mirrors itself
 }
 
