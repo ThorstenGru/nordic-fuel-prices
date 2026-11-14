@@ -56,11 +56,41 @@ export async function overLimit(req, now = Date.now()) {
   return n > RL_MAX;
 }
 
+// Nearby facilities (/api/fac?la=&lo=): the browser's direct Overpass calls often time out, so this Worker asks the public mirrors in turn and caches the answer a week
+// per ~100 m cell. Coordinates are rounded and never logged; the query is fixed here (the browser cannot send its own).
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const FAC_TTL = 7 * 86400;
+export function facQuery(la, lo) {   // Pure: the fixed Overpass query for rounded numbers, or null
+  if (!num(la, EUROPE.la) || !num(lo, EUROPE.lo)) return null;
+  la = Math.round(la * 1000) / 1000; lo = Math.round(lo * 1000) / 1000;
+  return { la, lo, q: `[out:json][timeout:8];(nwr(around:200,${la},${lo})[amenity~"^(cafe|restaurant|fast_food|toilets)$"];nwr(around:200,${la},${lo})[shop~"^(convenience|supermarket|kiosk)$"];);out center tags 60;` };
+}
+async function facility(req, ctx) {
+  const u = new URL(req.url), f = facQuery(parseFloat(u.searchParams.get('la')), parseFloat(u.searchParams.get('lo')));
+  if (!f) return json({ error: 'request' }, 400);
+  const key = new Request(`https://eurofuelprices.com/api/fac/c?la=${f.la}&lo=${f.lo}`);
+  const hit = await caches.default.match(key);
+  if (hit) return new Response(hit.body, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'HIT' } });
+  if (await overLimit(req)) return json({ error: 'rate' }, 429, { 'retry-after': '60' });
+  for (const m of OVERPASS) {
+    try {
+      const r = await fetch(m, { method: 'POST', body: 'data=' + encodeURIComponent(f.q), headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'eurofuelprices.com facilities proxy' }, signal: AbortSignal.timeout(7000) });
+      if (!r.ok) continue;
+      const text = await r.text();
+      JSON.parse(text);
+      ctx.waitUntil(caches.default.put(key, new Response(text, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + FAC_TTL } })));
+      return new Response(text, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'MISS' } });
+    } catch (_) {}
+  }
+  return json({ error: 'upstream' }, 502);   // never cached; the browser then tries the mirrors itself
+}
+
 export default {
   async fetch(req, env, ctx) {
     if (req.method !== 'GET') return json({ error: 'method' }, 405);
     const from = req.headers.get('Origin') || req.headers.get('Referer') || '';
     if (req.headers.get('Sec-Fetch-Site') !== 'same-origin' && !SITE.test(from)) return json({ error: 'origin' }, 403);   // not a browser on our own pages
+    if (new URL(req.url).pathname.startsWith('/api/fac')) return facility(req, ctx);
     const q = normalise(new URL(req.url).searchParams.get('json'));
     if (!q) return json({ error: 'request' }, 400);
 

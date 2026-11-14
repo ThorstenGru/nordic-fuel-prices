@@ -1,6 +1,6 @@
 // Run: node tools/test_route_worker.mjs   (needs Node 18+)
 import assert from 'node:assert/strict';
-import w, { normalise } from '../worker/route/index.mjs';
+import w, { normalise, facQuery } from '../worker/route/index.mjs';
 
 const ok = { locations: [{ lat: 55.6049, lon: 13.0038 }, { lat: 53.5511, lon: 9.9937 }], alternates: 2 };
 const n = normalise(JSON.stringify(ok));
@@ -63,4 +63,18 @@ assert.deepEqual(seen, ['valhalla']);
 seen.length = 0; r = await w.fetch(new Request(url, { headers: sameSite }), { ORS_KEY: 'k' }, ctx);
 assert.equal(r.status, 200); assert.equal(r.headers.get('x-src'), 'ors'); assert.deepEqual(seen, ['valhalla', 'ors']);
 assert.equal(JSON.parse(await r.text()).trip.legs[0].summary.has_ferry, true);
+// facilities proxy: fixed query, rounded cell, first working mirror, cached a week, bad input refused
+assert.equal(facQuery(40.7, -74), null); assert.equal(facQuery(NaN, 10), null);
+assert.match(facQuery(55.60491, 13.00381).q, /around:200,55\.605,13\.004/);
+store.clear(); pending.length = 0; seen.length = 0;
+globalThis.fetch = async (u) => { seen.push(String(u).split('/')[2]); return String(u).includes('overpass-api.de') ? new Response('x', { status: 504 }) : new Response(JSON.stringify({ elements: [{ lat: 1, lon: 2, tags: { amenity: 'cafe' } }] })); };
+const furl = 'https://eurofuelprices.com/api/fac?la=55.6049&lo=13.0038';
+r = await w.fetch(new Request(furl, { headers: sameSite }), {}, ctx);
+assert.equal(r.status, 200); assert.equal(r.headers.get('x-cache'), 'MISS'); assert.deepEqual(seen, ['overpass-api.de', 'overpass.private.coffee']);   // first mirror failed, second answered
+assert.equal(JSON.parse(await r.text()).elements.length, 1);
+await Promise.all(pending);
+seen.length = 0; r = await w.fetch(new Request(furl, { headers: sameSite }), {}, ctx);
+assert.equal(r.headers.get('x-cache'), 'HIT'); assert.deepEqual(seen, []);
+assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/fac?la=1&lo=1', { headers: sameSite }), {}, ctx)).status, 400);
+assert.equal((await w.fetch(new Request(furl), {}, ctx)).status, 403);                         // not from our pages
 console.log('test_route_worker: all passed');

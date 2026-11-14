@@ -4,4 +4,7 @@ compatibility_date = "2026-11-01"
 workers_dev = false
 
 # Same-origin route on the proxied zone: no extra subdomain, no CORS, no CSP change.
-routes = [{ pattern = "eurofuelprices.com/api/route*", zone_name = "eurofuelprices.com" }]
+routes = [
+  { pattern = "eurofuelprices.com/api/route*", zone_name = "eurofuelprices.com" },
+  { pattern = "eurofuelprices.com/api/fac*", zone_name = "eurofuelprices.com" },
+]

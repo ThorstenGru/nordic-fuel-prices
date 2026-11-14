@@ -4814,16 +4814,16 @@ async function loadFac(s, body) {
     try {
       const q = `[out:json][timeout:6];(nwr(around:200,${s.lat},${s.lon})[amenity~"^(cafe|restaurant|fast_food|toilets)$"];nwr(around:200,${s.lat},${s.lon})[shop~"^(convenience|supermarket|kiosk)$"];);out center tags 60;`;
       let r = null;
-      // hedged request: the first mirror starts at once, the next ones join after 1.5 s and 3 s if nothing has answered; the first good answer wins, 9 s in total
-      const acs = OVERPASS.map(() => new AbortController());
+      // hedged request: our proxy starts at once, the public mirrors join after 2.5 s, 4 s and 5.5 s if nothing has answered; the first good answer wins, 9 s in total
+      const acs = [null, ...OVERPASS].map(() => new AbortController());   // 0 = our own /api/fac proxy (cached, reliable), then the public mirrors
       const hit = await new Promise(resolve => {
-        let left = OVERPASS.length; const timers = [];
+        let left = OVERPASS.length + 1; const timers = [];
         const fin = v => { timers.forEach(clearTimeout); acs.forEach(a => { try { a.abort(); } catch (_) {} }); resolve(v); };
         const one = async i => {
-          try { const x = await fetch(OVERPASS[i], { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:acs[i].signal }); if (x.ok) return fin(await x.json()); } catch (_) {}
+          try { const x = await (i === 0 ? fetch(`/api/fac?la=${s.lat}&lo=${s.lon}`, { signal:acs[0].signal }) : fetch(OVERPASS[i - 1], { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:acs[i].signal })); if (x.ok) return fin(await x.json()); } catch (_) {}
           if (--left === 0) fin(null);
         };
-        OVERPASS.forEach((_, i) => timers.push(setTimeout(() => one(i), i * 1500)));
+        acs.forEach((_, i) => timers.push(setTimeout(() => one(i), i ? 2500 + (i - 1) * 1500 : 0)));
         timers.push(setTimeout(() => fin(null), 9000));
       });
       r = hit ? { ok: true, json: async () => hit } : null;
