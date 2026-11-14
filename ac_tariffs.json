@@ -1,0 +1,593 @@
+{
+ "schema": 1,
+ "updated": "2026-11-07",
+ "note": "Hand-kept. AC (Type 2, up to 22 kW) list prices per kWh read on opened operator pages. Not verified data: always say 'check operator'. ac is null when no figure was read on an opened page. start_fee/idle_fee null means not stated on the page read. Prices include VAT. adhoc_kwh is the no-subscription price (a 'from' price where the page says so); member_kwh needs registration, an app or a subscription. match.ocm_names are exact Operator titles from the Open Charge Map reference data (checked 2026-11-07); nobil_names are unverified hints (no NOBIL call made).",
+ "entries": [
+  {
+   "id": "mer-se",
+   "name": "Mer Sweden (public network)",
+   "operator": "Mer",
+   "countries": [
+    "SE"
+   ],
+   "match": {
+    "ocm_names": [
+     "MER"
+    ],
+    "nobil_names": [
+     "Mer"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "SEK",
+    "adhoc_kwh": 6.0,
+    "adhoc_kwh_max": null,
+    "member_kwh": 5.6,
+    "member_label": "Mer Flexible list price (subscription)",
+    "subscription_needed_for_member": true,
+    "app_required_adhoc": null,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "Mer Drop-in (ad hoc) AC, incl. VAT"
+   },
+   "notes": "Page says only 'AC', not the 22 kW band. App requirement for drop-in not stated. Subscriptions with included kWh exist (Curious 299 kr/month incl. 60 kWh and up); a Swedish personal number is needed for tag subscriptions. Start fee and idle fee are null because none was stated on the opened page, not because none exists. No validity date on page (footer 2024).",
+   "source": "https://se.mer.eco/public-ev-charging/prices/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "mer-no",
+   "name": "Mer Norway (public network)",
+   "operator": "Mer",
+   "countries": [
+    "NO"
+   ],
+   "match": {
+    "ocm_names": [
+     "MER"
+    ],
+    "nobil_names": [
+     "Mer"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "NOK",
+    "adhoc_kwh": 4.99,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": false,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "Mer 'normallading' under 50 kW, same price for drop-in and registered, pay with Vipps or card; page does not say 'AC'"
+   },
+   "notes": "Fast charging 6.49 NOK/kWh is DC and not recorded. Drop-in reserves 300 NOK on the card at start (released after). Business subscription 49 NOK/month gives 10% off; Coop members 5-10% off. Start fee and idle fee are null because none was stated on the opened page, not because none exists. No validity date (footer 2026).",
+   "source": "https://no.mer.eco/ladenettverk/priser/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "eon-drive-se",
+   "name": "E.ON Drive Public Sweden",
+   "operator": "E.ON Drive",
+   "countries": [
+    "SE"
+   ],
+   "match": {
+    "ocm_names": [
+     "E.ON Drive",
+     "Powered by E.ON Drive & Clever"
+    ],
+    "nobil_names": [
+     "E.ON"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "SEK",
+    "adhoc_kwh": 4.95,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": "Member (0 kr/month, requires the E.ON Drive Public app)",
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": false,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "ad hoc 'from' price, AC under 45 kW, no subscription, pay by contactless/web/RFID"
+   },
+   "notes": "Second page https://www.edri.com/en-se/app lists Member 4.45, Plus (59 kr/month, 20 kWh incl., 4.39) and Premium (129 kr/month, 50 kWh incl., 4.29) as campaign prices valid to 2026-12-31; Plus/Premium fees rise to 109/249 kr on 2027-01-01. Prices are 'from', may differ per site. Start fee and idle fee are null because none was stated on the opened page, not because none exists. The tariffs page gives no validity date. Member campaign prices (4.45/4.39/4.29) ran to 2026-12-31 and are not shown.",
+   "source": "https://www.edri.com/en-se/tariffs",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "eon-drive-dk",
+   "name": "E.ON Drive Public Denmark",
+   "operator": "E.ON Drive",
+   "countries": [
+    "DK"
+   ],
+   "match": {
+    "ocm_names": [
+     "E.ON (DK)",
+     "E.ON Drive",
+     "Powered by E.ON Drive & Clever"
+    ],
+    "nobil_names": [
+     "E.ON"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "DKK",
+    "adhoc_kwh": 3.25,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": false,
+    "start_fee": null,
+    "idle_fee": {
+     "amount": 2,
+     "currency": "DKK",
+     "unit": "unspecified",
+     "after_min": 240,
+     "label": "blocking fee; page does not say per minute or per session"
+    },
+    "basis": "ad hoc 'from' price, AC under 45 kW, no subscription needed"
+   },
+   "notes": "Subscription prices not shown on the page. No start fee stated. No validity date (footer 2026).",
+   "source": "https://www.edri.com/en-dk/tariffs",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "eon-drive-de",
+   "name": "E.ON Drive Public Germany",
+   "operator": "E.ON Drive",
+   "countries": [
+    "DE"
+   ],
+   "match": {
+    "ocm_names": [
+     "E.ON (DE)",
+     "E.ON Drive"
+    ],
+    "nobil_names": [
+     "E.ON"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "EUR",
+    "adhoc_kwh": 0.58,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": false,
+    "start_fee": null,
+    "idle_fee": {
+     "amount": 0.1,
+     "currency": "EUR",
+     "unit": "unspecified",
+     "after_min": 240,
+     "label": "Blockiergebuehr; page does not say per minute or per session; none under the night tariff"
+    },
+    "basis": "ad hoc 'from' price, 'Schnellladen' AC under 45 kW, QR code, no app, no account"
+   },
+   "notes": "Subscription prices not shown. No start fee stated. No validity date (footer 2026).",
+   "source": "https://www.edri.com/de-de/tariffs",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "recharge-se",
+   "name": "Recharge Sweden",
+   "operator": "Recharge",
+   "countries": [
+    "SE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Recharge (Formerly Fortum Charge & Drive)"
+    ],
+    "nobil_names": [
+     "Recharge"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "SEK",
+    "adhoc_kwh": 5.79,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": null,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "'standard price' for normal charger up to 22 kW; page does not label it ad hoc; app gives 'better prices' but no AC member price is listed"
+   },
+   "notes": "Recharge Move (79 kr/month) gives 4.49 SEK/kWh for fast chargers only, not AC. Card, tag and QR payment exist. Start fee and idle fee are null because none was stated on the opened page, not because none exists. No validity date on page. Another Recharge page (rechargeinfra.com/prices/) lists the same SE figure.",
+   "source": "https://rechargeinfra.com/se/priser/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "recharge-no",
+   "name": "Recharge Norway",
+   "operator": "Recharge",
+   "countries": [
+    "NO"
+   ],
+   "match": {
+    "ocm_names": [
+     "Recharge (Formerly Fortum Charge & Drive)"
+    ],
+    "nobil_names": [
+     "Recharge"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "NOK",
+    "adhoc_kwh": 5.99,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": null,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "listed price for slow charger max 22 kW; page says prices vary with how the service is activated and does not say which this is"
+   },
+   "notes": "Start fee and idle fee are null because none was stated on the opened page, not because none exists. Card terminal or QR payment without registration is possible. No validity date.",
+   "source": "https://rechargeinfra.com/prices/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "recharge-dk",
+   "name": "Recharge Denmark",
+   "operator": "Recharge",
+   "countries": [
+    "DK"
+   ],
+   "match": {
+    "ocm_names": [
+     "Recharge (Formerly Fortum Charge & Drive)"
+    ],
+    "nobil_names": [
+     "Recharge"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "DKK",
+    "adhoc_kwh": 3.79,
+    "adhoc_kwh_max": null,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": null,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "listed price for slow charger max 22 kW; activation mode not stated"
+   },
+   "notes": "Start fee and idle fee are null because none was stated on the opened page, not because none exists. No validity date. Germany is not listed on that page.",
+   "source": "https://rechargeinfra.com/prices/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "allego-de",
+   "name": "Allego Germany",
+   "operator": "Allego",
+   "countries": [
+    "DE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Allego BV"
+    ],
+    "nobil_names": [
+     "Allego"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "EUR",
+    "adhoc_kwh": 0.48,
+    "adhoc_kwh_max": 0.6,
+    "member_kwh": null,
+    "member_label": null,
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": false,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "pay-as-you-go, 'Regular up to 22 kW', range by location, incl. VAT"
+   },
+   "notes": "Euro column is unambiguous. Overstay fees exist but the amount is on a separate page not read. No start fee stated. No validity date.",
+   "source": "https://www.allego.eu/pricing/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "allego-nordic",
+   "name": "Allego Sweden, Denmark, Norway",
+   "operator": "Allego",
+   "countries": [
+    "SE",
+    "DK",
+    "NO"
+   ],
+   "match": {
+    "ocm_names": [
+     "Allego BV"
+    ],
+    "nobil_names": [
+     "Allego"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "The fetch showed three 'kr' figures for SE, DK and NO, assigned by order only, so no price is recorded. Re-read the page by hand and add per-country entries.",
+   "source": "https://www.allego.eu/pricing/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened (figures not recorded: SE/DK/NO columns all show 'kr' and could be matched to countries only by column order)",
+   "check_operator": true
+  },
+  {
+   "id": "aral-pulse-de",
+   "name": "Aral pulse Germany",
+   "operator": "Aral pulse",
+   "countries": [
+    "DE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Aral pulse"
+    ],
+    "nobil_names": [
+     "Aral pulse"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": {
+    "currency": "EUR",
+    "adhoc_kwh": 0.59,
+    "adhoc_kwh_max": null,
+    "member_kwh": 0.47,
+    "member_label": "Klassik-Tarif (no monthly fee, app or charge card with registration)",
+    "subscription_needed_for_member": false,
+    "app_required_adhoc": false,
+    "start_fee": null,
+    "idle_fee": null,
+    "basis": "Ladesaeulentarif, AC up to 22 kW, no registration, card, QR code or app"
+   },
+   "notes": "Extra-Tarif 0.41 EUR/kWh with 2.99 EUR/month. Page says no blocking fee at Aral pulse chargers when paying by app, card or QR; the 0.15 EUR/min after 360 min AC rule applies only at third-party chargers. No start fee stated. No validity date; prices as shown in the app apply.",
+   "source": "https://www.aral.de/de/global/retail/pulse/tarife-bezahlmethoden.html",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "enbw-de",
+   "name": "EnBW mobility+ Germany",
+   "operator": "EnBW",
+   "countries": [
+    "DE"
+   ],
+   "match": {
+    "ocm_names": [
+     "EnBW (D)"
+    ],
+    "nobil_names": [
+     "EnBW"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Own-network S/M/L prices are in image tiles stamped 'Stand: 01.12.2025' and were not read. Roaming at other operators 56 to 89 ct/kWh (another FAQ entry says 59 ct). Blocking fee read on https://www.enbw.com/service/faq/e-mobilitaet/blockiergebuehr: 10 ct per minute after 240 min, cap 12 EUR per session. Fill the price by hand from the tiles.",
+   "source": "https://www.enbw.com/elektromobilitaet/produkte/ladetarife",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened (tariff tiles are images, not read)",
+   "check_operator": true
+  },
+  {
+   "id": "circlek-se",
+   "name": "Circle K Sweden",
+   "operator": "Circle K",
+   "countries": [
+    "SE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Circle K"
+    ],
+    "nobil_names": [
+     "Circle K"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Own network listed is ultrafast DC only (6.69 SEK/kWh). Circle K app price at Mer chargers (roaming), normal AC, is 6.59 SEK/kWh on the page, but that is Circle K's roaming price, not the AC price at Circle K sites, so it is not recorded as a tariff. No start fee, idle fee or date on page.",
+   "source": "https://www.circlek.se/laddning/priser",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened (own network listed as DC only)",
+   "check_operator": true
+  },
+  {
+   "id": "clever-dk",
+   "name": "Clever Denmark",
+   "operator": "Clever",
+   "countries": [
+    "DK"
+   ],
+   "match": {
+    "ocm_names": [
+     "CLEVER"
+    ],
+    "nobil_names": [
+     "Clever"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Public kWh prices are dynamic and shown only in the Clever app; no AC figure on the page. Clever merges with Andel Energi on 2026-11-30 (page note), names may change.",
+   "source": "https://clever.dk/ladeloesninger/clever-go/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "vattenfall-incharge-se",
+   "name": "Vattenfall InCharge Sweden",
+   "operator": "Vattenfall InCharge",
+   "countries": [
+    "SE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Vattenfall InCharge",
+     "Incharge (SE)"
+    ],
+    "nobil_names": [
+     "Vattenfall"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "No tariff published: price per station and connector in the InCharge app, set per owner. Only a rough 4.50 kr/kWh comparison figure is given, not a tariff. Page mentions no monthly fee.",
+   "source": "https://incharge.vattenfall.se/kunskapshubb/artiklar/priserna-pa-vara-laddstationer",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "eviny-no",
+   "name": "Eviny (Bilkraft) Norway",
+   "operator": "Eviny",
+   "countries": [
+    "NO"
+   ],
+   "match": {
+    "ocm_names": [
+     "Eviny"
+    ],
+    "nobil_names": [
+     "Eviny"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Page lists no prices; shown in the Bilkraft app and the payment terminal. A news item dated 2022-09-06 (https://www.eviny.no/nyheter/innforer-nye-priser-for-hurtiglading) gave zone prices (normal charging 5.99 south, 3.99 mid/north NOK/kWh) but it is four years old and not recorded. Eviny points may be listed under another operator name in OCM; not checked.",
+   "source": "https://charging.eviny.no/",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  },
+  {
+   "id": "okq8-se",
+   "name": "OKQ8 Sweden",
+   "operator": "OKQ8",
+   "countries": [
+    "SE"
+   ],
+   "match": {
+    "ocm_names": [
+     "OKQ8 (SE)"
+    ],
+    "nobil_names": [
+     "OKQ8"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Price not read. Re-read in a browser. Customer service text says registered and logged-out users see different prices in the app.",
+   "source": "https://www.okq8.se/elbilsladdning/kostnad-ladda-elbil/",
+   "seen_on": "2026-11-07",
+   "confidence": "page opened but returned only its title (no body readable)",
+   "check_operator": true
+  },
+  {
+   "id": "shell-recharge-de",
+   "name": "Shell Recharge Germany",
+   "operator": "Shell Recharge",
+   "countries": [
+    "DE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Shell Recharge Solutions (DE)"
+    ],
+    "nobil_names": [],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Price not read. Search snippets mention 0.59 EUR/kWh and an older 0.52 AC basic tariff, but no opened primary page confirmed them.",
+   "source": "https://www.shell.de/laden/ladetarife-fuer-ihr-elektroauto.html",
+   "seen_on": "2026-11-07",
+   "confidence": "page opened but returned only its title (no body readable)",
+   "check_operator": true
+  },
+  {
+   "id": "monta",
+   "name": "Monta (platform)",
+   "operator": "Monta",
+   "countries": [
+    "SE",
+    "DK",
+    "NO",
+    "DE"
+   ],
+   "match": {
+    "ocm_names": [
+     "Monta"
+    ],
+    "nobil_names": [
+     "Monta"
+    ],
+    "ocm_verified": true,
+    "nobil_verified": false
+   },
+   "ac": null,
+   "notes": "Monta is a platform: each charge point host sets the price, so there is no operator tariff. Show 'price set by the site owner'.",
+   "source": "https://monta.com/en/pricing",
+   "seen_on": "2026-11-07",
+   "confidence": "operator page opened",
+   "check_operator": true
+  }
+ ]
+}

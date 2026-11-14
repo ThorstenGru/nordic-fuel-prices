@@ -1,0 +1,69 @@
+country,name,fuel,median_eur_per_litre,stations,source_grade
+AD,Andorra,p95,1.423,53,C
+AD,Andorra,diesel,1.643,53,C
+AT,Austria,p95,1.597,637,A
+AT,Austria,diesel,2.018,654,A
+BA,Bosnia and Herzegovina,p95,1.64,107,C
+BA,Bosnia and Herzegovina,diesel,1.902,107,C
+BE,Belgium,p95,1.842,1937,C
+BE,Belgium,diesel,2.332,2988,C
+BG,Bulgaria,p95,1.61,565,C
+BG,Bulgaria,diesel,1.89,685,C
+CH,Switzerland,p95,2.141,2768,C
+CH,Switzerland,diesel,2.509,2725,C
+CY,Cyprus,p95,1.719,313,C
+CY,Cyprus,diesel,1.999,312,C
+CZ,Czechia,p95,1.707,1350,D
+CZ,Czechia,diesel,1.851,1532,D
+DE,Germany,p95,1.979,13923,C
+DE,Germany,diesel,2.219,14839,C
+DK,Denmark,p95,2.126,1691,C
+DK,Denmark,diesel,2.393,2163,C
+EE,Estonia,p95,1.834,208,C
+EE,Estonia,diesel,2.129,330,C
+ES,Spain,p95,1.639,10936,A
+ES,Spain,diesel,1.859,11274,A
+FI,Finland,p95,2.151,342,C
+FI,Finland,diesel,2.376,557,C
+FR,France,p95,1.99,8962,A
+FR,France,diesel,2.149,9374,A
+GB,United Kingdom,p95,2.192,7156,B
+GB,United Kingdom,diesel,2.361,8477,B
+GR,Greece,p95,2.069,536,C
+GR,Greece,diesel,2.058,544,C
+HR,Croatia,p95,1.64,856,C
+HR,Croatia,diesel,1.72,856,C
+HU,Hungary,p95,1.707,764,C
+HU,Hungary,diesel,1.916,1184,C
+IE,Ireland,p95,1.929,128,C
+IE,Ireland,diesel,2.247,797,C
+IS,Iceland,p95,2.059,245,D
+IS,Iceland,diesel,2.469,245,D
+IT,Italy,p95,1.979,22072,B
+IT,Italy,diesel,2.2,22073,B
+LT,Lithuania,p95,1.79,422,C
+LT,Lithuania,diesel,2.142,481,C
+LU,Luxembourg,p95,1.595,189,C
+LU,Luxembourg,diesel,1.987,225,C
+LV,Latvia,p95,1.737,243,C
+LV,Latvia,diesel,1.963,298,C
+MK,North Macedonia,p95,1.397,148,C
+MK,North Macedonia,diesel,1.535,162,C
+MT,Malta,p95,1.34,69,C
+MT,Malta,diesel,1.21,66,C
+NL,Netherlands,p95,2.099,3807,C
+NL,Netherlands,diesel,2.259,3814,C
+NO,Norway,p95,2.252,446,C
+NO,Norway,diesel,2.521,1154,C
+PL,Poland,p95,1.373,4864,C
+PL,Poland,diesel,1.702,5281,C
+PT,Portugal,p95,1.969,3101,A
+PT,Portugal,diesel,2.206,2940,A
+RS,Serbia,p95,1.633,489,C
+RS,Serbia,diesel,1.897,495,C
+SE,Sweden,p95,1.458,482,D
+SE,Sweden,diesel,1.996,2011,D
+SI,Slovenia,p95,1.506,520,C
+SI,Slovenia,diesel,1.848,542,C
+SK,Slovakia,p95,1.689,562,C
+SK,Slovakia,diesel,1.95,709,C

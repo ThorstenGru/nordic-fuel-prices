@@ -1,0 +1,55 @@
+/* Shared Nordic Paper theme for static pages (about, admin, SEO town pages). Tokens mirror web/index.html. */
+@font-face { font-family:'Bricolage Grotesque'; font-style:normal; font-weight:200 800; font-display:swap;
+  src:url(fonts/bricolage-grotesque-latin-wght-normal.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family:'Bricolage Grotesque'; font-style:normal; font-weight:200 800; font-display:swap;
+  src:url(fonts/bricolage-grotesque-latin-ext-wght-normal.woff2) format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family:'Schibsted Grotesk'; font-style:normal; font-weight:400 900; font-display:swap;
+  src:url(fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family:'Schibsted Grotesk'; font-style:normal; font-weight:400 900; font-display:swap;
+  src:url(fonts/schibsted-grotesk-latin-ext-wght-normal.woff2) format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+
+:root {
+  --bg:#E9EEF3; --surf:#F8FAFC; --surf2:#EDF2F7; --line:#CBD5E1; --page:#DDE4EC;
+  --ink:#0F2037; --sub:#52627A; --mute:#56667E;
+  --scrim:rgba(233,238,243,.94); --glass:rgba(248,250,252,.94); --shade:rgba(15,32,55,.45);
+  /* the one accent: --acc for strokes/fills that carry no text, --acc-t for green text, --acc-btn + --on-acc for filled buttons */
+  --acc:#0B8F6E; --acc-t:#087657; --acc-btn:#087A5D; --on-acc:#FFFFFF; --acc-soft:rgba(11,143,110,.10);
+  /* price bands: fill (chips, legend, cluster discs) and the stronger underline / dot colour */
+  --b-g:#9BE3C4; --b-y:#F3E39A; --b-o:#F5B98D; --b-r:#EE8C7D;
+  --bu-g:#1FAF86; --bu-y:#E0BC2E; --bu-o:#E78D4A; --bu-r:#D9574A;
+  --on-b:#0F2037;
+  /* status */
+  --ok-t:#0B6B4C; --bad-t:#B3261E; --warn-t:#8A4B08; --warn-bg:#FFF6E5; --warn-bd:#E8C27A;
+  --banner-bg:#FDECEA; --banner-tx:#8F1D17; --banner-bd:#F3B8B2;
+  --tag-bg:#F8FAFC; --tag-ink:#0F2037; --inv-bg:#0F2037; --inv-fg:#F8FAFC;
+  --nav-bg:#0F2037; --nav-fg:#A9BBD3; --nav-on:#FFFFFF;
+  --handle:#B6C3D4; --map-bg:#E3E9F0; --rng:rgba(15,32,55,.16); --shadow:0 2px 10px rgba(15,32,55,.18);
+  --f-body:'Schibsted Grotesk',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --f-disp:'Bricolage Grotesque','Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --purple:#6E49B8;
+  /* legacy names used by the static pages */
+  --text:var(--ink); --text2:var(--sub); --text3:var(--mute);
+  --border:var(--line); --b:var(--line); --t2:var(--sub); --t3:var(--mute);
+  --blue:var(--acc-t); --green:var(--ok-t); --amber:var(--bu-y); --red:var(--bu-r); --coral:var(--bu-o);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#0E1A29; --surf:#162538; --surf2:#1C2F45; --line:#2B3F57; --page:#08111C;
+  --ink:#E6EEF7; --sub:#9FB1C7; --mute:#93A6BD;
+  --scrim:rgba(14,26,41,.94); --glass:rgba(22,37,56,.94); --shade:rgba(2,8,16,.6);
+  --acc:#2ED1A0; --acc-t:#2ED1A0; --acc-btn:#2ED1A0; --on-acc:#06231B; --acc-soft:rgba(46,209,160,.14);
+  --b-g:#15755A; --b-y:#7D6A12; --b-o:#9A5624; --b-r:#A8453A;
+  --bu-g:#34D3A0; --bu-y:#F0CF4A; --bu-o:#F29A5A; --bu-r:#F2796B;
+  --on-b:#E6EEF7;
+  --ok-t:#4CD9A8; --bad-t:#FF9C93; --warn-t:#F5C468; --warn-bg:#33290F; --warn-bd:#7A5F16;
+  --banner-bg:#3A1A1C; --banner-tx:#FFB4AC; --banner-bd:#7A2B2B;
+  --tag-bg:#162538; --tag-ink:#E6EEF7; --inv-bg:#E6EEF7; --inv-fg:#0E1A29;
+  --nav-bg:#0A1522; --nav-fg:#9FB1C7; --nav-on:#FFFFFF;
+  --handle:#3A5069; --map-bg:#0F1B2A; --rng:rgba(230,238,247,.26); --shadow:0 2px 10px rgba(0,0,0,.5);
+  --purple:#B79CF0;
+} }
+body { font-family:var(--f-body); background:var(--bg); color:var(--ink); }
+h1, h2, h3, .logo, .hd-logo { font-family:var(--f-disp); }
