@@ -33,7 +33,7 @@
   script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
+  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://overpass.private.coffee https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -4802,27 +4802,38 @@ function toggleFac(btn, id) {
   body.hidden = !open; btn.setAttribute('aria-expanded', String(open));
   if (open && !body.dataset.done && !body.dataset.busy) loadFac(findStation(id), body);
 }
-const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+const FAC_TTL = 7 * 864e5;   // facilities hardly change: a good answer is kept a week on this device (nothing about the user is stored, only the station id and what was found around it)
 const FAC_G = [['food', ['cafe', 'restaurant', 'fast_food']], ['shops', ['convenience', 'supermarket', 'kiosk']], ['toilets', ['toilets']]];
 async function loadFac(s, body) {
   if (!s) return;
+  if (!_fac.has(s.id)) { try { const c = JSON.parse(localStorage.getItem('efp_fac_' + s.id) || 'null'); if (c && Date.now() - c.t < FAC_TTL && Array.isArray(c.i)) _fac.set(s.id, c.i); } catch (_) {} }
   if (!_fac.has(s.id)) {
     body.innerHTML = `<p class="empty">${esc(t('loadingEllipsis'))}</p>`; body.dataset.busy = '1';
     const t0 = Date.now();
     try {
       const q = `[out:json][timeout:6];(nwr(around:200,${s.lat},${s.lon})[amenity~"^(cafe|restaurant|fast_food|toilets)$"];nwr(around:200,${s.lat},${s.lon})[shop~"^(convenience|supermarket|kiosk)$"];);out center tags 60;`;
       let r = null;
-      for (let i = 0; i < OVERPASS.length && !(r && r.ok); i++) {   // 8 s budget in total: first mirror gets 4.5 s, the second the rest
-        const left = 8000 - (Date.now() - t0); if (left < 800) break;
-        const ac = new AbortController(), to = setTimeout(() => ac.abort(), i ? left : Math.min(left, 4500));
-        try { r = await fetch(OVERPASS[i], { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:ac.signal }); } catch (_) { r = null; } finally { clearTimeout(to); }
-      }
+      // hedged request: the first mirror starts at once, the next ones join after 1.5 s and 3 s if nothing has answered; the first good answer wins, 9 s in total
+      const acs = OVERPASS.map(() => new AbortController());
+      const hit = await new Promise(resolve => {
+        let left = OVERPASS.length; const timers = [];
+        const fin = v => { timers.forEach(clearTimeout); acs.forEach(a => { try { a.abort(); } catch (_) {} }); resolve(v); };
+        const one = async i => {
+          try { const x = await fetch(OVERPASS[i], { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:acs[i].signal }); if (x.ok) return fin(await x.json()); } catch (_) {}
+          if (--left === 0) fin(null);
+        };
+        OVERPASS.forEach((_, i) => timers.push(setTimeout(() => one(i), i * 1500)));
+        timers.push(setTimeout(() => fin(null), 9000));
+      });
+      r = hit ? { ok: true, json: async () => hit } : null;
       if (!r || !r.ok) throw new Error('overpass');
       const j = await r.json();
       _fac.set(s.id, (j.elements || []).map(e => {
         const la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon, tg = e.tags || {};
         return la == null ? null : { n: tg.name || '', k: tg.amenity || tg.shop, d: dist(s.lat, s.lon, la, lo) };
       }).filter(Boolean).sort((a, b) => a.d - b.d));
+      try { localStorage.setItem('efp_fac_' + s.id, JSON.stringify({ t: Date.now(), i: _fac.get(s.id) })); } catch (_) {}
     } catch (_) { body.innerHTML = `<p class="empty">${esc(t('facErr'))}</p><button type="button" class="st-go" style="width:100%" onclick="loadFac(findStation('${escId(s.id)}'), this.parentNode)">${esc(t('facRetry'))}</button>${ATTR_OSM}`; return; }
     finally { delete body.dataset.busy; }
   }
@@ -5689,6 +5700,8 @@ function handleHint() {
 Object.assign(I18N.en, { sheetToggle:'Expand or collapse the panel' });
 Object.assign(I18N.sv, { sheetToggle:'Fäll ut eller ihop panelen' });
 Object.assign(I18N.de, { sheetToggle:'Bereich ein- oder ausklappen' });
+Object.assign(I18N.fr, { sheetToggle:'Déplier ou replier le panneau' });
+Object.assign(I18N.es, { sheetToggle:'Expandir o contraer el panel' });
 document.querySelectorAll('.panel').forEach(p => {
   const h = p.querySelector('.drag-handle');
   if (!h) return;
@@ -7388,12 +7401,15 @@ async function rtAccLoad() {
   try { const r = await fetch('de_accuracy.json'); if (!r.ok) return false; const j = await r.json(); rtAccData = j && j.summary && j.summary.n >= 500 ? j.summary : null; } catch (_) { rtAccData = null; }
   return !!rtAccData;
 }
-function rtUnc(cc, fuel) {
-  if (cc !== 'DE' || !rtAccData) return null;
+// UNC-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_route_model.js)
+function uncFromAcc(acc, cc, fuel) {          // EUR/L: the worse stratum's 90th-percentile |difference| for the fuel; strata under 100 checks are ignored
+  if (cc !== 'DE' || !acc) return null;
   const f = fuel === 'DIESEL' ? 'diesel' : 'petrol';
-  const p = Object.entries(rtAccData.by || {}).filter(([k, v]) => k.startsWith(f + '|') && v.n >= 100).map(([, v]) => v.abs_p90_ct);
+  const p = Object.entries(acc.by || {}).filter(([k, v]) => k.startsWith(f + '|') && v && v.n >= 100 && isFinite(v.abs_p90_ct)).map(([, v]) => v.abs_p90_ct);
   return p.length ? Math.max(...p) / 100 : null;
 }
+// UNC-PURE-END
+const rtUnc = (cc, fuel) => uncFromAcc(rtAccData, cc, fuel);
 function rtRank() {
   const R = rt.res; if (!R || R.error) return;
   if (!rtAccTried && R.countries.includes('DE')) { rtAccTried = true; rtAccLoad().then(ok => { if (ok && rt.res === R) { rtRank(); renderRoute(); } }); }
@@ -7620,7 +7636,7 @@ function rtDepHtml(R, P) {
 }
 Object.assign(rtExtras, { strip: rtStripHtml, nav: (R, P) => rtNavHtml(R, P, false), navd: (R, P) => rtNavHtml(R, P, true), ac: rtAcHtml, dep: rtDepHtml });
 // ── Charging posts (Type 2): map layer, sheet, list near the destination. Posts: data/ev_<cc>.json (src/chargers.py, docs/CHARGERS_PIPELINE.md). Prices: web/ac_tariffs.json (docs/AC_TARIFFS.md), never from the post data. ──
-const CHG_CC = ['SE', 'NO', 'DK', 'DE', 'NL', 'BE', 'IE', 'IS'];                 // countries that have a data file: add one here when src/chargers.py gains it
+const CHG_CC = ['SE', 'NO', 'DK', 'DE', 'NL', 'BE', 'IE', 'IS', 'FR', 'GB'];                 // countries that have a data file: add one here when src/chargers.py gains it
 const CHG_ZOOM = 11, CHG_MAX_MARKERS = 400;
 const chg = { on: store.get('efp_chg', false) === true, files: {}, loading: {}, tariffs: null, tarP: null, tarDone: false, layer: L.layerGroup().addTo(map), told: new Set() };
 const CHG_ICON = L.divIcon({ className: '', html: `<div class="chg-mk">${ico('bolt')}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
@@ -8113,9 +8129,13 @@ map.on('moveend', () => {
 Object.assign(I18N.en, { brandUncertain:'This brand is often a few cents off in our checks against the official feed.' });
 Object.assign(I18N.sv, { brandUncertain:'Det här varumärket avviker ofta några ören i våra kontroller mot den officiella källan.' });
 Object.assign(I18N.de, { brandUncertain:'Diese Marke weicht in unseren Prüfungen gegen die amtliche Quelle oft um einige Cent ab.' });
+Object.assign(I18N.fr, { brandUncertain:'Cette marque s’écarte souvent de quelques centimes dans nos contrôles par rapport à la source officielle.' });
+Object.assign(I18N.es, { brandUncertain:'Esta marca se desvía a menudo unos céntimos en nuestras comprobaciones con la fuente oficial.' });
 Object.assign(I18N.en, { installMenu:'Open your browser menu and choose “Install app” or “Add to Home screen”.' });
 Object.assign(I18N.sv, { installMenu:'Öppna webbläsarens meny och välj ”Installera app” eller ”Lägg till på hemskärmen”.' });
 Object.assign(I18N.de, { installMenu:'Öffne das Browsermenü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.' });
+Object.assign(I18N.fr, { installMenu:'Ouvrez le menu du navigateur et choisissez « Installer l’appli » ou « Ajouter à l’écran d’accueil ».' });
+Object.assign(I18N.es, { installMenu:'Abre el menú del navegador y elige «Instalar aplicación» o «Añadir a la pantalla de inicio».' });
 let swReg = null;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () =>

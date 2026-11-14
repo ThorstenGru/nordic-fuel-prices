@@ -3,6 +3,7 @@
 const META = 'https://eurofuelprices.com/meta.json';
 const STALE_MIN = 180;                 // the pipeline runs every ~15-30 min; 3 h without a new fetch means it is down
 const REMIND_MIN = 360;                // while still stale, repeat the alert every 6 h
+const CTY_REMIND_MIN = 1440;           // a country that stays stale: repeat once a day
 
 // Pure: { ok, ageMin, why } from the meta.json text (or null when it could not be fetched). Exported for tests.
 export function judge(meta, nowMs) {
@@ -11,6 +12,11 @@ export function judge(meta, nowMs) {
   if (!isFinite(t)) return { ok: false, ageMin: null, why: 'meta.json has no valid fetched_at' };
   const ageMin = Math.round((nowMs - t) / 60000);
   return ageMin > STALE_MIN ? { ok: false, ageMin, why: `no new price data for ${(ageMin / 60).toFixed(1)} h` } : { ok: true, ageMin, why: 'fresh' };
+}
+
+// Pure: sorted codes of the countries meta.json marks stale (one country's feed dying while the rest is fresh never moves the global fetched_at).
+export function staleCountries(meta) {
+  return ((meta && meta.countries) || []).filter(c => c && c.status === 'stale' && c.country).map(c => c.country).sort();
 }
 
 async function push(env, title, body, tags) {
@@ -28,6 +34,19 @@ export async function check(env, nowMs = Date.now()) {
   } else if (v.ok && prev.s === 'stale') {
     await push(env, 'EuroFuelPrices: data is fresh again', `Last fetch ${v.ageMin} min ago.`, 'white_check_mark');
     await env.STATE.put('s', JSON.stringify({ s: 'ok', t: nowMs }));
+  }
+  // per country: alert when the same set is stale in two checks in a row (30 min, no flapping), again only when the set changes or after a day
+  if (meta) {
+    const now = staleCountries(meta).join(','), c = JSON.parse((await env.STATE.get('c')) || '{"seen":"","alerted":"","t":0}');
+    if (now && now === c.seen && (now !== c.alerted || nowMs - c.t > CTY_REMIND_MIN * 60000)) {
+      await push(env, 'EuroFuelPrices: country feed stale', 'Stale: ' + now + '. The rest of the data is still updating.', 'warning');
+      c.alerted = now; c.t = nowMs;
+    } else if (!now && c.alerted) {
+      await push(env, 'EuroFuelPrices: country feeds fresh again', 'Was stale: ' + c.alerted + '.', 'white_check_mark');
+      c.alerted = ''; c.t = nowMs;
+    }
+    c.seen = now;
+    await env.STATE.put('c', JSON.stringify(c));
   }
   return v;
 }

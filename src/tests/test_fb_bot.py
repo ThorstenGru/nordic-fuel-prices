@@ -3,7 +3,7 @@ import os
 import sys
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "tools"))
@@ -67,6 +67,50 @@ class Local(unittest.TestCase):
 
     def test_ambiguous_or_unknown_town_gets_no_answer(self):
         self.assertIsNone(fb_local.answer_for("Nowhereville", None, fetch))
+
+
+class NewCountries(unittest.TestCase):
+    """IT, PL and BE are answered like the older countries; a country file is downloaded once per run."""
+
+    def mk(self, city, n=6, cur="EUR"):
+        now = datetime.now(timezone.utc).isoformat()
+        sts = [station(i, city, 50.0 + i * 0.005, 10.0, 1.8 + i * 0.01, 2.0 + i * 0.01) for i in range(n)]
+        for st in sts:
+            for pr in st["prices"]:
+                pr["updated_at"], pr["currency"] = now, cur      # PL and IT quote only dated prices; PL prices are in PLN
+        return json.dumps({"stations": sts})
+
+    def fetcher(self, files, calls):
+        def f(url, dest=None, timeout=30):
+            calls.append(url)
+            for k, v in files.items():
+                if url.endswith("/" + k + ".json"):
+                    return v
+            return None
+        return f
+
+    def test_comments_naming_pl_it_be_are_matched(self):
+        self.assertEqual(fb_local.match_comment("Warszawa, Polska"), ("Warszawa", "pl"))
+        self.assertEqual(fb_local.match_comment("Roma, Italia"), ("Roma", "it"))
+        self.assertEqual(fb_local.match_comment("Gent, Belgium"), ("Gent", "be"))
+
+    def test_answers_for_each_new_country(self):
+        for name, cc in (("Warszawa", "pl"), ("Roma", "it"), ("Gent", "be")):
+            calls = []
+            txt = fb_local.answer_for(name, cc, self.fetcher({cc: self.mk(name, cur="PLN" if cc == "pl" else "EUR"), "meta": json.dumps({"countries": [{"country": cc.upper(), "grade": "C"}]})}, calls), grades={cc: "C"})
+            self.assertIn(f"within 10 km of {name}", txt or "", cc)
+            self.assertIn(f"/{cc}/", txt)
+
+    def test_belgian_french_town_is_found_on_the_same_file(self):
+        txt = fb_local.answer_for("Liège", "be", self.fetcher({"be": self.mk("Liège")}, []), grades={"be": "C"})
+        self.assertIn("within 10 km of Li", txt or "")
+
+    def test_one_download_per_file(self):
+        calls, cache = [], {}
+        f = self.fetcher({"pl": self.mk("Warszawa")}, calls)
+        for _ in range(3):
+            fb_local.answer_for("Warszawa", "pl", f, grades={"pl": "C"}, cache=cache)
+        self.assertEqual(len([c for c in calls if c.endswith("/pl.json")]), 1)
 
 
 class Graph_(unittest.TestCase):

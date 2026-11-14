@@ -31,7 +31,7 @@ from scrapers import ALL_SCRAPERS
 from scrapers.geocoder import resolve_pages_base
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
-SCRAPER_TIMEOUT_S = int(os.environ.get("SCRAPER_TIMEOUT_S", "900"))
+SCRAPER_TIMEOUT_S = int(os.environ.get("SCRAPER_TIMEOUT_S", "600"))   # a slow source costs the whole run its publish time, so the default is 10 min (Germany test mode needs ~6); shortcut: Italy keeps its own longer TIMEOUT_S for the rare fallback crawl
 MIN_KEEP_RATIO = 0.6          # new result smaller than 60 % of the last good one => suspicious
 SCHEMA_VERSION = 2          # JSON layout; app release version lives in /VERSION (see below)
 try:

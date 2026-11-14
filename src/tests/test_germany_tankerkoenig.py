@@ -7,7 +7,7 @@ from unittest import mock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from data_checks import quality_report, track_changes  # noqa: E402
 from scrapers import germany  # noqa: E402
-from scrapers.germany import GermanyScraper, GRID, RURAL, _DEAnwb, _cover_circles, accuracy_summary, accuracy_update, parse_tk_stations  # noqa: E402
+from scrapers.germany import GermanyScraper, GRID, RURAL, _DEAnwb, _cover_circles, accuracy_summary, accuracy_update, parse_tk_stations, RISKY_MIN_STATIONS  # noqa: E402
 
 
 class FakeResp:
@@ -303,7 +303,7 @@ class RiskyBrands(unittest.TestCase):
         import json, tempfile, pathlib
         f = pathlib.Path(tempfile.mkdtemp()) / "acc.json"
         f.write_text(json.dumps({"summary": {"worst_brands": [
-            {"brand": "SPRINT", "n": 220, "over_2ct_pct": 35.0}, {"brand": "ARAL", "n": 900, "over_2ct_pct": 5.0}, {"brand": "TINY", "n": 5, "over_2ct_pct": 80.0}]}}))
+            {"brand": "SPRINT", "n": 220, "over_2ct_pct": 35.0, "off_stations": 12}, {"brand": "ARAL", "n": 900, "over_2ct_pct": 5.0, "off_stations": 40}, {"brand": "TINY", "n": 5, "over_2ct_pct": 80.0, "off_stations": 4}]}}))
         sc, _ = make("test", FakeSession())
         sc.acc_path = f
         st = [dict(anwb_station(1, 52.5, 13.4), brand="Sprint"), dict(anwb_station(2, 52.6, 13.4), brand="Aral"), dict(anwb_station(3, 52.7, 13.4), brand="Tiny"),
@@ -326,6 +326,23 @@ class CheckedAt(unittest.TestCase):
         out = run(sc, [anwb_station(1, 52.5, 13.4)])
         tkp = [p for p in out[0]["prices"] if p.get("source") == "tankerkoenig"]
         self.assertTrue(tkp and all(p["checked_at"].startswith("2023-11-14") for p in tkp))
+
+
+
+class OneBadPump(unittest.TestCase):
+    def test_one_stale_station_on_many_days_does_not_make_a_brand_risky(self):
+        store = {}
+        for day in range(25):                                                   # same single station, 3 ct off, every day, 25 days
+            accuracy_update(store, [("petrol", "metro", "SOLO", 3.0, 111)] + [("petrol", "metro", "SOLO", 0.0, 200 + i) for i in range(2)], f"2026-11-{day + 1:02d}")
+        w = [x for x in accuracy_summary(store)["worst_brands"] if x["brand"] == "SOLO"][0]
+        self.assertEqual(w["off_stations"], 1)
+        self.assertLess(w["off_stations"], RISKY_MIN_STATIONS)
+        store = {}
+        for st in range(6):                                                     # six different stations, all off, 4 days
+            for day in range(4):
+                accuracy_update(store, [("petrol", "metro", "CHAIN", 3.0, 300 + st)], f"2026-11-{day + 1:02d}")
+        w = [x for x in accuracy_summary(store)["worst_brands"] if x["brand"] == "CHAIN"][0]
+        self.assertGreaterEqual(w["off_stations"], RISKY_MIN_STATIONS)
 
 
 if __name__ == "__main__":

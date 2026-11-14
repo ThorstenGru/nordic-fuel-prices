@@ -21,4 +21,13 @@ meta = at(400 + 400); await check(env, NOW + 7 * 3600000); assert.equal(pushes.l
 meta = at(5, NOW + 8 * 3600000); await check(env, NOW + 8 * 3600000); assert.equal(pushes.length, 3); assert.match(pushes[2], /fresh again/);
 meta = at(5, NOW + 9 * 3600000); await check(env, NOW + 9 * 3600000); assert.equal(pushes.length, 3);                      // healthy again: silent
 meta = null; await check(env, NOW + 10 * 3600000); assert.equal(pushes.length, 4);        // unreachable counts as down
+// per-country alarm: needs the same stale set twice in a row, then one alert, silence, a new member alerts again, recovery message
+kv.clear(); pushes.length = 0;
+const T = 100 * 3600000, ctys = l => ({ ...at(5, T), countries: l.map(c => ({ country: c, status: 'stale' })).concat([{ country: 'SE', status: 'ok' }]) });
+meta = ctys(['IT']); await check(env, T); assert.equal(pushes.length, 0);                    // first sighting: wait
+await check(env, T + 30 * 60000); assert.equal(pushes.length, 1); assert.match(pushes[0], /country feed stale/);
+meta = { ...ctys(['IT']), ...at(5, T + 60 * 60000) }; await check(env, T + 60 * 60000); assert.equal(pushes.length, 1);   // same set: silent
+meta = { ...ctys(['IT', 'PL']), ...at(5, T + 90 * 60000) }; await check(env, T + 90 * 60000); assert.equal(pushes.length, 1);  // changed set: confirm first
+await check(env, T + 120 * 60000); assert.equal(pushes.length, 2);
+meta = { ...ctys([]), ...at(5, T + 150 * 60000) }; await check(env, T + 150 * 60000); assert.equal(pushes.length, 3); assert.match(pushes[2], /fresh again/);
 console.log('test_watchdog: all passed');

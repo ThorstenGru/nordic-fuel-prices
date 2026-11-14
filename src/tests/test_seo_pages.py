@@ -116,5 +116,24 @@ class StaleSource(unittest.TestCase):
         self.assertTrue((d / "it" / "roma" / "index.html").exists())
 
 
+class BelgiumAlternates(unittest.TestCase):
+    def test_hreflang_only_between_pages_that_exist_in_both_sets(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as t:
+            a, b = Path(t) / "be", Path(t) / "be-fr"
+            for d, slugs in ((a, ["", "gent/", "brugge/"]), (b, ["", "gent/", "liege/"])):
+                for sl in slugs:
+                    (d / sl).mkdir(parents=True, exist_ok=True)
+                    (d / sl / "index.html").write_text('<head><meta property="og:type" content="website"></head>', encoding="utf-8")
+            n = sp.link_alternates(a, b, "nl-BE", "fr-BE", "https://x/be/", "https://x/be-fr/")
+            self.assertEqual(n, 4)                                                       # hub + gent, both files each
+            h = (a / "gent" / "index.html").read_text(encoding="utf-8")
+            self.assertIn('hreflang="fr-BE" href="https://x/be-fr/gent/"', h)
+            self.assertIn('hreflang="x-default" href="https://x/be/gent/"', h)
+            self.assertNotIn("hreflang", (a / "brugge" / "index.html").read_text(encoding="utf-8"))   # no French twin: no alternate
+            self.assertEqual(sp.link_alternates(a, b, "nl-BE", "fr-BE", "https://x/be/", "https://x/be-fr/"), 0)   # idempotent
+
+
 if __name__ == "__main__":
     unittest.main()

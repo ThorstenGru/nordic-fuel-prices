@@ -28,7 +28,7 @@ repository (source, logs) or on the `gh-pages` branch (published data, regenerat
 | `src/merge_engine.py` | Multi-source merge (match ≤100 m, brand-compatible, newer timestamp wins, regulated caps fill gaps only) |
 | `src/data_checks.py`, `plausibility.py`, `source_gap.py` | Quality checks, implausible-price flags, cross-source comparison |
 | `src/chargers.py`, `src/elpris.py`, `src/price_cycles.py` | EV charging posts, electricity prices, weekly price cycles |
-| `src/seo_pages.py` | Static town pages per country + sitemaps (SE, AT, DE, CH, FR, ES, PT, DK, NL), Swedish cheapest-towns page |
+| `src/seo_pages.py`, `src/seo_text.py` | Static town pages per country + sitemaps (all countries in `seo_text.COUNTRIES`), Swedish cheapest-towns page; settings and texts are in `seo_text.py` |
 | `src/europe_index.py` | `/europe/` ranking (en + sv/de/da), 37 border pages, share pictures (`/og/*.png`), `/open-data/*`, `index_history.json` |
 | `src/indexnow.py` | Daily IndexNow ping (Bing/others) for the Europe pages and country hubs |
 | `src/seed/` | Seed data: place lists for SE/AT, caps, tariffs |

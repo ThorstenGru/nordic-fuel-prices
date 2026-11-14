@@ -130,4 +130,15 @@ mp = rtMakePlan({ o: low, segs: null, min: 280, cands: [mkc(150, 1.8, 2), mkc(14
 assert.strictEqual(mp.stops[0].along, 150); assert.strictEqual(mp.undated, false);
 mp = rtMakePlan({ o: low, segs: null, min: 280, cands: [mkc(140, 1.4, null)], ref, asm: {} });
 assert.strictEqual(mp.status, 'ok'); assert.strictEqual(mp.undated, true); assert.strictEqual(mp.stops[0].reason, 'need');
+// measured-error range for undated German prices (uncFromAcc)
+{ const u = src.match(/\/\/ UNC-PURE-BEGIN[^\n]*\n([\s\S]*?)\/\/ UNC-PURE-END/); assert(u, 'unc block not found');
+  const uncFromAcc = new Function(u[1] + '; return uncFromAcc;')();
+  const acc = { by: { 'petrol|metro': { n: 500, abs_p90_ct: 1 }, 'petrol|rural': { n: 300, abs_p90_ct: 3 }, 'diesel|metro': { n: 500, abs_p90_ct: 2 }, 'diesel|rural': { n: 50, abs_p90_ct: 9 } } };
+  assert.strictEqual(uncFromAcc(acc, 'DE', 'P95'), 0.03);          // worse of the two petrol strata
+  assert.strictEqual(uncFromAcc(acc, 'DE', 'DIESEL'), 0.02);       // the 50-check rural stratum is too small to count
+  assert.strictEqual(uncFromAcc(acc, 'SE', 'P95'), null);          // only Germany
+  assert.strictEqual(uncFromAcc(null, 'DE', 'P95'), null);
+  assert.strictEqual(uncFromAcc({ by: { 'petrol|metro': { n: 10, abs_p90_ct: 1 } } }, 'DE', 'P95'), null);
+  assert.strictEqual(uncFromAcc({}, 'DE', 'DIESEL'), null); }
+
 console.log('route model: all tests passed');

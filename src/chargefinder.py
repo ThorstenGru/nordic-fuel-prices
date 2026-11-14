@@ -29,6 +29,7 @@ CAP = 380                           # an answer this long is probably cut at ~40
 GAP_S = 0.5
 WORKERS = 2
 MIN_SPAN = 0.02                     # degrees: never split below ~2 km; a box that is still full is accepted as it is
+MAX_PER_RUN = 2                     # countries crawled per scrape run (the rest wait for the next 15-minute run), so the chain is never held up for an hour
 BUDGET_S = 40 * 60                  # shortcut: one crawl per country in one go, no resume; fine while a country takes < 40 min
 B32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
@@ -40,6 +41,8 @@ COUNTRIES: Dict[str, Tuple[str, Tuple[int, int], Tuple[float, float, float, floa
     "BE": ("BE", (1000, 150000), (49.45, 51.55, 2.5, 6.45)),
     "IE": ("IE", (100, 30000), (51.3, 55.5, -10.7, -5.9)),
     "IS": ("IS", (20, 5000), (63.2, 66.7, -24.6, -13.3)),
+    "FR": ("FR", (10000, 150000), (41.3, 51.2, -5.3, 9.7)),
+    "GB": ("GB", (8000, 120000), (49.8, 60.9, -8.7, 1.8)),
 }
 
 
@@ -192,6 +195,7 @@ async def run(countries: List[str], out_dir: Path, key: str, force: bool = False
     `attempted`, so a bad day is not retried every 15 minutes. Returns files written."""
     ok, today = 0, datetime.now(timezone.utc).date()
     async with aiohttp.ClientSession() as session:
+        tried = 0
         for cc in countries:
             path = out_dir / f"ev_{cc.lower()}.json"
             try:
@@ -203,6 +207,10 @@ async def run(countries: List[str], out_dir: Path, key: str, force: bool = False
             if not (force or chargers.due(prev, today)):
                 print(f"[chargefinder] {cc}: not due")
                 continue
+            if tried >= MAX_PER_RUN:
+                print(f"[chargefinder] {cc}: due, waits for the next run")
+                continue
+            tried += 1
             if prev:
                 chargers.write_json(path, {**prev, "attempted": today.isoformat()})
             raw = await crawl(session, cc, key)

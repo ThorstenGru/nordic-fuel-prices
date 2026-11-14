@@ -19,16 +19,30 @@ SITE = "https://eurofuelprices.com"
 RADIUS_KM = 10
 TOP_N = 3
 # countries with their own town pages and a source grade we are willing to quote
-SUPPORTED = ["de", "ch", "fr", "es", "pt", "dk", "nl", "se"]   # AT has no city field in its feed
+SUPPORTED = ["de", "ch", "fr", "es", "pt", "dk", "nl", "se", "be", "pl", "it"]   # AT has no city field in its feed. be = Dutch names; French names are tried as be-fr (same data file)
 CITIES = [("de", "Hamburg"), ("de", "Berlin"), ("de", "München"), ("de", "Köln"), ("de", "Flensburg"), ("de", "Frankfurt am Main"),
           ("dk", "København"), ("dk", "Aarhus"), ("dk", "Aalborg"), ("dk", "Odense"),
           ("se", "Stockholm"), ("se", "Göteborg"), ("se", "Malmö"), ("se", "Uppsala"), ("se", "Linköping"), ("ch", "Zürich"), ("ch", "Basel"), ("ch", "Bern"),
           ("fr", "Paris"), ("fr", "Lyon"), ("fr", "Marseille"), ("fr", "Strasbourg"),
           ("es", "Madrid"), ("es", "Barcelona"), ("es", "Valencia"), ("es", "Sevilla"),
-          ("pt", "Lisboa"), ("pt", "Porto"), ("nl", "Amsterdam"), ("nl", "Rotterdam"), ("nl", "Utrecht")]
+          ("pt", "Lisboa"), ("pt", "Porto"), ("nl", "Amsterdam"), ("nl", "Rotterdam"), ("nl", "Utrecht"),
+          ("be", "Antwerpen"), ("be", "Gent"), ("pl", "Warszawa"), ("pl", "Kraków"), ("pl", "Wrocław"), ("pl", "Gdańsk"), ("it", "Roma"), ("it", "Milano"), ("it", "Napoli"), ("it", "Torino")]
 COUNTRY_WORDS = {n.lower(): c for c, n in NAMES.items()}
 COUNTRY_WORDS.update({"deutschland": "DE", "österreich": "AT", "oesterreich": "AT", "schweiz": "CH", "suisse": "CH", "españa": "ES", "espana": "ES",
-                      "danmark": "DK", "nederland": "NL", "holland": "NL", "italia": "IT", "sverige": "SE", "norge": "NO"})
+                      "danmark": "DK", "nederland": "NL", "holland": "NL", "italia": "IT", "sverige": "SE", "norge": "NO",
+                      "polska": "PL", "belgië": "BE", "belgie": "BE", "belgique": "BE"})
+
+
+def load_stations(c, fetch, cache=None):
+    """Station list of a page-country (be-fr reads be.json). One download per file per run when a cache dict is passed."""
+    f = sp.COUNTRIES[c].get("data", c)
+    if cache is not None and f in cache:
+        return cache[f]
+    raw = fetch(f"{SITE}/{f}.json", timeout=120)
+    out = json.loads(raw)["stations"] if raw else []
+    if cache is not None:
+        cache[f] = out
+    return out
 
 
 def km(lat1, lon1, lat2, lon2):
@@ -110,13 +124,11 @@ def spotlight(fetch, used, today, audience=None, days=30):
         key = f"{cc}-{sp.slugify(name, sp.COUNTRIES[cc]['lang'])}"
         if key in recent or grades.get(cc) not in ("A", "B", "C", "D"):
             continue
-        if cc not in cache:
-            raw = fetch(f"{SITE}/{cc}.json", timeout=120)
-            cache[cc] = json.loads(raw)["stations"] if raw else []
-        town = find_town(cache[cc], cc, name)
+        stations = load_stations(cc, fetch, cache)
+        town = find_town(stations, cc, name)
         if not town:
             continue
-        found = cheapest_near(cache[cc], cc, town)
+        found = cheapest_near(stations, cc, town)
         if usable(found):
             return local_text(cc, town, found, f"Cheapest fuel within {RADIUS_KM} km of {town['name']} today:", grades.get(cc)), key
     return None
@@ -138,18 +150,17 @@ def match_comment(text, supported=SUPPORTED):
     return (name, cc) if name else None
 
 
-def answer_for(name, cc, fetch, now=None, grades=None):
+def answer_for(name, cc, fetch, now=None, grades=None, cache=None):
     """Reply text for a comment, or None if the town cannot be found uniquely in a supported country."""
     options = [cc] if cc else SUPPORTED
     hits = []
     for c in options:
-        raw = fetch(f"{SITE}/{c}.json", timeout=120)
-        if not raw:
-            continue
-        stations = json.loads(raw)["stations"]
-        town = find_town(stations, c, name)
-        if town:
-            hits.append((c, town, stations))
+        for v in ([c, "be-fr"] if c == "be" else [c]):         # Belgium: Dutch names first, then French names on the same data
+            stations = load_stations(v, fetch, cache)
+            town = find_town(stations, v, name) if stations else None
+            if town:
+                hits.append((v, town, stations))
+                break
     if len(hits) != 1:
         return None
     c, town, stations = hits[0]
@@ -161,6 +172,7 @@ def answer_for(name, cc, fetch, now=None, grades=None):
             grades = {x["country"].lower(): x.get("grade") for x in json.loads(fetch(SITE + "/meta.json")).get("countries", [])}
         except Exception:
             grades = {}
-    if grades and grades.get(c) not in ("A", "B", "C", "D"):
+    g = sp.COUNTRIES[c].get("data", c)
+    if grades and grades.get(g) not in ("A", "B", "C", "D"):
         return None                                          # no usable source grade: say nothing rather than guess
-    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:", (grades or {}).get(c, "C"))
+    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:", (grades or {}).get(g, "C"))

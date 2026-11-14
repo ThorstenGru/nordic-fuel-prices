@@ -144,7 +144,7 @@ def build(today: date, out: Path, audience=None, download=True):
             result = (built[0], f"{SITE}/og-image.png", "spotlight", built[1])
     elif wd == 5:   # opt-in: people comment their town, the bot replies with the cheapest nearby
         result = ("Where do you fill up? Comment your town (and country, e.g. “Hamburg, Germany”) and we will reply with the cheapest petrol and diesel "
-                  f"stations within 10 km, as listed on our map. Covered: DE, CH, FR, ES, PT, DK, NL, SE. {SITE}", f"{SITE}/og-image.png", "local-ask", "local-ask")
+                  f"stations within 10 km, as listed on our map. Covered: DE, CH, FR, ES, PT, DK, NL, SE, BE, PL, IT. {SITE}", f"{SITE}/og-image.png", "local-ask", "local-ask")
     elif wd in (1, 2):   # border pair / quiz
         ranked = sorted(pairs, key=lambda p: -max(abs(r[2][0] - r[1][0]) for r in pair_data(m, *p)))
         keys = [pair_slug(*p) for p in ranked]

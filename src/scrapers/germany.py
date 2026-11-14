@@ -84,6 +84,7 @@ METRO_PER_RUN, RURAL_PER_RUN = 2, 3        # = TEST_MAX_CIRCLES
 RURAL_SET = set(RURAL)
 
 # Accuracy meter (A): every ANWB-versus-MTS-K difference is counted in 1-cent bins, per day, so we can say how far ANWB is off.
+RISKY_MIN_STATIONS = 5                     # ... and the off readings come from >= 5 DIFFERENT stations (one stale pump seen on many days must not blame a whole chain)
 RISKY_MIN_N, RISKY_PCT = 20, 30.0          # a brand is "often a few cents off" with >= 20 checks and >= 30 % of them 2 ct or more away
 ACC_DAYS = 14
 ACC_CLIP = 25                              # bins beyond +-25 ct are pooled
@@ -177,10 +178,14 @@ def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float, int]], 
         b = d["bins"].setdefault(k, {})
         bin_ = str(max(-ACC_CLIP, min(ACC_CLIP, round(diff))))
         b[bin_] = b.get(bin_, 0) + 1
-        t = d["brands"].setdefault(brand, [0, 0])
+        t = d["brands"].setdefault(brand, [0, 0, []])
         t[0] += 1
         if abs(diff) >= 2:
             t[1] += 1
+            if len(t) < 3:
+                t.append([])
+            if key not in t[2]:
+                t[2].append(key)
     d["seen"] = sorted(seen)
     for old_day, v in days.items():   # the seen-list is only needed for today: keeps the published file small
         if old_day != day:
@@ -216,18 +221,19 @@ def accuracy_summary(store: Dict) -> Dict:
     days = store.get("days") or {}
     allh: Dict[int, int] = defaultdict(int)
     per: Dict[str, Dict[int, int]] = defaultdict(lambda: defaultdict(int))
-    brands: Dict[str, List[int]] = defaultdict(lambda: [0, 0])
+    brands: Dict[str, List[Any]] = defaultdict(lambda: [0, 0, set()])
     for d in days.values():
         for k, bins in d.get("bins", {}).items():
             for b, c in bins.items():
                 allh[int(b)] += c
                 per[k][int(b)] += c
-        for br, (n, o) in d.get("brands", {}).items():
-            brands[br][0] += n
-            brands[br][1] += o
+        for br, v in d.get("brands", {}).items():
+            brands[br][0] += v[0]
+            brands[br][1] += v[1]
+            brands[br][2].update(x for x in (v[2] if len(v) > 2 else []))      # keys are hashes of station+fuel: distinct count of off readings
     out = {"days": len(days), **stats(allh), "by": {k: stats(h) for k, h in sorted(per.items())}}
-    worst = sorted(((100 * o / n, br, n) for br, (n, o) in brands.items() if n >= RISKY_MIN_N), reverse=True)[:15]
-    out["worst_brands"] = [{"brand": br, "n": n, "over_2ct_pct": round(r, 1)} for r, br, n in worst]
+    worst = sorted(((100 * o / n, br, n, len(ks)) for br, (n, o, ks) in brands.items() if n >= RISKY_MIN_N), reverse=True)[:15]
+    out["worst_brands"] = [{"brand": br, "n": n, "over_2ct_pct": round(r, 1), "off_stations": k} for r, br, n, k in worst]
     if out["n"]:
         out["line"] = (f"ANWB matched the official MTS-K price to within 1 cent for {out['within_1ct_pct']}% of {out['n']} checks "
                        f"on German stations (last {out['days']} days); median difference {out['bias_median_ct']:+g} ct, "
@@ -320,7 +326,7 @@ class GermanyScraper(BaseScraper):
             worst = json.loads(self.acc_path.read_text(encoding="utf-8")).get("summary", {}).get("worst_brands") or []
         except (OSError, ValueError):
             return
-        risky = {w["brand"] for w in worst if w.get("n", 0) >= RISKY_MIN_N and w.get("over_2ct_pct", 0) >= RISKY_PCT}
+        risky = {w["brand"] for w in worst if w.get("n", 0) >= RISKY_MIN_N and w.get("over_2ct_pct", 0) >= RISKY_PCT and w.get("off_stations", 0) >= RISKY_MIN_STATIONS}
         if not risky:
             return
         n = 0

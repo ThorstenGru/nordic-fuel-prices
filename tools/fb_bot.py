@@ -96,14 +96,14 @@ def run_replies(dry: bool, graph=fb_graph, fetch=fb_daily.fetch, today=None) -> 
         print("fb_bot: no recent 'comment your town' post")
         return 0
     graph.verify_page(pid, tok)
-    done, sent = read_replied(), 0
+    done, sent, cache = read_replied(), 0, {}      # one download per country file per run, not one per comment
     for post in asks:
         for cm in graph.get_comments(post["post_id"], tok):
             cid = cm.get("id")
             if not cid or cid in done or str((cm.get("from") or {}).get("id", "")) == str(pid):
                 continue
             m = fb_local.match_comment(cm.get("message", ""))
-            text = fb_local.answer_for(m[0], m[1], fetch) if m else None
+            text = fb_local.answer_for(m[0], m[1], fetch, cache=cache) if m else None
             if not text:
                 if not dry:
                     append_replied(cid, "no-match")
