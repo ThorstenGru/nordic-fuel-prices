@@ -1387,6 +1387,7 @@ Object.assign(I18N.en, { carType:'Vehicle type', carNone:'Not set', carPetrol:'P
   
   no95:'No petrol 95 price reported for this station', no95Near:'Nearest station with a petrol 95 price: {n}, {d} away, {p}',
   gapLine:'For {f} ({n} stations), sources {o} and {p} differ by a median of {x}', gapP95:'petrol 95', gapDiesel:'diesel',
+  deVerified:'Germany: unofficial source, checked against the official feed: {p} % of {n} checks within 1 cent (last {d} days). Source grade stays C.',
   staleCty:'Prices for {c} were last updated {d} (source temporarily unavailable)' });
 Object.assign(I18N.sv, { 
   
@@ -1404,6 +1405,7 @@ Object.assign(I18N.sv, { carType:'Fordonstyp', carNone:'Inte angiven', carPetrol
   
   no95:'Inget pris för bensin 95 rapporterat för denna station', no95Near:'Närmaste station med pris för bensin 95: {n}, {d} bort, {p}',
   gapLine:'För {f} ({n} stationer) skiljer sig källorna {o} och {p} med en median på {x}', gapP95:'bensin 95', gapDiesel:'diesel',
+  deVerified:'Tyskland: inofficiell källa, kontrollerad mot det officiella flödet: {p} % av {n} kontroller inom 1 cent (senaste {d} dagarna). Källbetyget förblir C.',
   staleCty:'Priserna för {c} uppdaterades senast {d} (källan är tillfälligt otillgänglig)' });
 
 // Route planner — French and Spanish (these 29 keys were missing, so the whole Route view showed in English)
@@ -1995,6 +1997,7 @@ Object.assign(I18N.es, {
  "no95Near": "Estación más cercana con precio de gasolina 95: {n}, a {d}, {p}",
  "gapLine": "Para {f} ({n} estaciones), las fuentes {o} y {p} difieren en una mediana de {x}",
  "gapP95": "gasolina 95",
+ "deVerified": "Alemania: fuente no oficial, contrastada con la fuente oficial: {p} % de {n} comprobaciones dentro de 1 céntimo (últimos {d} días). La calificación de la fuente sigue siendo C.",
  "staleCty": "Los precios de {c} se actualizaron por última vez {d} (fuente no disponible temporalmente)",
  "rtFuelNow": "Combustible en el depósito al salir",
  "rtBattNow": "Batería al salir",
@@ -2568,6 +2571,7 @@ Object.assign(I18N.fr, {
  "gapLine": "Pour {f} ({n} stations), les sources {o} et {p} diffèrent d’une médiane de {x}",
  "gapP95": "essence 95",
  "gapDiesel": "diesel",
+ "deVerified": "Allemagne : source non officielle, comparée au flux officiel : {p} % de {n} contrôles à moins de 1 centime près (derniers {d} jours). La note de la source reste C.",
  "staleCty": "Les prix pour {c} ont été mis à jour pour la dernière fois {d} (source temporairement indisponible)",
  "rtFuelNow": "Carburant dans le réservoir au départ",
  "rtBattNow": "Batterie au départ",
@@ -3139,6 +3143,7 @@ Object.assign(I18N.de, {
  "gapLine": "Bei {f} ({n} Tankstellen) unterscheiden sich die Quellen {o} und {p} im Median um {x}",
  "gapP95": "Super 95",
  "gapDiesel": "Diesel",
+ "deVerified": "Deutschland: inoffizielle Quelle, mit dem amtlichen Feed abgeglichen: {p} % von {n} Prüfungen auf 1 Cent genau (letzte {d} Tage). Die Quellennote bleibt C.",
  "staleCty": "Die Preise für {c} wurden zuletzt {d} aktualisiert (Quelle vorübergehend nicht verfügbar)",
  "rtFuelNow": "Kraftstoff im Tank beim Start",
  "rtBattNow": "Akku beim Start",
@@ -5758,6 +5763,11 @@ function ctyNote(cc) {
   if (Array.isArray(m.source_gap)) for (const g of m.source_gap) {
     if (!g || (g.fuel !== 'p95' && g.fuel !== 'diesel') || typeof g.median_pct !== 'number' || !isFinite(g.median_pct) || !(g.n > 0) || !g.primary || !g.other) continue;
     h += `<div>${esc(t('gapLine', { f: t(g.fuel === 'p95' ? 'gapP95' : 'gapDiesel'), n: g.n, o: g.other, p: g.primary, x: (g.median_pct > 0 ? '+' : '') + (+g.median_pct).toFixed(1) + '%' }))}</div>`;
+  }
+  if (cc === 'DE') {   // the meter's own rule (owner decision 2026-11-14): >= 2000 station-day checks, >= 95 % within 1 ct, median difference < 0.5 ct; withdraws itself when the numbers slip
+    if (!rtAccData && !ctyNote.tried) { ctyNote.tried = true; rtAccLoad().then(ok => ok && ctyNote(cc)); }
+    const a = rtAccData;
+    if (a && a.n >= 2000 && a.within_1ct_pct >= 95 && Math.abs(a.bias_median_ct) < 0.5) h += `<div>${esc(t('deVerified', { p: dec(String(a.within_1ct_pct)), n: a.n, d: a.days }))}</div>`;
   }
   try {
     const L = rtCycData && cc ? trdLines(rtCycData, cc) : [];
