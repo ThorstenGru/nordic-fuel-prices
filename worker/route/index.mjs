@@ -71,7 +71,10 @@ async function facility(req, ctx) {
   const key = new Request(`https://eurofuelprices.com/api/fac/c?la=${f.la}&lo=${f.lo}`);
   const hit = await caches.default.match(key);
   if (hit) return new Response(hit.body, { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-cache': 'HIT' } });
+  const bad = new Request(`https://eurofuelprices.com/api/fac/f?la=${f.la}&lo=${f.lo}`);   // a search that is still running or just failed: do not start another one for this cell
+  if (await caches.default.match(bad)) return json({ error: 'upstream' }, 502, { 'retry-after': '30' });
   if (await overLimit(req)) return json({ error: 'rate' }, 429, { 'retry-after': '60' });
+  await caches.default.put(bad, new Response('1', { headers: { 'cache-control': 'max-age=30' } }));   // 30 s guard; the search itself can take 21 s
   // The mirrors are often at capacity. The search keeps going after the browser was answered (waitUntil) and fills the cache, so the browser's retry button finds it.
   const work = (async () => {
     for (const m of OVERPASS) {
@@ -81,9 +84,11 @@ async function facility(req, ctx) {
         const text = await r.text();
         JSON.parse(text);
         await caches.default.put(key, new Response(text, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=' + FAC_TTL } }));
+        await caches.default.delete(bad);
         return text;
       } catch (_) {}
     }
+    await caches.default.put(bad, new Response('1', { headers: { 'cache-control': 'max-age=60' } }));   // all mirrors failed: leave this cell alone for a minute
     return null;
   })();
   ctx.waitUntil(work);

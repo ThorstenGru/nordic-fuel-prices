@@ -110,7 +110,7 @@ def doc_of(n):
 
 
 class Run(unittest.TestCase):
-    """End to end with the network mocked: file written, key absent, last-good retained on a bad answer, frozen countries untouched."""
+    """End to end with the network mocked: file written, key absent, last-good retained on a bad answer, ChargeFinder countries untouched."""
 
     def run_with(self, doc, prev_file=None, cc="SE", key=NKEY, force=True):
         with tempfile.TemporaryDirectory() as d:
@@ -165,7 +165,7 @@ class Run(unittest.TestCase):
         self.assertEqual((n, calls), (0, []))
         self.assertEqual(json.loads(txt)["n"], 3000)
 
-    def test_frozen_countries_are_republished_untouched_even_when_forced(self):
+    def test_republish_only_countries_are_republished_untouched_even_when_forced(self):
         prev = {"v": 1, "cc": "DK", "generated": "2026-11-07", "s": [[55, 12, 0, 11, 2, 0, 24, "a"]] * 1500, "n": 1500}
         n, txt, calls = self.run_with(doc_of(2100), prev_file=prev, cc="DK")
         self.assertEqual((n, calls), (0, []))

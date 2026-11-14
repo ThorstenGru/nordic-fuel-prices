@@ -1,7 +1,7 @@
 """Type 2 charging stations -> data/ev_<cc>.json.  See docs/CHARGERS_PIPELINE.md.
 
 Source: NOBIL (Enova, the official Nordic charging register, CC BY 4.0; NOBIL_API_KEY) for SE and NO. Open Charge Map was dropped on
-2026-11-13 as not good enough (old, operator names missing). DK, DE, NL, BE, IE, IS are FROZEN here: refreshed by src/chargefinder.py (ChargeFinder); this file only re-publishes them.
+2026-11-13 as not good enough (old, operator names missing). DK, DE, NL, BE, IE, IS are REPUBLISH_ONLY here: refreshed by src/chargefinder.py (ChargeFinder); this file only re-publishes them.
 Weekly cadence without a scheduler: every run re-publishes the previous file (data/ is rebuilt on every CI run) and
 only calls the API when that file is older than MAX_AGE_DAYS. A refused or failed refresh keeps the last good file.
 Only a reduced tuple file is published: no NOBIL ids, no raw NOBIL fields, never a key.
@@ -33,7 +33,7 @@ COUNTRIES = {
     "SE": ("SWE", (2000, 12000), (55.0, 69.2, 10.8, 24.3)),
     "NO": ("NOR", (1500, 8000), (57.5, 81.0, 4.0, 35.0)),
 }
-FROZEN = ("DK", "DE", "NL", "BE", "IE", "IS", "FR", "GB")   # not refreshed here: src/chargefinder.py owns these; this only re-publishes the last published file (data/ is rebuilt every run)
+REPUBLISH_ONLY = ("DK", "DE", "NL", "BE", "IE", "IS", "FR", "GB")   # not refreshed here: src/chargefinder.py owns these; this only re-publishes the last published file (data/ is rebuilt every run)
 FLAG_FREE, FLAG_MEMBER, FLAG_NOTICE, FLAG_PAYLOC, FLAG_PARKHINT, FLAG_COSTNOTE, FLAG_TETHERED, FLAG_NOBIL_PARK = 1, 2, 4, 8, 16, 32, 64, 128
 
 # Operator aliases (normalised name -> display name) so every source shares one key space for the price table. Extend as needed.
@@ -244,7 +244,7 @@ async def run(countries: Optional[List[str]] = None, force: bool = False) -> int
     today = datetime.now(timezone.utc).date()
     ok = 0
     async with aiohttp.ClientSession() as session:
-        for cc in countries or [*COUNTRIES, *FROZEN]:
+        for cc in countries or [*COUNTRIES, *REPUBLISH_ONLY]:
             out = DATA / f"ev_{cc.lower()}.json"
             prev = await fetch_prev(session, cc)
             if prev is None:                            # could not be read (Pages hiccup): unknown is not "no file", so no blind refresh; the curl step restores the live file
@@ -252,10 +252,10 @@ async def run(countries: Optional[List[str]] = None, force: bool = False) -> int
                 continue
             if prev and prev.get("v") != 1:
                 prev = None
-            if cc in FROZEN or not (force or due(prev, today)):
+            if cc in REPUBLISH_ONLY or not (force or due(prev, today)):
                 if prev:
                     write_json(out, prev)               # re-publish: gh-pages deploy deletes files absent from data/
-                print(f"[chargers] {cc}: " + ("owned by chargefinder.py, re-published" if cc in FROZEN else f"previous file is {prev['generated']}, not due"))
+                print(f"[chargers] {cc}: " + ("owned by chargefinder.py, re-published" if cc in REPUBLISH_ONLY else f"previous file is {prev['generated']}, not due"))
                 continue
             if not nobil_key:
                 print(f"[chargers] {cc}: NOBIL_API_KEY not set, nothing refreshed")

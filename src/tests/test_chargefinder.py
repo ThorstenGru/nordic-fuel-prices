@@ -101,6 +101,7 @@ class Run(unittest.TestCase):
             if prev:
                 p.write_text(json.dumps(prev), encoding="utf-8")
             n = asyncio.run(cf.run(["DK"], Path(d), key, force))
+            self.state = json.loads((Path(d) / "cf_state.json").read_text(encoding="utf-8")) if (Path(d) / "cf_state.json").exists() else None
             return n, (p.read_text(encoding="utf-8") if p.exists() else None)
 
     def good(self, url):
@@ -117,9 +118,7 @@ class Run(unittest.TestCase):
         prev = {"v": 1, "cc": "DK", "generated": "2026-10-01", "n": 20, "s": []}
         n, txt = self.go(lambda u: (403, {}), prev=prev)
         self.assertEqual(n, 0)
-        kept = json.loads(txt)
-        self.assertEqual(kept["n"], 20)
-        self.assertIn("attempted", kept)
+        self.assertEqual(json.loads(txt)["n"], 20)
 
     def test_decoy_answer_is_refused(self):
         far = enc([st(i, 40.0 + i * 0.01, 3.0) for i in range(10)])    # stations nowhere near the box
@@ -129,6 +128,17 @@ class Run(unittest.TestCase):
         prev = {"v": 1, "cc": "DK", "generated": "2026-10-01", "n": 40, "s": []}
         n, txt = self.go(self.good, prev=prev)                          # 10 < 80 % of 40
         self.assertEqual((n, json.loads(txt)["n"]), (0, 40))
+
+    def test_a_failed_country_without_a_file_is_not_retried_the_same_day(self):
+        n, txt = self.go(lambda u: (403, {}))                                  # no file at all, the API says no
+        self.assertEqual((n, txt), (0, None))
+        self.assertEqual(self.state["attempted"]["DK"], date.today().isoformat())
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "cf_state.json").write_text(json.dumps({"attempted": {"DK": date.today().isoformat()}}), encoding="utf-8")
+            calls = []
+            with mock.patch.object(cf, "crawl", lambda *a, **k: calls.append(1)):
+                asyncio.run(cf.run(["DK"], Path(d), KEY))
+            self.assertEqual(calls, [])                                        # attempted today: crawl not even started
 
     def test_not_due_is_left_alone(self):
         prev = {"v": 1, "cc": "DK", "generated": date.today().isoformat(), "n": 40, "s": []}

@@ -1,6 +1,6 @@
 // Run: node tools/test_watchdog.mjs   (needs Node 18+)
 import assert from 'node:assert/strict';
-import { judge, check } from '../worker/watchdog/index.mjs';
+import { judge, check, staleChargers } from '../worker/watchdog/index.mjs';
 
 const NOW = Date.parse('2026-11-10T16:00:00Z');
 const at = (min, base = NOW) => ({ fetched_at: new Date(base - min * 60000).toISOString() });
@@ -13,7 +13,8 @@ assert.equal(judge({ fetched_at: 'garbage' }, NOW).ok, false);
 // check(): one alert per incident, a reminder after 6 h, a recovery message, silence while healthy
 const kv = new Map(), pushes = []; let meta = at(10);
 const env = { NTFY_TOPIC: 't', STATE: { get: async k => kv.get(k) ?? null, put: async (k, v) => kv.set(k, v) } };
-globalThis.fetch = async (u, o) => u.startsWith('https://ntfy.sh/') ? (pushes.push(o.headers.Title), new Response('ok')) : (meta ? new Response(JSON.stringify(meta)) : new Response('x', { status: 500 }));
+let evGen = new Date(NOW).toISOString();
+globalThis.fetch = async (u, o) => u.startsWith('https://ntfy.sh/') ? (pushes.push(o.headers.Title), new Response('ok')) : u.includes('/ev_') ? new Response(JSON.stringify({ generated: evGen })) : (meta ? new Response(JSON.stringify(meta)) : new Response('x', { status: 500 }));
 await check(env, NOW); assert.equal(pushes.length, 0);                                    // healthy: silent
 meta = at(400); await check(env, NOW); assert.equal(pushes.length, 1);                    // goes stale: alert
 await check(env, NOW + 30 * 60000); assert.equal(pushes.length, 1);                       // still stale: no spam
@@ -30,4 +31,11 @@ meta = { ...ctys(['IT']), ...at(5, T + 60 * 60000) }; await check(env, T + 60 * 
 meta = { ...ctys(['IT', 'PL']), ...at(5, T + 90 * 60000) }; await check(env, T + 90 * 60000); assert.equal(pushes.length, 1);  // changed set: confirm first
 await check(env, T + 120 * 60000); assert.equal(pushes.length, 2);
 meta = { ...ctys([]), ...at(5, T + 150 * 60000) }; await check(env, T + 150 * 60000); assert.equal(pushes.length, 3); assert.match(pushes[2], /fresh again/);
+// charger files: stale after 14 days, same two-checks rule
+assert.deepEqual(staleChargers({ DK: '2026-11-01', DE: '2026-10-20' }, Date.parse('2026-11-14')), ['DE']);
+assert.deepEqual(staleChargers({ DK: 'garbage' }, NOW), []);
+kv.clear(); pushes.length = 0; evGen = '2026-10-01'; const T2 = Date.parse('2026-11-14T10:00:00Z');
+meta = { ...at(5, T2), countries: [] }; await check(env, T2); assert.equal(pushes.length, 0);
+await check(env, T2 + 30 * 60000); assert.equal(pushes.length, 1); assert.match(pushes[0], /charger data stale/);
+evGen = new Date(T2).toISOString(); meta = { ...at(5, T2 + 3600000), countries: [] }; await check(env, T2 + 3600000); assert.equal(pushes.length, 2); assert.match(pushes[1], /charger data fresh again/);
 console.log('test_watchdog: all passed');

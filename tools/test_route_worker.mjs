@@ -15,7 +15,7 @@ assert.equal(Object.keys(normalise(JSON.stringify({ ...ok, costing: 'bus', date_
 
 // fetch handler with a fake cache and a fake upstream
 const store = new Map(); let upstream = 0, mode = 'ok';
-globalThis.caches = { default: { match: async k => store.get(k.url) && new Response(store.get(k.url)), put: async (k, r) => { store.set(k.url, await r.text()); } } };
+globalThis.caches = { default: { match: async k => store.get(k.url) && new Response(store.get(k.url)), put: async (k, r) => { store.set(k.url, await r.text()); }, delete: async k => store.delete(k.url) } };
 globalThis.fetch = async () => { upstream++; return mode === 'ok' ? new Response('{"trip":{"status":0}}') : new Response('x', { status: 500 }); };
 const pending = []; const ctx = { waitUntil: p => pending.push(p) };
 const call = (h, url) => w.fetch(new Request(url, { headers: h }), {}, ctx);
@@ -77,4 +77,10 @@ seen.length = 0; r = await w.fetch(new Request(furl, { headers: sameSite }), {},
 assert.equal(r.headers.get('x-cache'), 'HIT'); assert.deepEqual(seen, []);
 assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/fac?la=1&lo=1', { headers: sameSite }), {}, ctx)).status, 400);
 assert.equal((await w.fetch(new Request(furl), {}, ctx)).status, 403);                         // not from our pages
+// all mirrors down: 502, and the same cell is not searched again right away
+store.clear(); pending.length = 0; seen.length = 0;
+globalThis.fetch = async (u) => { seen.push(String(u).split('/')[2]); return new Response('x', { status: 502 }); };
+assert.equal((await w.fetch(new Request(furl, { headers: sameSite }), {}, ctx)).status, 502); await Promise.all(pending);
+const calls = seen.length; assert.equal(calls, 3);
+assert.equal((await w.fetch(new Request(furl, { headers: sameSite }), {}, ctx)).status, 502); assert.equal(seen.length, calls);   // guard: no new upstream calls
 console.log('test_route_worker: all passed');

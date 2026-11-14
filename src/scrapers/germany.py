@@ -28,7 +28,7 @@ import os
 import re
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -163,6 +163,13 @@ def parse_tk_stations(data: Dict, price_entry, read_at: Optional[str] = None) ->
     return out
 
 
+def _days_between(a: str, b: str) -> int:
+    try:
+        return (date.fromisoformat(b) - date.fromisoformat(a)).days
+    except ValueError:
+        return 0
+
+
 def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float, int]], day: str) -> Dict:
     """Add one run's (fuel, stratum, BRAND, diff_ct, key) pairs to the per-day histograms and drop days older than ACC_DAYS.
     diff_ct = ANWB price minus official MTS-K price, in cents. Each station and fuel counts ONCE per day (the first reading wins):
@@ -184,13 +191,13 @@ def accuracy_update(store: Dict, pairs: List[Tuple[str, str, str, float, int]], 
             t[1] += 1
             if len(t) < 3:
                 t.append([])
-            if key not in t[2]:
-                t[2].append(key)
+            if key >> 1 not in t[2]:
+                t[2].append(key >> 1)           # the STATION (the low bit is the fuel): one pump off in petrol and diesel is still one pump
     d["seen"] = sorted(seen)
     for old_day, v in days.items():   # the seen-list is only needed for today: keeps the published file small
         if old_day != day:
             v.pop("seen", None)
-    for old in sorted(days)[:-ACC_DAYS]:
+    for old in [d_ for d_ in days if _days_between(d_, day) >= ACC_DAYS]:   # by calendar days: a meter that stopped for weeks must not keep showing old evidence as "recent"
         del days[old]
     return store
 
@@ -526,7 +533,7 @@ class GermanyScraper(BaseScraper):
                     continue
                 if acc is not None:
                     acc.append((fuel, t.get("_stratum", "other"), (t.get("brand") or "?").strip().upper()[:40],
-                                round((a["price"] - p["price"]) * 100, 1), zlib.crc32(f"{t.get('id')}|{fuel}".encode())))
+                                round((a["price"] - p["price"]) * 100, 1), (zlib.crc32(str(t.get("id")).encode()) << 1) | (fuel == "diesel")))   # low bit = fuel: key >> 1 is the station
                 lo = min(a["price"], p["price"])
                 r = abs(a["price"] - p["price"]) / lo if lo > 0 else 0
                 if r >= cfg.alt_min_pct:

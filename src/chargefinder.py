@@ -28,7 +28,7 @@ UA = {"User-Agent": "EuroFuelPrices/2.0 (+https://eurofuelprices.com; ChargeFind
 CAP = 380                           # an answer this long is probably cut at ~400: split the box
 GAP_S = 0.5
 WORKERS = 2
-MIN_SPAN = 0.02                     # degrees: never split below ~2 km; a box that is still full is accepted as it is
+MIN_SPAN = 0.01                     # degrees: never split below ~1 km; a box that is still full is accepted as it is (counted and printed as `capped`)
 MAX_PER_RUN = 2                     # countries crawled per scrape run (the rest wait for the next 15-minute run), so the chain is never held up for an hour
 BUDGET_S = 40 * 60                  # shortcut: one crawl per country in one go, no resume; fine while a country takes < 40 min
 B32 = "0123456789bcdefghjkmnpqrstuvwxyz"
@@ -124,7 +124,7 @@ async def crawl(session: aiohttp.ClientSession, cc: str, key: str, sleep=asyncio
     cf_cc, _, box = COUNTRIES[cc]
     todo = seed_boxes(box)
     found: Dict[str, Dict[str, Any]] = {}
-    state = {"fails": 0, "calls": 0, "miss": 0, "stop": None}
+    state = {"fails": 0, "calls": 0, "miss": 0, "capped": 0, "stop": None}
     t0 = clock()
 
     async def one(b):
@@ -165,11 +165,14 @@ async def crawl(session: aiohttp.ClientSession, cc: str, key: str, sleep=asyncio
             for x in lst:
                 if inside(x, b) and x.get("slug"):
                     found[x["slug"]] = x
-            if len(lst) >= CAP and (b[1] - b[0]) > MIN_SPAN:
-                todo.extend(split4(b))
+            if len(lst) >= CAP:
+                if (b[1] - b[0]) > MIN_SPAN:
+                    todo.extend(split4(b))
+                else:
+                    state["capped"] += 1
 
     await asyncio.gather(*(worker() for _ in range(WORKERS)))
-    print(f"[chargefinder] {cc}: {len(found)} raw stations, {state['calls']} calls, stop={state['stop']}")
+    print(f"[chargefinder] {cc}: {len(found)} raw stations, {state['calls']} calls, {state['capped']} boxes still full at the smallest size, stop={state['stop']}")
     if state["stop"]:
         return None
     return [x for x in found.values() if (x.get("locationAddress") or {}).get("countryCode", "").upper() == cf_cc]
@@ -194,6 +197,11 @@ async def run(countries: List[str], out_dir: Path, key: str, force: bool = False
     drop vs the previous file, no key in the output), write out_dir/ev_<cc>.json. A failed or refused try keeps the last good file and stamps
     `attempted`, so a bad day is not retried every 15 minutes. Returns files written."""
     ok, today = 0, datetime.now(timezone.utc).date()
+    sp = out_dir / "cf_state.json"                   # {"attempted": {cc: date}}: published and downloaded again each run, so a country WITHOUT a file is not retried every 15 minutes either
+    try:
+        att = dict(json.loads(sp.read_text(encoding="utf-8")).get("attempted") or {})
+    except (OSError, ValueError, AttributeError):
+        att = {}
     async with aiohttp.ClientSession() as session:
         tried = 0
         for cc in countries:
@@ -204,15 +212,15 @@ async def run(countries: List[str], out_dir: Path, key: str, force: bool = False
                 prev = None
             if prev and prev.get("v") != 1:
                 prev = None
-            if not (force or chargers.due(prev, today)):
+            if not force and (att.get(cc) == today.isoformat() or not chargers.due(prev, today)):
                 print(f"[chargefinder] {cc}: not due")
                 continue
             if tried >= MAX_PER_RUN:
                 print(f"[chargefinder] {cc}: due, waits for the next run")
                 continue
             tried += 1
-            if prev:
-                chargers.write_json(path, {**prev, "attempted": today.isoformat()})
+            att[cc] = today.isoformat()
+            chargers.write_json(sp, {"attempted": att})          # before the crawl: a crash or the step timeout must not mean a retry in 15 minutes
             raw = await crawl(session, cc, key)
             sts = [x for x in (reduce_station(r, COUNTRIES[cc][0], today.year) for r in raw or []) if x]
             sts, merged = chargers.dedupe(sts)

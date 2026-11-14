@@ -33,7 +33,7 @@
   script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://overpass.private.coffee https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
+  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -4802,38 +4802,35 @@ function toggleFac(btn, id) {
   body.hidden = !open; btn.setAttribute('aria-expanded', String(open));
   if (open && !body.dataset.done && !body.dataset.busy) loadFac(findStation(id), body);
 }
-const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+const FAC_MAX = 40;      // stations kept: one storage key, the oldest dropped first, so it can never crowd out the user's settings
+const facCache = () => { try { const c = JSON.parse(localStorage.getItem('efp_fac') || '{}'); return c && typeof c === 'object' ? c : {}; } catch (_) { return {}; } };
+function facCacheSet(id, items) {
+  try {
+    const c = facCache(); c[id] = { t: Date.now(), i: items };
+    const keep = Object.entries(c).sort((a, b) => b[1].t - a[1].t).slice(0, FAC_MAX);
+    localStorage.setItem('efp_fac', JSON.stringify(Object.fromEntries(keep)));
+  } catch (_) {}
+}
+try { Object.keys(localStorage).filter(k => k.startsWith('efp_fac_')).forEach(k => localStorage.removeItem(k)); } catch (_) {}   // per-station keys of the first version
 const FAC_TTL = 7 * 864e5;   // facilities hardly change: a good answer is kept a week on this device (nothing about the user is stored, only the station id and what was found around it)
 const FAC_G = [['food', ['cafe', 'restaurant', 'fast_food']], ['shops', ['convenience', 'supermarket', 'kiosk']], ['toilets', ['toilets']]];
 async function loadFac(s, body) {
   if (!s) return;
-  if (!_fac.has(s.id)) { try { const c = JSON.parse(localStorage.getItem('efp_fac_' + s.id) || 'null'); if (c && Date.now() - c.t < FAC_TTL && Array.isArray(c.i)) _fac.set(s.id, c.i); } catch (_) {} }
+  if (!_fac.has(s.id)) { const c = facCache()[s.id]; if (c && Date.now() - c.t < FAC_TTL && Array.isArray(c.i)) _fac.set(s.id, c.i); }
   if (!_fac.has(s.id)) {
     body.innerHTML = `<p class="empty">${esc(t('loadingEllipsis'))}</p>`; body.dataset.busy = '1';
     const t0 = Date.now();
     try {
       const q = `[out:json][timeout:6];(nwr(around:200,${s.lat},${s.lon})[amenity~"^(cafe|restaurant|fast_food|toilets)$"];nwr(around:200,${s.lat},${s.lon})[shop~"^(convenience|supermarket|kiosk)$"];);out center tags 60;`;
-      let r = null;
-      // hedged request: our proxy starts at once, the public mirrors join after 2.5 s, 4 s and 5.5 s if nothing has answered; the first good answer wins, 9 s in total
-      const acs = [null, ...OVERPASS].map(() => new AbortController());   // 0 = our own /api/fac proxy (cached, reliable), then the public mirrors
-      const hit = await new Promise(resolve => {
-        let left = OVERPASS.length + 1; const timers = [];
-        const fin = v => { timers.forEach(clearTimeout); acs.forEach(a => { try { a.abort(); } catch (_) {} }); resolve(v); };
-        const one = async i => {
-          try { const x = await (i === 0 ? fetch(`/api/fac?la=${s.lat}&lo=${s.lon}`, { signal:acs[0].signal }) : fetch(OVERPASS[i - 1], { method:'POST', body:'data=' + encodeURIComponent(q), headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, signal:acs[i].signal })); if (x.ok) return fin(await x.json()); } catch (_) {}
-          if (--left === 0) fin(null);
-        };
-        acs.forEach((_, i) => timers.push(setTimeout(() => one(i), i ? 2500 + (i - 1) * 1500 : 0)));
-        timers.push(setTimeout(() => fin(null), 9000));
-      });
-      r = hit ? { ok: true, json: async () => hit } : null;
+      // one place asks the public mirrors: our own /api/fac Worker (cached a week, keeps searching after we gave up, so the retry button usually finds the answer). shortcut: no direct fallback, so without the Worker (local file preview) the error line shows; add one if the Worker is ever dropped
+      const r = await fetch(`/api/fac?la=${s.lat}&lo=${s.lon}`, { signal: AbortSignal.timeout(10000) }).catch(() => null);
       if (!r || !r.ok) throw new Error('overpass');
       const j = await r.json();
       _fac.set(s.id, (j.elements || []).map(e => {
         const la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon, tg = e.tags || {};
         return la == null ? null : { n: tg.name || '', k: tg.amenity || tg.shop, d: dist(s.lat, s.lon, la, lo) };
       }).filter(Boolean).sort((a, b) => a.d - b.d));
-      try { localStorage.setItem('efp_fac_' + s.id, JSON.stringify({ t: Date.now(), i: _fac.get(s.id) })); } catch (_) {}
+      facCacheSet(s.id, _fac.get(s.id));
     } catch (_) { body.innerHTML = `<p class="empty">${esc(t('facErr'))}</p><button type="button" class="st-go" style="width:100%" onclick="loadFac(findStation('${escId(s.id)}'), this.parentNode)">${esc(t('facRetry'))}</button>${ATTR_OSM}`; return; }
     finally { delete body.dataset.busy; }
   }
@@ -5778,7 +5775,7 @@ function ctyNote(cc) {
     h += `<div>${esc(t('gapLine', { f: t(g.fuel === 'p95' ? 'gapP95' : 'gapDiesel'), n: g.n, o: g.other, p: g.primary, x: (g.median_pct > 0 ? '+' : '') + (+g.median_pct).toFixed(1) + '%' }))}</div>`;
   }
   if (cc === 'DE') {   // the meter's own rule (owner decision 2026-11-14): >= 2000 station-day checks, >= 95 % within 1 ct, median difference < 0.5 ct; withdraws itself when the numbers slip
-    if (!rtAccData && !ctyNote.tried) { ctyNote.tried = true; rtAccLoad().then(ok => ok && ctyNote(cc)); }
+    if (!rtAccData && !ctyNote.tried) { ctyNote.tried = true; rtAccLoad().then(ok => { if (ok) ctyNote(cc); else setTimeout(() => { ctyNote.tried = false; }, 60000); }); }   // a failed load is tried again a minute later, on the next country change
     const a = rtAccData;
     if (a && a.n >= 2000 && a.within_1ct_pct >= 95 && Math.abs(a.bias_median_ct) < 0.5) h += `<div>${esc(t('deVerified', { p: dec(String(a.within_1ct_pct)), n: a.n, d: a.days }))}</div>`;
   }
@@ -7398,7 +7395,7 @@ function rtPlanNow(rows) {
 // Measured error of the German ANWB prices against the official feed (de_accuracy.json, written by the scrape job): 90th percentile of |difference| per fuel
 let rtAccData = null, rtAccTried = false;
 async function rtAccLoad() {
-  try { const r = await fetch('de_accuracy.json'); if (!r.ok) return false; const j = await r.json(); rtAccData = j && j.summary && j.summary.n >= 500 ? j.summary : null; } catch (_) { rtAccData = null; }
+  try { const r = await fetch('de_accuracy.json'); if (!r.ok) return false; const j = await r.json(); rtAccData = j && j.summary && j.summary.n >= 500 && Date.now() - Date.parse(j.updated) < 3 * 864e5 ? j.summary : null; } catch (_) { rtAccData = null; }   // older than 3 days = the meter stopped: no claim, no narrowed range
   return !!rtAccData;
 }
 // UNC-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_route_model.js)

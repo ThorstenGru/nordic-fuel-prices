@@ -295,7 +295,7 @@ class AccuracyMeter(unittest.TestCase):
         acc = []
         GermanyScraper._merge(base, tk, add_extras=False, acc=acc)
         import zlib
-        self.assertEqual(acc, [("petrol", "rural", "ARAL", 0.9, zlib.crc32(b"de_tk_tk0|petrol")), ("diesel", "rural", "ARAL", 0.9, zlib.crc32(b"de_tk_tk0|diesel"))])   # ANWB minus official, in ct, + dedupe key
+        self.assertEqual(acc, [("petrol", "rural", "ARAL", 0.9, (zlib.crc32(b"de_tk_tk0") << 1)), ("diesel", "rural", "ARAL", 0.9, ((zlib.crc32(b"de_tk_tk0") << 1) | 1))])   # ANWB minus official, in ct, + dedupe key
 
 
 class RiskyBrands(unittest.TestCase):
@@ -340,9 +340,21 @@ class OneBadPump(unittest.TestCase):
         store = {}
         for st in range(6):                                                     # six different stations, all off, 4 days
             for day in range(4):
-                accuracy_update(store, [("petrol", "metro", "CHAIN", 3.0, 300 + st)], f"2026-11-{day + 1:02d}")
+                accuracy_update(store, [("petrol", "metro", "CHAIN", 3.0, 300 + 2 * st)], f"2026-11-{day + 1:02d}")
         w = [x for x in accuracy_summary(store)["worst_brands"] if x["brand"] == "CHAIN"][0]
         self.assertGreaterEqual(w["off_stations"], RISKY_MIN_STATIONS)
+        store = {}
+        for st in range(3):                                                     # three pumps, each off in petrol AND diesel = 3 stations, not 6
+            for fuel_bit in (0, 1):
+                accuracy_update(store, [("petrol", "metro", "TRIO", 3.0, ((500 + st) << 1) | fuel_bit)] * 1, "2026-11-01")
+        w = [x for x in accuracy_summary(store)["worst_brands"] if x["brand"] == "TRIO"]
+        self.assertEqual(w[0]["off_stations"] if w else 3, 3)
+
+    def test_days_are_dropped_by_calendar_not_by_count(self):
+        store = {}
+        accuracy_update(store, [("petrol", "metro", "X", 0.0, 2)], "2026-10-01")
+        accuracy_update(store, [("petrol", "metro", "X", 0.0, 4)], "2026-11-14")        # the meter was off for six weeks
+        self.assertEqual(list(store["days"]), ["2026-11-14"])
 
 
 if __name__ == "__main__":
