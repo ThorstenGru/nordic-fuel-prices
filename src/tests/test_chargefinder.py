@@ -123,7 +123,7 @@ class Run(unittest.TestCase):
 
     def test_decoy_answer_is_refused(self):
         far = enc([st(i, 40.0 + i * 0.01, 3.0) for i in range(10)])    # stations nowhere near the box
-        self.assertEqual(self.go(lambda u: (200, far))[0], 0)
+        self.assertEqual(self.go(lambda u: (200, far))[0], 0)            # no station in the box: nothing usable
 
     def test_big_drop_refused(self):
         prev = {"v": 1, "cc": "DK", "generated": "2026-10-01", "n": 40, "s": []}

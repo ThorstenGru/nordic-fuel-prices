@@ -36,6 +36,10 @@ B32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 COUNTRIES: Dict[str, Tuple[str, Tuple[int, int], Tuple[float, float, float, float]]] = {
     "DK": ("DK", (3000, 20000), (54.5, 57.9, 7.9, 15.3)),
     "DE": ("DE", (30000, 150000), (47.2, 55.2, 5.8, 15.1)),
+    "NL": ("NL", (1000, 400000), (50.7, 53.6, 3.3, 7.3)),
+    "BE": ("BE", (1000, 150000), (49.45, 51.55, 2.5, 6.45)),
+    "IE": ("IE", (100, 30000), (51.3, 55.5, -10.7, -5.9)),
+    "IS": ("IS", (20, 5000), (63.2, 66.7, -24.6, -13.3)),
 }
 
 
@@ -117,7 +121,7 @@ async def crawl(session: aiohttp.ClientSession, cc: str, key: str, sleep=asyncio
     cf_cc, _, box = COUNTRIES[cc]
     todo = seed_boxes(box)
     found: Dict[str, Dict[str, Any]] = {}
-    state = {"fails": 0, "calls": 0, "stop": None}
+    state = {"fails": 0, "calls": 0, "miss": 0, "stop": None}
     t0 = clock()
 
     async def one(b):
@@ -149,9 +153,12 @@ async def crawl(session: aiohttp.ClientSession, cc: str, key: str, sleep=asyncio
                 state["fails"] += 1
                 continue
             state["fails"] = 0
-            if lst and not any(inside(x, b) for x in lst):          # an answer that has nothing to do with the box = the API is serving a default list
-                state["stop"] = "answer does not match the requested box"
-                return
+            if lst and not any(inside(x, b) for x in lst):          # nothing of the answer is in the box = a default list (an empty sea box gets one); only a run of them means the API is not answering for the box
+                state["miss"] += 1
+                if state["miss"] >= 8 and state["miss"] > state["calls"] / 3:
+                    state["stop"] = "answers do not match the requested boxes"
+                    return
+                continue
             for x in lst:
                 if inside(x, b) and x.get("slug"):
                     found[x["slug"]] = x
