@@ -185,6 +185,8 @@ def encode(frames: list, out: Path) -> None:
     lst = out.parent / "clips.txt"
     lst.write_text("".join(f"file '{c.name}'\n" for c in clips), encoding="utf-8")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", "-movflags", "+faststart", str(out)], check=True)
+    import fb_music
+    fb_music.add_music(out, len(frames) * SECONDS)      # elevator music under every video (synthesised, no licence); the silent video stays if this fails
 
 
 def build(today: date, outdir: Path, ignore_log: bool = False):
