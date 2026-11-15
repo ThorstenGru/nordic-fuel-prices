@@ -36,6 +36,25 @@ class Posts(unittest.TestCase):
         self.assertIn("Quick quiz", text)
         self.assertNotIn("cheaper in", text)
 
+    def test_links_only_for_link_formats_and_only_twice_a_month(self):
+        today = date(2026, 11, 16)
+        text, fmt = fb.compose("Body.", "https://x/europe/", "Full ranking: ", "ranking", [], today)
+        self.assertEqual(fmt, "ranking-link")
+        self.assertIn("https://x/europe/", text)
+        self.assertIn(fb.CTA_TOWN, text)
+        used = [{"date": "2026-11-02", "format": "ranking-link"}, {"date": "2026-11-09", "format": "spotlight-link"}]
+        text, fmt = fb.compose("Body.", "https://x/europe/", "Full ranking: ", "ranking", used, today)
+        self.assertEqual(fmt, "ranking")                                              # allowance used up: no link, the Page button instead
+        self.assertNotIn("http", text)
+        self.assertIn(fb.CTA_NOLINK, text)
+        text, fmt = fb.compose("Tip.", "https://x/", "", "feature", [], today)
+        self.assertEqual(fmt, "feature")
+        self.assertNotIn("http", text)                                                # tips never carry a link
+        used = [{"date": "2026-10-02", "format": "ranking-link"}, {"date": "2026-10-09", "format": "ranking-link"}]
+        self.assertEqual(fb.compose("B.", "https://x/", "", "ranking", used, today)[1], "ranking-link")   # last month's links do not count
+        text, fmt = fb.compose("Ask.", "https://x/", "", "local-ask", [], today)
+        self.assertNotIn(fb.CTA_TOWN, text)                                     # the ask itself is not asked twice
+
     def test_pick_skips_recent_keys(self):
         used = [{"date": "2026-11-10", "key": "a"}, {"date": "2026-10-01", "key": "b"}]
         self.assertEqual(fb.pick(["a", "b", "c"], used, date(2026, 11, 11)), "b")   # a is recent, b is old

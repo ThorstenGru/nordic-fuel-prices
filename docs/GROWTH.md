@@ -65,3 +65,12 @@ Tone: professional and polite. Send from your own address.
 ## Cautions
 - DE, CH, NL, BE, PL and other ANWB-fed numbers are grade C and unofficial; the index shows the grade next to every country. Do not put ANWB-derived pages into press outreach as "official".
 - The open-data files contain country medians only (no station rows). They are offered "free to reuse with a link"; no formal licence was chosen. Decide on CC BY 4.0 if you want one.
+
+## Facebook as the main traffic driver (2026-11-15)
+Research summary (blogs plus a few hard numbers, treat multipliers loosely): Meta pushes posts with external links down and tests a cap of 2 link posts a month per Page; Reels have the highest organic engagement; comments and Groups drive reach for small Pages.
+What changed in the automation:
+- **Posts carry no link by default.** Only ranking, spotlight and border-pair posts may link, at most 2 a month (logged as `<format>-link`); everything else points to the Page's website button. Every post ends with the invitation to comment a town (`tools/fb_daily.py` `compose`).
+- **The reply bot reads every post of the last 4 days**, not only the Saturday ask, likes each new comment it reads (best effort, needs `pages_manage_engagement`) and ends each answer with "Another town? Just comment it." (`tools/fb_bot.py`).
+- **Three Reels a week** (Tue border run, Thu cheapest petrol 95, Sat cheapest diesel) from `tools/fb_reels.py` via `facebook-reels.yml`; Reels API first, a normal video if that fails. The Sunday weekly video stays.
+- **Weekly numbers** (`facebook-insights.yml`, Monday): `docs/facebook/insights_weekly.csv` (followers, reactions, comments, shares) and `insights_posts.csv` (per post with our format), printed as interactions per post by format, so the mix can be tuned on data.
+- Not automated on purpose: posting in groups (each group has its own rules; the owner posts), paid boosts.

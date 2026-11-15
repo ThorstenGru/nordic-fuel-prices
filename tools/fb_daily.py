@@ -27,6 +27,29 @@ CF_IP = "104.21.74.127"   # fallback only: this machine's DNS has failed for the
 MIN_N = 300               # a country needs this many priced stations to be quoted in a post
 FILL_L = 50
 
+# Interaction first (2026-11-15): Facebook reaches posts with external links much less (Meta tests 2 link posts a month for Pages), so a post carries its link
+# only for the formats below and only LINKS_PER_MONTH times a month (logged as format "<format>-link"). Every other post ends with the invitation to
+# comment a town, which the reply bot answers, and points to the Page's website button instead of printing a link.
+LINK_FORMATS = ("ranking", "spotlight", "border-pair")
+LINKS_PER_MONTH = 2
+CTA_TOWN = "Comment your town and country (e.g. “Hamburg, Germany”) and we reply with the cheapest petrol and diesel within 10 km."
+CTA_NOLINK = "The live map is behind the website button on our Page."
+
+
+def link_budget_left(used, today):
+    month = today.isoformat()[:7]
+    return sum(1 for r in used if str(r.get("date", ""))[:7] == month and str(r.get("format", "")).endswith("-link")) < LINKS_PER_MONTH
+
+
+def compose(body, url, label, fmt, used, today):
+    """-> (text, logged format). The link goes in only for LINK_FORMATS while the month's allowance lasts; the town invitation goes on every post except the ask itself."""
+    link = fmt in LINK_FORMATS and link_budget_left(used, today)
+    parts = [body]
+    if fmt != "local-ask":
+        parts.append(CTA_TOWN)
+    parts.append(f"{label}{url}" if link else CTA_NOLINK)
+    return "\n\n".join(parts), (fmt + "-link" if link else fmt)
+
 FEATURES = [
     ("cheapest-in-view", "Tip: find the cheapest pump on your screen", "Pan or zoom the map and the “Cheapest in view” card shows the lowest price among the stations you can see. Which fuel do you fill most: petrol 95 or diesel?", "/"),
     ("tank-size", "Tip: see what a full tank really costs", "Set your tank size once and every station shows the cost of a fill-up, not just the price per litre. What size is your tank?", "/"),
@@ -104,11 +127,10 @@ def pair_post(m, a, b, quiz=False):
     url = f"{SITE}/europe/{pair_slug(a, b)}/"
     note = grade_note([va[2], vb[2]])
     if quiz:
-        text = (f"Quick quiz: {label.lower()} in {NAMES[a]} or in {NAMES[b]}, where is it cheaper today? "
-                f"Answer in the comments, then check the numbers: {url}")
+        text = f"Quick quiz: {label.lower()} in {NAMES[a]} or in {NAMES[b]}, where is it cheaper today? Answer in the comments."
     else:
         text = (f"{label} is about €{abs(d):.2f} per litre cheaper in {cheaper} than in {dearer} today (median station price{note}), "
-                f"about €{abs(d) * FILL_L:.2f} on a {FILL_L} L fill-up. Would you drive across the border for that? {url}")
+                f"about €{abs(d) * FILL_L:.2f} on a {FILL_L} L fill-up. Would you drive across the border for that?")
     return text, f"{SITE}/og/{pair_slug(a, b)}.png", url
 
 
@@ -135,16 +157,17 @@ def build(today: date, out: Path, audience=None, download=True):
             lo, hi = p95[0], p95[-1]
             note = grade_note([m[(lo[1], "p95")][2], m[(hi[1], "p95")][2]])
             text = (f"Petrol 95 across Europe today: cheapest {NAMES[lo[1]]} at €{lo[0]:.2f}/L, most expensive {NAMES[hi[1]]} at €{hi[0]:.2f}/L "
-                    f"(median station prices{note}). Does your country’s price surprise you? Full ranking: {SITE}/europe/")
-            result = (text, f"{SITE}/og/europe.png", "ranking", "europe")
+                    f"(median station prices{note}). Does your country’s price surprise you?")
+            result = (text, f"{SITE}/og/europe.png", "ranking", "europe", f"{SITE}/europe/", "Full ranking: ")
     elif wd == 4:   # local spotlight: cheapest within 10 km of a town (aggregate: rotating town or where followers are)
         import fb_local
         built = fb_local.spotlight(fetch, used, today, audience)
         if built:
-            result = (built[0], f"{SITE}/og-image.png", "spotlight", built[1])
+            body, _, url = built[0].rpartition(" More: ")          # fb_local.local_text ends with "More: <town page>"
+            result = (body or built[0], f"{SITE}/og-image.png", "spotlight", built[1], url if body else SITE, "More: ")
     elif wd == 5:   # opt-in: people comment their town, the bot replies with the cheapest nearby
         result = ("Where do you fill up? Comment your town (and country, e.g. “Hamburg, Germany”) and we will reply with the cheapest petrol and diesel "
-                  f"stations within 10 km, as listed on our map. Covered: DE, CH, FR, ES, PT, DK, NL, SE, BE, PL, IT. {SITE}", f"{SITE}/og-image.png", "local-ask", "local-ask")
+                  "stations within 10 km, as listed on our map. Covered: DE, CH, FR, ES, PT, DK, NL, SE, BE, PL, IT.", f"{SITE}/og-image.png", "local-ask", "local-ask", SITE, "")
     elif wd in (1, 2):   # border pair / quiz
         ranked = sorted(pairs, key=lambda p: -max(abs(r[2][0] - r[1][0]) for r in pair_data(m, *p)))
         keys = [pair_slug(*p) for p in ranked]
@@ -152,15 +175,16 @@ def build(today: date, out: Path, audience=None, download=True):
         a, b = next(p for p in ranked if pair_slug(*p) == key)
         built = pair_post(m, a, b, quiz=(wd == 2))
         if built:
-            result = (built[0], built[1], {1: "border-pair", 2: "quiz"}[wd], key)
+            result = (built[0], built[1], {1: "border-pair", 2: "quiz"}[wd], key, built[2], "Numbers: ")
     elif wd in (3, 6):   # feature tips (how to use)
         key = pick([f[0] for f in FEATURES], used, today, days=len(FEATURES) - 1)
         f = next(x for x in FEATURES if x[0] == key)
-        result = (f"{f[1]}. {f[2]} {SITE}{f[3]}", f"{SITE}/og-image.png", "feature", key)
+        result = (f"{f[1]}. {f[2]}", f"{SITE}/og-image.png", "feature", key, SITE + f[3], "")
     if not result:
         return {"skip": "not enough data for today's format"}
-    text, img_url, fmt, key = result
-    res = {"text": text, "image_url": img_url, "format": fmt, "key": key, "date": today.isoformat()}
+    body, img_url, fmt, key, url, label = result
+    text, logged = compose(body, url, label, fmt, used, today)
+    res = {"text": text, "image_url": img_url, "format": logged, "key": key, "date": today.isoformat()}
     if download:                      # the browser route needs a local file; the Graph API route posts the public URL
         out.mkdir(parents=True, exist_ok=True)
         img = out / f"fb_{today.isoformat()}.png"

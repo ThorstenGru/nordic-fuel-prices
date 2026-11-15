@@ -213,7 +213,7 @@ def build(today: date, outdir: Path, ignore_log: bool = False):
     video = outdir / f"weekly_{week_key(today)}.mp4"
     encode(frames, video)
     text = (f"Europe’s fuel prices this week: petrol 95 is cheapest in {sc[0]['rows'][0][0]} ({sc[0]['rows'][0][1]}/L) and dearest in "
-            f"{sc[1]['rows'][0][0]} ({sc[1]['rows'][0][1]}/L), median station prices. Full ranking and live map: {fb_daily.SITE}/europe/")
+            f"{sc[1]['rows'][0][0]} ({sc[1]['rows'][0][1]}/L), median station prices.\n\n{fb_daily.CTA_TOWN}\n\n{fb_daily.CTA_NOLINK}")
     return {"video": video, "text": text, "key": week_key(today), "date": today.isoformat(), "format": "weekly-video"}
 
 

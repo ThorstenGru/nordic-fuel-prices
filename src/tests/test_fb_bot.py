@@ -30,7 +30,7 @@ def fetch(url, dest=None, timeout=30):
 
 class Graph:
     def __init__(self, comments=()):
-        self.posts, self.replies, self.comments = [], [], list(comments)
+        self.posts, self.replies, self.comments, self.likes = [], [], list(comments), []
 
     def follower_cities(self, pid, tok):
         return {}
@@ -48,6 +48,10 @@ class Graph:
     def reply(self, cid, tok, message):
         self.replies.append((cid, message))
         return "r1"
+
+    def like(self, cid, tok):
+        self.likes.append(cid)
+        return True
 
 
 class Local(unittest.TestCase):
@@ -166,6 +170,19 @@ class Bot(unittest.TestCase):
         fb_bot.run_replies(False, g, fetch, date(2026, 11, 22))                      # second pass: all comments already handled
         self.assertEqual([r[0] for r in g.replies], ["c1"])
         self.assertIn("within 10 km of Hamburg", g.replies[0][1])
+        self.assertIn("Another town? Just comment it.", g.replies[0][1])             # keeps the conversation going
+        self.assertEqual(g.likes, ["c1", "c2"])                                      # the Page likes what it reads, never its own comment, once
+
+    def test_every_recent_post_is_read_not_only_the_saturday_ask(self):
+        self.log.write_text("date,format,key,post_id\n2026-11-21,weekly-video,2026-W46,777\n2026-11-10,ranking,europe,555\n", encoding="utf-8")
+        seen = []
+
+        class G(Graph):
+            def get_comments(self, post_id, tok):
+                seen.append(post_id)
+                return []
+        fb_bot.run_replies(False, G(), fetch, date(2026, 11, 22))
+        self.assertEqual(seen, ["777"])                                              # a video from yesterday yes, a post from 12 days ago no
 
 
 if __name__ == "__main__":

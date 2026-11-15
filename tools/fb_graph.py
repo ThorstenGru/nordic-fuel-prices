@@ -77,6 +77,57 @@ def post_video(page_id: str, token: str, message: str, path: str, timeout: int =
         raise GraphError(f"POST videos: {e.reason}".replace(token, "***")) from None
 
 
+def post_reel(page_id: str, token: str, description: str, path: str, call_fn=call, upload_fn=None, timeout: int = 300) -> str:
+    """Publish a 9:16 video as a Reel (Reels Publishing API): start -> upload the bytes to the returned URL -> finish with PUBLISHED. Returns the video id.
+    Raises GraphError at any step; the caller then falls back to a normal video so the post is never lost."""
+    start = call_fn("POST", f"{page_id}/video_reels", token, {"upload_phase": "start"})
+    vid, url = str(start.get("video_id", "")), start.get("upload_url", "")
+    if not vid or not url:
+        raise GraphError("reel: no video_id / upload_url from the start phase")
+    with open(path, "rb") as f:
+        blob = f.read()
+    if upload_fn is None:
+        def upload_fn(u, data):
+            req = urllib.request.Request(u, data=data, method="POST", headers={"Authorization": "OAuth " + token, "offset": "0", "file_size": str(len(data)),
+                                                                              "Content-Type": "application/octet-stream"})
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as r:
+                    return json.loads(r.read().decode("utf-8") or "{}")
+            except urllib.error.HTTPError as e:
+                raise GraphError(f"reel upload: HTTP {e.code}") from None
+            except urllib.error.URLError as e:
+                raise GraphError(f"reel upload: {e.reason}") from None
+    up = upload_fn(url, blob)
+    if isinstance(up, dict) and up.get("success") is False:
+        raise GraphError("reel upload refused")
+    fin = call_fn("POST", f"{page_id}/video_reels", token, {"upload_phase": "finish", "video_id": vid, "video_state": "PUBLISHED", "description": description})
+    if not fin.get("success", True):
+        raise GraphError("reel publish refused")
+    return vid
+
+
+def like(object_id: str, token: str, call_fn=call) -> bool:
+    """The Page likes a comment (shows people we read it, and counts as interaction). Best effort: needs pages_manage_engagement."""
+    try:
+        return bool(call_fn("POST", f"{object_id}/likes", token).get("success"))
+    except GraphError:
+        return False
+
+
+def page_stats(page_id: str, token: str, call_fn=call) -> dict:
+    """followers_count / fan_count of the Page ({} on error)."""
+    try:
+        return call_fn("GET", page_id, token, {"fields": "followers_count,fan_count"})
+    except GraphError:
+        return {}
+
+
+def recent_posts(page_id: str, token: str, limit: int = 50, call_fn=call) -> list:
+    """The Page's latest posts with their basic engagement counts (reactions, comments, shares)."""
+    r = call_fn("GET", f"{page_id}/posts", token, {"fields": "id,created_time,shares,reactions.summary(true).limit(0),comments.summary(true).limit(0)", "limit": str(limit)})
+    return r.get("data", [])
+
+
 def get_comments(object_id: str, token: str, call_fn=call) -> list:
     r = call_fn("GET", f"{object_id}/comments", token, {"fields": "id,message,from,created_time", "limit": "100", "filter": "stream"})
     return r.get("data", [])

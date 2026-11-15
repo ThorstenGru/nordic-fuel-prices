@@ -111,7 +111,7 @@ def spotlight(fetch, used, today, audience=None, days=30):
         grades = {c["country"].lower(): c.get("grade") for c in meta.get("countries", [])}
     except Exception:
         return None
-    recent = {r.get("key") for r in used if r.get("format") == "spotlight" and (today - datetime.fromisoformat(r["date"]).date()).days < days}
+    recent = {r.get("key") for r in used if str(r.get("format", "")).startswith("spotlight") and (today - datetime.fromisoformat(r["date"]).date()).days < days}
     candidates = []
     for place in (audience or {}):                       # "City, Region, Country" -> aggregate follower cities, biggest first
         parts = [p.strip() for p in place.split(",")]
@@ -175,4 +175,4 @@ def answer_for(name, cc, fetch, now=None, grades=None, cache=None):
     g = sp.COUNTRIES[c].get("data", c)
     if grades and grades.get(g) not in ("A", "B", "C", "D"):
         return None                                          # no usable source grade: say nothing rather than guess
-    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:", (grades or {}).get(g, "C"))
+    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:", (grades or {}).get(g, "C")) + chr(10) + "Another town? Just comment it."

@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOG = fb_daily.LOG
 REPLIED = ROOT / "docs" / "facebook" / "replied.csv"
 MAX_REPLIES = 15
+MAX_LIKES = 40                  # per hourly run
 LOG_FIELDS = ["date", "format", "key", "post_id"]
 
 
@@ -90,18 +91,20 @@ def run_replies(dry: bool, graph=fb_graph, fetch=fb_daily.fetch, today=None) -> 
     if not c:
         return 0
     pid, tok = c
-    asks = [r for r in fb_daily.read_log() if r.get("format") == "local-ask" and r.get("post_id")
-            and (today - date.fromisoformat(r["date"])).days <= 7]
+    # every post invites a town in the comments now (not only the Saturday ask), so every recent post with an id is read
+    asks = [r for r in fb_daily.read_log() if r.get("format") not in (None, "skip") and r.get("post_id") and (today - date.fromisoformat(r["date"])).days <= 4]
     if not asks:
-        print("fb_bot: no recent 'comment your town' post")
+        print("fb_bot: no recent post to read comments on")
         return 0
     graph.verify_page(pid, tok)
-    done, sent, cache = read_replied(), 0, {}      # one download per country file per run, not one per comment
+    done, sent, cache, likes = read_replied(), 0, {}, 0      # one download per country file per run, not one per comment
     for post in asks:
         for cm in graph.get_comments(post["post_id"], tok):
             cid = cm.get("id")
             if not cid or cid in done or str((cm.get("from") or {}).get("id", "")) == str(pid):
                 continue
+            if not dry and likes < MAX_LIKES:
+                likes += graph.like(cid, tok)                         # interaction: the Page likes every new comment it reads
             m = fb_local.match_comment(cm.get("message", ""))
             text = fb_local.answer_for(m[0], m[1], fetch, cache=cache) if m else None
             if not text:
