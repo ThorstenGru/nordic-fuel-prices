@@ -1,6 +1,6 @@
 // Run: node tools/test_route_worker.mjs   (needs Node 18+)
 import assert from 'node:assert/strict';
-import w, { normalise, facQuery } from '../worker/route/index.mjs';
+import w, { normalise, facQuery, tally, EVENTS, POLL } from '../worker/route/index.mjs';
 
 const ok = { locations: [{ lat: 55.6049, lon: 13.0038 }, { lat: 53.5511, lon: 9.9937 }], alternates: 2 };
 const n = normalise(JSON.stringify(ok));
@@ -83,4 +83,16 @@ globalThis.fetch = async (u) => { seen.push(String(u).split('/')[2]); return new
 assert.equal((await w.fetch(new Request(furl, { headers: sameSite }), {}, ctx)).status, 502); await Promise.all(pending);
 const calls = seen.length; assert.equal(calls, 3);
 assert.equal((await w.fetch(new Request(furl, { headers: sameSite }), {}, ctx)).status, 502); assert.equal(seen.length, calls);   // guard: no new upstream calls
+// counters: only whitelisted names, POST only, same-origin only, one upsert each
+const dbCalls = []; const env2 = { DB: { prepare: sql => ({ bind: (...a) => ({ run: async () => { dbCalls.push([sql.split(' ')[2], ...a]); } }) }) } };
+const post = (q, h = sameSite) => w.fetch(new Request('https://eurofuelprices.com/api/poll?' + q, { method: 'POST', headers: h }), env2, ctx);
+store.clear(); pending.length = 0;
+assert.equal((await post('e=route_planned')).status, 204); assert.equal(dbCalls[0][0], 'events'); assert.match(dbCalls[0][1], /^\d{4}-\d{2}-\d{2}$/); assert.equal(dbCalls[0][2], 'route_planned');
+assert.equal((await post('q=use&a=route')).status, 204); assert.deepEqual(dbCalls[1], ['poll', 'use', 'route']);
+assert.equal((await post('e=drop_table')).status, 400); assert.equal((await post('q=use&a=hack')).status, 400); assert.equal((await post('q=zzz&a=route')).status, 400);
+assert.equal((await post('e=route_planned', {})).status, 403);                                  // not from our pages
+assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/poll?e=route_planned', { headers: sameSite }), env2, ctx)).status, 405);   // GET refused
+assert.equal(dbCalls.length, 2); assert.ok(EVENTS.has('trip_calc') && POLL.next.includes('alerts'));
+store.clear(); let last; for (let i = 0; i < 41; i++) last = await post('e=nearby_used');
+assert.equal(last.status, 429);                                                                  // 40 a minute per visitor
 console.log('test_route_worker: all passed');

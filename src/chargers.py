@@ -34,7 +34,7 @@ COUNTRIES = {
     "NO": ("NOR", (1500, 8000), (57.5, 81.0, 4.0, 35.0)),
 }
 REPUBLISH_ONLY = ("DK", "DE", "NL", "BE", "IE", "IS", "FR", "GB")   # not refreshed here: src/chargefinder.py owns these; this only re-publishes the last published file (data/ is rebuilt every run)
-FLAG_FREE, FLAG_MEMBER, FLAG_NOTICE, FLAG_PAYLOC, FLAG_PARKHINT, FLAG_COSTNOTE, FLAG_TETHERED, FLAG_NOBIL_PARK = 1, 2, 4, 8, 16, 32, 64, 128
+FLAG_FREE, FLAG_MEMBER, FLAG_NOTICE, FLAG_PAYLOC, FLAG_PARKHINT, FLAG_COSTNOTE, FLAG_TETHERED, FLAG_NOBIL_PARK, FLAG_H24 = 1, 2, 4, 8, 16, 32, 64, 128, 256   # H24: ChargeFinder says open 24/7
 
 # Operator aliases (normalised name -> display name) so every source shares one key space for the price table. Extend as needed.
 ALIAS = {"mer": "MER", "recharge": "Recharge", "fortum charge drive": "Recharge", "incharge": "Vattenfall InCharge",

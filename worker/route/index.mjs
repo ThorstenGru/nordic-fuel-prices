@@ -47,13 +47,27 @@ export function orsToValhalla(j) {
 }
 
 // Per-visitor counter in the Worker cache (no KV, free). Not exact (read-then-write), which is fine for a safety valve.
-export async function overLimit(req, now = Date.now()) {
+export async function overLimit(req, now = Date.now(), max = RL_MAX, bucket = 'rl') {
   const ip = req.headers.get('CF-Connecting-IP') || 'none';
-  const key = new Request('https://eurofuelprices.com/api/route/rl/' + encodeURIComponent(ip) + '/' + Math.floor(now / 60000));
+  const key = new Request('https://eurofuelprices.com/api/route/' + bucket + '/' + encodeURIComponent(ip) + '/' + Math.floor(now / 60000));
   const hit = await caches.default.match(key);
   const n = hit ? (+(await hit.text()) || 0) + 1 : 1;
   await caches.default.put(key, new Response(String(n), { headers: { 'cache-control': 'max-age=120' } }));
-  return n > RL_MAX;
+  return n > max;
+}
+
+// Cookieless counters (POST /api/poll?e=<event> or ?q=<question>&a=<answer>): what people use, and a two-question survey. Only whitelisted names are counted,
+// nothing else is stored (no IP, no user agent): one row per day and event, one row per question and answer. Read it with wrangler (docs/OPERATIONS.md).
+export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown']);
+export const POLL = { use: ['cheapest', 'route', 'ev', 'compare', 'other'], next: ['alerts', 'countries', 'ev', 'route', 'speed'] };
+export async function tally(req, env, now = Date.now()) {
+  const u = new URL(req.url), e = u.searchParams.get('e'), q = u.searchParams.get('q'), a = u.searchParams.get('a');
+  if (e && EVENTS.has(e)) {
+    await env.DB.prepare('INSERT INTO events (day, name, n) VALUES (?, ?, 1) ON CONFLICT (day, name) DO UPDATE SET n = n + 1').bind(new Date(now).toISOString().slice(0, 10), e).run();
+  } else if (q && POLL[q] && POLL[q].includes(a)) {
+    await env.DB.prepare('INSERT INTO poll (q, a, n) VALUES (?, ?, 1) ON CONFLICT (q, a) DO UPDATE SET n = n + 1').bind(q, a).run();
+  } else return json({ error: 'request' }, 400);
+  return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
 }
 
 // Nearby facilities (/api/fac?la=&lo=): the browser's direct Overpass calls often time out, so this Worker asks the public mirrors in turn and caches the answer a week
@@ -99,9 +113,11 @@ async function facility(req, ctx) {
 
 export default {
   async fetch(req, env, ctx) {
-    if (req.method !== 'GET') return json({ error: 'method' }, 405);
+    const poll = new URL(req.url).pathname.startsWith('/api/poll');
+    if (req.method !== (poll ? 'POST' : 'GET')) return json({ error: 'method' }, 405);
     const from = req.headers.get('Origin') || req.headers.get('Referer') || '';
     if (req.headers.get('Sec-Fetch-Site') !== 'same-origin' && !SITE.test(from)) return json({ error: 'origin' }, 403);   // not a browser on our own pages
+    if (poll) return (await overLimit(req, Date.now(), 40, 'pl')) ? json({ error: 'rate' }, 429) : tally(req, env);
     if (new URL(req.url).pathname.startsWith('/api/fac')) return facility(req, ctx);
     const q = normalise(new URL(req.url).searchParams.get('json'));
     if (!q) return json({ error: 'request' }, 400);

@@ -326,3 +326,33 @@ for _lang, _d in NEW_TXT.items():
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
+# Added 2026-11-15: "reported 2 days ago" under the cheapest price of each card. rep = a real price time, chk = our own check time.
+AGE_TXT: Dict[str, Dict[str, str]] = {
+    "sv": dict(rep="rapporterat {a}", chk="kontrollerat {a}", a_today="i dag", a_yday="i går", a_h="för {n} tim sedan", a_d="för {n} dagar sedan"),
+    "de": dict(rep="gemeldet {a}", chk="geprüft {a}", a_today="heute", a_yday="gestern", a_h="vor {n} Std.", a_d="vor {n} Tagen"),
+    "fr": dict(rep="signalé {a}", chk="vérifié {a}", a_today="aujourd’hui", a_yday="hier", a_h="il y a {n} h", a_d="il y a {n} jours"),
+    "es": dict(rep="comunicado {a}", chk="consultado {a}", a_today="hoy", a_yday="ayer", a_h="hace {n} h", a_d="hace {n} días"),
+    "pt": dict(rep="comunicado {a}", chk="consultado {a}", a_today="hoje", a_yday="ontem", a_h="há {n} h", a_d="há {n} dias"),
+    "da": dict(rep="indberettet {a}", chk="tjekket {a}", a_today="i dag", a_yday="i går", a_h="for {n} t. siden", a_d="for {n} dage siden"),
+    "nl": dict(rep="gemeld {a}", chk="gecontroleerd {a}", a_today="vandaag", a_yday="gisteren", a_h="{n} uur geleden", a_d="{n} dagen geleden"),
+    "it": dict(rep="segnalato {a}", chk="controllato {a}", a_today="oggi", a_yday="ieri", a_h="{n} ore fa", a_d="{n} giorni fa"),
+    "pl": dict(rep="zgłoszono {a}", chk="sprawdzono {a}", a_today="dzisiaj", a_yday="wczoraj", a_h="{n} godz. temu", a_d="{n} dni temu"),
+}
+for _lang, _d in AGE_TXT.items():
+    TXT[_lang].update(_d)
+
+# Added 2026-11-15: price-history block on the country hub pages (EU Weekly Oil Bulletin, reproduction allowed with source).
+HIST_TXT: Dict[str, Dict[str, str]] = {
+    "sv": dict(hist_h="Prisutveckling", hist_sub="Veckovis riksgenomsnitt inklusive skatter, senaste två åren (€/l)", hist_src="Källa: Europeiska kommissionen, Weekly Oil Bulletin"),
+    "de": dict(hist_h="Preisentwicklung", hist_sub="Wöchentlicher Landesdurchschnitt inkl. Steuern, letzte zwei Jahre (€/l)", hist_src="Quelle: Europäische Kommission, Weekly Oil Bulletin"),
+    "fr": dict(hist_h="Évolution des prix", hist_sub="Moyenne nationale hebdomadaire taxes comprises, deux dernières années (€/l)", hist_src="Source : Commission européenne, Weekly Oil Bulletin"),
+    "es": dict(hist_h="Evolución de los precios", hist_sub="Media nacional semanal con impuestos, últimos dos años (€/l)", hist_src="Fuente: Comisión Europea, Weekly Oil Bulletin"),
+    "pt": dict(hist_h="Evolução dos preços", hist_sub="Média nacional semanal com impostos, últimos dois anos (€/l)", hist_src="Fonte: Comissão Europeia, Weekly Oil Bulletin"),
+    "da": dict(hist_h="Prisudvikling", hist_sub="Ugentligt landsgennemsnit inkl. afgifter, seneste to år (€/l)", hist_src="Kilde: Europa-Kommissionen, Weekly Oil Bulletin"),
+    "nl": dict(hist_h="Prijsontwikkeling", hist_sub="Wekelijks landelijk gemiddelde incl. belastingen, laatste twee jaar (€/l)", hist_src="Bron: Europese Commissie, Weekly Oil Bulletin"),
+    "it": dict(hist_h="Andamento dei prezzi", hist_sub="Media nazionale settimanale comprensiva di imposte, ultimi due anni (€/l)", hist_src="Fonte: Commissione europea, Weekly Oil Bulletin"),
+    "pl": dict(hist_h="Zmiany cen", hist_sub="Tygodniowa średnia krajowa z podatkami, ostatnie dwa lata (€/l)", hist_src="Źródło: Komisja Europejska, Weekly Oil Bulletin"),
+}
+for _lang, _d in HIST_TXT.items():
+    TXT[_lang].update(_d)

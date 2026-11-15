@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from plausibility import mark_implausible  # noqa: E402
@@ -79,6 +80,34 @@ class Plausibility(unittest.TestCase):
         bad = S[-1]["prices"]
         self.assertEqual(bad[1].get("implausible_reason"), "inconsistent_fuels")
         self.assertNotIn("plausible", bad[0])
+
+
+class StaleLow(unittest.TestCase):
+    NOW = datetime(2026, 11, 15, 12, tzinfo=timezone.utc)
+
+    def dated(self, n=80, old=None):
+        out = []
+        for i in range(n):
+            s = st(i, E10=1.95 + (i % 5) * 0.01)
+            s["prices"][0]["updated_at"] = (self.NOW - timedelta(days=1)).isoformat()
+            out.append(s)
+        for j, (price, days) in enumerate(old or []):
+            s = st(900 + j, E10=price)
+            s["prices"][0]["updated_at"] = (self.NOW - timedelta(days=days)).isoformat()
+            out.append(s)
+        return out
+
+    def test_low_and_old_is_flagged_low_and_fresh_or_high_and_old_is_not(self):
+        S = self.dated(old=[(1.56, 40), (1.56, 2), (2.10, 40), (1.90, 40)])        # low+old, low+fresh, high+old, 3 % below+old
+        c = mark_implausible(S, "EUR", now=self.NOW)
+        self.assertEqual(c.get("stale_low"), 1)
+        flagged = [s["id"] for s in S if s["prices"][0].get("plausible") is False]
+        self.assertEqual(flagged, ["900"])
+        self.assertEqual(S[-4]["prices"][0]["implausible_reason"], "stale_low")
+
+    def test_a_country_that_is_mostly_old_is_left_alone(self):
+        S = self.dated(n=30, old=[(1.60, 30)] * 30)                                # half the prices are old: a slow feed, not an exception
+        self.assertNotIn("stale_low", mark_implausible(S, "EUR", now=self.NOW))
 
 
 if __name__ == "__main__":

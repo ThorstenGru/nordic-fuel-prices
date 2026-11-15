@@ -7,4 +7,11 @@ workers_dev = false
 routes = [
   { pattern = "eurofuelprices.com/api/route*", zone_name = "eurofuelprices.com" },
   { pattern = "eurofuelprices.com/api/fac*", zone_name = "eurofuelprices.com" },
+  { pattern = "eurofuelprices.com/api/poll*", zone_name = "eurofuelprices.com" },
 ]
+
+# Counters for "what do people use" and the two-question survey (docs/OPERATIONS.md). Free plan: 100k rows written per day.
+[[d1_databases]]
+binding = "DB"
+database_name = "efp-poll"
+database_id = "d80fc037-83ea-4d79-99c5-1a9d76fa34a6"

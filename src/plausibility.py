@@ -16,6 +16,10 @@ Reasons
                           is priced < 1 % above those stations' 95 on >= 20 paired stations (a real 98 costs
                           3-10 % more: ANWB's mislabelled SE / SK / EE / GB petrol slots)
 
+    stale_low             more than 10 % below the country median AND last updated over 14 days ago, in a country where such old prices are the
+                          exception (< 25 % of its dated prices): a price stuck from long ago must not win "cheapest" (Italy, 2026-11-15:
+                          about 300 of 22,000 petrol prices, several dated February or October)
+
 Regulated maxima (basis == "regulated_max") only face the absolute band: they are one number for a whole
 country, so "far from the country median" is meaningless for them.
 """
@@ -23,6 +27,7 @@ from __future__ import annotations
 
 import statistics
 from collections import defaultdict
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 # plausible EUR per litre (CNG: per kg) — deliberately wide: this catches broken data, not expensive stations
@@ -30,6 +35,7 @@ EUR_BANDS: Dict[str, tuple] = {
     "P95": (0.8, 3.4), "P98": (0.9, 3.6), "DIESEL": (0.8, 3.4), "LPG": (0.3, 1.9),
     "CNG": (0.6, 3.2), "E85": (0.5, 2.2), "HVO100": (1.0, 3.4),
 }
+STALE_DAYS, STALE_LOW_RATIO, STALE_MAX_SHARE = 14, 0.90, 0.25   # see stale_low above
 LOW, HIGH = 0.6, 1.6            # relative to the country median of the same fuel group
 MIN_GROUP = 20                  # prices needed before the median is trusted
 RATIO_TOL = 0.30                # station diesel/petrol ratio may deviate this much from the country's ratio
@@ -60,8 +66,9 @@ def _flag(p: Dict[str, Any], reason: str, counts: Dict[str, int]) -> None:
     counts[reason] += 1
 
 
-def mark_implausible(stations: List[Dict[str, Any]], currency: str, fx: Optional[Dict[str, float]] = None) -> Dict[str, int]:
+def mark_implausible(stations: List[Dict[str, Any]], currency: str, fx: Optional[Dict[str, float]] = None, now: Optional[datetime] = None) -> Dict[str, int]:
     """Flag implausible prices in place. Returns {reason: count}."""
+    now = now or datetime.now(timezone.utc)
     counts: Dict[str, int] = defaultdict(int)
     rate = 1.0 if currency == "EUR" else (fx or {}).get(currency)
 
@@ -107,6 +114,25 @@ def mark_implausible(stations: List[Dict[str, Any]], currency: str, fx: Optional
             m = med.get(fuel_group(p) or "")
             if m and not (m * LOW <= p["price"] <= m * HIGH):
                 _flag(p, "far_from_country", counts)
+
+    # 2c — a low price that is also old, where old prices are rare (see stale_low)
+    def _age_days(p: Dict[str, Any]) -> Optional[float]:
+        try:
+            return (now - datetime.fromisoformat(str(p["updated_at"]).replace("Z", "+00:00"))).total_seconds() / 86400
+        except (KeyError, ValueError, TypeError):
+            return None
+    dated: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for s in stations:
+        for p in s.get("prices") or []:
+            g = fuel_group(p)
+            if g in med and _station_price(p) and _age_days(p) is not None:
+                dated[g].append(p)
+    for g, lst in dated.items():
+        old = [p for p in lst if _age_days(p) > STALE_DAYS]
+        if len(lst) >= MIN_GROUP and len(old) / len(lst) < STALE_MAX_SHARE:
+            for p in old:
+                if p["price"] < med[g] * STALE_LOW_RATIO:
+                    _flag(p, "stale_low", counts)
 
     # 2b — a source's whole 98 slot priced below the country's 95 median (too few same-station pairs for 1b)
     if "P95" in med:

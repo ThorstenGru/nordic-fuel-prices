@@ -359,6 +359,12 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 
 /* ── Nearby section (top of List) ── */
 .nearby-sec { padding:0 4px 8px; }
+.poll { margin:8px 14px 0; padding:12px 14px; background:var(--surf2); border:1px solid var(--line); border-radius:var(--r-m); font-size:.84rem; }
+.poll[hidden] { display:none; }
+.poll b { display:block; margin-bottom:6px; }
+.poll .po { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.poll .po button { background:var(--surf); border:1px solid var(--line); border-radius:999px; color:var(--ink); font-size:.82rem; font-weight:700; min-height:40px; padding:0 14px; cursor:pointer; }
+.poll .px { background:none; border:none; color:var(--sub); font-size:.8rem; font-weight:600; margin-top:6px; padding:0; min-height:32px; cursor:pointer; }
 .sec-h { font-size:.7rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--sub); padding:2px 4px 6px; }
 .nearby-summary { background:var(--acc-soft); border:1px solid var(--acc); border-radius:var(--r-m); padding:12px 14px; font-size:.8rem; display:flex; flex-direction:column; gap:3px; }
 .nearby-summary .ns-label { color:var(--acc-t); font-weight:800; font-size:.66rem; text-transform:uppercase; letter-spacing:.07em; }
@@ -870,6 +876,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
     <button class="on" type="button" data-m="all" onclick="setListMode('all')"><span data-i18n="allSt">All</span></button>
     <button type="button" data-m="saved" onclick="setListMode('saved')"><svg class="ic sm"><use href="#i-star"/></svg> <span data-i18n="saved">Saved</span> <span id="fav-n"></span></button>
   </div>
+  <div class="poll" id="poll-card" hidden></div>
   <div class="panel-scroll" id="list-scroll">
     <section class="nearby-sec" id="nearby-sec" aria-labelledby="nearby-h">
       <div class="sec-h" id="nearby-h" data-i18n="nearbyTitle">Cheapest Near You</div>
@@ -1347,11 +1354,16 @@ Object.assign(I18N.de, { retry:'Erneut versuchen', loadFail:'{c} konnte nicht ge
 Object.assign(I18N.fr, { retry:'Réessayer', loadFail:'Impossible de charger {c}', offlineNote:'Vous êtes hors ligne — données enregistrées affichées', mapBackup:'Carte de secours activée', mapDown:'La carte est indisponible — les prix restent dans la liste.', lgToggle:'Changer les couleurs : prix / note de source', gradeInfo:'Comment nous notons les sources' });
 Object.assign(I18N.es, { retry:'Reintentar', loadFail:'No se pudo cargar {c}', offlineNote:'Sin conexión — se muestran los datos guardados', mapBackup:'Mapa de respaldo activado', mapDown:'El mapa no está disponible ahora — los precios siguen en la lista.', lgToggle:'Cambiar colores: precio / calificación de fuente', gradeInfo:'Cómo calificamos las fuentes' });
 
-Object.assign(I18N.en, { notPlausible:'Not plausible', npExcluded:'Not used for rankings, colours or averages.', np_far_from_country:'far from typical prices in this country', np_octane_order:'this 98 price is below the 95 price at the same station or for the same source', np_outside_eur_band:'outside any realistic price range', np_inconsistent_fuels:"doesn't fit this station's other fuel prices" });
-Object.assign(I18N.sv, { notPlausible:'Inte rimligt', npExcluded:'Används inte i rankning, färger eller medelvärden.', np_far_from_country:'långt från typiska priser i landet', np_octane_order:'detta 98-pris är lägre än 95-priset på samma station eller hos samma källa', np_outside_eur_band:'utanför ett realistiskt prisintervall', np_inconsistent_fuels:'passar inte stationens övriga bränslepriser' });
-Object.assign(I18N.de, { notPlausible:'Nicht plausibel', npExcluded:'Wird nicht für Ranglisten, Farben oder Durchschnitte verwendet.', np_far_from_country:'weit entfernt von den üblichen Preisen im Land', np_octane_order:'dieser 98er-Preis liegt unter dem 95er-Preis derselben Station oder Quelle', np_outside_eur_band:'außerhalb jeder realistischen Preisspanne', np_inconsistent_fuels:'passt nicht zu den anderen Kraftstoffpreisen dieser Tankstelle' });
-Object.assign(I18N.fr, { notPlausible:'Non plausible', npExcluded:'Non utilisé pour les classements, couleurs ou moyennes.', np_far_from_country:'très éloigné des prix habituels du pays', np_octane_order:'ce prix 98 est inférieur au prix 95 de la même station ou de la même source', np_outside_eur_band:'hors de toute fourchette de prix réaliste', np_inconsistent_fuels:"ne correspond pas aux autres carburants de cette station" });
-Object.assign(I18N.es, { notPlausible:'No plausible', npExcluded:'No se usa en clasificaciones, colores ni medias.', np_far_from_country:'muy lejos de los precios habituales del país', np_octane_order:'este precio 98 es inferior al precio 95 de la misma estación o fuente', np_outside_eur_band:'fuera de cualquier rango de precios realista', np_inconsistent_fuels:'no encaja con los demás combustibles de esta estación' });
+Object.assign(I18N.en, { poll_use:'What do you mainly use this app for?', poll_use_cheapest:'Cheapest fuel nearby', poll_use_route:'Route planning', poll_use_ev:'Charging an electric car', poll_use_compare:'Comparing countries', poll_use_other:'Something else', poll_next:'What should we build next?', poll_next_alerts:'Price alerts', poll_next_countries:'More countries', poll_next_ev:'Better charging info', poll_next_route:'Better route planner', poll_next_speed:'Faster app', poll_later:'Not now', poll_thanks:'Thank you, that helps.' });
+Object.assign(I18N.en, { notPlausible:'Not plausible', npExcluded:'Not used for rankings, colours or averages.', np_far_from_country:'far from typical prices in this country', np_octane_order:'this 98 price is below the 95 price at the same station or for the same source', np_outside_eur_band:'outside any realistic price range', np_inconsistent_fuels:"doesn't fit this station's other fuel prices", np_stale_low:'low price that is also old: not used' });
+Object.assign(I18N.sv, { poll_use:'Vad använder du främst appen till?', poll_use_cheapest:'Billigaste bränsle i närheten', poll_use_route:'Ruttplanering', poll_use_ev:'Ladda elbil', poll_use_compare:'Jämföra länder', poll_use_other:'Något annat', poll_next:'Vad ska vi bygga härnäst?', poll_next_alerts:'Prisbevakning', poll_next_countries:'Fler länder', poll_next_ev:'Bättre laddinfo', poll_next_route:'Bättre ruttplanerare', poll_next_speed:'Snabbare app', poll_later:'Inte nu', poll_thanks:'Tack, det hjälper.' });
+Object.assign(I18N.sv, { notPlausible:'Inte rimligt', npExcluded:'Används inte i rankning, färger eller medelvärden.', np_far_from_country:'långt från typiska priser i landet', np_octane_order:'detta 98-pris är lägre än 95-priset på samma station eller hos samma källa', np_outside_eur_band:'utanför ett realistiskt prisintervall', np_inconsistent_fuels:'passar inte stationens övriga bränslepriser', np_stale_low:'lågt pris som dessutom är gammalt: används inte' });
+Object.assign(I18N.de, { "poll_use": "Wofür nutzt du die App hauptsächlich?", "poll_use_cheapest": "Günstigster Kraftstoff in der Nähe", "poll_use_route": "Routenplanung", "poll_use_ev": "Elektroauto laden", "poll_use_compare": "Länder vergleichen", "poll_use_other": "Etwas anderes", "poll_next": "Was sollen wir als Nächstes bauen?", "poll_next_alerts": "Preisalarm", "poll_next_countries": "Mehr Länder", "poll_next_ev": "Bessere Ladeinfos", "poll_next_route": "Besserer Routenplaner", "poll_next_speed": "Schnellere App", "poll_later": "Jetzt nicht", "poll_thanks": "Danke, das hilft." });
+Object.assign(I18N.de, { notPlausible:'Nicht plausibel', npExcluded:'Wird nicht für Ranglisten, Farben oder Durchschnitte verwendet.', np_far_from_country:'weit entfernt von den üblichen Preisen im Land', np_octane_order:'dieser 98er-Preis liegt unter dem 95er-Preis derselben Station oder Quelle', np_outside_eur_band:'außerhalb jeder realistischen Preisspanne', np_inconsistent_fuels:'passt nicht zu den anderen Kraftstoffpreisen dieser Tankstelle', np_stale_low:'niedriger Preis, der außerdem alt ist: wird nicht verwendet' });
+Object.assign(I18N.fr, { "poll_use": "À quoi sert surtout cette appli pour vous ?", "poll_use_cheapest": "Carburant le moins cher près de moi", "poll_use_route": "Planifier un trajet", "poll_use_ev": "Recharger une voiture électrique", "poll_use_compare": "Comparer les pays", "poll_use_other": "Autre chose", "poll_next": "Que devrions-nous construire ensuite ?", "poll_next_alerts": "Alertes de prix", "poll_next_countries": "Plus de pays", "poll_next_ev": "Meilleures infos de recharge", "poll_next_route": "Meilleur planificateur de trajet", "poll_next_speed": "Appli plus rapide", "poll_later": "Pas maintenant", "poll_thanks": "Merci, cela nous aide." });
+Object.assign(I18N.fr, { notPlausible:'Non plausible', npExcluded:'Non utilisé pour les classements, couleurs ou moyennes.', np_far_from_country:'très éloigné des prix habituels du pays', np_octane_order:'ce prix 98 est inférieur au prix 95 de la même station ou de la même source', np_outside_eur_band:'hors de toute fourchette de prix réaliste', np_inconsistent_fuels:"ne correspond pas aux autres carburants de cette station", np_stale_low:'prix bas et ancien : non utilisé' });
+Object.assign(I18N.es, { "poll_use": "¿Para qué usas sobre todo esta app?", "poll_use_cheapest": "Combustible más barato cerca", "poll_use_route": "Planificar rutas", "poll_use_ev": "Cargar un coche eléctrico", "poll_use_compare": "Comparar países", "poll_use_other": "Otra cosa", "poll_next": "¿Qué debemos construir ahora?", "poll_next_alerts": "Alertas de precio", "poll_next_countries": "Más países", "poll_next_ev": "Mejor información de carga", "poll_next_route": "Mejor planificador de rutas", "poll_next_speed": "App más rápida", "poll_later": "Ahora no", "poll_thanks": "Gracias, nos ayuda." });
+Object.assign(I18N.es, { notPlausible:'No plausible', npExcluded:'No se usa en clasificaciones, colores ni medias.', np_far_from_country:'muy lejos de los precios habituales del país', np_octane_order:'este precio 98 es inferior al precio 95 de la misma estación o fuente', np_outside_eur_band:'fuera de cualquier rango de precios realista', np_inconsistent_fuels:'no encaja con los demás combustibles de esta estación', np_stale_low:'precio bajo y además antiguo: no se usa' });
 
 Object.assign(I18N.en, { labelTheme:'Appearance', themeAuto:'Auto', themeLight:'Light', themeDark:'Dark' });
 Object.assign(I18N.sv, { labelTheme:'Utseende', themeAuto:'Auto', themeLight:'Ljust', themeDark:'Mörkt' });
@@ -2247,6 +2259,8 @@ Object.assign(I18N.es, {
  "rtTemp": "Ajuste por temperatura: {t} °C ({s}). La autonomía eléctrica, los kWh y el consumo de gasolina siguen la misma curva que en Mi coche.",
  "mcApp": "Ajustes de la aplicación",
  "chgParkYes": "Tarifa de aparcamiento: la fuente indica que hay una.",
+ "chgTagH24": "Abierto 24 h, según la fuente",
+ "chgListed": "Datos a fecha de {d}. La disponibilidad en directo (libre, ocupado, averiado) no se muestra aquí.",
  "chgNote": "Nota de la fuente (sin verificar): «{n}»",
  "chgCostStart": ", incluida la tarifa de inicio",
  "evLoss": "Factor de pérdida de carga (1,15 = se pierde un 15 %)",
@@ -3033,6 +3047,8 @@ Object.assign(I18N.fr, {
  "chgTagNotice": "Prévenir l’exploitant à l’avance",
  "chgTagPay": "Paiement sur place",
  "chgTagTether": "Câble fixé à la borne",
+ "chgTagH24": "Ouvert 24 h/24, selon la source",
+ "chgListed": "Données au {d}. La disponibilité en direct (libre, occupée, en panne) n’est pas affichée ici.",
  "chgNote": "Note de la source (non vérifiée) : « {n} »",
  "chgVer": "Dernière vérification en {y}.",
  "chgStale": "Ces données datent d’il y a {d} jours et peuvent être périmées.",
@@ -3605,6 +3621,8 @@ Object.assign(I18N.de, {
  "chgTagNotice": "Betreiber vorher informieren",
  "chgTagPay": "Vor Ort bezahlen",
  "chgTagTether": "Kabel fest an der Ladesäule",
+ "chgTagH24": "Rund um die Uhr geöffnet, laut Quelle",
+ "chgListed": "Stand der Angaben: {d}. Die aktuelle Verfügbarkeit (frei, belegt, defekt) wird hier nicht angezeigt.",
  "chgNote": "Hinweis der Quelle (nicht überprüft): „{n}“",
  "chgVer": "Zuletzt überprüft {y}.",
  "chgStale": "Diese Daten sind {d} Tage alt und möglicherweise veraltet.",
@@ -3689,7 +3707,7 @@ Object.assign(I18N.en, {
   chgCar:'Your car charges at up to {c} kW.', chgCarFast:'A faster post does not charge it faster.',
   chgParkYes:'Parking fee: the source says there is one.', chgParkHint:'Parking fee: the source text hints at one (unverified).', chgParkNone:'Parking fee: not stated in the source.',
   chgTagFree:'Free, the source text says so', chgTagCard:'Charging card or app needed', chgTagNotice:'Tell the operator beforehand', chgTagPay:'Pay at the location', chgTagTether:'Cable attached to the post',
-  chgNote:'Source note (unverified): “{n}”', chgVer:'Last verified in {y}.', chgStale:'This data is from {d} days ago and may be out of date.',
+chgTagH24:'Open 24/7, according to the source', chgListed:'Listing as of {d}. Live availability (free or busy, out of order) is not shown here.',   chgNote:'Source note (unverified): “{n}”', chgVer:'Last verified in {y}.', chgStale:'This data is from {d} days ago and may be out of date.',
   chgPrFree:'Free. The source text says so; check the sign at the post.', chgPrOwn:'Your own price: {p} per kWh (from My car). Start and parking fees are not included.',
   chgPrList:'List price {f}about {p} per kWh{s}. Check operator. Seen {d}.', chgPrStart:', plus {s} start fee', chgPrNoStart:', start fee not published',
   chgPrOld:'Last seen {d}, more than 90 days ago: about {p} per kWh. Not used in the estimate. Check operator.', chgPrNone:'Price not published.', chgFrom:'from ',
@@ -3716,7 +3734,7 @@ Object.assign(I18N.sv, {
   chgCar:'Din bil laddar med högst {c} kW.', chgCarFast:'En snabbare stolpe laddar den inte snabbare.',
   chgParkYes:'Parkeringsavgift: källan anger att det finns en.', chgParkHint:'Parkeringsavgift: källans text antyder en (ej kontrollerat).', chgParkNone:'Parkeringsavgift: anges inte i källan.',
   chgTagFree:'Gratis, enligt källans text', chgTagCard:'Laddkort eller app krävs', chgTagNotice:'Meddela operatören i förväg', chgTagPay:'Betala på plats', chgTagTether:'Kabel sitter fast på stolpen',
-  chgNote:'Anmärkning från källan (ej kontrollerad): ”{n}”', chgVer:'Senast verifierad {y}.', chgStale:'Datan är {d} dagar gammal och kan vara inaktuell.',
+chgTagH24:'Öppet dygnet runt, enligt källan', chgListed:'Uppgifterna gäller per {d}. Aktuell tillgänglighet (ledig, upptagen, ur funktion) visas inte här.',   chgNote:'Anmärkning från källan (ej kontrollerad): ”{n}”', chgVer:'Senast verifierad {y}.', chgStale:'Datan är {d} dagar gammal och kan vara inaktuell.',
   chgPrFree:'Gratis. Källans text säger det; kontrollera skylten vid stolpen.', chgPrOwn:'Ditt eget pris: {p} per kWh (från Min bil). Startavgift och parkeringsavgift ingår inte.',
   chgPrList:'Listpris {f}cirka {p} per kWh{s}. Kontrollera hos operatören. Sett {d}.', chgPrStart:', plus {s} i startavgift', chgPrNoStart:', startavgift ej publicerad',
   chgPrOld:'Senast sett {d}, mer än 90 dagar sedan: cirka {p} per kWh. Används inte i uppskattningen. Kontrollera hos operatören.', chgPrNone:'Priset är inte publicerat.', chgFrom:'från ',
@@ -3871,6 +3889,10 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
 };
+// Cookieless counters (worker/route: POST /api/poll). Only a whitelisted event name goes out, once per visit; no id, no cookie, nothing about the person. Off when the browser says Do Not Track.
+const _tr = new Set();
+const TRACK_ON = () => location.protocol === 'https:' && navigator.doNotTrack !== '1';
+function track(n) { if (_tr.has(n) || !TRACK_ON()) return; _tr.add(n); try { navigator.sendBeacon && navigator.sendBeacon('/api/poll?e=' + n); } catch (_) {} }
 let   tank    = store.get('efp_tank', 40);     // litres, used for "fill-up cost"
 // no valid saved choice -> petrol 95 only for petrol/PHEV owners (the filter hides stations without that fuel); everyone else keeps All fuels
 fFuel = (v => ['', 'P95', 'P98', 'DIESEL', 'HVO100', 'LPG', 'CNG', 'E85'].includes(v) ? v : (['petrol', 'phev'].includes((store.get('efp_car', {}) || {}).type) ? 'P95' : ''))(store.get('efp_fuel', null));
@@ -4658,6 +4680,7 @@ function clearStationUi() { stId = null; clearSelRing(); }
 
 function openStationSheet(s, zoomTo, custom) {   // custom = { head, body } html for something that is not a pump (a charging post)
   const p = document.getElementById('p-station'); if (!p) return;
+  track(custom ? 'charger_opened' : 'station_opened');
   stId = custom ? null : s.id; selId = custom ? null : s.id;
   document.getElementById('st-head').innerHTML = custom ? custom.head : stHead(s);
   const body = document.getElementById('st-body');
@@ -4816,6 +4839,7 @@ const FAC_TTL = 7 * 864e5;   // facilities hardly change: a good answer is kept 
 const FAC_G = [['food', ['cafe', 'restaurant', 'fast_food']], ['shops', ['convenience', 'supermarket', 'kiosk']], ['toilets', ['toilets']]];
 async function loadFac(s, body) {
   if (!s) return;
+  track('facilities_opened');
   if (!_fac.has(s.id)) { const c = facCache()[s.id]; if (c && Date.now() - c.t < FAC_TTL && Array.isArray(c.i)) _fac.set(s.id, c.i); }
   if (!_fac.has(s.id)) {
     body.innerHTML = `<p class="empty">${esc(t('loadingEllipsis'))}</p>`; body.dataset.busy = '1';
@@ -4842,6 +4866,27 @@ async function loadFac(s, body) {
   body.dataset.done = '1';
   body.innerHTML = (h || `<p class="empty">${esc(t('facNone'))}</p>`) + ATTR_OSM;
 }
+
+// Two-question survey card (answers are counted anonymously by worker/route; asked from the 3rd visit, once, "not now" waits 30 days)
+const POLL_Q = { use: ['cheapest', 'route', 'ev', 'compare', 'other'], next: ['alerts', 'countries', 'ev', 'route', 'speed'] };
+function pollRender() {
+  const el = document.getElementById('poll-card'); if (!el) return;
+  const st = store.get('efp_poll', {}) || {};
+  const q = !st.use ? 'use' : !st.next ? 'next' : null;
+  if (!q || !TRACK_ON() || (st.snooze && Date.now() < st.snooze)) { el.hidden = true; return; }
+  el.innerHTML = `<b>${esc(t('poll_' + q))}</b><div class="po">${POLL_Q[q].map(a => `<button type="button" onclick="pollAns('${q}','${a}')">${esc(t('poll_' + q + '_' + a))}</button>`).join('')}</div><button type="button" class="px" onclick="pollSnooze()">${esc(t('poll_later'))}</button>`;
+  el.hidden = false;
+}
+function pollAns(q, a) {
+  const st = store.get('efp_poll', {}) || {}; st[q] = a; store.set('efp_poll', st);
+  try { navigator.sendBeacon && navigator.sendBeacon('/api/poll?q=' + q + '&a=' + a); } catch (_) {}
+  if (q === 'next') { const el = document.getElementById('poll-card'); if (el) { el.innerHTML = `<b>${esc(t('poll_thanks'))}</b>`; el.hidden = false; setTimeout(() => { el.hidden = true; }, 3500); } } else pollRender();
+}
+function pollSnooze() { const st = store.get('efp_poll', {}) || {}; st.snooze = Date.now() + 30 * 864e5; store.set('efp_poll', st); pollRender(); }
+(function pollInit() {
+  try { if (!sessionStorage.getItem('efp_vis')) { sessionStorage.setItem('efp_vis', '1'); store.set('efp_visits', (store.get('efp_visits', 0) | 0) + 1); } } catch (_) {}
+  if ((store.get('efp_visits', 0) | 0) >= 3) setTimeout(pollRender, 4000);
+})();
 
 // Desktop map popup: same header + body as the phone sheet
 function mkPopup(s) {
@@ -5292,6 +5337,7 @@ const nearBtn = () => `<button class="btn-line" type="button" onclick="goNearby(
 function goNearby() {
   if (!navigator.geolocation) { toast(t('geoNotSupported')); return; }
   if (_locating) return;
+  track('nearby_used');
   _locating = true;
   const fab = document.getElementById('fab');
   fab.classList.add('busy'); fab.setAttribute('aria-busy', 'true');
@@ -5629,7 +5675,7 @@ function goTab(tab) {
   const pid = PANEL_MAP[tab];
   if (pid) { document.getElementById(pid)?.classList.add('open'); document.body.classList.add('sheet'); curPanel = document.getElementById(pid); setSheet(SHEET_DEFAULT[tab] || 'full'); }
 
-  if (tab === 'car') { vehLoad(); evAll(); }
+  if (tab === 'car') { track('mycar_opened'); vehLoad(); evAll(); }
   if (tab === 'stations') {
     rebuildList();
     if (myLat != null) showNearby();
@@ -7030,7 +7076,7 @@ function trdPart(hr) { return hr < 6 ? 'night' : hr < 12 ? 'morning' : hr < 18 ?
 function trdLines(file, cc) { const o = []; for (const f of TRD_FUELS) { const h = rtDepartHint(file, cc, f); if (h) o.push({ fuel: f, wd: h.wd, part: trdPart(h.hr) }); } return o; }
 // TRD-PURE-END
 // CHG-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_chargers.js)
-const CHG_F = { free: 1, card: 2, notice: 4, pay: 8, hint: 16, note: 32, tether: 64, fee: 128 };   // flag bits of data/ev_<cc>.json, docs/CHARGERS_PIPELINE.md
+const CHG_F = { free: 1, card: 2, notice: 4, pay: 8, hint: 16, note: 32, tether: 64, fee: 128, h24: 256 };   // flag bits of data/ev_<cc>.json, docs/CHARGERS_PIPELINE.md
 const CHG_OLD_DAYS = 90, CHG_STALE_DAYS = 21, CHG_RADIUS_KM = 2, CHG_MAX_LIST = 5;
 // Same key space as src/chargers.py norm_op: operator names in the data files and in web/ac_tariffs.json meet here.
 const chgNorm = s => String(s || '').toLowerCase().replace(/&/g, ' ').replace(/\./g, '').replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9åäöæøü ]+/g, ' ')
@@ -7088,7 +7134,7 @@ function chgNearest(posts, lat, lon, km, max) {
 const chgKwGroup = kw => !(kw > 0) ? 'unk' : kw <= 7.4 ? 'low' : kw <= 22 ? 'mid' : 'high';
 const chgKwCounts = posts => { const c = { low: 0, mid: 0, high: 0, unk: 0 }; for (const p of posts) c[chgKwGroup(p.kw)]++; return c; };
 const chgParking = f => f & CHG_F.fee ? 'yes' : f & CHG_F.hint ? 'hint' : 'none';
-const chgTags = f => ['free', 'card', 'notice', 'pay', 'tether'].filter(k => f & CHG_F[k]);
+const chgTags = f => ['free', 'card', 'notice', 'pay', 'tether', 'h24'].filter(k => f & CHG_F[k]);
 const chgStale = (generated, now) => { const d = chgDays(generated, now); return d > CHG_STALE_DAYS && d !== Infinity ? d : 0; };
 // CHG-PURE-END
 // SH-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_share.js)
@@ -7259,7 +7305,7 @@ function rtRouteCountries(pts, ccs) {
 
 async function rtGo(fromShare) {
   if (rt.busy) return;
-  if (fromShare !== true) rt.shMsg = null;
+  if (fromShare !== true) { rt.shMsg = null; track('route_planned'); }
   rt.fromTxt = document.getElementById('rt-from')?.value ?? rt.fromTxt;
   rt.toTxt = document.getElementById('rt-to')?.value ?? rt.toTxt;
   if (!rt.fromTxt.trim() || !rt.toTxt.trim()) return;
@@ -7309,6 +7355,7 @@ const shLink = () => { const h = (s => s && shEncode(s))(shState()); return h ? 
 async function shShare() {
   const url = shLink(), out = document.getElementById('rt-sh-out'); if (!out) return;
   if (!url) { out.innerHTML = `<p class="cmp-note">${esc(t('rtShFail'))}</p>`; return; }
+  track('plan_shared');
   out.innerHTML = `<input readonly class="rt-sh-url" aria-label="${esc(t('rtShBtn'))}" value="${esc(url)}" onfocus="this.select()">`;
   const inp = out.firstChild; let ok = false;
   try { await navigator.clipboard.writeText(url); ok = true; } catch (_) {
@@ -7679,6 +7726,7 @@ function chgBody(p) {
       ${p.pts ? row('chgPoints', p.pts) : ''}${row('chgParking', esc(t(park === 'yes' ? 'chgParkYes' : park === 'hint' ? 'chgParkHint' : 'chgParkNone')))}</dl>
     ${tags ? `<p class="chg-p">${tags}.</p>` : ''}${p.note ? `<p class="chg-p">${esc(t('chgNote', { n: p.note }))}</p>` : ''}
     <p class="chg-p">${p.yy ? esc(t('chgVer', { y: 2000 + p.yy })) : ''} ${age ? esc(t('chgStale', { d: age })) : ''}</p>
+    ${f && f.generated ? `<p class="chg-p">${esc(t('chgListed', { d: f.generated }))}</p>` : ''}
     <div class="rt-navb"><button type="button" class="pri" onclick="chgNavPost('${p.cc}',${p.i})">${ico('go', 'sm')}&nbsp;${esc(t('chgNav'))}</button></div>
     ${mcQ('chgWhat')}${f ? `<p class="ev-note">${esc(t('chgSrc', { a: f.attribution.join('; ') }))}</p>` : ''}`;
 }
@@ -7990,6 +8038,7 @@ function renderTrip() {
   tripCalc();
 }
 function tripCalc() {
+  track('trip_calc');
   const L = tank, cons = trip.cons;
   const pf = tripPrice(trip.from), pt = tripPrice(trip.to);
   const lbl = document.getElementById('t-extra-lbl'); if (lbl) lbl.textContent = t('tripExtra', { k: trip.extra });

@@ -432,15 +432,64 @@ def station_table(rows: List[Tuple[Dict, float]], c: Ctx, show_town: Optional[Di
             f'<th>{escape(x["th_when"][cfg["ts_kind"]])}</th></tr></thead><tbody>{"".join(body)}</tbody></table></div>')
 
 
+def rel_age(when: Optional[datetime], now: datetime, x: Dict[str, str]) -> str:
+    """'today', '5 h ago', 'yesterday', '3 days ago' in the page language; '' when there is no time."""
+    if when is None:
+        return ""
+    h = max(0, int((now - when).total_seconds() // 3600))
+    if h < 1:
+        return x["a_today"]
+    if h < 24:
+        return x["a_h"].format(n=h)
+    return x["a_yday"] if h < 48 else x["a_d"].format(n=h // 24)
+
+
+def history_html(cc: str, cfg: Dict, x: Dict[str, str], labels: Dict[str, str]) -> str:
+    """Inline SVG line chart of the EU Weekly Oil Bulletin national average (data/wob_history.json, tools/wob_history.py); '' when the country is not in it.
+    No script (the pages block inline scripts): two polylines, three grid lines, first and last date."""
+    try:
+        doc = json.loads((DATA_DIR / "wob_history.json").read_text(encoding="utf-8"))
+        ser = doc["c"][cfg.get("iso", cc).upper()]
+        dates = doc["dates"]
+    except (OSError, ValueError, KeyError):
+        return ""
+    vals = [v for k in ("p", "d") for v in ser[k] if v is not None]
+    if len(dates) < 20 or not vals:
+        return ""
+    lo, hi = math.floor(min(vals) * 10) / 10, math.ceil(max(vals) * 10) / 10
+    if hi - lo < 0.2:
+        hi = lo + 0.2
+    W, H, L, R, T, B = 640, 210, 44, 10, 10, 26
+    px = lambda i: L + (W - L - R) * i / (len(dates) - 1)       # noqa: E731
+    py = lambda v: T + (H - T - B) * (1 - (v - lo) / (hi - lo))   # noqa: E731
+    grid = "".join(f'<line x1="{L}" x2="{W - R}" y1="{py(g):.1f}" y2="{py(g):.1f}" stroke="var(--border)"/>'
+                   f'<text x="{L - 6}" y="{py(g) + 4:.1f}" text-anchor="end" font-size="11" fill="var(--text3)">{g:.2f}</text>'
+                   for g in (lo, (lo + hi) / 2, hi))
+    lines = ""
+    for key, colour, fuel in (("p", "var(--blue)", "P95"), ("d", "var(--amber)", "DIESEL")):
+        pts = " ".join(f"{px(i):.1f},{py(v):.1f}" for i, v in enumerate(ser[key]) if v is not None)
+        if pts:
+            lines += f'<polyline fill="none" stroke="{colour}" stroke-width="2" stroke-linejoin="round" points="{pts}"/>'
+    axis = (f'<text x="{L}" y="{H - 8}" font-size="11" fill="var(--text3)">{escape(fmt_day(dates[0], cfg["lang"]) + " " + dates[0][:4])}</text>'
+            f'<text x="{W - R}" y="{H - 8}" text-anchor="end" font-size="11" fill="var(--text3)">{escape(fmt_day(dates[-1], cfg["lang"]) + " " + dates[-1][:4])}</text>')
+    title = f'{x["hist_h"]}: {labels.get("P95", "")} {ser["p"][-1]:.2f}, {labels.get("DIESEL", "")} {ser["d"][-1]:.2f} €/L ({dates[-1]})'
+    legend = (f'<span style="color:var(--blue)">&#9632;</span> {escape(labels.get("P95", ""))} &nbsp; '
+              f'<span style="color:var(--amber)">&#9632;</span> {escape(labels.get("DIESEL", ""))}')
+    return (f'<h2>{escape(x["hist_h"])}</h2><p class="lede">{escape(x["hist_sub"])}</p>'
+            f'<div class="tw" style="padding:10px"><svg viewBox="0 0 {W} {H}" width="100%" role="img" aria-label="{escape(title)}" style="display:block;max-width:100%;height:auto">'
+            f'<title>{escape(title)}</title>{grid}{lines}{axis}</svg><div class="sub" style="margin-top:6px">{legend}</div></div>'
+            f'<p class="sub">{escape(x["hist_src"])}</p>')
+
+
 def summary_cards(rows: List[Tuple[Dict, float]], c: Ctx, prev: Optional[Tuple[str, Dict[str, float]]] = None,
                   now_med: Optional[Dict[str, float]] = None) -> str:
     cfg, x = c.cfg, c.x
     cards = []
     for f, label in cfg["fuels"]:
-        vals = [(fp[0], s) for s, _ in rows if (fp := fresh_price(s, f, c.now, cfg))]
+        vals = [(fp[0], s, fp[1]) for s, _ in rows if (fp := fresh_price(s, f, c.now, cfg))]
         if not vals:
             continue
-        low, st = min(vals, key=lambda v: v[0])
+        low, st, low_when = min(vals, key=lambda v: v[0])
         diff = ""
         if f in c.national and abs(low - c.national[f]) >= 0.005:
             dd = low - c.national[f]
@@ -460,8 +509,11 @@ def summary_cards(rows: List[Tuple[Dict, float]], c: Ctx, prev: Optional[Tuple[s
             dd = now_med[f] - prev[1][f]
             amount = f"{'+' if dd > 0 else '−'}{fmt_price(abs(dd), cfg)}"
             extra += f'<div class="s">{escape(x["chg"].format(when=fmt_day(prev[0], c.lang), d=amount, u=cfg["sym"] + "/L"))}</div>'
+        age = x["rep"].format(a=rel_age(low_when, c.now, x)) if low_when else (x["chk"].format(a=rel_age(c.fetched, c.now, x)) if cfg["ts_kind"] == "fetched" and c.fetched else "")
+        age_html = '<div class="s">' + escape(age) + '</div>' if age else ''
         cards.append(f'<div class="card"><div class="k">{escape(x["cheapest"].format(f=label))}</div>'
-                     f'<div class="v">{escape(money(low, cfg))}</div><div class="s">{escape(station_label(st)[0])}{escape(diff)}</div>{extra}</div>')
+                     f'<div class="v">{escape(money(low, cfg))}</div><div class="s">{escape(station_label(st)[0])}{escape(diff)}</div>'
+                     + age_html + extra + '</div>')
     return f'<div class="cards">{"".join(cards)}</div>' if cards else ""
 
 
@@ -669,7 +721,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         by_letter[disp[0].upper()].append(f'<li><a href="/{cc}/{slug}/">{escape(disp)}</a>{extra}</li>')
     towns_html = "".join(f'<h2>{escape(l)}</h2><ul class="links">{"".join(v)}</ul>' for l, v in sorted(by_letter.items()))
     rank_link = f'<p><a href="/{cc}/{cfg["rank"]["slug"]}/">{escape(cfg["rank"]["h1"])} →</a></p>' if cfg.get("rank") and town_lows else ""
-    hub_body = f'<p class="lede">{(cfg.get("hub_lede") or x["hub_lede"]).format(n=len(hub_rows))}</p>' + rank_link + "".join(top) + f"<h2>{escape(x['h_find'])}</h2>{towns_html}"
+    hub_body = (f'<p class="lede">{(cfg.get("hub_lede") or x["hub_lede"]).format(n=len(hub_rows))}</p>' + rank_link + "".join(top)
+                + history_html(cc, cfg, x, labels) + f"<h2>{escape(x['h_find'])}</h2>{towns_html}")
     (out / "index.html").write_text(
         page(cfg, cfg["hub_title"], (cfg.get("hub_desc") or x["hub_desc"]).format(n=len(hub_rows)), hub_url, cfg["hub"], hub_body,
              [breadcrumb_ld([(x["home"], SITE + "/"), (cfg["hub"], hub_url)])],

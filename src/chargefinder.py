@@ -87,7 +87,7 @@ def inside(s: Dict[str, Any], box: Tuple[float, float, float, float], pad: float
     return isinstance(la, (int, float)) and isinstance(lo, (int, float)) and box[0] - pad <= la <= box[1] + pad and box[2] - pad <= lo <= box[3] + pad
 
 
-def reduce_station(s: Dict[str, Any], cc: str, year: int) -> Optional[Dict[str, Any]]:
+def reduce_station(s: Dict[str, Any], cc: str, year: int = 0) -> Optional[Dict[str, Any]]:
     """One ChargeFinder station -> the station dict of src/chargers.py, or None (not Type 2, not public, other country, no position)."""
     loc, adr = s.get("location") or {}, s.get("locationAddress") or {}
     if (adr.get("countryCode") or "").upper() != cc or not s.get("plugType2") or (s.get("access") or "Public") != "Public":
@@ -97,8 +97,10 @@ def reduce_station(s: Dict[str, Any], cc: str, year: int) -> Optional[Dict[str, 
     flags = (chargers.FLAG_FREE if s.get("freeCharging") == 1 else 0) | (chargers.FLAG_MEMBER if s.get("authCard") == 1 else 0)
     kw = s.get("maxCapacity") or s.get("minCapacity") or 0
     title = ", ".join(x for x in [str(adr.get("street") or "").strip(), str(adr.get("city") or "").strip()] if x) or str(s.get("title") or "").strip()
+    if str(s.get("openingHours") or "").strip().lower() in ("24/7", "24h", "24 h", "24 hours"):
+        flags |= chargers.FLAG_H24
     return {"lat": float(loc["latitude"]), "lon": float(loc["longitude"]), "op": chargers.canon_op(s.get("operator") or s.get("operatorOther")),
-            "kw": float(kw) if isinstance(kw, (int, float)) and kw > 0 else None, "pts": int(s["plugType2"]), "flags": flags, "yr": year,
+            "kw": float(kw) if isinstance(kw, (int, float)) and kw > 0 else None, "pts": int(s["plugType2"]), "flags": flags, "yr": 0,   # yr 0: a crawl date is not a "last verified" year, the sheet shows the file date instead
             "title": title, "uc": "", "prov": 0, "ref": ""}
 
 
@@ -188,7 +190,7 @@ def build_file(cc: str, stations: List[Dict[str, Any]], today: date) -> Dict[str
              s["yr"] % 100, s["title"]] for s in keep]
     return {"v": 1, "cc": cc, "generated": today.isoformat(), "source": "chargefinder", "sources": ["ChargeFinder"],
             "attribution": ["Charging stations: ChargeFinder (chargefinder.com), used with permission"],
-            "medVerified": today.year, "n": len(rows), "dropped_outside_box": len(stations) - len(keep),
+            "medVerified": 0, "n": len(rows), "dropped_outside_box": len(stations) - len(keep),
             "ops": names, "s": rows, "notes": []}
 
 

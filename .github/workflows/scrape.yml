@@ -124,6 +124,12 @@ jobs:
       - name: Copy web files to data dir
         run: cp -r web/* data/
 
+      - name: EU Weekly Oil Bulletin price history (data/wob_history.json; downloads the 4.5 MB workbook at most every 6 days; never fails the run)
+        continue-on-error: true
+        run: |
+          curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/wob_history.json -o data/wob_history.json || rm -f data/wob_history.json
+          python tools/wob_history.py
+
       - name: Build SEO town pages and sitemaps (never blocks the price data deploy)
         continue-on-error: true
         run: python src/seo_pages.py

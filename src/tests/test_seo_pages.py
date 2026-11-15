@@ -135,5 +135,44 @@ class BelgiumAlternates(unittest.TestCase):
             self.assertEqual(sp.link_alternates(a, b, "nl-BE", "fr-BE", "https://x/be/", "https://x/be-fr/"), 0)   # idempotent
 
 
+class CheapestAge(unittest.TestCase):
+    def test_every_language_has_the_age_words_and_rel_age_reads_right(self):
+        from datetime import datetime, timedelta, timezone
+        now = datetime(2026, 11, 15, 12, tzinfo=timezone.utc)
+        for lang, x in sp.TXT.items():
+            for k in ("rep", "chk", "a_today", "a_yday", "a_h", "a_d"):
+                self.assertIn(k, x, f"{lang}.{k}")
+        x = sp.TXT["de"]
+        self.assertEqual(sp.rel_age(now - timedelta(minutes=20), now, x), "heute")
+        self.assertEqual(sp.rel_age(now - timedelta(hours=5), now, x), "vor 5 Std.")
+        self.assertEqual(sp.rel_age(now - timedelta(hours=30), now, x), "gestern")
+        self.assertEqual(sp.rel_age(now - timedelta(days=3, hours=2), now, x), "vor 3 Tagen")
+        self.assertEqual(sp.rel_age(None, now, x), "")
+
+
+class History(unittest.TestCase):
+    def test_chart_is_drawn_from_the_bulletin_file_and_skipped_without_it(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as t:
+            old = sp.DATA_DIR
+            sp.DATA_DIR = Path(t)
+            try:
+                cfg, x = sp.COUNTRIES["se"], sp.TXT["sv"]
+                labels = dict(cfg["fuels"])
+                self.assertEqual(sp.history_html("se", cfg, x, labels), "")                          # no file: no block
+                dates = [f"2025-{1 + i // 4:02d}-{1 + (i % 4) * 7:02d}" for i in range(40)]
+                (Path(t) / "wob_history.json").write_text(json.dumps({"dates": dates, "c": {"SE": {"p": [1.5 + i / 100 for i in range(40)], "d": [1.9 - i / 100 for i in range(40)]}}}), encoding="utf-8")
+                h = sp.history_html("se", cfg, x, labels)
+                self.assertIn("<polyline", h)
+                self.assertEqual(h.count("<polyline"), 2)
+                self.assertIn("Weekly Oil Bulletin", h)
+                self.assertIn("2025", h)
+                self.assertEqual(sp.history_html("ch", sp.COUNTRIES["ch"], sp.TXT["de"], dict(sp.COUNTRIES["ch"]["fuels"])), "")   # Switzerland is not in the bulletin
+            finally:
+                sp.DATA_DIR = old
+
+
 if __name__ == "__main__":
     unittest.main()

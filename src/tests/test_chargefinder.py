@@ -55,6 +55,14 @@ class Pure(unittest.TestCase):
         self.assertIsNone(cf.reduce_station(st(3, 55.5, 12.5, access="Visitors"), "DK", 2026))     # not public
         self.assertIsNone(cf.reduce_station(st(4, 55.5, 12.5, cc="SE"), "DK", 2026))               # other country
 
+    def test_open_24_7_flag_and_no_made_up_verification_year(self):
+        r = cf.reduce_station(st(1, 55.5, 12.5, openingHours="24/7"), "DK", 2026)
+        self.assertTrue(r["flags"] & cf.chargers.FLAG_H24)
+        self.assertEqual(r["yr"], 0)
+        self.assertFalse(cf.reduce_station(st(2, 55.5, 12.5, openingHours="Mo-Fr 8-16"), "DK", 2026)["flags"] & cf.chargers.FLAG_H24)
+        f = cf.build_file("DK", [r], date(2026, 11, 15))
+        self.assertEqual((f["medVerified"], f["s"][0][6]), (0, 0))
+
     def test_split_and_seed_cover_the_box(self):
         b = (54.5, 57.9, 7.9, 15.3)
         self.assertEqual(len(cf.split4(b)), 4)
