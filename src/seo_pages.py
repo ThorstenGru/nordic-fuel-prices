@@ -43,6 +43,7 @@ ROOT = Path(__file__).parent.parent
 DATA_DIR = ROOT / "data"
 SEED_DIR = Path(__file__).parent / "seed"
 SITE = "https://eurofuelprices.com"
+FACEBOOK = "https://www.facebook.com/eurofuelprices"
 
 MIN_STATIONS = 3          # below this a town page would be thin content -> no page
 ASSIGN_RADIUS_KM = 12     # places mode: a station belongs to the nearest centre within this radius
@@ -546,6 +547,7 @@ def footer_html(c: Ctx, unofficial: bool = False) -> str:
         parts.append('Data: <a href="https://www.fuel-prices.eu/" rel="noopener">fuel-prices.eu</a>, CC BY 4.0.')
     if cfg["osm"]:
         parts.append(f'{escape(x["foot_osm"])} <a href="https://www.openstreetmap.org/copyright">{escape(x["foot_osm_who"])}</a>.')
+    parts.append(f'<br><a href="{FACEBOOK}" rel="noopener">{escape(x["fb_follow"])}</a>')
     return " ".join(parts)
 
 

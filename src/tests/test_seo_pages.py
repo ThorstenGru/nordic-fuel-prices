@@ -136,6 +136,11 @@ class BelgiumAlternates(unittest.TestCase):
 
 
 class CheapestAge(unittest.TestCase):
+    def test_every_language_has_the_facebook_line_and_footers_link_to_the_page(self):
+        for lang, x in sp.TXT.items():
+            self.assertIn("fb_follow", x, lang)
+        self.assertIn("facebook.com/eurofuelprices", sp.FACEBOOK)
+
     def test_every_language_has_the_age_words_and_rel_age_reads_right(self):
         from datetime import datetime, timedelta, timezone
         now = datetime(2026, 11, 15, 12, tzinfo=timezone.utc)

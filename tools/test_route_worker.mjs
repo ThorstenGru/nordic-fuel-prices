@@ -92,7 +92,7 @@ assert.equal((await post('q=use&a=route')).status, 204); assert.deepEqual(dbCall
 assert.equal((await post('e=drop_table')).status, 400); assert.equal((await post('q=use&a=hack')).status, 400); assert.equal((await post('q=zzz&a=route')).status, 400);
 assert.equal((await post('e=route_planned', {})).status, 403);                                  // not from our pages
 assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/poll?e=route_planned', { headers: sameSite }), env2, ctx)).status, 405);   // GET refused
-assert.equal(dbCalls.length, 2); assert.ok(EVENTS.has('trip_calc') && POLL.next.includes('alerts'));
+assert.equal(dbCalls.length, 2); assert.ok(EVENTS.has('trip_calc') && EVENTS.has('fb_follow_click') && POLL.next.includes('alerts'));
 store.clear(); let last; for (let i = 0; i < 41; i++) last = await post('e=nearby_used');
 assert.equal(last.status, 429);                                                                  // 40 a minute per visitor
 console.log('test_route_worker: all passed');

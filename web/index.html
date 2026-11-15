@@ -364,6 +364,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .poll b { display:block; margin-bottom:6px; }
 .poll .po { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .poll .po button { background:var(--surf); border:1px solid var(--line); border-radius:999px; color:var(--ink); font-size:.82rem; font-weight:700; min-height:40px; padding:0 14px; cursor:pointer; }
+.poll .fbgo { display:inline-flex; align-items:center; min-height:40px; padding:0 16px; border-radius:999px; background:var(--acc-btn); color:var(--on-acc); font-size:.84rem; font-weight:800; text-decoration:none; }
 .poll .px { background:none; border:none; color:var(--sub); font-size:.8rem; font-weight:600; margin-top:6px; padding:0; min-height:32px; cursor:pointer; }
 .sec-h { font-size:.7rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--sub); padding:2px 4px 6px; }
 .nearby-summary { background:var(--acc-soft); border:1px solid var(--acc); border-radius:var(--r-m); padding:12px 14px; font-size:.8rem; display:flex; flex-direction:column; gap:3px; }
@@ -1355,14 +1356,19 @@ Object.assign(I18N.fr, { retry:'Réessayer', loadFail:'Impossible de charger {c}
 Object.assign(I18N.es, { retry:'Reintentar', loadFail:'No se pudo cargar {c}', offlineNote:'Sin conexión — se muestran los datos guardados', mapBackup:'Mapa de respaldo activado', mapDown:'El mapa no está disponible ahora — los precios siguen en la lista.', lgToggle:'Cambiar colores: precio / calificación de fuente', gradeInfo:'Cómo calificamos las fuentes' });
 
 Object.assign(I18N.en, { poll_use:'What do you mainly use this app for?', poll_use_cheapest:'Cheapest fuel nearby', poll_use_route:'Route planning', poll_use_ev:'Charging an electric car', poll_use_compare:'Comparing countries', poll_use_other:'Something else', poll_next:'What should we build next?', poll_next_alerts:'Price alerts', poll_next_countries:'More countries', poll_next_ev:'Better charging info', poll_next_route:'Better route planner', poll_next_speed:'Faster app', poll_later:'Not now', poll_thanks:'Thank you, that helps.' });
+Object.assign(I18N.en, { fb_h:'Daily prices on Facebook', fb_sub:'Follow us, comment your town and we reply with the cheapest pumps near you.', fb_btn:'Follow on Facebook', fb_later:'Not now' });
 Object.assign(I18N.en, { notPlausible:'Not plausible', npExcluded:'Not used for rankings, colours or averages.', np_far_from_country:'far from typical prices in this country', np_octane_order:'this 98 price is below the 95 price at the same station or for the same source', np_outside_eur_band:'outside any realistic price range', np_inconsistent_fuels:"doesn't fit this station's other fuel prices", np_stale_low:'low price that is also old: not used' });
 Object.assign(I18N.sv, { poll_use:'Vad använder du främst appen till?', poll_use_cheapest:'Billigaste bränsle i närheten', poll_use_route:'Ruttplanering', poll_use_ev:'Ladda elbil', poll_use_compare:'Jämföra länder', poll_use_other:'Något annat', poll_next:'Vad ska vi bygga härnäst?', poll_next_alerts:'Prisbevakning', poll_next_countries:'Fler länder', poll_next_ev:'Bättre laddinfo', poll_next_route:'Bättre ruttplanerare', poll_next_speed:'Snabbare app', poll_later:'Inte nu', poll_thanks:'Tack, det hjälper.' });
+Object.assign(I18N.sv, { fb_h:'Dagliga priser på Facebook', fb_sub:'Följ oss, kommentera din ort så svarar vi med de billigaste pumparna nära dig.', fb_btn:'Följ på Facebook', fb_later:'Inte nu' });
 Object.assign(I18N.sv, { notPlausible:'Inte rimligt', npExcluded:'Används inte i rankning, färger eller medelvärden.', np_far_from_country:'långt från typiska priser i landet', np_octane_order:'detta 98-pris är lägre än 95-priset på samma station eller hos samma källa', np_outside_eur_band:'utanför ett realistiskt prisintervall', np_inconsistent_fuels:'passar inte stationens övriga bränslepriser', np_stale_low:'lågt pris som dessutom är gammalt: används inte' });
 Object.assign(I18N.de, { "poll_use": "Wofür nutzt du die App hauptsächlich?", "poll_use_cheapest": "Günstigster Kraftstoff in der Nähe", "poll_use_route": "Routenplanung", "poll_use_ev": "Elektroauto laden", "poll_use_compare": "Länder vergleichen", "poll_use_other": "Etwas anderes", "poll_next": "Was sollen wir als Nächstes bauen?", "poll_next_alerts": "Preisalarm", "poll_next_countries": "Mehr Länder", "poll_next_ev": "Bessere Ladeinfos", "poll_next_route": "Besserer Routenplaner", "poll_next_speed": "Schnellere App", "poll_later": "Jetzt nicht", "poll_thanks": "Danke, das hilft." });
+Object.assign(I18N.de, { "fb_h": "Tagespreise auf Facebook", "fb_sub": "Folge uns, kommentiere deinen Ort und wir antworten mit den günstigsten Zapfsäulen in deiner Nähe.", "fb_btn": "Auf Facebook folgen", "fb_later": "Jetzt nicht" });
 Object.assign(I18N.de, { notPlausible:'Nicht plausibel', npExcluded:'Wird nicht für Ranglisten, Farben oder Durchschnitte verwendet.', np_far_from_country:'weit entfernt von den üblichen Preisen im Land', np_octane_order:'dieser 98er-Preis liegt unter dem 95er-Preis derselben Station oder Quelle', np_outside_eur_band:'außerhalb jeder realistischen Preisspanne', np_inconsistent_fuels:'passt nicht zu den anderen Kraftstoffpreisen dieser Tankstelle', np_stale_low:'niedriger Preis, der außerdem alt ist: wird nicht verwendet' });
 Object.assign(I18N.fr, { "poll_use": "À quoi sert surtout cette appli pour vous ?", "poll_use_cheapest": "Carburant le moins cher près de moi", "poll_use_route": "Planifier un trajet", "poll_use_ev": "Recharger une voiture électrique", "poll_use_compare": "Comparer les pays", "poll_use_other": "Autre chose", "poll_next": "Que devrions-nous construire ensuite ?", "poll_next_alerts": "Alertes de prix", "poll_next_countries": "Plus de pays", "poll_next_ev": "Meilleures infos de recharge", "poll_next_route": "Meilleur planificateur de trajet", "poll_next_speed": "Appli plus rapide", "poll_later": "Pas maintenant", "poll_thanks": "Merci, cela nous aide." });
+Object.assign(I18N.fr, { "fb_h": "Les prix du jour sur Facebook", "fb_sub": "Suivez-nous, commentez votre ville et nous répondons avec les pompes les moins chères près de chez vous.", "fb_btn": "Suivre sur Facebook", "fb_later": "Pas maintenant" });
 Object.assign(I18N.fr, { notPlausible:'Non plausible', npExcluded:'Non utilisé pour les classements, couleurs ou moyennes.', np_far_from_country:'très éloigné des prix habituels du pays', np_octane_order:'ce prix 98 est inférieur au prix 95 de la même station ou de la même source', np_outside_eur_band:'hors de toute fourchette de prix réaliste', np_inconsistent_fuels:"ne correspond pas aux autres carburants de cette station", np_stale_low:'prix bas et ancien : non utilisé' });
 Object.assign(I18N.es, { "poll_use": "¿Para qué usas sobre todo esta app?", "poll_use_cheapest": "Combustible más barato cerca", "poll_use_route": "Planificar rutas", "poll_use_ev": "Cargar un coche eléctrico", "poll_use_compare": "Comparar países", "poll_use_other": "Otra cosa", "poll_next": "¿Qué debemos construir ahora?", "poll_next_alerts": "Alertas de precio", "poll_next_countries": "Más países", "poll_next_ev": "Mejor información de carga", "poll_next_route": "Mejor planificador de rutas", "poll_next_speed": "App más rápida", "poll_later": "Ahora no", "poll_thanks": "Gracias, nos ayuda." });
+Object.assign(I18N.es, { "fb_h": "Precios diarios en Facebook", "fb_sub": "Síguenos, comenta tu localidad y te respondemos con los surtidores más baratos cerca de ti.", "fb_btn": "Seguir en Facebook", "fb_later": "Ahora no" });
 Object.assign(I18N.es, { notPlausible:'No plausible', npExcluded:'No se usa en clasificaciones, colores ni medias.', np_far_from_country:'muy lejos de los precios habituales del país', np_octane_order:'este precio 98 es inferior al precio 95 de la misma estación o fuente', np_outside_eur_band:'fuera de cualquier rango de precios realista', np_inconsistent_fuels:'no encaja con los demás combustibles de esta estación', np_stale_low:'precio bajo y además antiguo: no se usa' });
 
 Object.assign(I18N.en, { labelTheme:'Appearance', themeAuto:'Auto', themeLight:'Light', themeDark:'Dark' });
@@ -4873,10 +4879,20 @@ function pollRender() {
   const el = document.getElementById('poll-card'); if (!el) return;
   const st = store.get('efp_poll', {}) || {};
   const q = !st.use ? 'use' : !st.next ? 'next' : null;
-  if (!q || !TRACK_ON() || (st.snooze && Date.now() < st.snooze)) { el.hidden = true; return; }
+  if (!q || !TRACK_ON() || (st.snooze && Date.now() < st.snooze)) { fbRender(el); return; }
   el.innerHTML = `<b>${esc(t('poll_' + q))}</b><div class="po">${POLL_Q[q].map(a => `<button type="button" onclick="pollAns('${q}','${a}')">${esc(t('poll_' + q + '_' + a))}</button>`).join('')}</div><button type="button" class="px" onclick="pollSnooze()">${esc(t('poll_later'))}</button>`;
   el.hidden = false;
 }
+// Follow card: from the 2nd visit, when no survey question is showing. "Not now" waits 30 days, a tap on the button is the end of it.
+const FB_PAGE = 'https://www.facebook.com/eurofuelprices';
+function fbRender(el) {
+  const st = store.get('efp_fb', {}) || {};
+  if (st.done || (st.snooze && Date.now() < st.snooze) || (store.get('efp_visits', 0) | 0) < 2) { el.hidden = true; return; }
+  el.innerHTML = `<b>${esc(t('fb_h'))}</b>${esc(t('fb_sub'))}<div class="po"><a class="fbgo" href="${FB_PAGE}" target="_blank" rel="noopener" onclick="fbClick()">${esc(t('fb_btn'))}</a></div><button type="button" class="px" onclick="fbSnooze()">${esc(t('fb_later'))}</button>`;
+  el.hidden = false; track('fb_follow_shown');
+}
+function fbClick() { store.set('efp_fb', { done: 1 }); track('fb_follow_click'); const el = document.getElementById('poll-card'); if (el) setTimeout(() => { el.hidden = true; }, 400); }
+function fbSnooze() { store.set('efp_fb', { snooze: Date.now() + 30 * 864e5 }); const el = document.getElementById('poll-card'); if (el) el.hidden = true; }
 function pollAns(q, a) {
   const st = store.get('efp_poll', {}) || {}; st[q] = a; store.set('efp_poll', st);
   try { navigator.sendBeacon && navigator.sendBeacon('/api/poll?q=' + q + '&a=' + a); } catch (_) {}
@@ -4885,7 +4901,7 @@ function pollAns(q, a) {
 function pollSnooze() { const st = store.get('efp_poll', {}) || {}; st.snooze = Date.now() + 30 * 864e5; store.set('efp_poll', st); pollRender(); }
 (function pollInit() {
   try { if (!sessionStorage.getItem('efp_vis')) { sessionStorage.setItem('efp_vis', '1'); store.set('efp_visits', (store.get('efp_visits', 0) | 0) + 1); } } catch (_) {}
-  if ((store.get('efp_visits', 0) | 0) >= 3) setTimeout(pollRender, 4000);
+  if ((store.get('efp_visits', 0) | 0) >= 2) setTimeout(pollRender, 4000);
 })();
 
 // Desktop map popup: same header + body as the phone sheet

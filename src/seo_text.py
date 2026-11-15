@@ -356,3 +356,18 @@ HIST_TXT: Dict[str, Dict[str, str]] = {
 }
 for _lang, _d in HIST_TXT.items():
     TXT[_lang].update(_d)
+
+# Added 2026-11-15: a follow line at the foot of every generated page.
+FB_TXT: Dict[str, Dict[str, str]] = {
+    "sv": dict(fb_follow="Dagliga priser och svar för din ort på Facebook"),
+    "de": dict(fb_follow="Tagespreise und Antworten für deinen Ort auf Facebook"),
+    "fr": dict(fb_follow="Prix du jour et réponses pour votre ville sur Facebook"),
+    "es": dict(fb_follow="Precios diarios y respuestas para tu localidad en Facebook"),
+    "pt": dict(fb_follow="Preços diários e respostas para a sua localidade no Facebook"),
+    "da": dict(fb_follow="Daglige priser og svar til din by på Facebook"),
+    "nl": dict(fb_follow="Dagelijkse prijzen en antwoorden voor jouw plaats op Facebook"),
+    "it": dict(fb_follow="Prezzi quotidiani e risposte per la tua città su Facebook"),
+    "pl": dict(fb_follow="Codzienne ceny i odpowiedzi dla Twojego miasta na Facebooku"),
+}
+for _lang, _d in FB_TXT.items():
+    TXT[_lang].update(_d)
