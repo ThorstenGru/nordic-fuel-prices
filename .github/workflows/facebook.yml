@@ -17,6 +17,13 @@ on:
         description: 'dry run (no posting)'
         type: boolean
         default: true
+      post_format:
+        description: 'one-off format for mode post (ranking, border-pair, quiz, feature, spotlight, local-ask); empty = today''s plan'
+        default: ''
+      nolink:
+        description: 'never print the link in the post'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -46,7 +53,9 @@ jobs:
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
           MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '30 * * * *' && 'replies' || 'post') }}
           DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
-        run: python tools/fb_bot.py "$MODE" $DRY
+          FMT: ${{ github.event_name == 'workflow_dispatch' && inputs.post_format || '' }}
+          NOLINK: ${{ github.event_name == 'workflow_dispatch' && inputs.nolink && '--nolink' || '' }}
+        run: python tools/fb_bot.py "$MODE" $DRY ${FMT:+--format "$FMT"} $NOLINK
 
       - name: Commit the logs
         run: |

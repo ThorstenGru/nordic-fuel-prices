@@ -150,7 +150,7 @@ class Bot(unittest.TestCase):
     def test_post_once_and_log(self):
         g = Graph()
         orig = fb_daily.build
-        fb_daily.build = lambda today, out, audience=None, download=True: ({"skip": "already posted today"} if any(
+        fb_daily.build = lambda today, out, audience=None, download=True, force=None, nolink=False: ({"skip": "already posted today"} if any(
             r["date"] == today.isoformat() for r in fb_daily.read_log()) else
             {"text": "hello", "image_url": "https://x/y.png", "format": "feature", "key": "k", "date": today.isoformat()})
         try:

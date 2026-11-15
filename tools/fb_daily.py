@@ -41,9 +41,9 @@ def link_budget_left(used, today):
     return sum(1 for r in used if str(r.get("date", ""))[:7] == month and str(r.get("format", "")).endswith("-link")) < LINKS_PER_MONTH
 
 
-def compose(body, url, label, fmt, used, today):
+def compose(body, url, label, fmt, used, today, allow_link=True):
     """-> (text, logged format). The link goes in only for LINK_FORMATS while the month's allowance lasts; the town invitation goes on every post except the ask itself."""
-    link = fmt in LINK_FORMATS and link_budget_left(used, today)
+    link = allow_link and fmt in LINK_FORMATS and link_budget_left(used, today)
     parts = [body]
     if fmt != "local-ask":
         parts.append(CTA_TOWN)
@@ -134,9 +134,13 @@ def pair_post(m, a, b, quiz=False):
     return text, f"{SITE}/og/{pair_slug(a, b)}.png", url
 
 
-def build(today: date, out: Path, audience=None, download=True):
+FORCE_WD = {"ranking": 0, "border-pair": 1, "quiz": 2, "feature": 3, "spotlight": 4, "local-ask": 5}   # a forced format uses that weekday's recipe
+
+
+def build(today: date, out: Path, audience=None, download=True, force=None, nolink=False):
+    """force = one of FORCE_WD (a one-off post of that format, also on a day that already has a post); nolink = never print the link."""
     used = read_log()
-    if any(r["date"] == today.isoformat() and r.get("format") != "skip" for r in used):
+    if not force and any(r["date"] == today.isoformat() and r.get("format") != "skip" for r in used):
         return {"skip": "already posted today"}
     raw = fetch(SITE + "/open-data/national-averages.json")
     if not raw:
@@ -148,7 +152,7 @@ def build(today: date, out: Path, audience=None, download=True):
     if upd is None or datetime.now(timezone.utc) - upd > timedelta(hours=36):
         return {"skip": "data older than 36 h"}
     m = medians(doc)
-    wd = today.weekday()   # Mon=0
+    wd = FORCE_WD[force] if force else today.weekday()   # Mon=0
     pairs = [p for p in BORDER_PAIRS if pair_data(m, *p)]
     result = None
     if wd == 0:   # ranking
@@ -183,7 +187,7 @@ def build(today: date, out: Path, audience=None, download=True):
     if not result:
         return {"skip": "not enough data for today's format"}
     body, img_url, fmt, key, url, label = result
-    text, logged = compose(body, url, label, fmt, used, today)
+    text, logged = compose(body, url, label, fmt, used, today, allow_link=not nolink)
     res = {"text": text, "image_url": img_url, "format": logged, "key": key, "date": today.isoformat()}
     if download:                      # the browser route needs a local file; the Graph API route posts the public URL
         out.mkdir(parents=True, exist_ok=True)

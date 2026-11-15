@@ -1,6 +1,6 @@
 """Autonomous Facebook routine for the Euro Fuel Prices Page. Runs on GitHub Actions; needs no computer, app or person.
 
-    python tools/fb_bot.py post [--dry-run]      # one post a day (text + share card), logged in docs/facebook/post_log.csv
+    python tools/fb_bot.py post [--dry-run] [--format ranking|border-pair|quiz|feature|spotlight|local-ask] [--nolink]   # one post a day (text + share card), logged in docs/facebook/post_log.csv; --format = a one-off of that format
     python tools/fb_bot.py replies [--dry-run]   # answers "comment your town" comments with the cheapest stations within 10 km
 
 Environment: FB_PAGE_ID and FB_PAGE_TOKEN (a PAGE access token, GitHub secrets). Without them the script exits quietly (exit 0), so the
@@ -60,7 +60,7 @@ def creds():
     return pid, tok
 
 
-def run_post(dry: bool, graph=fb_graph, today=None) -> int:
+def run_post(dry: bool, graph=fb_graph, today=None, force=None, nolink=False) -> int:
     today = today or date.today()
     c = creds()
     if not c and not dry:
@@ -69,7 +69,7 @@ def run_post(dry: bool, graph=fb_graph, today=None) -> int:
     if c:
         print(f"fb_bot: token belongs to Page '{graph.verify_page(pid, tok)}'")   # read-only check, also in a dry run; aborts for any other account
     audience = graph.follower_cities(pid, tok) if c else {}
-    res = fb_daily.build(today, Path("."), audience=audience, download=False)
+    res = fb_daily.build(today, Path("."), audience=audience, download=False, force=force or None, nolink=nolink)
     if "skip" in res:
         print(f"fb_bot: skip - {res['skip']}")
         if res["skip"] != "already posted today":
@@ -148,7 +148,11 @@ def main() -> int:
         if mode == "selftest":
             return run_selftest()
         if mode == "post":
-            return run_post(dry)
+            fmt = a[a.index("--format") + 1] if "--format" in a else None
+            if fmt and fmt not in fb_daily.FORCE_WD:
+                print(f"fb_bot: unknown --format {fmt}")
+                return 2
+            return run_post(dry, force=fmt, nolink="--nolink" in a)
         if mode == "replies":
             return run_replies(dry)
     except fb_graph.GraphError as e:
