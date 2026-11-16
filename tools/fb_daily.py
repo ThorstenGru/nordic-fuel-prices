@@ -24,7 +24,7 @@ from europe_index import BORDER_PAIRS, NAMES, pair_slug  # noqa: E402
 SITE = "https://eurofuelprices.com"
 LOG = ROOT / "docs" / "facebook" / "post_log.csv"
 CF_IP = "104.21.74.127"   # fallback only: this machine's DNS has failed for the domain before
-MIN_N = 300               # a country needs this many priced stations to be quoted in a post
+MIN_N = 30                # a country needs this many priced stations to be quoted: the same as src/europe_index.MIN_N, so the post text and the picture (og/europe.png) always name the same countries
 FILL_L = 50
 
 # Interaction first (2026-11-15): Facebook reaches posts with external links much less (Meta tests 2 link posts a month for Pages), so a post carries its link

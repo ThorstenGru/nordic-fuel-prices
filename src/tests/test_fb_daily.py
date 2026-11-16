@@ -68,3 +68,9 @@ class Posts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SameThresholdAsCard(unittest.TestCase):
+    def test_post_text_and_europe_card_quote_the_same_countries(self):
+        import europe_index
+        self.assertEqual(fb.MIN_N, europe_index.MIN_N)   # 2026-11-16: text said Poland, picture said Malta (300 vs 30)
