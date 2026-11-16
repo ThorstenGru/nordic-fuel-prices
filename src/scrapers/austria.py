@@ -279,8 +279,9 @@ class AustriaScraper(BaseScraper):
                 "country": "AT",
                 "name": s.get("name", ""),
                 "brand": (s.get("name", "") or "").split(",")[0].strip(),
-                "address": f"{addr.get('street', '')} {addr.get('streetnumber', '')}".strip(),
-                "city": addr.get("city", ""),
+                # e-control puts the postal address in "location" ({address, postalCode, city, latitude, longitude}); the old "address" object is not there (2026-11-16: every Austrian station had no city)
+                "address": (loc.get("address") or f"{addr.get('street', '')} {addr.get('streetnumber', '')}").strip(),
+                "city": loc.get("city") or addr.get("city", ""),
                 "lat": loc.get("latitude"),
                 "lon": loc.get("longitude"),
                 "source": self.SOURCE,

@@ -42,6 +42,13 @@ COUNTRIES: Dict[str, Dict[str, Any]] = {
                fuels=[("P95", "Gasolina 95"), ("DIESEL", "Gasóleo"), ("LPG", "GPL Auto")],
                cheapest=("P95", "DIESEL"), src="DGEG – Direção-Geral de Energia e Geologia", osm=False,
                nation="mediana nacional"),
+    # Bot-only (2026-11-16): the reply bot (tools/fb_local.py) answers town comments here; no SEO pages are generated (bot_only), so only "near" is needed in TXT.
+    "no": dict(lang="nb", currency="NOK", sym="kr", mode="city", ts_kind="fetched", fallback_nearby=False, bot_only=True,
+               hub="Drivstoffpriser Norge", hub_title="Drivstoffpriser Norge",
+               fuels=[("P95", "Bensin 95"), ("DIESEL", "Diesel")], cheapest=("P95", "DIESEL"), src="ANWB", osm=False, nation="landsmedian"),
+    "fi": dict(lang="fi", currency="EUR", sym="€", mode="city", ts_kind="price", fallback_nearby=False, bot_only=True,
+               hub="Polttoaineen hinnat Suomi", hub_title="Polttoaineen hinnat Suomi",
+               fuels=[("P95", "Bensiini 95"), ("DIESEL", "Diesel")], cheapest=("P95", "DIESEL"), src="polttoaine.net, ANWB", osm=False, nation="valtakunnallinen mediaani"),
     "dk": dict(lang="da", currency="DKK", sym="kr", mode="city", ts_kind="price", fallback_nearby=False,
                hub="Benzinpriser Danmark", hub_title="Benzinpriser Danmark i dag – billigste benzin og diesel",
                fuels=[("P95", "Benzin 95"), ("P98", "Benzin 98"), ("DIESEL", "Diesel")],
@@ -86,6 +93,8 @@ MONTHS = {
 }
 
 TXT: Dict[str, Dict[str, str]] = {
+    "nb": dict(near="ved"),   # bot-only language (see COUNTRIES "no")
+    "fi": dict(near="lähellä"),   # bot-only language (see COUNTRIES "fi")
     "sv": dict(
         locale="sv_SE", home="Hem", map="Öppna kartan →", crumbs="Brödsmulor",
         cheapest="Billigaste {f}", vs="{d} kr mot riksmedian",

@@ -16,9 +16,14 @@ class JsonLd(unittest.TestCase):
         self.assertIn("<\\/script>", html)
 
 
+BOT_ONLY_LANGS = {c["lang"] for c in sp.COUNTRIES.values() if c.get("bot_only")}
+
+
 class NewCountries(unittest.TestCase):
     def test_every_country_has_its_language_texts(self):
         for cc, cfg in sp.COUNTRIES.items():
+            if cfg.get("bot_only"):   # no pages, only the reply bot (fb_local)
+                continue
             self.assertIn(cfg["lang"], sp.TXT, cc)
             self.assertIn(cfg["lang"], sp.MONTHS, cc)
             sp.slugify("Łódź", cfg["lang"])   # must not raise
@@ -138,6 +143,8 @@ class BelgiumAlternates(unittest.TestCase):
 class CheapestAge(unittest.TestCase):
     def test_every_language_has_the_facebook_line_and_footers_link_to_the_page(self):
         for lang, x in sp.TXT.items():
+            if lang in BOT_ONLY_LANGS:
+                continue
             self.assertIn("fb_follow", x, lang)
         self.assertIn("facebook.com/eurofuelprices", sp.FACEBOOK)
 
@@ -145,6 +152,8 @@ class CheapestAge(unittest.TestCase):
         from datetime import datetime, timedelta, timezone
         now = datetime(2026, 11, 15, 12, tzinfo=timezone.utc)
         for lang, x in sp.TXT.items():
+            if lang in BOT_ONLY_LANGS:
+                continue
             for k in ("rep", "chk", "a_today", "a_yday", "a_h", "a_d"):
                 self.assertIn(k, x, f"{lang}.{k}")
         x = sp.TXT["de"]

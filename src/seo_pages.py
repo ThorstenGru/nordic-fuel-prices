@@ -56,7 +56,7 @@ from seo_text import COUNTRIES, MONTHS, TXT  # (country settings and page texts 
 
 
 def slugify(name: str, lang: str) -> str:
-    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "nl": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}, "it": {}, "pl": {"ł": "l"}}[lang]
+    rep = {"sv": {"å": "a", "ä": "a", "ö": "o"}, "de": {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}, "fr": {"œ": "oe", "æ": "ae"}, "es": {}, "pt": {}, "nl": {}, "da": {"å": "aa", "ø": "oe", "æ": "ae"}, "nb": {"å": "aa", "ø": "o", "æ": "ae"}, "fi": {"ä": "a", "ö": "o", "å": "a"}, "it": {}, "pl": {"ł": "l"}}[lang]
     s = name.lower()
     for k, v in rep.items():
         s = s.replace(k, v)
@@ -771,6 +771,8 @@ def main() -> int:
     now = datetime.now(timezone.utc)
     built = []
     for cc, cfg in COUNTRIES.items():
+        if cfg.get("bot_only"):
+            continue
         try:
             if build_country(cc, cfg, now):
                 built.append(cc)

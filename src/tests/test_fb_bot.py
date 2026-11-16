@@ -59,7 +59,8 @@ class Local(unittest.TestCase):
         self.assertEqual(fb_local.match_comment("Hamburg, Germany"), ("Hamburg", "de"))
         self.assertEqual(fb_local.match_comment("Wien"), ("Wien", None))
         self.assertIsNone(fb_local.match_comment("great idea, thanks for building this tool for everybody"))
-        self.assertIsNone(fb_local.match_comment("Oslo, Norway"))             # country without town pages in our supported list
+        self.assertEqual(fb_local.match_comment("Oslo, Norway"), ("Oslo", "no"))   # Nordics and DACH are answered (2026-11-16)
+        self.assertIsNone(fb_local.match_comment("Reykjavik, Iceland"))              # Iceland: no city field in its feed
 
     def test_answer_only_quotes_stations_within_10_km(self):
         text = fb_local.answer_for("Hamburg", "de", fetch)
@@ -207,3 +208,15 @@ class LogHeaderRepair(unittest.TestCase):
             bot.LOG, daily.LOG = old, old2
         self.assertEqual(rows[1].get("post_id"), "123_456")      # was None: replies "found no recent post"
         self.assertFalse(rows[0].get("post_id"))
+
+
+class BotOnlyCountries(unittest.TestCase):
+    def test_norway_answer_links_the_map_and_marks_chain_prices(self):
+        st = {"brand": "CIRCLE K", "address": "Vei 1", "city": "Oslo", "chain_price": True}
+        found = {"P95": [(20.97, st)], "DIESEL": []}
+        text = fb_local.local_text("no", {"slug": "oslo"}, found, "Here are the cheapest stations within 10 km of Oslo:")
+        self.assertIn("https://eurofuelprices.com/", text)
+        self.assertNotIn("/no/oslo", text)                      # no town page exists for bot-only countries
+        self.assertIn("20,97", text.replace(".", ","))
+        self.assertIn("*", text)                                # chain price marked
+        self.assertIn("list price", text)

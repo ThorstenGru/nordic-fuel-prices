@@ -19,10 +19,12 @@ SITE = "https://eurofuelprices.com"
 RADIUS_KM = 10
 TOP_N = 3
 # countries with their own town pages and a source grade we are willing to quote
-SUPPORTED = ["de", "ch", "fr", "es", "pt", "dk", "nl", "se", "be", "pl", "it"]   # AT has no city field in its feed. be = Dutch names; French names are tried as be-fr (same data file)
+SUPPORTED = ["de", "at", "ch", "dk", "se", "no", "fi", "fr", "es", "pt", "nl", "be", "pl", "it"]   # DACH and the Nordics first (Iceland has no city field). be = Dutch names; French names are tried as be-fr (same data file)
 CITIES = [("de", "Hamburg"), ("de", "Berlin"), ("de", "München"), ("de", "Köln"), ("de", "Flensburg"), ("de", "Frankfurt am Main"),
           ("dk", "København"), ("dk", "Aarhus"), ("dk", "Aalborg"), ("dk", "Odense"),
           ("se", "Stockholm"), ("se", "Göteborg"), ("se", "Malmö"), ("se", "Uppsala"), ("se", "Linköping"), ("ch", "Zürich"), ("ch", "Basel"), ("ch", "Bern"),
+          ("at", "Wien"), ("at", "Graz"), ("at", "Salzburg"), ("at", "Linz"), ("at", "Innsbruck"),
+          ("no", "Oslo"), ("no", "Bergen"), ("no", "Trondheim"), ("no", "Stavanger"), ("fi", "Helsinki"), ("fi", "Tampere"), ("fi", "Turku"), ("fi", "Oulu"),
           ("fr", "Paris"), ("fr", "Lyon"), ("fr", "Marseille"), ("fr", "Strasbourg"),
           ("es", "Madrid"), ("es", "Barcelona"), ("es", "Valencia"), ("es", "Sevilla"),
           ("pt", "Lisboa"), ("pt", "Porto"), ("nl", "Amsterdam"), ("nl", "Rotterdam"), ("nl", "Utrecht"),
@@ -30,7 +32,7 @@ CITIES = [("de", "Hamburg"), ("de", "Berlin"), ("de", "München"), ("de", "Köln
 COUNTRY_WORDS = {n.lower(): c for c, n in NAMES.items()}
 COUNTRY_WORDS.update({"deutschland": "DE", "österreich": "AT", "oesterreich": "AT", "schweiz": "CH", "suisse": "CH", "españa": "ES", "espana": "ES",
                       "danmark": "DK", "nederland": "NL", "holland": "NL", "italia": "IT", "sverige": "SE", "norge": "NO",
-                      "polska": "PL", "belgië": "BE", "belgie": "BE", "belgique": "BE"})
+                      "polska": "PL", "suomi": "FI", "finnland": "FI", "noreg": "NO", "norwegen": "NO", "schweden": "SE", "dänemark": "DK", "danemark": "DK", "belgië": "BE", "belgie": "BE", "belgique": "BE"})
 
 
 def load_stations(c, fetch, cache=None):
@@ -87,15 +89,18 @@ def format_lines(cc, found):
     for fuel, label in (("P95", "Petrol 95"), ("DIESEL", "Diesel")):
         rows = found.get(fuel) or []
         if rows:
-            items = "; ".join(f"{i}) {sp.station_label(s)[0]}, {sp.station_label(s)[1] or '-'} {sp.money(p, cfg)}" for i, (p, s) in enumerate(rows, 1))
+            items = "; ".join(f"{i}) {sp.station_label(s)[0]}, {sp.station_label(s)[1] or '-'} {sp.money(p, cfg)}{'*' if s.get('chain_price') else ''}" for i, (p, s) in enumerate(rows, 1))
             lines.append(f"{label}: {items}")
     return lines
 
 
 def local_text(cc, town, found, lead, grade="C"):
-    url = f"{SITE}/{cc}/{town['slug']}/"
+    url = SITE + "/" if sp.COUNTRIES[cc].get("bot_only") else f"{SITE}/{cc}/{town['slug']}/"   # bot-only countries have no town page: the live map
+    chain = any(s.get("chain_price") for rows in found.values() for _, s in rows)
     note = ("Estimates from community reports, not official prices; check at the pump." if grade == "D"
             else "Prices as listed on our map; check at the pump.")
+    if chain:
+        note = "* the same price at many stations of this chain, probably its list price. " + note
     return f"{lead}\n" + "\n".join(format_lines(cc, found)) + f"\n{note} More: {url}"
 
 

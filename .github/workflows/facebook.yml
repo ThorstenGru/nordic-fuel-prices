@@ -5,8 +5,8 @@ name: Facebook — daily post and replies (Euro Fuel Prices Page)
 
 on:
   schedule:
-    - cron: '0 7 * * *'     # daily post (08:00/09:00 in Sweden)
-    - cron: '0 11 * * *'    # retry of the daily post if the first run had to skip (a post is never made twice: the log is checked)
+    - cron: '0 16 * * *'    # daily post (17:00/18:00 in Sweden and Germany: after work; moved from 07:00 on 2026-11-16)
+    - cron: '30 17 * * *'   # retry of the daily post if the first run had to skip (a post is never made twice: the log is checked)
     - cron: '30 * * * *'    # answers to "comment your town" comments
   workflow_dispatch:
     inputs:
