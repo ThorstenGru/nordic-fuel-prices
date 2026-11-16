@@ -71,6 +71,7 @@ def make(mode, session, ft=None, key="k", **attrs):
     ft = ft or FakeTime()
     sc._sleep, sc._clock, sc._wall = ft.sleep, ft.clock, lambda: ft.wall
     sc.acc_path = None   # tests never write data/de_accuracy.json
+    sc.state_path = None  # ... nor data/de_tk_state.json
     for k, v in attrs.items():
         setattr(sc, k, v)
     return sc, ft
@@ -125,20 +126,60 @@ class TestMode(unittest.TestCase):
         run(sc, [anwb_station(1, 52.5, 13.4)])
         self.assertTrue(all(abs(x - 62) < 1e-6 for x in ft.sleeps))   # full gap after the 10 s request ended
 
-    def test_rotation_by_time_slot_covers_all_circles(self):
-        seen = []
-        for slot in range(20):
+    def test_rotation_by_age_metro_first_then_country_side(self):
+        state, seen, rural_runs = {}, [], 0
+        for slot in range(30):
             sc, _ = make("test", FakeSession(), ft=FakeTime(wall=slot * 1800 + 5))
+            sc._state = state                                            # the state file carried from run to run
             c5 = sc._circles([])
             self.assertEqual(len(c5), 5)
-            self.assertEqual(sum(1 for c in c5 if c in RURAL), 3)       # every run: 2 metro + 3 country-side circles
+            if slot == 0:
+                self.assertTrue(all(c in GRID for c in c5))              # nothing read yet: the cities go first
+            for c in c5:
+                state.setdefault("circles", {})[sc._ckey(c)] = sc._wall()
+            rural_runs += sum(1 for c in c5 if c in RURAL)
             seen += c5
-        self.assertEqual(set(seen), set(GRID) | set(RURAL))
-        a, _ = make("test", FakeSession(), ft=FakeTime(wall=100))
-        b, _ = make("test", FakeSession(), ft=FakeTime(wall=1700))   # same slot, same circles
-        c, _ = make("test", FakeSession(), ft=FakeTime(wall=1900))
-        self.assertEqual(a._circles([]), b._circles([]))
-        self.assertNotEqual(a._circles([]), c._circles([]))
+        self.assertEqual(set(seen), set(GRID) | set(RURAL))              # everything is visited within 15 h
+        self.assertGreater(rural_runs, 0)
+        # steady state: a metro circle is read about twice as often as a country-side one
+        n_m = sum(1 for c in seen if c in GRID) / len(GRID)
+        n_r = sum(1 for c in seen if c in RURAL) / len(RURAL)
+        self.assertGreater(n_m, n_r)
+
+    def test_failed_circle_keeps_its_age(self):
+        s = FakeSession([(500, {})])
+        sc, _ = make("test", s)
+        run(sc, [anwb_station(1, 52.5, 13.4)])
+        self.assertEqual(sc._state.get("circles", {}), {})                # a circle that errored is tried again first
+
+    def test_recent_readings_are_carried_and_expire(self):
+        body = tk_body((52.5, 13.4, 1.90, 1.85, 1.75))
+        s = FakeSession([(200, body)])
+        sc, ft = make("test", s, ft=FakeTime(wall=1_800_000_000))
+        out = run(sc, [anwb_station(1, 52.5, 13.4)])
+        first = out[0]["prices"][0]["checked_at"]
+        saved = {"readings": sc._state["readings"], "circles": sc._state["circles"]}
+        # 3 h later this station is not in any circle read: the saved reading is used, with its ORIGINAL time
+        s2 = FakeSession([(200, {"ok": True, "stations": []})])
+        sc2, _ = make("test", s2, ft=FakeTime(wall=1_800_000_000 + 3 * 3600))
+        sc2.state_path = None
+        with mock.patch.object(GermanyScraper, "_load_state", return_value=saved):
+            out2 = run(sc2, [anwb_station(1, 52.5, 13.4)])
+        self.assertEqual(out2[0]["grade"], "A")
+        self.assertEqual(out2[0]["prices"][0]["checked_at"], first)
+        self.assertEqual(sc2.tk_info["carried"], 1)
+        # 9 h later a metro reading is too old and the station falls back to ANWB
+        sc3, _ = make("test", FakeSession([(200, {"ok": True, "stations": []})]), ft=FakeTime(wall=1_800_000_000 + 9 * 3600))
+        with mock.patch.object(GermanyScraper, "_load_state", return_value=saved):
+            out3 = run(sc3, [anwb_station(1, 52.5, 13.4)])
+        self.assertEqual(out3[0]["grade"], "C")
+
+    def test_carried_readings_do_not_feed_the_accuracy_meter(self):
+        t = parse_tk_stations(tk_body((52.5, 13.4, 1.90, 1.85, 1.75)), lambda ft, v, u, octane=None: {"fuel_type": ft, "price": v, "currency": "EUR", "unit": u, "updated_at": None, "octane": octane})
+        t[0]["_carried"] = True
+        acc = []
+        GermanyScraper._merge([anwb_station(1, 52.5, 13.4)], t, acc=acc)
+        self.assertEqual(acc, [])
 
     def test_aborts_on_first_503_without_retry(self):
         for code in (503, 429):

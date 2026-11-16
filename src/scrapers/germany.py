@@ -80,8 +80,14 @@ RURAL = [
     (49.60, 9.00), (50.40, 9.90), (49.50, 10.80), (49.00, 13.00), (47.70, 10.30), (47.80, 12.00), (48.40, 9.40),
     (48.20, 8.20), (52.70, 7.30), (53.40, 7.50), (54.60, 8.90), (54.00, 9.60), (53.00, 10.20), (51.90, 9.30),
 ]
-METRO_PER_RUN, RURAL_PER_RUN = 2, 3        # = TEST_MAX_CIRCLES
 RURAL_SET = set(RURAL)
+# Test-mode rotation is by AGE, not by the clock: each run reads the TEST_MAX_CIRCLES circles whose last reading is oldest, a metro circle
+# counting METRO_WEIGHT times as old as a country-side one. So the cities come first and are refreshed about twice as often as the
+# country side; a circle never read yet goes first. The last readings are kept (carried) for TK_TTL_H hours, so between two visits
+# a station still has a real, dated MTS-K price. No extra request is made for this.
+METRO_WEIGHT = 2.0
+TK_TTL_H = {"metro": 8.0, "rural": 12.0}
+STATE_V = 1
 
 # Accuracy meter (A): every ANWB-versus-MTS-K difference is counted in 1-cent bins, per day, so we can say how far ANWB is off.
 RISKY_MIN_STATIONS = 5                     # ... and the off readings come from >= 5 DIFFERENT stations (one stale pump seen on many days must not blame a whole chain)
@@ -288,10 +294,14 @@ class GermanyScraper(BaseScraper):
         self.tk_info: Dict[str, Any] = {"mode": mode}
         # accuracy meter file (published as /de_accuracy.json; the workflow downloads the last copy before the run). None = off.
         self.acc_path: Optional[Path] = Path(env("DE_ACCURACY_PATH") or Path(__file__).resolve().parents[2] / "data" / "de_accuracy.json")
+        # circle read times + carried readings (published as /de_tk_state.json, downloaded again before each run). None = off.
+        self.state_path: Optional[Path] = Path(env("DE_TK_STATE_PATH") or Path(__file__).resolve().parents[2] / "data" / "de_tk_state.json")
+        self._state: Dict[str, Any] = {}
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         t0 = self._clock()
         stations = await _DEAnwb(self.session).fetch_stations()    # baseline: errors propagate as before
+        self._state = self._load_state()
 
         if self.mode == "off":
             print("[DE] TANKERKOENIG_MODE=off - ANWB baseline only (no statutory MTS-K upgrade)")
@@ -398,13 +408,58 @@ class GermanyScraper(BaseScraper):
 
     # -- Tankerkoenig (MTS-K) ---------------------------------------------------
 
+    def _load_state(self) -> Dict[str, Any]:
+        if self.state_path is None:
+            return {}
+        try:
+            st = json.loads(self.state_path.read_text(encoding="utf-8"))
+            return st if st.get("v") == STATE_V else {}
+        except (OSError, ValueError, AttributeError):
+            return {}
+
+    def _save_state(self) -> None:
+        if self.state_path is None or self.mode != "test":
+            return
+        try:
+            out = {"v": STATE_V, "circles": self._state.get("circles", {}),
+                   "readings": {k: {a: b for a, b in v.items() if a != "_carried"} for k, v in (self._state.get("readings") or {}).items()}}
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            self.state_path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        except Exception as e:  # noqa: BLE001 - state is an optimisation, never break the feed for it
+            print(f"[DE] tankerkoenig state not saved: {type(e).__name__}: {e}")
+
+    @staticmethod
+    def _ckey(c: Tuple[float, float]) -> str:
+        return f"{c[0]:.4f},{c[1]:.4f}"
+
     def _circles(self, baseline: List[Dict]) -> List[Tuple[float, float]]:
         if self.mode == "test":
-            slot = int(self._wall() // (self.REFRESH_MINUTES * 60))
-            m, r = (slot * METRO_PER_RUN) % len(GRID), (slot * RURAL_PER_RUN) % len(RURAL)
-            return ([GRID[(m + i) % len(GRID)] for i in range(METRO_PER_RUN)]
-                    + [RURAL[(r + i) % len(RURAL)] for i in range(RURAL_PER_RUN)])
+            now, last = self._wall(), self._state.get("circles") or {}
+
+            def prio(c: Tuple[float, float]) -> float:
+                t = last.get(self._ckey(c))
+                age = 1e6 if not isinstance(t, (int, float)) else max(0.0, now - t) / 3600
+                return age * (1.0 if c in RURAL_SET else METRO_WEIGHT)
+            allc = GRID + RURAL
+            return [allc[i] for i in sorted(range(len(allc)), key=lambda i: (-prio(allc[i]), i))[:TEST_MAX_CIRCLES]]
         return _cover_circles(baseline, self.radius_km) or list(GRID)   # no footprint: metro circles only
+
+    def _carry(self, seen: Dict[str, Dict]) -> int:
+        """Test mode: remember this run's readings and add the still-young ones from earlier runs. -> number carried."""
+        now, old, carried = self._wall(), self._state.get("readings") or {}, 0
+        for sid, st in old.items():
+            if sid in seen:
+                continue
+            ts = next((p.get("checked_at") for p in st.get("prices") or [] if p.get("checked_at")), None)
+            try:
+                age_h = (now - datetime.fromisoformat(ts).timestamp()) / 3600
+            except (TypeError, ValueError):
+                continue
+            if 0 <= age_h <= TK_TTL_H["rural" if st.get("_stratum") == "rural" else "metro"]:
+                seen[sid] = dict(st, _carried=True)
+                carried += 1
+        self._state["readings"] = dict(seen)
+        return carried
 
     async def _fetch_tankerkoenig(self, baseline: List[Dict], budget_s: float) -> List[Dict[str, Any]]:
         circles = self._circles(baseline)
@@ -438,10 +493,14 @@ class GermanyScraper(BaseScraper):
                 if wait > 0:
                     await self._sleep(wait)
                 info["requests"] += 1
+                errs = info["errors"]
                 try:
-                    for st in await self._request(circle, radius):
+                    got = await self._request(circle, radius)
+                    for st in got:
                         st["_stratum"] = "rural" if circle in RURAL_SET else ("metro" if test else "cover")
                         seen.setdefault(st["id"], st)
+                    if test and info["aborted"] is None and info["errors"] == errs:
+                        self._state.setdefault("circles", {})[self._ckey(circle)] = self._wall()
                 finally:
                     last_end[0] = self._clock()
 
@@ -450,7 +509,10 @@ class GermanyScraper(BaseScraper):
                                    timeout=budget_s + 30)
         except asyncio.TimeoutError:
             info["stopped"] = "time budget"
-        print(f"[DE] tankerkoenig mode={self.mode}: {len(seen)} stations from {info['requests']}/{len(circles)} "
+        if test:
+            info["carried"] = self._carry(seen)
+            self._save_state()
+        print(f"[DE] tankerkoenig mode={self.mode}: {len(seen)} stations ({info.get('carried', 0)} carried from earlier runs) from {info['requests']}/{len(circles)} "
               f"circles, aborted={info['aborted']}, stopped={info['stopped']}, errors={info['errors']}")
         return list(seen.values())
 
@@ -531,7 +593,7 @@ class GermanyScraper(BaseScraper):
             for a, p, fuel in pairs:
                 if p is None:
                     continue
-                if acc is not None:
+                if acc is not None and not t.get("_carried"):   # the meter counts fresh readings only
                     acc.append((fuel, t.get("_stratum", "other"), (t.get("brand") or "?").strip().upper()[:40],
                                 round((a["price"] - p["price"]) * 100, 1), (zlib.crc32(str(t.get("id")).encode()) << 1) | (fuel == "diesel")))   # low bit = fuel: key >> 1 is the station
                 lo = min(a["price"], p["price"])
