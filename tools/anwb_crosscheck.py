@@ -29,7 +29,7 @@ def prices(st):
     d = {}
     for p in st.get("prices") or []:
         ft = p.get("fuel_type")
-        if ft in ("95", "E5", "E10"):
+        if ft in ("95", "E5", "E10") and int(p.get("octane") or 95) == 95:   # 98-octane (also typed E5) is a different product
             d.setdefault("P", p["price"])
         elif ft == "DIESEL":
             d["D"] = p["price"]
