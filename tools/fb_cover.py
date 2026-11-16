@@ -27,7 +27,7 @@ def draw(out: Path) -> None:
     d = ImageDraw.Draw(im)
     d.rectangle((0, 0, W, 14), fill=TOP)
     cx = W // 2
-    d.text((cx, 120), "Euro Fuel Prices", font=font(104), fill=FG, anchor="mm")
+    d.text((cx, 120), "EuroFuelPrices", font=font(104), fill=FG, anchor="mm")
     d.text((cx, 215), "Live fuel prices across Europe", font=font(44, False), fill=GREEN, anchor="mm")
     d.text((cx, 272), "Free map  ·  no account  ·  no ads", font=font(34, False), fill=DIM, anchor="mm")
     codes = ["SE", "NO", "DK", "FI", "DE", "AT", "CH", "PL", "FR", "ES", "IT", "NL"]
