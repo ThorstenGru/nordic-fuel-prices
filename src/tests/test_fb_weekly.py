@@ -52,7 +52,7 @@ class MobileLayout(unittest.TestCase):
         self.assertGreater(len(log), 20)
         for t, x0, y0, x1, y1, size in log:
             self.assertGreaterEqual(x0, wk.SAFE_X - 4, t)
-            self.assertLessEqual(x1, wk.W - wk.SAFE_X + 2, t)
+            self.assertLessEqual(x1, wk.W - wk.SAFE_R + 2, t)   # right of this the Reels buttons cover the picture
             self.assertGreaterEqual(y0, wk.BAND_TOP - 6, t)
             self.assertLessEqual(y1, wk.BAND_BOT + 6, t)
 

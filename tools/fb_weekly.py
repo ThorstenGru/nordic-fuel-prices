@@ -24,6 +24,7 @@ from europe_index import BORDER_PAIRS, NAMES, pil_font as font  # noqa: E402
 W, H = 1080, 1920
 SECONDS = 4
 SAFE_X = 90                        # side margin: no text gets closer to the edge than this
+SAFE_R = 150                       # right margin: the Reels button column (like, comment, share) sits at x ~ 950-1040 of 1080 and covered the last price on a phone
 BAND_TOP, BAND_BOT = 340, 1560     # the feed shows the middle 4:5 of the 9:16 video (y 285-1635) and Reels covers the bottom ~350 px with its own buttons
 MIN_PX, MIN_NOTE_PX = 40, 36       # 40 px of 1080 is about 14 px on a 375 px wide phone
 BG, FG, DIM, GREEN, BAR = (14, 26, 41), (255, 255, 255), (150, 165, 185), (74, 222, 128), (38, 70, 104)
@@ -119,7 +120,7 @@ def _draw(kind, scene, headline, sub, k):
     from PIL import Image
     im = Image.new("RGB", (W, H), BG)
     pen = Pen(im)
-    wide = W - 2 * SAFE_X
+    wide = W - SAFE_X - SAFE_R
     sz = lambda v, lo=MIN_PX: max(int(v * k) // 2 * 2, lo)   # noqa: E731
 
     def note(y, text):
@@ -134,9 +135,9 @@ def _draw(kind, scene, headline, sub, k):
         y = _block(pen, SAFE_X, BAND_TOP + 90, lines, f, FG) + int(50 * k)
         card_h, gap, vf = int(140 * k), int(24 * k), font(sz(56))
         for name, val, bar in scene["rows"]:
-            pen.d.rounded_rectangle((SAFE_X, y, W - SAFE_X, y + card_h), 24, fill=BAR)
+            pen.d.rounded_rectangle((SAFE_X, y, W - SAFE_R, y + card_h), 24, fill=BAR)
             vw = pen.width(val, vf)
-            pen.text((W - SAFE_X - 28, y + card_h * 0.4), val, vf, GREEN, anchor="rm")
+            pen.text((W - SAFE_R - 28, y + card_h * 0.4), val, vf, GREEN, anchor="rm")
             nf, nl = fit(pen, name, wide - 28 - vw - 28 - 28, sz(52))
             pen.text((SAFE_X + 28, y + card_h * 0.4), nl[0], nf, FG, anchor="lm")
             pen.d.rounded_rectangle((SAFE_X + 28, y + card_h - 26, SAFE_X + 28 + int((wide - 56) * bar), y + card_h - 16), 5, fill=GREEN)   # the bar sits under the text, never behind a number
