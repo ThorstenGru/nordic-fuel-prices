@@ -27,7 +27,19 @@ MAX_LIKES = 40                  # per hourly run
 LOG_FIELDS = ["date", "format", "key", "post_id"]
 
 
+def _fix_header():
+    """The log was first written with 3 columns; later rows carry a 4th (post_id) that DictReader dropped, so comment replies never found a post to read.
+    Rewrites the header line when it is the old one; the rows stay as they are (old rows have an empty post_id)."""
+    if not LOG.exists():
+        return
+    text = LOG.read_text(encoding="utf-8")
+    first, _, rest = text.partition(chr(10))
+    if first.strip() != ",".join(LOG_FIELDS):
+        LOG.write_text(",".join(LOG_FIELDS) + chr(10) + rest, encoding="utf-8", newline=chr(10))
+
+
 def append_log(row: dict):
+    _fix_header()
     new = not LOG.exists()
     with LOG.open("a", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=LOG_FIELDS, extrasaction="ignore", lineterminator="\n")
@@ -92,6 +104,7 @@ def run_replies(dry: bool, graph=fb_graph, fetch=fb_daily.fetch, today=None) -> 
         return 0
     pid, tok = c
     # every post invites a town in the comments now (not only the Saturday ask), so every recent post with an id is read
+    _fix_header()
     asks = [r for r in fb_daily.read_log() if r.get("format") not in (None, "skip") and r.get("post_id") and (today - date.fromisoformat(r["date"])).days <= 4]
     if not asks:
         print("fb_bot: no recent post to read comments on")

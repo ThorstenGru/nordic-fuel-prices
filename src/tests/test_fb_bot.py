@@ -187,3 +187,23 @@ class Bot(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LogHeaderRepair(unittest.TestCase):
+    def test_old_three_column_header_is_repaired_so_post_ids_are_read(self):
+        import tempfile
+        from pathlib import Path
+        import fb_bot as bot
+        import fb_daily as daily
+        d = Path(tempfile.mkdtemp())
+        log = d / "post_log.csv"
+        log.write_text("date,format,key\n2026-11-11,intro,intro\n2026-11-15,ranking,europe,123_456\n", encoding="utf-8")
+        old, old2 = bot.LOG, daily.LOG
+        bot.LOG = daily.LOG = log
+        try:
+            bot._fix_header()
+            rows = daily.read_log()
+        finally:
+            bot.LOG, daily.LOG = old, old2
+        self.assertEqual(rows[1].get("post_id"), "123_456")      # was None: replies "found no recent post"
+        self.assertFalse(rows[0].get("post_id"))
