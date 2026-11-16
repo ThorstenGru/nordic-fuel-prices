@@ -4900,7 +4900,7 @@ function pollAns(q, a) {
 }
 function pollSnooze() { const st = store.get('efp_poll', {}) || {}; st.snooze = Date.now() + 30 * 864e5; store.set('efp_poll', st); pollRender(); }
 (function pollInit() {
-  try { if (!sessionStorage.getItem('efp_vis')) { sessionStorage.setItem('efp_vis', '1'); store.set('efp_visits', (store.get('efp_visits', 0) | 0) + 1); } } catch (_) {}
+  try { if (!sessionStorage.getItem('efp_vis')) { sessionStorage.setItem('efp_vis', '1'); store.set('efp_visits', (store.get('efp_visits', 0) | 0) + 1); track('visit'); if (/(^|\.)(facebook\.com|fb\.me|fb\.com)$/.test((document.referrer.match(/^https?:\/\/([^\/]+)/) || [])[1] || '')) track('visit_fb'); } } catch (_) {}
   if ((store.get('efp_visits', 0) | 0) >= 2) setTimeout(pollRender, 4000);
 })();
 

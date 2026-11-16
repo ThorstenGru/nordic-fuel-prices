@@ -58,7 +58,7 @@ export async function overLimit(req, now = Date.now(), max = RL_MAX, bucket = 'r
 
 // Cookieless counters (POST /api/poll?e=<event> or ?q=<question>&a=<answer>): what people use, and a two-question survey. Only whitelisted names are counted,
 // nothing else is stored (no IP, no user agent): one row per day and event, one row per question and answer. Read it with wrangler (docs/OPERATIONS.md).
-export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown', 'fb_follow_shown', 'fb_follow_click']);
+export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown', 'fb_follow_shown', 'fb_follow_click', 'visit', 'visit_fb']);
 export const POLL = { use: ['cheapest', 'route', 'ev', 'compare', 'other'], next: ['alerts', 'countries', 'ev', 'route', 'speed'] };
 export async function tally(req, env, now = Date.now()) {
   const u = new URL(req.url), e = u.searchParams.get('e'), q = u.searchParams.get('q'), a = u.searchParams.get('a');
