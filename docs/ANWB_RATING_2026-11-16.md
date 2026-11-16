@@ -19,3 +19,9 @@ Source order: unchanged. Where a second source with timestamps exists (DK chains
 - ANWB lists 95 petrol for only 567 of 2,167 Danish stations (diesel for 2,047); where both exist they agree (15.893 vs 15.89 DKK). ANWB Sweden lists mostly 98 (318) and 95 (298).
 - Real finding: in several countries ANWB gives ONE price per chain, not per station. Share of ANWB stations that sit at their brand's most common diesel price (brands with 15+ stations, 2026-11-16): DE 17 %, CH 7 %, NL 15 %, FI 3 % (per station); DK 61 %, SE 57 %, NO 65 %, BE 69 %, HU 62 %, IE 67 %, PL 44 %, EE 77 %, LV 87 % (chain list price).
 - Sweden example: ANWB shows 21.593 SEK diesel and 17.039 for 98 at every St1; the crowd source has 20.39-21.29 at the same stations. List price versus real pump price: ANWB runs about 2 % high there.
+
+## Chain-price flag (built 2026-11-16)
+
+`src/chain_price.py` (called from `main.py` after cleaning) sets `chain_price = true` on a station when its ANWB price (no timestamp) is the most common one of its brand (brand with >= 15 stations, >= 50 % at that price). The app shows a note on the station sheet (`chainPrice`, 5 languages). Prices with timestamps or from other sources are never flagged. Run `python src/chain_price.py data` to see the share per country.
+
+Share of ANWB-priced stations flagged (2026-11-16): AL 100, MK 97, LV 90, RS 85, LU 82, SK 75, CZ 73, EE 69, BE 59, LT 57, HU 54, NO 48, DK 44, SE 40, IE 39, AD 28, BA 23, PL 20, CY 17, BG 5, GB 2; none in DE, CH, NL, FI, GR, LI, MC, ME, MT. Luxembourg, Albania and Macedonia have regulated or capped prices, so a shared price there can be the legal price rather than a list price; the note is worded neutrally ("probably the list price").

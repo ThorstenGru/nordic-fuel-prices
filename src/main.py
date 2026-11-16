@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
+from chain_price import flag_chain_prices
 from data_checks import median_jump, quality_report, track_changes
 from plausibility import mark_implausible
 from source_gap import source_gap
@@ -279,6 +280,7 @@ async def run_one(scraper_cls, session: aiohttp.ClientSession, prev_meta: Dict[s
         clean, dropped = clean_stations(stations)
         summ = summarize(clean, scraper_cls.CURRENCY)
         implausible = mark_implausible(clean, summ["currency"], FX)   # flagged, never deleted — the app shows "not plausible"
+        flag_chain_prices(clean)   # ANWB list prices shared by many stations of one chain: the app says so
     except Exception as e:  # noqa: BLE001 — one country's odd data must not stop the other countries
         error = error or f"post-processing {type(e).__name__}: {e}"
         traceback.print_exc()

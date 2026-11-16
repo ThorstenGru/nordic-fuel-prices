@@ -4233,7 +4233,7 @@ function ageHtml(s) {
     : t('priceSetAt', { t: fmtAgo(new Date(Date.now() - h*3600000).toISOString()) });
   const stale = m.status === 'stale'
     ? `<div class="stale-note">${t('staleNote', { t: fmtAgo(m.fetched_at) })}</div>` : '';
-  return `<div class="age-line"><button type="button" class="gb g${g}" aria-label="${esc(t('gradeInfo'))}" onclick="event.stopPropagation();openTrust()">${g} ${ico('info', 'sm')}</button> ${gradeTxt(g)}<br>${ico('clock', 'sm')} ${when}</div>${s.uncertain ? `<div class="unc-note">${esc(t('brandUncertain'))}</div>` : ''}${stale}`;
+  return `<div class="age-line"><button type="button" class="gb g${g}" aria-label="${esc(t('gradeInfo'))}" onclick="event.stopPropagation();openTrust()">${g} ${ico('info', 'sm')}</button> ${gradeTxt(g)}<br>${ico('clock', 'sm')} ${when}</div>${s.uncertain ? `<div class="unc-note">${esc(t('brandUncertain'))}</div>` : ''}${s.chain_price ? `<div class="unc-note">${esc(t('chainPrice'))}</div>` : ''}${stale}`;
 }
 
 function fmtDate(iso) {
@@ -8193,6 +8193,11 @@ Object.assign(I18N.sv, { brandUncertain:'Det här varumärket avviker ofta någr
 Object.assign(I18N.de, { brandUncertain:'Diese Marke weicht in unseren Prüfungen gegen die amtliche Quelle oft um einige Cent ab.' });
 Object.assign(I18N.fr, { brandUncertain:'Cette marque s’écarte souvent de quelques centimes dans nos contrôles par rapport à la source officielle.' });
 Object.assign(I18N.es, { brandUncertain:'Esta marca se desvía a menudo unos céntimos en nuestras comprobaciones con la fuente oficial.' });
+Object.assign(I18N.en, { chainPrice:"Many stations of this chain show exactly this price: probably the chain's list price. Your pump may differ." });
+Object.assign(I18N.sv, { chainPrice:'Många stationer i den här kedjan visar exakt samma pris: troligen kedjans listpris. Din pump kan avvika.' });
+Object.assign(I18N.de, { chainPrice:"Viele Stationen dieser Kette zeigen genau diesen Preis: wahrscheinlich der Listenpreis der Kette. Ihre Zapfsäule kann abweichen." });
+Object.assign(I18N.fr, { chainPrice:"De nombreuses stations de cette enseigne affichent exactement ce prix : probablement le prix catalogue de l’enseigne. Votre pompe peut différer." });
+Object.assign(I18N.es, { chainPrice:"Muchas estaciones de esta cadena muestran exactamente este precio: probablemente el precio de lista de la cadena. Tu surtidor puede diferir." });
 Object.assign(I18N.en, { installMenu:'Open your browser menu and choose “Install app” or “Add to Home screen”.' });
 Object.assign(I18N.sv, { installMenu:'Öppna webbläsarens meny och välj ”Installera app” eller ”Lägg till på hemskärmen”.' });
 Object.assign(I18N.de, { installMenu:'Öffne das Browsermenü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.' });
