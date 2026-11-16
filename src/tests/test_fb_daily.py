@@ -41,7 +41,7 @@ class Posts(unittest.TestCase):
         text, fmt = fb.compose("Body.", "https://x/europe/", "Full ranking: ", "ranking", [], today)
         self.assertEqual(fmt, "ranking-link")
         self.assertIn("https://x/europe/", text)
-        self.assertIn(fb.CTA_TOWN, text)
+        self.assertTrue(any(a in text for a in fb.TOWN_ASKS))
         used = [{"date": "2026-11-02", "format": "ranking-link"}, {"date": "2026-11-09", "format": "spotlight-link"}]
         text, fmt = fb.compose("Body.", "https://x/europe/", "Full ranking: ", "ranking", used, today)
         self.assertEqual(fmt, "ranking")                                              # allowance used up: no link, the Page button instead
@@ -53,7 +53,7 @@ class Posts(unittest.TestCase):
         used = [{"date": "2026-10-02", "format": "ranking-link"}, {"date": "2026-10-09", "format": "ranking-link"}]
         self.assertEqual(fb.compose("B.", "https://x/", "", "ranking", used, today)[1], "ranking-link")   # last month's links do not count
         text, fmt = fb.compose("Ask.", "https://x/", "", "local-ask", [], today)
-        self.assertNotIn(fb.CTA_TOWN, text)                                     # the ask itself is not asked twice
+        self.assertFalse(any(a in text for a in fb.TOWN_ASKS))                  # the ask itself is not asked twice
 
     def test_pick_skips_recent_keys(self):
         used = [{"date": "2026-11-10", "key": "a"}, {"date": "2026-10-01", "key": "b"}]
@@ -74,3 +74,16 @@ class SameThresholdAsCard(unittest.TestCase):
     def test_post_text_and_europe_card_quote_the_same_countries(self):
         import europe_index
         self.assertEqual(fb.MIN_N, europe_index.MIN_N)   # 2026-11-16: text said Poland, picture said Malta (300 vs 30)
+
+
+class Variety(unittest.TestCase):
+    def test_town_ask_and_questions_change_from_day_to_day(self):
+        days = [date(2026, 11, d) for d in range(16, 23)]
+        asks = [fb.rotate(fb.TOWN_ASKS, d) for d in days]
+        self.assertTrue(all(a != b for a, b in zip(asks, asks[1:])))               # never the same twice in a row
+        self.assertGreaterEqual(len(set(asks)), 5)
+        self.assertGreaterEqual(len({fb.rotate(fb.RANKING_ASKS, d) for d in days}), 4)
+        self.assertTrue(all("“" in a for a in fb.TOWN_ASKS))                        # every ask shows the format of an answer ("Town, Country")
+
+    def test_post_days_are_the_reduced_plan(self):
+        self.assertEqual(fb.POST_DAYS, (0, 2, 4, 5))

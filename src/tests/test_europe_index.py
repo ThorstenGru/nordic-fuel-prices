@@ -11,7 +11,7 @@ import europe_index as ei  # noqa: E402
 NOW = datetime(2026, 11, 10, 12, 0, tzinfo=timezone.utc)
 
 
-def country(cc, p95=None, diesel=None, n=100, status="ok", age_h=1, grade="B"):
+def country(cc, p95=None, diesel=None, n=400, status="ok", age_h=1, grade="B"):
     st = {}
     if p95 is not None:
         st["p95"] = {"n": n, "median": p95}

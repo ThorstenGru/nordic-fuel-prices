@@ -24,7 +24,7 @@ from europe_index import BORDER_PAIRS, NAMES, pair_slug  # noqa: E402
 SITE = "https://eurofuelprices.com"
 LOG = ROOT / "docs" / "facebook" / "post_log.csv"
 CF_IP = "104.21.74.127"   # fallback only: this machine's DNS has failed for the domain before
-MIN_N = 30                # a country needs this many priced stations to be quoted: the same as src/europe_index.MIN_N, so the post text and the picture (og/europe.png) always name the same countries
+MIN_N = 300               # a country needs this many priced stations to be quoted: the same as src/europe_index.MIN_N, so the post text and the picture (og/europe.png) always name the same countries
 FILL_L = 50
 
 # Interaction first (2026-11-15): Facebook reaches posts with external links much less (Meta tests 2 link posts a month for Pages), so a post carries its link
@@ -32,7 +32,27 @@ FILL_L = 50
 # comment a town, which the reply bot answers, and points to the Page's website button instead of printing a link.
 LINK_FORMATS = ("ranking", "spotlight", "border-pair")
 LINKS_PER_MONTH = 2
-CTA_TOWN = "Comment your town and country (e.g. “Hamburg, Germany”) and we reply with the cheapest petrol and diesel within 10 km."
+# Variety (2026-11-16): the town invitation and the closing question rotate by day so two posts in a row never end the same way. Examples use countries the reply bot answers.
+TOWN_ASKS = [
+    "Comment your town and country (e.g. “Hamburg, Germany”) and we reply with the cheapest petrol and diesel within 10 km.",
+    "Where do you usually fill up? Comment “Town, Country” (e.g. “Malmö, Sweden”) and we reply with the cheapest pumps within 10 km.",
+    "Curious about the cheapest pump near you? Comment your town and country, e.g. “Lyon, France”, and we reply with the cheapest petrol and diesel nearby.",
+    "Drop your town and country below (e.g. “Aarhus, Denmark”) and we reply with the cheapest pumps within 10 km.",
+    "Commuting or travelling? Comment a town and country (e.g. “Munich, Germany”) and we reply with the cheapest petrol and diesel there.",
+    "Planning a trip? Comment where you are heading (e.g. “Zurich, Switzerland”) and we reply with the cheapest pumps within 10 km.",
+    "Want a local price check? Comment “Town, Country” (e.g. “Rotterdam, Netherlands”) and we reply with the cheapest petrol and diesel nearby.",
+]
+RANKING_ASKS = ["Does your country’s price surprise you?", "Is your country at the cheap end or the dear end?", "Which of these would you fill up in?",
+                "What do you pay per litre at home?", "Where do you think your country ranks?"]
+BORDER_ASKS = ["Would you drive across the border for that?", "Is that saving worth the detour for you?", "Have you ever filled up across the border?",
+               "How far would you drive to save that much?"]
+
+
+def rotate(pool, today, salt=0):
+    return pool[(today.toordinal() + salt) % len(pool)]
+
+
+CTA_TOWN = TOWN_ASKS[0]   # kept for callers that need one fixed text
 CTA_NOLINK = "The live map is behind the website button on our Page."
 
 
@@ -46,7 +66,7 @@ def compose(body, url, label, fmt, used, today, allow_link=True):
     link = allow_link and fmt in LINK_FORMATS and link_budget_left(used, today)
     parts = [body]
     if fmt != "local-ask":
-        parts.append(CTA_TOWN)
+        parts.append(rotate(TOWN_ASKS, today))
     parts.append(f"{label}{url}" if link else CTA_NOLINK)
     return "\n\n".join(parts), (fmt + "-link" if link else fmt)
 
@@ -116,7 +136,7 @@ def pair_data(m, a, b):
     return rows
 
 
-def pair_post(m, a, b, quiz=False):
+def pair_post(m, a, b, quiz=False, today=None):
     rows = pair_data(m, a, b)
     if not rows:
         return None
@@ -130,10 +150,12 @@ def pair_post(m, a, b, quiz=False):
         text = f"Quick quiz: {label.lower()} in {NAMES[a]} or in {NAMES[b]}, where is it cheaper today? Answer in the comments."
     else:
         text = (f"{label} is about €{abs(d):.2f} per litre cheaper in {cheaper} than in {dearer} today (median station price{note}), "
-                f"about €{abs(d) * FILL_L:.2f} on a {FILL_L} L fill-up. Would you drive across the border for that?")
+                f"about €{abs(d) * FILL_L:.2f} on a {FILL_L} L fill-up. {rotate(BORDER_ASKS, today or date.today())}")
     return text, f"{SITE}/og/{pair_slug(a, b)}.png", url
 
 
+# Cadence (2026-11-16): 7 pieces a week instead of 11 - posts Mon, Wed, Fri, Sat; Reels Tue and Thu; the weekly video on Sunday.
+POST_DAYS = (0, 2, 4, 5)
 FORCE_WD = {"ranking": 0, "border-pair": 1, "quiz": 2, "feature": 3, "spotlight": 4, "local-ask": 5}   # a forced format uses that weekday's recipe
 
 
@@ -153,6 +175,10 @@ def build(today: date, out: Path, audience=None, download=True, force=None, noli
         return {"skip": "data older than 36 h"}
     m = medians(doc)
     wd = FORCE_WD[force] if force else today.weekday()   # Mon=0
+    if not force and wd not in POST_DAYS:
+        return {"skip": "no post planned today (Reel or weekly-video day)"}
+    if not force and wd == 2 and today.isocalendar()[1] % 2:   # Wednesdays alternate quiz / feature tip
+        wd = 3
     pairs = [p for p in BORDER_PAIRS if pair_data(m, *p)]
     result = None
     if wd == 0:   # ranking
@@ -161,7 +187,7 @@ def build(today: date, out: Path, audience=None, download=True, force=None, noli
             lo, hi = p95[0], p95[-1]
             note = grade_note([m[(lo[1], "p95")][2], m[(hi[1], "p95")][2]])
             text = (f"Petrol 95 across Europe today: cheapest {NAMES[lo[1]]} at €{lo[0]:.2f}/L, most expensive {NAMES[hi[1]]} at €{hi[0]:.2f}/L "
-                    f"(median station prices{note}). Does your country’s price surprise you?")
+                    f"(median station prices{note}). {rotate(RANKING_ASKS, today)}")
             result = (text, f"{SITE}/og/europe.png", "ranking", "europe", f"{SITE}/europe/", "Full ranking: ")
     elif wd == 4:   # local spotlight: cheapest within 10 km of a town (aggregate: rotating town or where followers are)
         import fb_local
@@ -177,7 +203,7 @@ def build(today: date, out: Path, audience=None, download=True, force=None, noli
         keys = [pair_slug(*p) for p in ranked]
         key = pick(keys, used, today)
         a, b = next(p for p in ranked if pair_slug(*p) == key)
-        built = pair_post(m, a, b, quiz=(wd == 2))
+        built = pair_post(m, a, b, quiz=(wd == 2), today=today)
         if built:
             result = (built[0], built[1], {1: "border-pair", 2: "quiz"}[wd], key, built[2], "Numbers: ")
     elif wd in (3, 6):   # feature tips (how to use)

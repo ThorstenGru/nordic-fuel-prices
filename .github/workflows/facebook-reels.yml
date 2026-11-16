@@ -5,7 +5,7 @@ name: Facebook — Reels (Euro Fuel Prices Page)
 
 on:
   schedule:
-    - cron: '0 15 * * 2,4,6'    # Tue, Thu, Sat 15:00 UTC (late afternoon in Sweden)
+    - cron: '0 15 * * 2,4'    # Tue, Thu, Sat 15:00 UTC (late afternoon in Sweden)
   workflow_dispatch:
     inputs:
       dry_run:

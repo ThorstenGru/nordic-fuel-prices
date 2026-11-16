@@ -13,8 +13,8 @@ import fb_reels  # noqa: E402
 
 
 class Reels(unittest.TestCase):
-    def test_three_reels_a_week_on_tue_thu_sat(self):
-        self.assertEqual([fb_reels.kind_for(date(2026, 11, d)) for d in range(16, 23)], ["", "border", "", "cheap95", "", "diesel", ""])
+    def test_two_reels_a_week_on_tue_thu(self):
+        self.assertEqual([fb_reels.kind_for(date(2026, 11, d)) for d in range(16, 23)], ["", "border", "", "cheap95", "", "", ""])
         self.assertEqual(fb_reels.kind_for(date(2026, 11, 16), "diesel"), "diesel")
 
     def test_caption_has_no_link_and_asks_for_a_town(self):
@@ -23,7 +23,7 @@ class Reels(unittest.TestCase):
         for kind, sc in (("cheap95", rows), ("border", border)):
             t = fb_reels.caption(kind, sc)
             self.assertNotIn("http", t)
-            self.assertIn(fb_daily.CTA_TOWN, t)
+            self.assertTrue(any(a in t for a in fb_daily.TOWN_ASKS))
             self.assertIn("Poland", t)
 
     def test_reels_api_failure_falls_back_to_a_normal_video(self):

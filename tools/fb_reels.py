@@ -20,7 +20,7 @@ import fb_graph  # noqa: E402
 import fb_weekly  # noqa: E402
 
 # weekday (Mon=0) -> kind; index of the scene in fb_weekly.scenes(): 0 cheapest petrol, 1 dearest petrol, 2 cheapest diesel, 3 border run
-SCHEDULE = {1: "border", 3: "cheap95", 5: "diesel"}
+SCHEDULE = {1: "border", 3: "cheap95"}   # Saturday's diesel Reel dropped 2026-11-16 (cadence 7 pieces a week); --kind diesel still works
 SCENE = {"cheap95": 0, "diesel": 2, "border": 3}
 
 
@@ -28,14 +28,14 @@ def kind_for(today: date, forced: str = ""):
     return forced or SCHEDULE.get(today.weekday(), "")
 
 
-def caption(kind: str, scene: dict) -> str:
+def caption(kind: str, scene: dict, today: date = None) -> str:
     if kind == "border":
         b = scene["border"]
         head = f"{b['label']} is about €{b['d']:.2f} per litre cheaper in {b['cheap']} than in {b['dear']} today (median station prices)."
     else:
         r = scene["rows"][0]
         head = f"{scene['title']} in Europe today: {r[0]} at {r[1]} per litre (median station prices)."
-    return f"{head}\n\n{fb_daily.CTA_TOWN}\n\n{fb_daily.CTA_NOLINK}"
+    return f"{head}\n\n{fb_daily.rotate(fb_daily.TOWN_ASKS, today or date.today(), 3)}\n\n{fb_daily.CTA_NOLINK}"
 
 
 def build(today: date, outdir: Path, forced: str = "", ignore_log: bool = False):
@@ -68,7 +68,7 @@ def build(today: date, outdir: Path, forced: str = "", ignore_log: bool = False)
         frames.append(p)
     video = outdir / f"reel_{key}.mp4"
     fb_weekly.encode(frames, video)
-    return {"video": video, "text": caption(kind, scene), "key": key, "date": today.isoformat(), "format": "reel"}
+    return {"video": video, "text": caption(kind, scene, today), "key": key, "date": today.isoformat(), "format": "reel"}
 
 
 def publish(pid: str, tok: str, text: str, path: str, graph=fb_graph) -> str:

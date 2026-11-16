@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 sys.path.insert(0, str(Path(__file__).parent))
 from seo_pages import CSS, DATA_DIR, SITE, breadcrumb_ld, write_sitemap  # noqa: E402
 
-MIN_N = 30
+MIN_N = 300
 MAX_AGE_H = 36
 HISTORY_URL = SITE + "/index_history.json"
 HISTORY_DAYS = 400
