@@ -220,3 +220,22 @@ class BotOnlyCountries(unittest.TestCase):
         self.assertIn("20,97", text.replace(".", ","))
         self.assertIn("*", text)                                # chain price marked
         self.assertIn("list price", text)
+
+
+class ReplyLanguage(unittest.TestCase):
+    def test_language_follows_the_country_word_of_the_comment(self):
+        self.assertEqual(fb_local.comment_lang("Wien, Österreich"), "de")
+        self.assertEqual(fb_local.comment_lang("Malmö, Sverige"), "sv")
+        self.assertEqual(fb_local.comment_lang("Oslo, Norge"), "nb")
+        self.assertEqual(fb_local.comment_lang("Helsinki, Suomi"), "fi")
+        self.assertEqual(fb_local.comment_lang("Hamburg, Germany"), "en")        # an English country name gets English
+        self.assertEqual(fb_local.comment_lang("Hamburg"), "en")
+        for lang in fb_local.REPLY:                                              # every language has every string
+            self.assertEqual(set(fb_local.REPLY[lang]), set(fb_local.REPLY["en"]), lang)
+
+    def test_german_reply_text(self):
+        st = {"brand": "ARAL", "address": "Weg 1", "city": "Wien"}
+        found = {"P95": [(1.5, st)], "DIESEL": [(1.7, st)]}
+        t = fb_local.local_text("de", {"slug": "hamburg"}, found, "x", "B", "de")
+        self.assertIn("Benzin 95", t)
+        self.assertIn("Zapfsäule", t)

@@ -119,7 +119,7 @@ def run_replies(dry: bool, graph=fb_graph, fetch=fb_daily.fetch, today=None) -> 
             if not dry and likes < MAX_LIKES:
                 likes += graph.like(cid, tok)                         # interaction: the Page likes every new comment it reads
             m = fb_local.match_comment(cm.get("message", ""))
-            text = fb_local.answer_for(m[0], m[1], fetch, cache=cache) if m else None
+            text = fb_local.answer_for(m[0], m[1], fetch, cache=cache, lang=fb_local.comment_lang(cm.get("message", ""))) if m else None
             if not text:
                 if not dry:
                     append_replied(cid, "no-match")

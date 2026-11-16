@@ -35,6 +35,54 @@ COUNTRY_WORDS.update({"deutschland": "DE", "österreich": "AT", "oesterreich": "
                       "polska": "PL", "suomi": "FI", "finnland": "FI", "noreg": "NO", "norwegen": "NO", "schweden": "SE", "dänemark": "DK", "danemark": "DK", "belgië": "BE", "belgie": "BE", "belgique": "BE"})
 
 
+# Reply language (2026-11-16): the bot answers in the language of the comment. The language is read from the country word the person wrote
+# in their own language ("Wien, Österreich" -> German); an English country name or no country gives English. Unknown languages fall back to English.
+NATIVE_WORDS = {
+    "de": ["deutschland", "österreich", "oesterreich", "schweiz", "schweden", "dänemark", "norwegen", "finnland", "frankreich", "spanien", "italien", "polen", "niederlande", "belgien"],
+    "sv": ["sverige"], "da": ["danmark"], "nb": ["norge", "noreg"], "fi": ["suomi"], "es": ["españa", "espana"], "nl": ["nederland", "belgië", "belgie"],
+    "fr": ["suisse", "belgique", "danemark"],
+}
+REPLY = {
+    "en": dict(lead="Here are the cheapest stations within {km} km of {town}:", p95="Petrol 95", diesel="Diesel", ok="Prices as listed on our map; check at the pump.",
+               est="Estimates from community reports, not official prices; check at the pump.", chain="* the same price at many stations of this chain, probably its list price.",
+               more="More:", another="Another town? Just comment it."),
+    "de": dict(lead="Hier sind die günstigsten Tankstellen im Umkreis von {km} km um {town}:", p95="Benzin 95", diesel="Diesel", ok="Preise wie auf unserer Karte; bitte an der Zapfsäule prüfen.",
+               est="Schätzungen aus Community-Meldungen, keine amtlichen Preise; bitte an der Zapfsäule prüfen.", chain="* derselbe Preis an vielen Stationen dieser Kette, vermutlich der Listenpreis.",
+               more="Mehr:", another="Anderer Ort? Einfach kommentieren."),
+    "sv": dict(lead="Här är de billigaste stationerna inom {km} km från {town}:", p95="Bensin 95", diesel="Diesel", ok="Priser som på vår karta; kontrollera vid pumpen.",
+               est="Uppskattningar från användarrapporter, inte officiella priser; kontrollera vid pumpen.", chain="* samma pris på många stationer i kedjan, troligen listpriset.",
+               more="Mer:", another="En annan ort? Kommentera bara."),
+    "da": dict(lead="Her er de billigste tankstationer inden for {km} km fra {town}:", p95="Benzin 95", diesel="Diesel", ok="Priser som på vores kort; tjek ved pumpen.",
+               est="Skøn fra brugerrapporter, ikke officielle priser; tjek ved pumpen.", chain="* samme pris på mange stationer i kæden, sandsynligvis listeprisen.",
+               more="Mere:", another="En anden by? Skriv den bare."),
+    "nb": dict(lead="Her er de billigste stasjonene innen {km} km fra {town}:", p95="Bensin 95", diesel="Diesel", ok="Priser som på kartet vårt; sjekk ved pumpen.",
+               est="Anslag fra brukerrapporter, ikke offisielle priser; sjekk ved pumpen.", chain="* samme pris på mange stasjoner i kjeden, trolig listeprisen.",
+               more="Mer:", another="Et annet sted? Bare kommenter."),
+    "fi": dict(lead="Halvimmat asemat {km} km säteellä paikasta {town}:", p95="Bensiini 95", diesel="Diesel", ok="Hinnat kuten kartallamme; tarkista pumpulta.",
+               est="Arvioita käyttäjäilmoituksista, ei virallisia hintoja; tarkista pumpulta.", chain="* sama hinta monella ketjun asemalla, luultavasti listahinta.",
+               more="Lisää:", another="Toinen paikkakunta? Kommentoi vain."),
+    "fr": dict(lead="Voici les stations les moins chères dans un rayon de {km} km autour de {town} :", p95="Sans plomb 95", diesel="Gazole", ok="Prix comme sur notre carte ; vérifiez à la pompe.",
+               est="Estimations issues de signalements d’utilisateurs, pas des prix officiels ; vérifiez à la pompe.", chain="* même prix dans de nombreuses stations de cette enseigne, probablement le prix catalogue.",
+               more="Plus :", another="Une autre ville ? Commentez-la."),
+    "es": dict(lead="Estas son las gasolineras más baratas en {km} km alrededor de {town}:", p95="Gasolina 95", diesel="Diésel", ok="Precios como en nuestro mapa; comprueba en el surtidor.",
+               est="Estimaciones de avisos de usuarios, no precios oficiales; comprueba en el surtidor.", chain="* el mismo precio en muchas estaciones de esta cadena, probablemente su precio de lista.",
+               more="Más:", another="¿Otra localidad? Solo coméntala."),
+    "nl": dict(lead="Dit zijn de goedkoopste tankstations binnen {km} km van {town}:", p95="Euro 95", diesel="Diesel", ok="Prijzen zoals op onze kaart; controleer bij de pomp.",
+               est="Schattingen uit meldingen van gebruikers, geen officiële prijzen; controleer bij de pomp.", chain="* dezelfde prijs bij veel stations van deze keten, waarschijnlijk de lijstprijs.",
+               more="Meer:", another="Een andere plaats? Reageer maar."),
+}
+
+
+def comment_lang(text):
+    """Language code (a key of REPLY) for a comment: the language of the country word the person used; English otherwise."""
+    words = {w.strip().lower() for w in re.split(r"[,/]", text or "") if w.strip()}
+    for lang, native in NATIVE_WORDS.items():
+        if words & set(native):
+            return lang
+    return "en"
+
+
+
 def load_stations(c, fetch, cache=None):
     """Station list of a page-country (be-fr reads be.json). One download per file per run when a cache dict is passed."""
     f = sp.COUNTRIES[c].get("data", c)
@@ -83,10 +131,11 @@ def cheapest_near(stations, cc, town, now=None, radius=RADIUS_KM, top=TOP_N):
     return out
 
 
-def format_lines(cc, found):
+def format_lines(cc, found, lang="en"):
     cfg = sp.COUNTRIES[cc]
     lines = []
-    for fuel, label in (("P95", "Petrol 95"), ("DIESEL", "Diesel")):
+    R = REPLY.get(lang) or REPLY["en"]
+    for fuel, label in (("P95", R["p95"]), ("DIESEL", R["diesel"])):
         rows = found.get(fuel) or []
         if rows:
             items = "; ".join(f"{i}) {sp.station_label(s)[0]}, {sp.station_label(s)[1] or '-'} {sp.money(p, cfg)}{'*' if s.get('chain_price') else ''}" for i, (p, s) in enumerate(rows, 1))
@@ -94,14 +143,14 @@ def format_lines(cc, found):
     return lines
 
 
-def local_text(cc, town, found, lead, grade="C"):
+def local_text(cc, town, found, lead, grade="C", lang="en"):
+    R = REPLY.get(lang) or REPLY["en"]
     url = SITE + "/" if sp.COUNTRIES[cc].get("bot_only") else f"{SITE}/{cc}/{town['slug']}/"   # bot-only countries have no town page: the live map
     chain = any(s.get("chain_price") for rows in found.values() for _, s in rows)
-    note = ("Estimates from community reports, not official prices; check at the pump." if grade == "D"
-            else "Prices as listed on our map; check at the pump.")
+    note = R["est"] if grade == "D" else R["ok"]
     if chain:
-        note = "* the same price at many stations of this chain, probably its list price. " + note
-    return f"{lead}\n" + "\n".join(format_lines(cc, found)) + f"\n{note} More: {url}"
+        note = R["chain"] + " " + note
+    return f"{lead}\n" + "\n".join(format_lines(cc, found, lang)) + f"\n{note} {R['more']} {url}"
 
 
 def usable(found):
@@ -155,7 +204,7 @@ def match_comment(text, supported=SUPPORTED):
     return (name, cc) if name else None
 
 
-def answer_for(name, cc, fetch, now=None, grades=None, cache=None):
+def answer_for(name, cc, fetch, now=None, grades=None, cache=None, lang="en"):
     """Reply text for a comment, or None if the town cannot be found uniquely in a supported country."""
     options = [cc] if cc else SUPPORTED
     hits = []
@@ -180,4 +229,5 @@ def answer_for(name, cc, fetch, now=None, grades=None, cache=None):
     g = sp.COUNTRIES[c].get("data", c)
     if grades and grades.get(g) not in ("A", "B", "C", "D"):
         return None                                          # no usable source grade: say nothing rather than guess
-    return local_text(c, town, found, f"Here are the cheapest stations within {RADIUS_KM} km of {town['name']}:", (grades or {}).get(g, "C")) + chr(10) + "Another town? Just comment it."
+    R = REPLY.get(lang) or REPLY["en"]
+    return local_text(c, town, found, R["lead"].format(km=RADIUS_KM, town=town["name"]), (grades or {}).get(g, "C"), lang) + chr(10) + R["another"]
