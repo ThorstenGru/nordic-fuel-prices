@@ -91,4 +91,7 @@ async def fetch(session: aiohttp.ClientSession) -> List[Dict[str, Any]]:
         if r.status != 200:
             print(f"[FI/hintatutka] HTTP {r.status}")
             return []
-        return parse(await r.text())
+        out = parse(await r.text())
+        if not out:   # 2026-11-16: the page no longer carries prices (stations only, no price fields); this says so in the log instead of silently giving 0
+            print("[FI/hintatutka] 0 stations with prices: the page format has probably changed (the /about blob has no price fields any more)")
+        return out
