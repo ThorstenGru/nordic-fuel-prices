@@ -64,6 +64,7 @@ jobs:
           # one path per call: git refuses the WHOLE add when one path (replied.csv before the first reply) does not exist, and the log row was then never saved
           git add docs/facebook/post_log.csv 2>/dev/null || true
           git add docs/facebook/replied.csv 2>/dev/null || true
+          git add docs/facebook/medians.csv 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Facebook log [skip ci]"
             ok=0

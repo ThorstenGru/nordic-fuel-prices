@@ -66,6 +66,36 @@ class Posts(unittest.TestCase):
             self.assertNotIn("like and share", body.lower())
 
 
+class News(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.f = os.path.join(tempfile.mkdtemp(), "medians.csv")
+
+    def seed(self, d, rows):
+        fb.record_history({(c, f): (v, 500, "A") for c, f, v in rows}, d, self.f)
+
+    def test_history_is_written_once_per_day(self):
+        d = date(2026, 11, 10)
+        self.seed(d, [("SE", "diesel", 1.5)])
+        self.seed(d, [("SE", "diesel", 9.9)])
+        self.assertEqual(sum(1 for _ in open(self.f)), 2)                       # header + one row
+        fb.record_history({("SE", "diesel"): (1.5, 500, "A")}, d, None)         # None = local run, nothing written
+
+    def test_biggest_weekly_move_becomes_the_news(self):
+        self.seed(date(2026, 11, 10), [("SE", "diesel", 1.50), ("DE", "p95", 1.80)])
+        now = {("SE", "diesel"): (1.58, 500, "A"), ("DE", "p95"): (1.81, 500, "A")}
+        text, key = fb.week_news(now, date(2026, 11, 17), self.f)
+        self.assertIn("Diesel in Sweden: up 8 cents per litre in a week (€1.50 to €1.58", text)
+        self.assertEqual(key, "SE-diesel-2026-11-17")
+
+    def test_no_news_without_history_or_for_small_moves(self):
+        now = {("SE", "diesel"): (1.51, 500, "A")}
+        self.assertIsNone(fb.week_news(now, date(2026, 11, 17), self.f))        # no file yet
+        self.seed(date(2026, 11, 10), [("SE", "diesel", 1.50)])
+        self.assertIsNone(fb.week_news(now, date(2026, 11, 17), self.f))        # +0.7 %: not news
+        self.assertIsNone(fb.week_news({("SE", "diesel"): (1.58, 500, "A")}, date(2026, 11, 14), self.f))   # only 4 days of history
+
+
 if __name__ == "__main__":
     unittest.main()
 

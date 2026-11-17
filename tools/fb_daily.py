@@ -12,6 +12,7 @@ Fri local spotlight (cheapest within 10 km of a town), Sat "comment your town", 
 """
 import csv
 import json
+import os
 import subprocess
 import sys
 from datetime import date, datetime, timedelta, timezone
@@ -26,6 +27,9 @@ LOG = ROOT / "docs" / "facebook" / "post_log.csv"
 CF_IP = "104.21.74.127"   # fallback only: this machine's DNS has failed for the domain before
 MIN_N = 300               # a country needs this many priced stations to be quoted: the same as src/europe_index.MIN_N, so the post text and the picture (og/europe.png) always name the same countries
 FILL_L = 50
+HIST = ROOT / "docs" / "facebook" / "medians.csv"   # one row per day, country and fuel: the median we quoted; the news post compares it with a week ago
+NEWS_MIN_PCT = 1.5                                  # a weekly move below this is not news
+NEWS_FUELS = (("p95", "Petrol 95"), ("diesel", "Diesel"))
 
 # Interaction first (2026-11-15): Facebook reaches posts with external links much less (Meta tests 2 link posts a month for Pages), so a post carries its link
 # only for the formats below and only LINKS_PER_MONTH times a month (logged as format "<format>-link"). Every other post ends with the invitation to
@@ -121,6 +125,57 @@ def medians(doc):
     return out
 
 
+def record_history(m, today, path):
+    """Append today's medians once (idempotent per date). path None = do nothing (local runs and tests)."""
+    if path is None:
+        return
+    path = Path(path)
+    rows = list(csv.reader(path.open(encoding="utf-8"))) if path.exists() else []
+    if any(r and r[0] == today.isoformat() for r in rows):
+        return
+    new = [[today.isoformat(), c, f, f"{v[0]:.4f}"] for (c, f), v in sorted(m.items())]
+    with path.open("a", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        if not rows:
+            w.writerow(["date", "country", "fuel", "median_eur_per_litre"])
+        w.writerows(new)
+
+
+def week_news(m, today, path):
+    """The biggest week-on-week move among the countries we quote, as (text body, key) or None.
+    Compares with the stored median from 6 to 8 days ago (nearest to 7); needs both values and a move of at least NEWS_MIN_PCT."""
+    path = Path(path) if path else None
+    if path is None or not path.exists():
+        return None
+    old = {}
+    for r in csv.DictReader(path.open(encoding="utf-8")):
+        try:
+            gap = (today - date.fromisoformat(r["date"])).days
+            v = float(r["median_eur_per_litre"])
+        except (ValueError, KeyError):
+            continue
+        if 6 <= gap <= 8 and v > 0:
+            k = (r["country"], r["fuel"])
+            if k not in old or abs(gap - 7) < abs(old[k][1] - 7):
+                old[k] = (v, gap)
+    best = None
+    for (cc, fuel), (new, _n, grade) in m.items():
+        if (cc, fuel) not in old or fuel not in dict(NEWS_FUELS) or cc not in NAMES:
+            continue
+        before = old[(cc, fuel)][0]
+        pct = (new - before) / before * 100
+        if abs(pct) >= NEWS_MIN_PCT and (best is None or abs(pct) > abs(best[0])):
+            best = (pct, cc, fuel, before, new, grade)
+    if not best:
+        return None
+    pct, cc, fuel, before, new, grade = best
+    cents = round((new - before) * 100)
+    word = "up" if pct > 0 else "down"
+    text = (f"{dict(NEWS_FUELS)[fuel]} in {NAMES[cc]}: {word} {abs(cents)} cents per litre in a week "
+            f"(€{before:.2f} to €{new:.2f}, median station prices{grade_note([grade])}).")
+    return text, f"{cc}-{fuel}-{today.isoformat()}"
+
+
 def grade_note(grades):
     g = set(grades)
     if "D" in g:
@@ -174,6 +229,7 @@ def build(today: date, out: Path, audience=None, download=True, force=None, noli
     if upd is None or datetime.now(timezone.utc) - upd > timedelta(hours=36):
         return {"skip": "data older than 36 h"}
     m = medians(doc)
+    record_history(m, today, HIST if os.environ.get("GITHUB_ACTIONS") == "true" else None)   # only the scheduled CI run keeps history
     wd = FORCE_WD[force] if force else today.weekday()   # Mon=0
     if not force and wd not in POST_DAYS:
         return {"skip": "no post planned today (Reel or weekly-video day)"}
@@ -206,7 +262,11 @@ def build(today: date, out: Path, audience=None, download=True, force=None, noli
         built = pair_post(m, a, b, quiz=(wd == 2), today=today)
         if built:
             result = (built[0], built[1], {1: "border-pair", 2: "quiz"}[wd], key, built[2], "Numbers: ")
-    elif wd in (3, 6):   # feature tips (how to use)
+    elif wd in (3, 6):   # feature tips (how to use); a real weekly move beats a tip
+        news = week_news(m, today, HIST)
+        if news and not any(r.get("key") == news[1] for r in used):
+            result = (f"{news[0]} {rotate(RANKING_ASKS, today)}", f"{SITE}/og/europe.png", "news", news[1], f"{SITE}/europe/", "Full ranking: ")
+    if result is None and wd in (3, 6):
         key = pick([f[0] for f in FEATURES], used, today, days=len(FEATURES) - 1)
         f = next(x for x in FEATURES if x[0] == key)
         result = (f"{f[1]}. {f[2]}", f"{SITE}/og-image.png", "feature", key, SITE + f[3], "")
