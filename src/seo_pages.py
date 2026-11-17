@@ -54,6 +54,7 @@ MAX_PRICE_AGE_H = 72      # ignore prices older than this when the source gives 
 EXCLUDE_ANWB = os.environ.get("SEO_EXCLUDE_ANWB") == "1"   # kill switch: skip countries fed by the unofficial ANWB API
 
 from seo_text import COUNTRIES, MONTHS, TXT  # (country settings and page texts live in seo_text.py)
+import town_cards
 
 
 def slugify(name: str, lang: str) -> str:
@@ -334,8 +335,13 @@ def share_link(lang: str, url: str) -> str:
     return f'<a href="https://www.facebook.com/sharer/sharer.php?u={quote(url, safe="")}" target="_blank" rel="noopener">{escape(SHARE.get(lang, SHARE["en"]))}</a>'
 
 
+def _country_en(cfg: Dict, cc: str) -> str:
+    from europe_index import NAMES    # europe_index imports this module, so it is imported here, when a page is written
+    return NAMES.get(cfg.get("iso", cc).upper()[:2], "")
+
+
 def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, jsonld: List[Dict],
-         crumbs: str, modified: str, foot: str) -> str:
+         crumbs: str, modified: str, foot: str, og_image: str = "") -> str:
     x = TXT[cfg["lang"]]
     ld = "\n".join('<script type="application/ld+json">' + json.dumps(o, ensure_ascii=False).replace("</", "<\\/") + '</script>' for o in jsonld)   # a name containing </script> must not end the block
     return f"""<!DOCTYPE html>
@@ -352,7 +358,7 @@ def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, j
 <meta property="og:title" content="{escape(title)}">
 <meta property="og:description" content="{escape(desc)}">
 <meta property="og:url" content="{canonical}">
-<meta property="og:image" content="{SITE}/og-image.png">
+<meta property="og:image" content="{og_image or SITE + '/og-image.png'}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
@@ -697,7 +703,8 @@ def build_country(cc: str, cfg: Dict, now: datetime) -> Optional[List[Tuple[str,
         d.mkdir(parents=True, exist_ok=True)
         (d / "index.html").write_text(
             page(cfg, title, desc, canonical, x["h1"].format(town=disp), "\n".join(body), ld,
-                 crumbs_html(lang, [(x["home"], "/"), (cfg["hub"], hub_url), (disp, None)]), modified, foot),
+                 crumbs_html(lang, [(x["home"], "/"), (cfg["hub"], hub_url), (disp, None)]), modified, foot,
+                 og_image=town_cards.ensure(DATA_DIR, SITE, cc, slug, disp, _country_en(cfg, cc), lang) or ""),
             encoding="utf-8")
         urls.append((canonical, lastmod))
 
