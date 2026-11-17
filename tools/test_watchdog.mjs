@@ -1,12 +1,12 @@
 // Run: node tools/test_watchdog.mjs   (needs Node 18+)
 import assert from 'node:assert/strict';
-import { judge, check, staleChargers } from '../worker/watchdog/index.mjs';
+import { judge, check, staleChargers, droppedCountries, nextBase } from '../worker/watchdog/index.mjs';
 
 const NOW = Date.parse('2026-11-10T16:00:00Z');
 const at = (min, base = NOW) => ({ fetched_at: new Date(base - min * 60000).toISOString() });
 assert.equal(judge(at(10), NOW).ok, true);
-assert.equal(judge(at(180), NOW).ok, true);                 // exactly the limit is still fine
-assert.equal(judge(at(181), NOW).ok, false);
+assert.equal(judge(at(60), NOW).ok, true);                  // exactly the limit is still fine
+assert.equal(judge(at(61), NOW).ok, false);
 assert.equal(judge(null, NOW).ok, false);
 assert.equal(judge({ fetched_at: 'garbage' }, NOW).ok, false);
 
@@ -38,4 +38,13 @@ kv.clear(); pushes.length = 0; evGen = '2026-10-01'; const T2 = Date.parse('2026
 meta = { ...at(5, T2), countries: [] }; await check(env, T2); assert.equal(pushes.length, 0);
 await check(env, T2 + 30 * 60000); assert.equal(pushes.length, 1); assert.match(pushes[0], /charger data stale/);
 evGen = new Date(T2).toISOString(); meta = { ...at(5, T2 + 3600000), countries: [] }; await check(env, T2 + 3600000); assert.equal(pushes.length, 2); assert.match(pushes[1], /charger data fresh again/);
+// station-count drop: baseline kept while dropped, alert after two sightings, recovery message
+assert.deepEqual(droppedCountries({ countries: [{ country: 'FI', station_count: 100 }, { country: 'SE', station_count: 20 }] }, { FI: 400, SE: 30 }), ['FI 400>100']);   // SE had < 50: ignored
+assert.deepEqual(nextBase({ countries: [{ country: 'FI', station_count: 100 }, { country: 'NO', station_count: 900 }] }, { FI: 400 }), { FI: 400, NO: 900 });
+assert.deepEqual(nextBase({ countries: [{ country: 'FI', station_count: 350 }] }, { FI: 400 }), { FI: 350 });
+kv.clear(); pushes.length = 0; const T3 = Date.parse('2026-11-17T10:00:00Z'), cn = n => ({ ...at(5, T3), countries: [{ country: 'FI', station_count: n, status: 'ok' }] });
+meta = cn(400); await check(env, T3); meta = { ...cn(400), ...at(5, T3 + 30 * 60000) }; await check(env, T3 + 30 * 60000); assert.equal(pushes.length, 0);   // baseline learned, silent
+meta = { ...cn(100), ...at(5, T3 + 60 * 60000) }; await check(env, T3 + 60 * 60000); assert.equal(pushes.length, 0);                                           // first sighting: wait
+meta = { ...cn(100), ...at(5, T3 + 90 * 60000) }; await check(env, T3 + 90 * 60000); assert.equal(pushes.length, 1); assert.match(pushes[0], /lost stations/);
+meta = { ...cn(390), ...at(5, T3 + 120 * 60000) }; await check(env, T3 + 120 * 60000); assert.equal(pushes.length, 2); assert.match(pushes[1], /recovered/);
 console.log('test_watchdog: all passed');

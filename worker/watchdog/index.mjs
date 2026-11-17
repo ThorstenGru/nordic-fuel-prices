@@ -1,7 +1,8 @@
 // Stale-data alarm for eurofuelprices.com. Cron every 30 min: reads meta.json, pushes a phone notification via ntfy.sh when the
 // price data stops updating (the scrape chain can die silently). Free: Workers cron + KV + ntfy.sh. Secret: NTFY_TOPIC (random, acts as the password).
 const META = 'https://eurofuelprices.com/meta.json';
-const STALE_MIN = 180;                 // the pipeline runs every ~15-30 min; 3 h without a new fetch means it is down
+const STALE_MIN = 60;                  // the pipeline runs every ~15-30 min; an hour without a new fetch means the chain died (also the site-down alarm: meta.json unreachable)
+const DROP_RATIO = 0.7, DROP_MIN = 50; // a country that had >= 50 stations and now has under 70 % of them: a source broke or changed (Hintatutka and ANWB did that before)
 const REMIND_MIN = 360;                // while still stale, repeat the alert every 6 h
 const CTY_REMIND_MIN = 1440;           // a country that stays stale: repeat once a day
 
@@ -17,6 +18,21 @@ export function judge(meta, nowMs) {
 // Pure: sorted codes of the countries meta.json marks stale (one country's feed dying while the rest is fresh never moves the global fetched_at).
 export function staleCountries(meta) {
   return ((meta && meta.countries) || []).filter(c => c && c.status === 'stale' && c.country).map(c => c.country).sort();
+}
+
+// Pure: "CC old>new" for countries whose station count fell under DROP_RATIO of the remembered baseline. Exported for tests.
+export function droppedCountries(meta, base) {
+  return ((meta && meta.countries) || []).filter(c => c && c.country && typeof c.station_count === 'number' && base[c.country] >= DROP_MIN && c.station_count < base[c.country] * DROP_RATIO)
+    .map(c => `${c.country} ${base[c.country]}>${c.station_count}`).sort();
+}
+// Pure: the baseline moves with normal changes and stays put while a country is in the dropped state (so the alarm clears only when it recovers).
+export function nextBase(meta, base) {
+  const out = { ...base };
+  for (const c of (meta && meta.countries) || []) {
+    if (!c || !c.country || typeof c.station_count !== 'number') continue;
+    if (!(c.country in out) || c.station_count >= out[c.country] * DROP_RATIO) out[c.country] = c.station_count;
+  }
+  return out;
 }
 
 const CHARGER_CC = ['DK', 'DE'];       // the ChargeFinder countries that were live first; a rotated key or a block stops them all
@@ -59,6 +75,9 @@ export async function check(env, nowMs = Date.now()) {
   // again only when the set changes or after a day; one message when it is empty again.
   if (meta) {
     await watchSet(env, 'c', staleCountries(meta), nowMs, 'country feed stale', 'country feeds fresh again', 'The rest of the data is still updating.');
+    const base = JSON.parse((await env.STATE.get('n')) || '{}');
+    await watchSet(env, 'd', droppedCountries(meta, base), nowMs, 'country lost stations', 'station counts recovered', 'A source may have changed; check the scrape log of that country.');
+    await env.STATE.put('n', JSON.stringify(nextBase(meta, base)));
     const files = {};
     for (const cc of CHARGER_CC) {
       try { const r = await fetch(`https://eurofuelprices.com/ev_${cc.toLowerCase()}.json?w=${Math.floor(nowMs / 60000)}`, { signal: AbortSignal.timeout(15000) }); if (r.ok) files[cc] = (await r.json()).generated; } catch (_) {}
