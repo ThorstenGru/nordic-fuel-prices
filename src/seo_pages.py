@@ -33,6 +33,7 @@ import re
 import statistics
 import sys
 import unicodedata
+from urllib.parse import quote
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from html import escape
@@ -324,6 +325,15 @@ footer { margin-top:40px; padding-top:14px; border-top:1px solid var(--border); 
 """
 
 
+# Plain share link (Facebook's sharer page): no Meta script on our pages, so nothing is loaded or tracked until someone clicks.
+SHARE = {"en": "Share on Facebook", "sv": "Dela på Facebook", "de": "Auf Facebook teilen", "da": "Del på Facebook", "nb": "Del på Facebook",
+         "fi": "Jaa Facebookissa", "fr": "Partager sur Facebook", "es": "Compartir en Facebook", "nl": "Delen op Facebook"}
+
+
+def share_link(lang: str, url: str) -> str:
+    return f'<a href="https://www.facebook.com/sharer/sharer.php?u={quote(url, safe="")}" target="_blank" rel="noopener">{escape(SHARE.get(lang, SHARE["en"]))}</a>'
+
+
 def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, jsonld: List[Dict],
          crumbs: str, modified: str, foot: str) -> str:
     x = TXT[cfg["lang"]]
@@ -361,7 +371,7 @@ def page(cfg: Dict, title: str, desc: str, canonical: str, h1: str, body: str, j
 {body}
 <footer>
 <p>{foot}</p>
-<p>{escape(x['foot_upd'])}: {escape(modified)}. · <a href="https://www.facebook.com/eurofuelprices" rel="me noopener">Facebook</a></p>
+<p>{escape(x['foot_upd'])}: {escape(modified)}. · <a href="https://www.facebook.com/eurofuelprices" rel="me noopener">Facebook</a> · {share_link(cfg['lang'], canonical)}</p>
 </footer>
 </body>
 </html>

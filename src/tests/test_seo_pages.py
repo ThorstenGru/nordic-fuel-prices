@@ -16,6 +16,14 @@ class JsonLd(unittest.TestCase):
         self.assertIn("<\\/script>", html)
 
 
+class ShareLink(unittest.TestCase):
+    def test_every_page_has_an_encoded_facebook_share_link(self):
+        html = sp.page(sp.COUNTRIES["de"], "T", "d", "https://eurofuelprices.com/de/x?a=1&b=2", "H", "<p>b</p>", [], "", "2026-11-07", "f")
+        self.assertIn("sharer.php?u=https%3A%2F%2Feurofuelprices.com%2Fde%2Fx%3Fa%3D1%26b%3D2", html)
+        self.assertIn("Auf Facebook teilen", html)
+        self.assertNotIn("connect.facebook.net", html)   # a plain link, no Meta script
+
+
 BOT_ONLY_LANGS = {c["lang"] for c in sp.COUNTRIES.values() if c.get("bot_only")}
 
 
