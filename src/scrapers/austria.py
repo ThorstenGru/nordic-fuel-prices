@@ -52,6 +52,7 @@ class AustriaScraper(BaseScraper):
     SOURCE = "e-control.at"
     CONFIDENCE = 1.0
     GRADE = "A"   # statutory: price changes reported to E-Control within 30 minutes
+    REFRESH_MINUTES = 60   # 2026-11-17: the top-up asks e-control about a thousand times per run; once an hour is polite enough for a public API without written terms
 
     async def fetch_stations(self) -> List[Dict[str, Any]]:
         pb_codes = await self._fetch_pb_codes()
@@ -117,9 +118,13 @@ class AustriaScraper(BaseScraper):
             if st.get("lat") is not None and st.get("lon") is not None:
                 seen_cells.setdefault(cell(st["lat"], st["lon"]), []).append((st["lat"], st["lon"]))
 
+        discs: List[tuple] = []   # (lat, lon, radius_m) of every answered question: the 10 nearest stations came back, so a place inside the disc has been seen if e-control lists it at all
+
         def covered(lat, lon):
             cx, cy = cell(lat, lon)
-            return any(dist_m(lat, lon, a, b) <= SEED_MATCH_M for dx in (-1, 0, 1) for dy in (-1, 0, 1) for a, b in seen_cells.get((cx + dx, cy + dy), ()))
+            if any(dist_m(lat, lon, a, b) <= SEED_MATCH_M for dx in (-1, 0, 1) for dy in (-1, 0, 1) for a, b in seen_cells.get((cx + dx, cy + dy), ())):
+                return True
+            return any(abs(lat - d[0]) < d[2] / 111200 and abs(lon - d[1]) < d[2] / 70000 and dist_m(lat, lon, d[0], d[1]) <= d[2] for d in discs)
 
         for st in merged.values():
             index(st)
@@ -138,6 +143,10 @@ class AustriaScraper(BaseScraper):
             asked += len(batch)
             res = await asyncio.gather(*(self._near(lat, lon, fuel, sem) for lat, lon in batch for fuel in FUEL_MAP if fuel != "GAS"),
                                        return_exceptions=True)
+            for k, (lat, lon) in enumerate(batch):            # results are ordered place by place, one answer per fuel
+                ans = [x for r in res[k * 2:k * 2 + 2] if not isinstance(r, Exception) and r for x in r if x.get("lat") is not None]
+                if ans:
+                    discs.append((lat, lon, 0.9 * max(dist_m(lat, lon, x["lat"], x["lon"]) for x in ans)))
             for r in res:
                 if isinstance(r, Exception) or not r:
                     continue
