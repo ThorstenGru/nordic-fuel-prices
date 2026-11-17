@@ -21,6 +21,11 @@ const odd = { ...full, f: { la: -33.8688, lo: 151.2093, n: 'Tåby "Å" & Ö ü /
 assert.deepStrictEqual(rt(odd), odd);
 const h = F.shEncode(full); assert(/^#p1=[A-Za-z0-9_-]+$/.test(h)); assert(h.length < 400, h.length);
 assert(/^#p1=[\x21-\x7e]+$/.test(F.shEncode(odd)));
+// via stops: optional, survive the round trip in order, at most two, damaged ones refuse the whole link; links without them stay identical
+const vi = [{ la: 54.3, lo: 11.0, n: 'Puttgarden' }, { la: 53.9, lo: 10.7, n: 'Lübeck' }];
+assert.deepStrictEqual(rt({ ...full, vi }).vi, vi);
+assert.strictEqual(rt({ ...full, vi: [] }).vi, undefined); assert.strictEqual(F.shEncode({ ...full, vi: [] }), F.shEncode(full));
+assert.strictEqual(F.shNorm({ ...full, vi: [...vi, vi[0]] }), null); assert.strictEqual(F.shNorm({ ...full, vi: [{ la: 999, lo: 0, n: 'x' }] }), null); assert.strictEqual(F.shNorm({ ...full, vi: 'x' }), null);
 // coordinates are rounded to 4 decimals (about 11 m)
 assert.strictEqual(rt({ ...full, f: { la: 55.604912345, lo: 13.003876, n: 'x' } }).f.la, 55.6049);
 // empty name -> the coordinates as text (the planner needs a non-empty name)

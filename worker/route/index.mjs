@@ -14,12 +14,12 @@ const num = (v, [lo, hi]) => typeof v === 'number' && isFinite(v) && v >= lo && 
 export function normalise(raw) {
   let j; try { j = JSON.parse(raw); } catch (_) { return null; }
   const L = j && j.locations;
-  if (!Array.isArray(L) || L.length !== 2) return null;
+  if (!Array.isArray(L) || L.length < 2 || L.length > 4) return null;            // start, up to 2 via stops, destination
   for (const p of L) if (!p || !num(p.lat, EUROPE.la) || !num(p.lon, EUROPE.lo)) return null;
   return {
     locations: L.map(p => ({ lat: +p.lat.toFixed(3), lon: +p.lon.toFixed(3) })),
     costing: 'auto', directions_type: 'maneuvers',
-    alternates: Math.max(0, Math.min(2, j.alternates | 0)),
+    alternates: L.length === 2 ? Math.max(0, Math.min(2, j.alternates | 0)) : 0,   // Valhalla gives alternatives for two-point routes only
   };
 }
 

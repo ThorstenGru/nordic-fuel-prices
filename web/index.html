@@ -1453,6 +1453,11 @@ Object.assign(I18N.es, { routeTab:'Ruta', rtPreview:'Vista previa', rtFrom:'Desd
   rtNone:'Ningún surtidor con precio a menos de {w} km de la ruta.', rtSummary:'{d} km · unas {h} · {n} surtidores con precio a menos de {w} km',
   rtMedian:'Mediana de la ruta {p} por litro', rtCheaper:'{d}/L por debajo de la mediana de la ruta', rtSame:'cerca de la mediana de la ruta',
   rtAlong:'km {k} de {n}', rtDetour:'+{k} km de desvío (est.)', rtVia:'Ruta por aquí', rtClear:'Borrar ruta' });
+Object.assign(I18N.en, { rtStopN:'Stop on the way {n}', rtStopAdd:'Add a stop on the way', rtStopDel:'Remove this stop' });
+Object.assign(I18N.sv, { rtStopN:'Stopp på vägen {n}', rtStopAdd:'Lägg till ett stopp på vägen', rtStopDel:'Ta bort det här stoppet' });
+Object.assign(I18N.de, { rtStopN:'Zwischenstopp {n}', rtStopAdd:'Zwischenstopp hinzufügen', rtStopDel:'Diesen Zwischenstopp entfernen' });
+Object.assign(I18N.fr, { rtStopN:'Étape {n}', rtStopAdd:'Ajouter une étape', rtStopDel:'Supprimer cette étape' });
+Object.assign(I18N.es, { rtStopN:'Parada {n}', rtStopAdd:'Añadir una parada', rtStopDel:'Quitar esta parada' });
 // Route planner v2 (PHEV-aware cost, range, net-of-detour saving, data-quality gate). de/fr/es fall back to English for these keys;
 // their old rtNote/rtCheaper/rtSame described the previous behaviour and the privacy text must stay accurate, so they are dropped.
 for (const l of ['de', 'fr', 'es']) { delete I18N[l].rtNote; delete I18N[l].rtCheaper; delete I18N[l].rtSame; }
@@ -6714,7 +6719,7 @@ async function cheapestInView() {
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
 // acpOv: a public AC price taken from a shared plan link; it wins over My car's own price for this session only and is never saved
-const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
@@ -6737,25 +6742,25 @@ function rtVTrip(tr) {                         // one Valhalla trip -> route obj
   const mv = tr.legs.flatMap(l => l.maneuvers || []), segs = mv.length ? mv.map(m => ({ km: m.length, min: m.time / 60, hw: !!m.highway, ferry: !!m.ferry })) : null;
   return { pts: tr.legs.flatMap(l => decodePoly6(l.shape)), km: tr.summary.length, min: tr.summary.time / 60, ferry: tr.legs.some(l => l.summary?.has_ferry), toll: !!(tr.summary.has_toll || tr.legs.some(l => l.summary?.has_toll)), via:'valhalla', segs };
 }
-async function rtValhalla(a, b) {
+async function rtValhalla(a, b, vs = []) {
   // alternates:2 rides on the same request (one call, the server asks for max 1 request/second); the main trip is always the router's best route
-  const q = JSON.stringify({ locations:[{ lat:a.lat, lon:a.lon }, { lat:b.lat, lon:b.lon }], costing:'auto', directions_type:'maneuvers', alternates:2 });
+  const q = JSON.stringify({ locations:[a, ...vs, b].map(p => ({ lat:p.lat, lon:p.lon })), costing:'auto', directions_type:'maneuvers', alternates: vs.length ? 0 : 2 });   // Valhalla: alternatives only for two points
   // our own proxy first (cached, validated, one place to swap the provider: worker/route); if it is missing or down, the public server directly
   let j; try { j = await rtJson(`${VALHALLA_PROXY}?json=${encodeURIComponent(q)}`, 15000); } catch (_) { j = await rtJson(`${VALHALLA}?json=${encodeURIComponent(q)}`, 15000); }
   const m = rtVTrip(j.trip);
   m.alts = (j.alternates || []).map(x => { try { return rtVTrip(x.trip); } catch (_) { return null; } }).filter(Boolean);   // key absent on short routes: no alternatives
   return m;
 }
-async function rtOsrm(a, b) {
-  const j = await rtJson(`${OSRM}${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson&alternatives=2`, 15000);
+async function rtOsrm(a, b, vs = []) {
+  const j = await rtJson(`${OSRM}${[a, ...vs, b].map(p => p.lon + ',' + p.lat).join(';')}?overview=full&geometries=geojson&alternatives=${vs.length ? 'false' : '2'}`, 15000);
   if (j.code !== 'Ok' || !j.routes?.[0]) throw new Error(j.code || 'route');
   const one = r => ({ pts: r.geometry.coordinates.map(([lo, la]) => [la, lo]), km: r.distance / 1000, min: r.duration / 60, ferry: false, toll: false, via:'osrm', segs: null });
   return { ...one(j.routes[0]), alts: j.routes.slice(1, 3).map(one) };
 }
 // fb = Valhalla failed and OSRM answered (the footnote says so; OSRM does not route ferries)
-async function rtRoute(a, b) {
-  if (ROUTER === 'valhalla') { try { return await rtValhalla(a, b); } catch (_) { return { ...(await rtOsrm(a, b)), fb: true }; } }
-  return rtOsrm(a, b);
+async function rtRoute(a, b, vs = []) {
+  if (ROUTER === 'valhalla') { try { return await rtValhalla(a, b, vs); } catch (_) { return { ...(await rtOsrm(a, b, vs)), fb: true }; } }
+  return rtOsrm(a, b, vs);
 }
 const rtFuelKey = () => cmpKey === 'diesel' ? 'DIESEL' : 'P95';
 
@@ -7231,6 +7236,8 @@ function shPlace(p) {
 function shNorm(x) {
   if (!x || typeof x !== 'object') return null;
   const f = shPlace(x.f), t = shPlace(x.t), w = x.w, k = x.k;
+  let vi = null;
+  if (x.vi != null) { if (!Array.isArray(x.vi) || x.vi.length > 2) return null; vi = x.vi.map(shPlace); if (vi.some(p => !p)) return null; }
   if (!f || !t || ![2, 3, 5].includes(w) || (k !== 'P' && k !== 'D')) return null;
   const fp = shInt(x.fp, 0, 100), bp = shInt(x.bp, 0, 100), v = shInt(x.v, 0, 1000);
   if (fp == null || bp == null || v == null) return null;
@@ -7242,14 +7249,16 @@ function shNorm(x) {
     if (!p || typeof c !== 'string' || !/^[A-Z]{3}$/.test(c)) return null;
     a = { p, c };
   }
-  return { f, t, w, k, fp, bp, r, s, v, d: x.d ? 1 : 0, h: x.h ? 1 : 0, a };
+  const o = { f, t, w, k, fp, bp, r, s, v, d: x.d ? 1 : 0, h: x.h ? 1 : 0, a };
+  if (vi && vi.length) o.vi = vi;                          // via stops: optional, absent when there are none
+  return o;
 }
 const shB64 = s => { const b = new TextEncoder().encode(s); let o = ''; for (let i = 0; i < b.length; i++) o += String.fromCharCode(b[i]); return btoa(o).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
 const shUnB64 = s => { const o = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), b = new Uint8Array(o.length); for (let i = 0; i < o.length; i++) b[i] = o.charCodeAt(i); return new TextDecoder('utf-8', { fatal: true }).decode(b); };
 function shEncode(state) {                                 // '#p1=...' or null when the state is invalid / too long
   const S = shNorm(state); if (!S) return null;
   const j = { f: S.f, t: S.t, w: S.w, k: S.k, fp: S.fp, bp: S.bp, v: S.v };
-  if (S.r != null) j.r = S.r; if (S.s != null) j.s = S.s; if (S.d) j.d = 1; if (S.h) j.h = 1; if (S.a) j.a = S.a;
+  if (S.vi) j.vi = S.vi; if (S.r != null) j.r = S.r; if (S.s != null) j.s = S.s; if (S.d) j.d = 1; if (S.h) j.h = 1; if (S.a) j.a = S.a;
   const h = '#p' + SH_VER + '=' + shB64(JSON.stringify(j));
   return h.length <= SH_MAX ? h : null;
 }
@@ -7293,9 +7302,11 @@ function renderRoute() {
       <label style="margin-top:0">${t('rtFrom')}</label>
       <div class="rt-field"><input id="rt-from" data-ac="from" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" autocomplete="off" value="${lbl('from')}" placeholder="${t('rtPh')}" oninput="rt.fromTxt=this.value;rt.from=null" onkeydown="if(event.key==='Enter')rtGo()">
         <button type="button" title="${t('rtMyLoc')}" aria-label="${t('rtMyLoc')}" onclick="rtUseMe()">${ico('locate')}</button><button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('from')">${ico('map')}</button></div>
+      ${rt.vias.map((v, i) => `<label>${t('rtStopN', { n: i + 1 })}</label><div class="rt-field"><input id="rt-via${i}" autocomplete="off" value="${esc(v.txt)}" placeholder="${t('rtPh')}" oninput="rt.vias[${i}].txt=this.value;rt.vias[${i}].ll=null" onkeydown="if(event.key==='Enter')rtGo()"><button type="button" title="${t('rtStopDel')}" aria-label="${t('rtStopDel')}" onclick="rtViaDel(${i})">${ico('close')}</button></div>`).join('')}
       <label>${t('rtTo')}</label>
       <div class="rt-field"><input id="rt-to" data-ac="to" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" autocomplete="off" value="${lbl('to')}" placeholder="${t('rtPh')}" oninput="rt.toTxt=this.value;rt.to=null" onkeydown="if(event.key==='Enter')rtGo()">
         <button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('to')">${ico('map')}</button></div>
+      ${rt.vias.length < 2 ? `<button type="button" class="mc-btn" style="margin-top:8px" onclick="rtViaAdd()">+ ${t('rtStopAdd')}</button>` : ''}
       <label>${t('rtWidth')}</label>
       <div class="tchips">${[2, 3, 5].map(w => `<button class="${rt.w === w ? 'on' : ''}" onclick="rt.w=${w};rt.res=null;renderRoute()">${w} km</button>`).join('')}</div>
       ${(() => { const o = rtInputs(), chip = (k, v, on, txt) => `<button class="${on ? 'on' : ''}" data-k="${k}" data-v="${v}" aria-pressed="${on}" onclick="rtSet('${k}',${v})">${txt}</button>`, rs = [...new Set([o.defReserve, 5, 10, 15])].sort((a, b) => a - b);
@@ -7320,6 +7331,8 @@ function renderRoute() {
 }
 function rtSetStatus(msg) { rt.status = msg; const o = document.getElementById('rt-out'); if (o && rt.busy) o.innerHTML = `<p class="empty" style="padding:14px 0"><i class="spin"></i> ${esc(msg)}</p>`; }
 
+function rtViaAdd() { if (rt.vias.length >= 2) return; rt.vias.push({ txt: '', ll: null }); rt.res = null; renderRoute(); document.getElementById('rt-via' + (rt.vias.length - 1))?.focus(); }
+function rtViaDel(i) { rt.vias.splice(i, 1); rt.res = null; renderRoute(); }
 function rtUseMe() {
   if (myLat != null) { rt.from = { lat:myLat, lon:myLon }; rt.fromTxt = t('rtMyLoc'); renderRoute(); return; }
   if (!navigator.geolocation) return;
@@ -7384,6 +7397,8 @@ async function rtGo(fromShare) {
   rt.fromTxt = document.getElementById('rt-from')?.value ?? rt.fromTxt;
   rt.toTxt = document.getElementById('rt-to')?.value ?? rt.toTxt;
   if (!rt.fromTxt.trim() || !rt.toTxt.trim()) return;
+  rt.vias.forEach((v, i) => { const el = document.getElementById('rt-via' + i); if (el) v.txt = el.value; });
+  rt.vias = rt.vias.filter(v => v.txt.trim());             // an empty via field is simply not a via stop
   rt.busy = true; rt.res = null; document.getElementById('rt-go')?.setAttribute('disabled', '');
   try {
     rtSetStatus(t('rtSearching'));
@@ -7395,9 +7410,16 @@ async function rtGo(fromShare) {
       rt[side] = g;
       if (side === 'from') await _sleep(1100);               // Nominatim: max 1 request/second
     }
+    for (const v of rt.vias) {
+      if (v.ll) continue;
+      await _sleep(1100);                                    // Nominatim: max 1 request/second
+      const g = await rtGeocode(v.txt.trim());
+      if (!g) { rt.busy = false; renderRoute(); document.getElementById('rt-out').innerHTML = `<p class="empty">${t('rtNoPlace', { q: esc(v.txt.trim()) })}</p>`; return; }
+      v.ll = g;
+    }
     rtSetStatus(t('rtRouting'));
     const a = rt.from, b = rt.to;
-    const rte = await rtRoute(a, b);
+    const rte = await rtRoute(a, b, rt.vias.map(v => v.ll));
     const pts = rte.pts;
     const alts = rtKeepAlts(rte, rte.alts || []);
     const need = rtNeed(pts), needAll = [...new Set([...need, ...alts.flatMap(x => rtNeed(x.pts))])];   // alternatives may touch more countries: their files are needed to find fares
@@ -7423,7 +7445,7 @@ async function rtGo(fromShare) {
 // ── share a plan as a link (pure part: SH-PURE block) ──
 function shState() {
   if (!rt.from || !rt.to) return null;
-  return shNorm({ f: { la: rt.from.lat, lo: rt.from.lon, n: rt.fromTxt }, t: { la: rt.to.lat, lo: rt.to.lon, n: rt.toTxt }, w: rt.w, k: rtFuelKey() === 'DIESEL' ? 'D' : 'P',
+  return shNorm({ f: { la: rt.from.lat, lo: rt.from.lon, n: rt.fromTxt }, t: { la: rt.to.lat, lo: rt.to.lon, n: rt.toTxt }, w: rt.w, k: rtFuelKey() === 'DIESEL' ? 'D' : 'P', vi: rt.vias.filter(v => v.ll).map(v => ({ la: v.ll.lat, lo: v.ll.lon, n: v.txt })),
     fp: rt.fuelPct, bp: rt.battPct, r: rt.reserve, s: rt.cruise, v: rt.vot, d: rt.destChg, h: rt.hideUnknown, a: (a => a ? { p: a.p, c: a.cur } : null)(acpNow()) });
 }
 const shLink = () => { const h = (s => s && shEncode(s))(shState()); return h ? location.origin + location.pathname + h : null; };
@@ -7440,7 +7462,7 @@ async function shShare() {
   if (navigator.share) { try { await navigator.share({ title: 'EuroFuelPrices', text: t('rtShText', { a: rt.fromTxt, b: rt.toTxt }), url }); } catch (_) {} }
 }
 function shApply(S) {
-  Object.assign(rt, { from: { lat: S.f.la, lon: S.f.lo }, fromTxt: S.f.n, to: { lat: S.t.la, lon: S.t.lo }, toTxt: S.t.n, w: S.w, fuelPct: S.fp, battPct: S.bp, reserve: S.r, cruise: S.s,
+  Object.assign(rt, { vias: (S.vi || []).map(p => ({ txt: p.n, ll: { lat: p.la, lon: p.lo } })), from: { lat: S.f.la, lon: S.f.lo }, fromTxt: S.f.n, to: { lat: S.t.la, lon: S.t.lo }, toTxt: S.t.n, w: S.w, fuelPct: S.fp, battPct: S.bp, reserve: S.r, cruise: S.s,
     vot: S.v, destChg: !!S.d, hideUnknown: !!S.h, acpOv: S.a ? { p: S.a.p, cur: S.a.c } : null, asmOpen: true, res: null, pick: null });
   setCmpKey(S.k === 'D' ? 'diesel' : 'p95');
 }
@@ -7711,7 +7733,7 @@ function rtStripHtml(R, P) {
 }
 const rtNavDest = R => (rt.toTxt || '').trim() || t('rtNavDest');
 function rtNavHtml(R, P, detail) {   // detail=false: heading + buttons; true: hints and leg list (inside Details)
-  if (P.status !== 'ok' || !P.nStops) return '';
+  if (P.status !== 'ok' || !P.nStops || rt.vias.length) return '';   // shortcut: with via stops the export would drop them; add the stops in route order when asked for
   const stops = P.stops.map(s => ({ lat: s.s.lat, lon: s.s.lon })), e = R.pts[R.pts.length - 1], dest = rtNavDest(R);
   const L = rtNavLinks(stops, { lat: e[0], lon: e[1] }), A = { waze: [t('rtNavWazeBtn'), L.waze[0]], google: [t('rtNavGoogle'), L.google], apple: [t('rtNavApple'), L.apple] };
   const iosOk = NAV_APPS.find(x => x.id === 'apple')?.show();

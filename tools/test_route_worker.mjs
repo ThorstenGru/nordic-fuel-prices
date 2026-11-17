@@ -8,7 +8,11 @@ assert.deepEqual(n.locations, [{ lat: 55.605, lon: 13.004 }, { lat: 53.551, lon:
 assert.equal(n.alternates, 2); assert.equal(n.costing, 'auto');
 assert.equal(normalise(JSON.stringify({ ...ok, alternates: 99 })).alternates, 2);           // capped
 assert.equal(normalise('not json'), null);
-assert.equal(normalise(JSON.stringify({ locations: [ok.locations[0]] })), null);              // needs exactly two points
+assert.equal(normalise(JSON.stringify({ locations: [ok.locations[0]] })), null);              // needs at least two points
+const mid = { lat: 54.3, lon: 11.0 }, v3 = normalise(JSON.stringify({ locations: [ok.locations[0], mid, ok.locations[1]], alternates: 2 }));
+assert.equal(v3.locations.length, 3); assert.equal(v3.alternates, 0);                          // one via stop: allowed, no alternatives
+assert.equal(normalise(JSON.stringify({ locations: [ok.locations[0], mid, mid, mid, ok.locations[1]] })), null);   // more than two via stops: refused
+assert.equal(normalise(JSON.stringify({ locations: [ok.locations[0], { lat: 40.7, lon: -74 }, ok.locations[1]] })), null);   // a via stop outside Europe: refused
 assert.equal(normalise(JSON.stringify({ locations: [{ lat: 40.7, lon: -74 }, ok.locations[1]] })), null);   // outside Europe
 assert.equal(normalise(JSON.stringify({ locations: [{ lat: '55', lon: '13' }, ok.locations[1]] })), null); // strings refused
 assert.equal(Object.keys(normalise(JSON.stringify({ ...ok, costing: 'bus', date_time: 1 }))).sort().join(), 'alternates,costing,directions_type,locations');  // no pass-through
