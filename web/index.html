@@ -266,7 +266,7 @@ button, .tb, .chip, select, input { touch-action:manipulation; }
 
 /* ── Tab bar: 4 tabs, 52 px + safe area ── */
 #tabbar { position:fixed; bottom:0; left:0; right:0; height:calc(var(--tab-h) + var(--safe-b)); padding-bottom:var(--safe-b); background:var(--nav-bg);
-  display:grid; grid-template-columns:repeat(4,1fr); z-index:800; }
+  display:grid; grid-template-columns:repeat(5,1fr); z-index:800; }
 .tb { position:relative; background:none; border:none; color:var(--nav-fg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; padding:4px 2px; }
 .tb .ic { width:22px; height:22px; }
 .tb-lbl { font-size:.66rem; font-weight:700; letter-spacing:.02em; white-space:nowrap; }
@@ -306,7 +306,7 @@ body.hint-handle .panel.open .drag-handle::after { animation:handleNudge 1.1s ea
 .upd-line.old { color:var(--warn-t); }
 .sort-btn { background:none; border:1px solid var(--line); border-radius:var(--r-s); color:var(--sub); font-size:.72rem; font-weight:600; min-height:32px; padding:0 10px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
 #p-stations .panel-scroll, #p-search .panel-scroll { padding:0 12px 14px; }
-#p-compare .panel-scroll { padding:0 14px 16px; }
+#p-compare .panel-scroll, #p-route .panel-scroll { padding:0 14px 16px; }
 #p-car .panel-scroll, #p-filter .panel-scroll { padding:4px 14px 20px; }
 
 /* ── Segment controls ── */
@@ -722,7 +722,7 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
   #brandbar .bb-links { display:flex; gap:14px; font-size:.78rem; font-weight:600; }
   #brandbar .bb-links a { color:var(--sub); text-decoration:none; }
   #brandbar .bb-links a:hover { color:var(--acc-t); }
-  #tabbar { top:var(--brand-h); bottom:auto; left:0; right:auto; width:var(--side-w); height:var(--tabs-h); padding-bottom:0; grid-template-columns:repeat(3,1fr);
+  #tabbar { top:var(--brand-h); bottom:auto; left:0; right:auto; width:var(--side-w); height:var(--tabs-h); padding-bottom:0; grid-template-columns:repeat(4,1fr);
     background:var(--surf); border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
   #tb-map { display:none; }
   .tb { flex-direction:row; gap:7px; color:var(--sub); }
@@ -907,13 +907,23 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
   </div>
 </div>
 
-<!-- Trip: Prices | Border run | Route -->
+<!-- Route: its own tab (planner: start, destination, fuel plan, cost, share link) -->
+<div class="panel" id="p-route" role="region" data-i18n-aria="routeTab">
+  <div class="drag-handle"></div>
+  <div class="phead"><h2 data-i18n="routeTab">Route</h2></div>
+  <div class="seg" id="route-fuel">
+    <button class="on" type="button" data-k="p95" onclick="setCmpKey('p95')">95</button>
+    <button type="button" data-k="diesel" onclick="setCmpKey('diesel')"><span data-i18n="fuelOptDiesel">Diesel</span></button>
+  </div>
+  <div class="panel-scroll" id="route-body"><p class="empty" data-i18n="loadingEllipsis">Loading…</p></div>
+</div>
+
+<!-- Trip: Prices | Border run -->
 <div class="panel" id="p-compare" role="region" data-i18n-aria="tabTrip">
   <div class="drag-handle"></div>
   <div class="phead"><h2 data-i18n="tabTrip">Trip</h2></div>
   <div class="view-seg" id="cmp-views">
     <button class="on" type="button" data-v="countries" onclick="setCmpView('countries')"><span data-i18n="segPrices">Prices</span></button>
-    <button type="button" data-v="route" onclick="setCmpView('route')"><span data-i18n="routeTab">Route</span></button>
     <button type="button" data-v="trip" onclick="setCmpView('trip')"><span data-i18n="segBorder">Border run</span></button>
   </div>
   <div class="seg">
@@ -1107,11 +1117,12 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
   <div class="bb-links"><a href="about.html" data-i18n="bbAbout">About</a><a href="admin.html" data-i18n="bbSources">Sources</a><a href="privacy.html">Privacy</a><a href="https://www.facebook.com/eurofuelprices" target="_blank" rel="me noopener">Facebook</a></div>
 </div>
 
-<!-- Tab bar: Map | List | Trip | My car -->
+<!-- Tab bar: Map | List | Route | Trip | My car -->
 <nav id="tabbar" aria-label="Main">
   <button class="tb on" id="tb-map" type="button" onclick="goTab('map')"><svg class="ic"><use href="#i-map"/></svg><span class="tb-lbl" data-i18n="tabMap">Map</span></button>
   <button class="tb" id="tb-stations" type="button" onclick="goTab('stations')"><svg class="ic"><use href="#i-list"/></svg><span class="tb-lbl" id="tb-list-lbl" data-i18n="tabList">List</span></button>
-  <button class="tb" id="tb-compare" type="button" onclick="goTab('compare')"><svg class="ic"><use href="#i-route"/></svg><span class="tb-lbl" data-i18n="tabTrip">Trip</span></button>
+  <button class="tb" id="tb-route" type="button" onclick="goTab('route')"><svg class="ic"><use href="#i-route"/></svg><span class="tb-lbl" data-i18n="routeTab">Route</span></button>
+  <button class="tb" id="tb-compare" type="button" onclick="goTab('compare')"><svg class="ic"><use href="#i-calc"/></svg><span class="tb-lbl" data-i18n="tabTrip">Trip</span></button>
   <button class="tb" id="tb-car" type="button" onclick="goTab('car')"><svg class="ic"><use href="#i-car"/></svg><span class="tb-lbl" data-i18n="tabCar">My car</span></button>
 </nav>
 
@@ -3816,7 +3827,7 @@ function setLang(l) {
   applyStaticI18n(); curUi();
   updStatus();
   if (typeof renderMarkers === 'function') { renderMarkers(); renderBubbles(); }
-  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); fillNavPref(); renderCarCard(); evAll(); updPeek(_peekBest); }
+  if (typeof renderLegend === 'function') { renderLegend(); renderCompare(); if (activeTab === 'route') renderRoute(); fillNavPref(); renderCarCard(); evAll(); updPeek(_peekBest); }
   if (typeof vehBuild === 'function') vehBuild();
   if (typeof rebuildList === 'function') rebuildList();
   if (activeTab === 'stations' && myLat != null) showNearby();
@@ -4696,7 +4707,7 @@ function startSearch() {
 function startGo(k) {
   closeStart();
   if (k === 'nearby') goNearby();
-  else if (k === 'route') { goTab('compare'); setCmpView('route'); }
+  else if (k === 'route') goTab('route');
   else showFavs();
 }
 map.on('click', () => toggleMore(false));
@@ -5714,7 +5725,7 @@ acUi();
 // Tab / Panel management
 // ════════════════════════════════════════════════════
 // Tabs: map (no panel) | stations (List + Nearby section) | compare (Trip: Prices | Border run | Route) | car (My car). search / filter / station open from the map.
-const PANEL_MAP = { search:'p-search', stations:'p-stations', compare:'p-compare', car:'p-car', filter:'p-filter', station:'p-station' };
+const PANEL_MAP = { search:'p-search', stations:'p-stations', compare:'p-compare', route:'p-route', car:'p-car', filter:'p-filter', station:'p-station' };
 
 function goTab(tab) {
   if (tab === 'map' && DESK.matches) tab = 'stations';   // desktop has no separate map tab
@@ -5733,6 +5744,7 @@ function goTab(tab) {
   const pid = PANEL_MAP[tab];
   if (pid) { document.getElementById(pid)?.classList.add('open'); document.body.classList.add('sheet'); curPanel = document.getElementById(pid); setSheet(SHEET_DEFAULT[tab] || 'full'); }
 
+  if (tab === 'route') renderRoute();
   if (tab === 'car') { track('mycar_opened'); vehLoad(); evAll(); }
   if (tab === 'stations') {
     rebuildList();
@@ -5771,7 +5783,7 @@ map.on('click', () => { if (stOpen() && !DESK.matches) closeStation(true); });  
 
 // ── Draggable sheets: full / half / peek (phones & tablets). Drag the handle; swipe past peek to close. ──
 let sheetState = 'full', curPanel = null;
-const SHEET_DEFAULT = { stations:'half', search:'half', compare:'full', car:'full', filter:'full' };
+const SHEET_DEFAULT = { stations:'half', search:'half', compare:'full', route:'full', car:'full', filter:'full' };
 function sheetOffset(p, st) {
   const h = p.offsetHeight;
   if (st === 'full') return 0;
@@ -7273,7 +7285,7 @@ function rtSet(k, v) {
 }
 
 function renderRoute() {
-  const el = document.getElementById('cmp-body'); if (!el) return;
+  const el = document.getElementById('route-body'); if (!el) return;
   const lbl = (side) => rt[side] ? esc(rt[side + 'Txt'] || '') : esc(rt[side + 'Txt'] || '');
   el.innerHTML = (rt.shMsg ? `<p class="cmp-note" id="rt-sh-msg" role="status" style="margin:0 0 10px">${esc(rt.shMsg())}</p>` : '') + `
     <div class="tcard">
@@ -7326,7 +7338,7 @@ map.on('click', e => {
   const side = rt.pick; rt.pick = null;
   rt[side] = { lat:e.latlng.lat, lon:e.latlng.lng };
   rt[side + 'Txt'] = `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
-  goTab('compare'); setCmpView('route');
+  goTab('route');
 });
 
 async function rtGeocode(q) {
@@ -7435,7 +7447,7 @@ function shApply(S) {
 function shOpen() {
   const d = shDecode(location.hash); if (d.st === 'none') return;
   if (rt.busy) { toast(t('rtShBusy')); return; }       // a search is running: applying now would mix two plans
-  closeStart(); goTab('compare'); setCmpView('route');
+  closeStart(); goTab('route');
   if (d.st !== 'ok') { rt.shMsg = () => t(d.st === 'ver' ? 'rtShVer' : 'rtShBad', { v: d.v }); renderRoute(); return; }
   shApply(d.state);
   rt.shMsg = () => t('rtShOpened') + (d.state.a ? ' ' + t('rtShAc', { p: d.state.a.p, c: d.state.a.c }) : '');   // a function so a language switch re-words it
@@ -8046,13 +8058,13 @@ function toggleColorBy() {
 function setCmpKey(k) {
   cmpKey = k;
   if (typeof rt !== 'undefined' && rt.res) rt.res = null;
-  document.querySelectorAll('#p-compare .seg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
-  renderCompare();
+  document.querySelectorAll('#p-compare .seg button, #route-fuel button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  if (activeTab === 'route') renderRoute(); else renderCompare();
 }
 function setCmpView(v) {
   cmpView = v;
   document.querySelectorAll('#cmp-views button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-  if (v === 'trip') renderTrip(); else if (v === 'route') renderRoute(); else renderCompare();
+  if (v === 'trip') renderTrip(); else renderCompare();
 }
 
 // ── Trip calculator: border run + road trip, on each country's median price (EUR, from meta.json) ──
@@ -8128,7 +8140,6 @@ function renderCompare() {
   const el = document.getElementById('cmp-body');
   if (!el) return;
   if (cmpView === 'trip') { renderTrip(); return; }
-  if (cmpView === 'route') { renderRoute(); return; }
   const rows = metaCountries.filter(c => c.stats_eur?.[cmpKey])
     .map(c => ({ cc:c.country, st:c.stats_eur[cmpKey] }))
     .sort((a,b) => a.st.median - b.st.median);
