@@ -1,6 +1,6 @@
 // Run: node tools/test_route_worker.mjs   (needs Node 18+)
 import assert from 'node:assert/strict';
-import w, { normalise, facQuery, tally, EVENTS, POLL } from '../worker/route/index.mjs';
+import w, { normalise, facQuery, tally, EVENTS, POLL, DIMS, stats } from '../worker/route/index.mjs';
 
 const ok = { locations: [{ lat: 55.6049, lon: 13.0038 }, { lat: 53.5511, lon: 9.9937 }], alternates: 2 };
 const n = normalise(JSON.stringify(ok));
@@ -95,4 +95,22 @@ assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/poll?e=r
 assert.equal(dbCalls.length, 2); assert.ok(EVENTS.has('trip_calc') && EVENTS.has('fb_follow_click') && EVENTS.has('visit') && EVENTS.has('visit_fb') && POLL.next.includes('alerts'));
 store.clear(); let last; for (let i = 0; i < 41; i++) last = await post('e=nearby_used');
 assert.equal(last.status, 429);                                                                  // 40 a minute per visitor
+// events with one dimension from a fixed list; the search text and anything else is never accepted
+store.clear(); dbCalls.length = 0;
+assert.equal((await post('e=fuel_filter&d=diesel')).status, 204); assert.equal(dbCalls[0][2], 'fuel_filter:diesel');
+assert.equal((await post('e=country_view&d=SE')).status, 204); assert.equal(dbCalls[1][2], 'country_view:SE');
+assert.equal((await post('e=nav_go&d=waze')).status, 204); assert.equal((await post('e=search_used')).status, 204); assert.equal((await post('e=app_installed')).status, 204);
+assert.equal((await post('e=fuel_filter&d=hamburg')).status, 400);                               // free text refused
+assert.equal((await post('e=fuel_filter')).status, 400);                                          // a dimension event needs its dimension
+assert.equal((await post('e=search_used&d=berlin')).status, 400);                                 // a plain event takes no dimension
+assert.equal(dbCalls.length, 5); assert.ok(DIMS.country_view.includes('DE') && DIMS.fuel_filter.includes('all'));
+// stats export: token required, constant answer shape
+const sdb = { DB: { prepare: sql => ({ bind: (...a) => ({ all: async () => ({ results: [{ day: '2026-11-17', name: 'visit', n: 3 }] }) }), all: async () => ({ results: [{ q: 'use', a: 'route', n: 1 }] }) }) }, STATS_TOKEN: 'secret-token' };
+const getStats = h => w.fetch(new Request('https://eurofuelprices.com/api/stats?days=30', { headers: h }), sdb, ctx);
+assert.equal((await getStats({})).status, 401); assert.equal((await getStats({ Authorization: 'Bearer wrong-token' })).status, 401);
+const okRes = await getStats({ Authorization: 'Bearer secret-token' }); assert.equal(okRes.status, 200);
+const okBody = await okRes.json(); assert.equal(okBody.events[0].name, 'visit'); assert.equal(okBody.poll[0].a, 'route');
+assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/stats', { headers: { Authorization: 'Bearer x' } }), { DB: sdb.DB }, ctx)).status, 401);   // no secret set: always closed
+store.clear(); let last2; for (let i = 0; i < 41; i++) last2 = await post('e=nearby_used');
+assert.equal(last2.status, 429);
 console.log('test_route_worker: all passed');

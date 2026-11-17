@@ -247,47 +247,13 @@ a:hover { text-decoration:underline; }
     </table>
   </div>
 
-  <!-- What to track -->
-  <div class="sec-hd">Recommended events to track</div>
-  <div style="background:var(--surf);border:1px solid var(--b);border-radius:16px;padding:20px;font-size:0.78rem;line-height:1.8;color:var(--t2)">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-      <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">Map interactions</strong>
-        Zoom level when station is tapped<br>
-        Country that was browsed most<br>
-        Cluster vs individual pin clicks
-      </div>
-      <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">Fuel type preference</strong>
-        Which fuel type filter is most used<br>
-        E10 vs Diesel vs HVO split by country<br>
-        "All fuels" vs specific type ratio
-      </div>
-      <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">Near Me usage</strong>
-        How often Near Me is triggered<br>
-        How many stations shown (radius)<br>
-        Navigation button (Go) click rate
-      </div>
-      <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">Search behaviour</strong>
-        Top searched cities / addresses<br>
-        Search-to-navigate conversion rate<br>
-        Station name vs address search ratio
-      </div>
-      <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">Device & platform</strong>
-        Mobile vs desktop split<br>
-        iOS vs Android (for navigation link)<br>
-        PWA install rate (beforeinstallprompt)
-      </div>
-      <div>
-        <strong style="color:var(--text);display:block;margin-bottom:6px">Geographic</strong>
-        Top countries of origin<br>
-        Most viewed country on map<br>
-        Cross-border browsing patterns
-      </div>
-    </div>
+  <!-- Usage (cookieless counters, exported weekly by .github/workflows/usage.yml into usage.json) -->
+  <div class="sec-hd">Usage (cookieless counters) <span style="color:var(--t2);font-size:0.65rem;text-transform:none;letter-spacing:0;font-weight:400" id="usageHint"></span></div>
+  <div class="tbl-wrap">
+    <table class="tbl" id="usageTbl">
+      <thead><tr><th>Event</th><th>Last 7 days</th><th>Previous 7</th><th>All days in file</th></tr></thead>
+      <tbody id="usageBody"><tr><td colspan="4" style="color:var(--t3);padding:20px;text-align:center">Loading…</td></tr></tbody>
+    </table>
   </div>
 </div>
 
@@ -444,6 +410,27 @@ function render(meta, health) {
 }
 
 load();
+
+// Usage panel: usage.json is written by the weekly workflow (counts per day and event, no personal data).
+(async function usagePanel() {
+  const body = document.getElementById('usageBody'), hint = document.getElementById('usageHint');
+  try {
+    const r = await fetch('usage.json', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const u = await r.json(), today = Date.now(), d7 = new Date(today - 7 * 864e5).toISOString().slice(0, 10), d14 = new Date(today - 14 * 864e5).toISOString().slice(0, 10);
+    const by = {};
+    for (const e of u.events || []) {
+      const o = by[e.name] || (by[e.name] = { a: 0, b: 0, all: 0 });
+      o.all += e.n; if (e.day >= d7) o.a += e.n; else if (e.day >= d14) o.b += e.n;
+    }
+    const names = Object.keys(by).sort((x, y) => by[y].a - by[x].a || by[y].all - by[x].all);
+    body.innerHTML = names.length ? names.map(n => `<tr><td>${esc(n)}</td><td>${by[n].a}</td><td>${by[n].b}</td><td>${by[n].all}</td></tr>`).join('')
+      : '<tr><td colspan="4" style="color:var(--t3);padding:20px;text-align:center">No events yet</td></tr>';
+    hint.textContent = 'exported ' + String(u.generated || '').slice(0, 16).replace('T', ' ') + ' UTC';
+  } catch (e) {
+    body.innerHTML = '<tr><td colspan="4" style="color:var(--t3);padding:20px;text-align:center">No usage file yet (first export runs on Monday)</td></tr>';
+  }
+})();
 </script>
 </body>
 </html>

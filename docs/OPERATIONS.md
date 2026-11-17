@@ -111,3 +111,10 @@ Limits: one answer per browser is only enforced on the device (survey, not a vot
 
 ## Facebook log bug fixed 2026-11-15
 `facebook.yml` staged both log files in one `git add`; while `replied.csv` did not exist yet, git refused the whole add, so no daily post was ever written to `post_log.csv` from 2026-11-12 to 2026-11-15. Effects: the reply bot never found the "comment your town" post, and the 11:00 retry could not see that the daily post was already made. Now each file is added on its own.
+
+## Usage counters (events), updated 2026-11-17
+- The app sends cookieless beacons to `/api/poll` (`track()` / `trackD()` in `web/index.html`); the Worker (`worker/route/index.mjs`) only accepts names from `EVENTS` and, for events with a dimension, a value from `DIMS` (stored as `name:dim`). New: `fuel_filter:<fuel>`, `country_view:<CC>` (country in the middle of the screen at zoom >= 6), `nav_go:<app>`, `search_used` (count only, never the text), `app_installed`; earlier: visit, visit_fb, route_planned, station_opened, nearby_used and more.
+- Weekly export (Monday 06:15 UTC, `.github/workflows/usage.yml`, `tools/usage_export.py`): `GET /api/stats` with the Worker secret `STATS_TOKEN` (also stored as the GitHub secret of the same name) -> `web/usage.json` (Usage panel in `admin.html`) and `docs/usage/events.csv`. Rotate the token with `wrangler secret put STATS_TOKEN` and `gh secret set STATS_TOKEN`.
+- Visits, countries, devices, referrers and Core Web Vitals come from Cloudflare Web Analytics (dashboard), not from these counters.
+- The block "Recommended events to track" was removed from `admin.html`.
+

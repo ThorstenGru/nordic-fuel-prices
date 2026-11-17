@@ -8,6 +8,7 @@ routes = [
   { pattern = "eurofuelprices.com/api/route*", zone_name = "eurofuelprices.com" },
   { pattern = "eurofuelprices.com/api/fac*", zone_name = "eurofuelprices.com" },
   { pattern = "eurofuelprices.com/api/poll*", zone_name = "eurofuelprices.com" },
+  { pattern = "eurofuelprices.com/api/stats*", zone_name = "eurofuelprices.com" },
 ]
 
 # Counters for "what do people use" and the two-question survey (docs/OPERATIONS.md). Free plan: 100k rows written per day.

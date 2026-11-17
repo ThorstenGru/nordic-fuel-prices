@@ -3933,6 +3933,7 @@ const store = {
 // Cookieless counters (worker/route: POST /api/poll). Only a whitelisted event name goes out, once per visit; no id, no cookie, nothing about the person. Off when the browser says Do Not Track.
 const _tr = new Set();
 const TRACK_ON = () => location.protocol === 'https:' && navigator.doNotTrack !== '1';
+function trackD(e, d) { const k = e + ':' + d; if (_tr.has(k) || !TRACK_ON()) return; _tr.add(k); try { navigator.sendBeacon && navigator.sendBeacon('/api/poll?e=' + e + '&d=' + encodeURIComponent(d)); } catch (_) {} }   // an event with one dimension from the Worker's fixed list
 function track(n) { if (_tr.has(n) || !TRACK_ON()) return; _tr.add(n); try { navigator.sendBeacon && navigator.sendBeacon('/api/poll?e=' + n); } catch (_) {} }
 let   tank    = store.get('efp_tank', 40);     // litres, used for "fill-up cost"
 // no valid saved choice -> petrol 95 only for petrol/PHEV owners (the filter hides stations without that fuel); everyone else keeps All fuels
@@ -4305,6 +4306,7 @@ const navName = a => a.id === 'geo' ? t('navOther') : a.name;
 let navPref = store.get('efp_nav', 'ask');
 let _navSt = null;
 function openNavApp(a, st) {
+  trackD('nav_go', a.id === 'geo' ? 'other' : a.id);
   const url = a.url(st.lat, st.lon, st.name || st.brand);
   if (a.id === 'geo') location.href = url; else window.open(url, '_blank', 'noopener');
 }
@@ -5177,6 +5179,7 @@ function schedVP() { clearTimeout(_vpt); _vpt = setTimeout(checkVP, 150); }
 function checkVP() {
   const b = map.getBounds(), z = map.getZoom();
   const here = z >= 5 ? centerCountry() : null;
+  if (here && z >= 6) trackD('country_view', String(here).toUpperCase());   // the country in the middle of the screen, once per session
   for (const [cc, bbox] of Object.entries(CB)) {
     if (loaded.has(cc) || loading.has(cc)) continue;
     if (fCountry && cc !== fCountry) continue;
@@ -5198,6 +5201,7 @@ function setCountry(val) {
 }
 
 function setFuel(chipEl, val, noSave) {
+  if (!noSave) trackD('fuel_filter', val ? String(val).toLowerCase() : 'all');
   fFuel = val; if (!noSave) store.set('efp_fuel', val);
   document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.remove('on'));
   if (chipEl) chipEl.classList.add('on');
@@ -5498,6 +5502,7 @@ function setSMode(el, mode) {
 async function runSearch(isMob) {
   const q = document.getElementById('mobSearch')?.value.trim();
   if (!q) return;
+  track('search_used');                                    // a count only: the search text is never sent anywhere but the geocoder
   try { document.getElementById('mobSearch').blur(); } catch (_) {}     // closes the on-screen keyboard so the results are visible
   const resEl = document.getElementById('search-results');
 
@@ -8260,7 +8265,7 @@ async function installApp() {
   if (_installEvt) { _installEvt.prompt(); try { await _installEvt.userChoice; } catch (_) {} _installEvt = null; return; }
   toast(t(IS_IOS ? 'iosInstall' : 'installMenu'), 6500);   // no install event: iOS has its own steps, other browsers use their menu
 }
-window.addEventListener('appinstalled', () => { const r = document.getElementById('install-row'); if (r) r.style.display = 'none'; });
+window.addEventListener('appinstalled', () => { track('app_installed'); const r = document.getElementById('install-row'); if (r) r.style.display = 'none'; });
 // Gentle install nudge: from the 2nd visit on, once per 3 weeks, never when already installed; dismissal is remembered.
 (function installNudge() {
   if (IS_STANDALONE) return;

@@ -58,16 +58,33 @@ export async function overLimit(req, now = Date.now(), max = RL_MAX, bucket = 'r
 
 // Cookieless counters (POST /api/poll?e=<event> or ?q=<question>&a=<answer>): what people use, and a two-question survey. Only whitelisted names are counted,
 // nothing else is stored (no IP, no user agent): one row per day and event, one row per question and answer. Read it with wrangler (docs/OPERATIONS.md).
-export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown', 'fb_follow_shown', 'fb_follow_click', 'visit', 'visit_fb']);
+export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown', 'fb_follow_shown', 'fb_follow_click', 'visit', 'visit_fb', 'search_used', 'app_installed'])
+// Events with ONE small dimension from a fixed list (never free text): stored as "name:dim" in the same table.
+export const DIMS = { fuel_filter: ['p95', 'p98', 'diesel', 'e10', 'e5', 'lpg', 'e85', 'hvo100', 'cng', 'all'], nav_go: ['google', 'waze', 'apple', 'here', 'other'],
+  country_view: ['AD', 'AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GL', 'GR', 'HR', 'HU', 'IE', 'IL', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'SM', 'TR', 'XK'] };
 export const POLL = { use: ['cheapest', 'route', 'ev', 'compare', 'other'], next: ['alerts', 'countries', 'ev', 'route', 'speed'] };
 export async function tally(req, env, now = Date.now()) {
-  const u = new URL(req.url), e = u.searchParams.get('e'), q = u.searchParams.get('q'), a = u.searchParams.get('a');
-  if (e && EVENTS.has(e)) {
-    await env.DB.prepare('INSERT INTO events (day, name, n) VALUES (?, ?, 1) ON CONFLICT (day, name) DO UPDATE SET n = n + 1').bind(new Date(now).toISOString().slice(0, 10), e).run();
+  const u = new URL(req.url), e = u.searchParams.get('e'), q = u.searchParams.get('q'), a = u.searchParams.get('a'), d = u.searchParams.get('d');
+  const name = e && EVENTS.has(e) && d == null ? e : e && DIMS[e] && DIMS[e].includes(d) ? e + ':' + d : null;
+  if (name) {
+    await env.DB.prepare('INSERT INTO events (day, name, n) VALUES (?, ?, 1) ON CONFLICT (day, name) DO UPDATE SET n = n + 1').bind(new Date(now).toISOString().slice(0, 10), name).run();
   } else if (q && POLL[q] && POLL[q].includes(a)) {
     await env.DB.prepare('INSERT INTO poll (q, a, n) VALUES (?, ?, 1) ON CONFLICT (q, a) DO UPDATE SET n = n + 1').bind(q, a).run();
   } else return json({ error: 'request' }, 400);
   return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+}
+
+// Read-only export of the counters for the weekly usage report (GET /api/stats?days=N, header Authorization: Bearer <STATS_TOKEN>, a Worker secret).
+// Nothing personal is in these tables, but the endpoint is closed anyway so that nobody can hammer the database.
+function safeEq(a, b) { if (a.length !== b.length) return false; let x = 0; for (let i = 0; i < a.length; i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i); return x === 0; }
+export async function stats(req, env, now = Date.now()) {
+  const tok = env.STATS_TOKEN || '';
+  if (!tok || !safeEq(req.headers.get('Authorization') || '', 'Bearer ' + tok)) return json({ error: 'auth' }, 401);
+  const days = Math.min(Math.max(parseInt(new URL(req.url).searchParams.get('days'), 10) || 90, 1), 400);
+  const since = new Date(now - days * 864e5).toISOString().slice(0, 10);
+  const ev = await env.DB.prepare('SELECT day, name, n FROM events WHERE day >= ? ORDER BY day, name').bind(since).all();
+  const po = await env.DB.prepare('SELECT q, a, n FROM poll ORDER BY q, a').all();
+  return json({ generated: new Date(now).toISOString(), days, events: ev.results || [], poll: po.results || [] }, 200);
 }
 
 // Nearby facilities (/api/fac?la=&lo=): the browser's direct Overpass calls often time out, so this Worker asks the public mirrors in turn and caches the answer a week
@@ -113,6 +130,7 @@ async function facility(req, ctx) {
 
 export default {
   async fetch(req, env, ctx) {
+    if (new URL(req.url).pathname.startsWith('/api/stats')) return req.method === 'GET' ? stats(req, env) : json({ error: 'method' }, 405);
     const poll = new URL(req.url).pathname.startsWith('/api/poll');
     if (req.method !== (poll ? 'POST' : 'GET')) return json({ error: 'method' }, 405);
     const from = req.headers.get('Origin') || req.headers.get('Referer') || '';

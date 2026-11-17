@@ -1,0 +1,50 @@
+name: EuroFuelPrices — usage counters (weekly export)
+
+# Exports the cookieless counters from the Worker's D1 table into web/usage.json (read by the Usage panel in admin.html) and docs/usage/events.csv.
+# Needs the secret STATS_TOKEN (same value as the Worker secret STATS_TOKEN). Counts only, nothing about people. web/ is published by the next scrape/deploy.
+
+on:
+  schedule:
+    - cron: '15 6 * * 1'    # Monday 06:15 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: usage-export
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.0
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Fetch and write the counters
+        env:
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+        run: |
+          curl -fsS --retry 3 --max-time 30 -H "Authorization: Bearer $STATS_TOKEN" "https://eurofuelprices.com/api/stats?days=400" -o "$RUNNER_TEMP/stats.json"
+          python tools/usage_export.py "$RUNNER_TEMP/stats.json"
+
+      - name: Commit the counters
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/usage.json docs/usage/events.csv
+          if ! git diff --cached --quiet; then
+            git commit -m "Usage counters [skip ci]"
+            ok=0
+            for i in 1 2 3; do if git pull --rebase origin main && git push origin HEAD:main; then ok=1; break; fi; sleep 5; done
+            if [ "$ok" != 1 ]; then echo "::error::the counters could not be saved"; exit 1; fi
+          fi
