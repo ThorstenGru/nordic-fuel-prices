@@ -7,7 +7,7 @@ const fs = require('fs'), crypto = require('crypto'), path = require('path');
 const root = path.join(__dirname, '..', 'web'), fix = process.argv.includes('--fix');
 const hashOf = file => crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file), 'utf8').split('\r\n').join('\n')).digest('hex').slice(0, 10);
 let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8'), bad = 0, changed = false;
-for (const [file, konst] of [['vehicles.json', 'VEH_V'], ['fares.json', 'FARES_V']]) {
+for (const [file, konst] of [['vehicles.json', 'VEH_V'], ['vehicles_eea.json', 'VEH_E_V'], ['fares.json', 'FARES_V']]) {
   const hash = hashOf(file);
   const re = new RegExp(`(const ${konst} = )(\\d+)(;\\s*// data-hash:${file.replace('.', '\\.')}=)([0-9a-f]{10})`);
   const m = html.match(re);

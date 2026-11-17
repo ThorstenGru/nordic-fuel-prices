@@ -1819,12 +1819,14 @@ Object.assign(I18N.en, { noPriceRep:'No price reported', vehSet:'Set your car fo
   actReport:'Report', nbTitle:'Other options nearby', nbSame:'same price', facTitle:'Nearby facilities', facErr:'Could not load facilities: the map data service is slow or busy.', facRetry:'Try again', facNone:'Nothing found within 200 m.', fac_food:'Food & drink', fac_shops:'Shops', fac_toilets:'Toilets',
   fk_cafe:'Cafe', fk_restaurant:'Restaurant', fk_fast_food:'Fast food', fk_convenience:'Convenience store', fk_supermarket:'Supermarket', fk_kiosk:'Kiosk', fk_toilets:'Toilets',
   vehFind:'Find your car', vehSearch:'Search make or model', vehCustom:'Custom (enter values below)', vehNone:'No match - clear the search', vehPetrol:'Best sellers in Europe: Petrol (incl. hybrids)', vehDiesel:'Best sellers in Europe: Diesel', vehPhev:'Best sellers in Europe: Plug-in hybrid',
-  vehHyundai:'Hyundai (all models)', vehElec2:'Electric only (cannot be compared)', vehExample:'Example values (typical WLTP figures) from {s}: please adjust to your car.', vehApprox:'Some figures are approximate.' });
+  vehHyundai:'Hyundai (all models)', vehElec2:'Electric only (cannot be compared)', vehExample:'Example values (typical WLTP figures) from {s}: please adjust to your car.', vehApprox:'Some figures are approximate.',
+  vehEP:'Top 100 in Europe 2024 (EEA): Petrol', vehEH:'Top 100 in Europe 2024 (EEA): Hybrid (HEV, incl. mild)', vehED:'Top 100 in Europe 2024 (EEA): Diesel', vehEPh:'Top 100 in Europe 2024 (EEA): Plug-in hybrid',
+  vehEea:'Average official WLTP consumption of this model in the EU register of new cars 2024 (EEA). Tank size is not in the register: please check it for your car.', vehEeaPh:'For plug-in hybrids the register has only a weighted figure, so enter your own consumption with an empty battery and the electric range.' });
 Object.assign(I18N.sv, { noPriceRep:'Inget pris rapporterat', vehSet:'Ange din bil för kostnadsuppskattning', vehNoPrice:'Inget pris för ditt bränsle på den här stationen.', vehFuel:'100 km på bränsle här: {v}', vehElec:'100 km på el: {v}', vehMore:'Ange förbrukning under Min bil för kostnadsuppskattning',
   actReport:'Rapportera', nbTitle:'Andra alternativ i närheten', nbSame:'samma pris', facTitle:'Faciliteter i närheten', facErr:'Det gick inte att hämta faciliteter: korttjänsten är långsam eller upptagen.', facRetry:'Försök igen', facNone:'Inget hittades inom 200 m.', fac_food:'Mat & dryck', fac_shops:'Butiker', fac_toilets:'Toaletter',
   fk_cafe:'Kafé', fk_restaurant:'Restaurang', fk_fast_food:'Snabbmat', fk_convenience:'Närbutik', fk_supermarket:'Stormarknad', fk_kiosk:'Kiosk', fk_toilets:'Toalett',
   vehFind:'Hitta din bil', vehSearch:'Sök märke eller modell', vehCustom:'Egen (ange värden nedan)', vehNone:'Ingen träff - rensa sökningen', vehPetrol:'Storsäljare i Europa: Bensin (inkl. hybrider)', vehDiesel:'Storsäljare i Europa: Diesel', vehPhev:'Storsäljare i Europa: Laddhybrid',
-  vehHyundai:'Hyundai (alla modeller)', vehElec2:'Endast el (kan inte jämföras)', vehExample:'Exempelvärden (typiska WLTP-siffror) från {s}: justera efter din bil.', vehApprox:'Vissa uppgifter är ungefärliga.' });
+  vehEP:'Topp 100 i Europa 2024 (EEA): Bensin', vehEH:'Topp 100 i Europa 2024 (EEA): Hybrid (HEV, inkl. mild)', vehED:'Topp 100 i Europa 2024 (EEA): Diesel', vehEPh:'Topp 100 i Europa 2024 (EEA): Laddhybrid', vehEea:'Genomsnittlig officiell WLTP-förbrukning för modellen i EU:s register över nya bilar 2024 (EEA). Tankstorlek finns inte i registret: kontrollera den för din bil.', vehEeaPh:'För laddhybrider finns bara ett viktat värde i registret, så ange din egen förbrukning med tomt batteri och elräckvidden.', vehHyundai:'Hyundai (alla modeller)', vehElec2:'Endast el (kan inte jämföras)', vehExample:'Exempelvärden (typiska WLTP-siffror) från {s}: justera efter din bil.', vehApprox:'Vissa uppgifter är ungefärliga.' });
 
 // My car clarity pass (EN + SV written in full; DE/FR/ES fall back to English for these keys). Loaded after every older block so these texts win.
 Object.assign(I18N.en, {
@@ -6426,13 +6428,16 @@ function opRender() {
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
 const VEH_V = 4;   // data-hash:vehicles.json=7d1cd12e37  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
+const VEH_E_V = 2;   // data-hash:vehicles_eea.json=6160c4e728  (EEA register 2024: top 100 per kind, model level, no tank size / electric range; same ?v= rule as above)
 let _veh = null, _vehTried = false;
 function vehLoad() {
   if (_vehTried) return; _vehTried = true;
-  fetch('vehicles.json?v=' + VEH_V).then(r => r.ok ? r.json() : Promise.reject()).then(j => {
+  const eeaP = fetch('vehicles_eea.json?v=' + VEH_E_V).then(r => r.ok ? r.json() : null).catch(() => null);   // optional: the picker works without it
+  fetch('vehicles.json?v=' + VEH_V).then(r => r.ok ? r.json() : Promise.reject()).then(async j => {
     const cat = ['petrol', 'diesel', 'phev'].flatMap(k => j.categories?.[k] || []);
     j.hyundai = [...(j.hyundai || []), ...cat.filter(v => v.make === 'Hyundai' && !(j.hyundai || []).some(h => h.id === v.id))];   // Hyundai group = ALL Hyundai, incl. ones that also rank as best sellers
-    const all = [...cat, ...j.hyundai];
+    j.eea = (await eeaP)?.categories || {};
+    const all = [...cat, ...j.hyundai, ...Object.values(j.eea).flat()];
     _veh = { j, by: Object.fromEntries(all.map(v => [v.id, v])) };
     $id('veh').hidden = false; vehBuild();
   }).catch(() => {});                                  // picker stays hidden; manual fields keep working
@@ -6446,7 +6451,8 @@ function vehBuild() {
   const hy = j.hyundai || [], on = v => v.type === 'ev' || v.type === 'hydrogen';
   sel.innerHTML = `<option value="">${esc(t('vehCustom'))}</option>`
     + grp(t('vehPetrol'), j.categories?.petrol || []) + grp(t('vehDiesel'), j.categories?.diesel || []) + grp(t('vehPhev'), j.categories?.phev || [])
-    + grp(t('vehHyundai'), hy.filter(v => !on(v))) + grp(t('vehElec2'), hy.filter(on));
+    + grp(t('vehHyundai'), hy.filter(v => !on(v))) + grp(t('vehElec2'), hy.filter(on))
+    + [['petrol', 'vehEP'], ['hev', 'vehEH'], ['diesel', 'vehED'], ['phev', 'vehEPh']].map(([k, key]) => grp(t(key), j.eea?.[k] || [])).join('');
   if (q && !sel.querySelector('optgroup')) sel.innerHTML += `<option value="" disabled>${esc(t('vehNone'))}</option>`;
   sel.value = car.veh && _veh.by[car.veh] && ok(_veh.by[car.veh]) ? car.veh : '';
   vehNote();
@@ -6456,15 +6462,16 @@ function vehNote() {
   const v = car.veh && _veh?.by[car.veh], el = $id('veh-note'); if (!el) return;
   if (_vehNo) { el.textContent = t('mcBev', { m: vehName(_vehNo) }); return; }
   if (!v) { el.textContent = ''; return; }
+  if (v.source === 'EEA 2024') { el.textContent = t('vehEea') + (v.type === 'phev' ? ' ' + t('vehEeaPh') : ''); return; }
   let host = ''; try { host = new URL(v.source).hostname.replace(/^www\./, ''); } catch (_) {}
   el.textContent = t('vehExample') + (host ? ' ' + t('vehSrc', { s: host }) : '') + (v.confidence === 'low' ? ' ' + t('vehApprox') : '');
 }
 function vehPick(id) {
   const v = _veh?.by[id]; _vehNo = null;
   if (!v) { delete car.veh; store.set('efp_car', car); vehNote(); mcSummary(); return; }
-  if (v.type !== 'petrol' && v.type !== 'diesel' && v.type !== 'phev') { _vehNo = v; vehBuild(); mcSummary(); return; }   // vehBuild puts the select back on the saved car
-  carSet('type', v.type);
-  if (v.tank_l) carSet('tank', v.tank_l);
+  if (v.type !== 'petrol' && v.type !== 'diesel' && v.type !== 'phev' && v.type !== 'hev') { _vehNo = v; vehBuild(); mcSummary(); return; }   // vehBuild puts the select back on the saved car
+  carSet('type', v.type === 'hev' ? 'petrol' : v.type);   // a (mild) hybrid is costed like a petrol car with its own, lower consumption
+  if (v.tank_l) carSet('tank', v.tank_l); else if (v.source === 'EEA 2024') delete car.tank;   // not in the register: never keep the previous car's tank
   for (const [k, f] of [['cons', 'cons_l100'], ['batt', 'battery_kwh'], ['range', 'range_km']]) { if (v[f]) carSet(k, v[f]); else delete car[k]; }
   if (v.type !== 'phev') { delete car.batt; delete car.range; }
   if (v.type === 'phev' && v.ev_kwh100 > 0) car.kwh100 = v.ev_kwh100; else delete car.kwh100;
