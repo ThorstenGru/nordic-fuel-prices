@@ -3870,10 +3870,10 @@ async function glStart() {
   if (!glSupported()) { _glFailed = true; return; }
   _glPending = true;
   try {
-    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/maplibre/maplibre-gl.css'; document.head.appendChild(css);
-    await glScript('vendor/maplibre/maplibre-gl-csp-5.6.1.js');
-    maplibregl.setWorkerUrl(new URL('vendor/maplibre/maplibre-gl-csp-worker.js', location.href).href);
-    await glScript('vendor/maplibre/leaflet-maplibre-gl.js');
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/maplibre/maplibre-gl.css?v=5.6.1'; document.head.appendChild(css);
+    await glScript('vendor/maplibre/maplibre-gl-csp-5.6.1.js?v=5.6.1');
+    maplibregl.setWorkerUrl(new URL('vendor/maplibre/maplibre-gl-csp-worker.js?v=5.6.1', location.href).href);
+    await glScript('vendor/maplibre/leaflet-maplibre-gl.js?v=0.1.1');
     _glNow = GL_STYLE[isDark() ? 'dark' : 'light'];
     _gl = L.maplibreGL({ style: _glNow, attributionControl: { customAttribution: GL_ATTR } }).addTo(map);
     const g = _gl.getMaplibreMap(); let loaded = false, errs = 0;
