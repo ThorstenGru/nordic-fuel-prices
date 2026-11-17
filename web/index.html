@@ -32,8 +32,9 @@
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: https://server.arcgisonline.com https://tile.openstreetmap.org;
-  connect-src 'self' https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
+  img-src 'self' data: blob: https://tiles.openfreemap.org https://server.arcgisonline.com https://tile.openstreetmap.org;
+  worker-src 'self' blob:;
+  connect-src 'self' https://tiles.openfreemap.org https://router.project-osrm.org https://valhalla1.openstreetmap.de https://cloudflareinsights.com https://static.cloudflareinsights.com https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://api.open-meteo.com https://archive-api.open-meteo.com https://photon.komoot.io;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -3829,7 +3830,7 @@ const map = L.map('map', { center:[62, 15], zoom:5, zoomControl:false });   // z
 map.attributionControl.setPosition('bottomleft');
 map.attributionControl.setPrefix(false);  // drop the non-required "Leaflet" self-credit to save width
 map.attributionControl.addAttribution('<a href="admin.html" style="color:inherit">Sources</a>');
-// Light: Esri grey canvas (free, no key). Dark: Esri dark-grey canvas. If the primary keeps failing we fall back
+// FALLBACK basemaps (since 2026-11-17 the primary is the OpenFreeMap vector map below). Light: Esri grey canvas (legacy service, terms unclear). Dark: Esri dark-grey canvas. If the primary keeps failing we fall back
 // (Esri → OpenStreetMap, Esri dark → Esri light) so the map never stays blank; if everything fails (offline) say so once.
 const baseEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   attribution:'Tiles &copy; Esri &mdash; &copy; OpenStreetMap contributors', maxZoom:16,
@@ -3851,8 +3852,42 @@ const refDark = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/service
 const _darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
 function isDark() { const t = document.documentElement.dataset.theme; return t === 'dark' || (t !== 'light' && _darkMQ.matches); }
 let _usingBackup = false, _darkFailed = false;
+// Vector basemap (2026-11-17): OpenFreeMap through MapLibre GL, files self-hosted in vendor/maplibre (CSP build, no CDN). The Esri and OpenStreetMap raster
+// layers above stay as the FALLBACK only: used when WebGL is missing, the GL files or the style do not load, or the vector tiles keep failing.
+const GL_STYLE = { light: 'https://tiles.openfreemap.org/styles/positron', dark: 'https://tiles.openfreemap.org/styles/dark' };
+const GL_ATTR = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+let _gl = null, _glPending = false, _glFailed = false;
+function glSupported() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (_) { return false; } }
+function glScript(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error(src)); document.head.appendChild(s); }); }
+function glFallback() {
+  if (_glFailed) return;
+  _glFailed = true; _glPending = false;
+  try { if (_gl) map.removeLayer(_gl); } catch (_) {}
+  _gl = null; applyBasemap();
+  if (typeof toast === 'function') toast(t('mapBackup'));
+}
+async function glStart() {
+  if (!glSupported()) { _glFailed = true; return; }
+  _glPending = true;
+  try {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/maplibre/maplibre-gl.css'; document.head.appendChild(css);
+    await glScript('vendor/maplibre/maplibre-gl-csp.js');
+    maplibregl.setWorkerUrl(new URL('vendor/maplibre/maplibre-gl-csp-worker.js', location.href).href);
+    await glScript('vendor/maplibre/leaflet-maplibre-gl.js');
+    _glNow = GL_STYLE[isDark() ? 'dark' : 'light'];
+    _gl = L.maplibreGL({ style: _glNow, attributionControl: { customAttribution: GL_ATTR } }).addTo(map);
+    const g = _gl.getMaplibreMap(); let loaded = false, errs = 0;
+    g.on('load', () => { loaded = true; _glPending = false; });
+    g.on('error', () => { if (++errs >= 8) glFallback(); });
+    setTimeout(() => { if (!loaded) glFallback(); }, 12000);
+  } catch (e) { glFallback(); }
+}
+let _glNow = '';
+function glTheme() { const u = GL_STYLE[isDark() ? 'dark' : 'light']; if (_gl && u !== _glNow) { _glNow = u; try { _gl.getMaplibreMap().setStyle(u); } catch (_) {} } }
 function applyBasemap() {
   [baseEsri, refEsri, baseBackup, baseDark, refDark].forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+  if (_gl) { glTheme(); return; }                       // the vector layer stays; only its style follows the theme
+  if (_glPending) return;                                // vector map is loading: no raster tiles from Esri/OSM in the meantime
   if (isDark() && !_darkFailed) { baseDark.addTo(map); refDark.addTo(map); }
   else if (_usingBackup) baseBackup.addTo(map);
   else { baseEsri.addTo(map); refEsri.addTo(map); }
@@ -3872,7 +3907,7 @@ function applyBasemap() {
   baseBackup.on('tileload', ok); baseBackup.on('tileerror', err);
   baseEsri.on('tileload', ok);
 })();
-applyBasemap();
+glStart().then(applyBasemap);   // glStart sets _glPending/_glFailed first; then the right base is chosen once
 
 // ════════════════════════════════════════════════════
 // State
