@@ -118,3 +118,9 @@ Limits: one answer per browser is only enforced on the device (survey, not a vot
 - Visits, countries, devices, referrers and Core Web Vitals come from Cloudflare Web Analytics (dashboard), not from these counters.
 - The block "Recommended events to track" was removed from `admin.html`.
 
+
+## Restore after losing the machine (what lives where)
+- **Code, data, docs:** the GitHub repository `ThorstenGru/nordic-fuel-prices` is the source of truth; clone it, nothing else is needed to read or build.
+- **Secrets (GitHub Actions):** CHARGEFINDER_KEY, FB_PAGE_ID, FB_PAGE_TOKEN, GOON_API_KEY, NOBIL_API_KEY, STATS_TOKEN, TANKERKOENIG_API_KEY. Re-issue each at its provider (names and owners in `docs/PERMISSIONS.md`) and `gh secret set <NAME>`. The Page token comes from Meta (see `docs/facebook/GRAPH_API_SETUP.md`); rotate it yearly and after any suspicion.
+- **Cloudflare (account of the owner):** DNS, header rules, the rate-limit rule (`docs/SECURITY_SETTINGS.md`), Email Routing `contact@` -> owner's mailbox, Workers `route` and `watchdog` (`wrangler deploy` from `worker/<name>`), D1 `events`/`poll` tables (counters only, safe to lose), KV for the watchdog state.
+- **Uptime:** the watchdog Worker alerts (ntfy topic in its secret) when `data/meta.json` is older than 60 minutes, when a country goes stale or loses 30 % of its stations.
