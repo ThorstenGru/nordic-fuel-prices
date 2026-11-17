@@ -415,7 +415,7 @@ load();
 (async function usagePanel() {
   const body = document.getElementById('usageBody'), hint = document.getElementById('usageHint');
   try {
-    const r = await fetch('usage.json', { cache: 'no-cache' });
+    const r = await fetch('usage.json?t=' + Date.now(), { cache: 'no-store' });   // a query string per call: the edge caches a 404 for hours
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const u = await r.json(), today = Date.now(), d7 = new Date(today - 7 * 864e5).toISOString().slice(0, 10), d14 = new Date(today - 14 * 864e5).toISOString().slice(0, 10);
     const by = {};
