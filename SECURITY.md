@@ -4,7 +4,7 @@ EuroFuelPrices (https://eurofuelprices.com) is a free fuel price map. It has no 
 
 ## Reporting a vulnerability
 Please report it **privately** through GitHub: <https://github.com/ThorstenGru/nordic-fuel-prices/security/advisories/new>
-(Security tab > "Report a vulnerability"), or by email to contact@eurofuelprices.com. Please do not open a public issue for a security problem.
+(Security tab > "Report a vulnerability"); or send a message to the Facebook Page <https://www.facebook.com/eurofuelprices>. Please do not open a public issue for a security problem.
 
 Useful details: what you found, the URL or file, how to reproduce it, and what you expect could happen.
 You will get an answer as soon as possible; this is a one-person project, so please allow a few days.
