@@ -256,6 +256,64 @@ def pair_sentence(a: str, b: str, rows) -> str:
     return "On the median station, " + " and ".join(bits) + "." if bits else ""
 
 
+# ── quick answers (visible text + FAQPage markup that says the same): what answer engines and AI assistants quote ──
+FAQ_TXT = {
+    "en": dict(h="Quick answers",
+               q1="Which European country has the cheapest petrol today?",
+               a1="On {date}, petrol 95 is cheapest in {c1} at about €{p1} per litre (median station price) and most expensive in {c2} at €{p2}, across {n} countries.",
+               q2="Which European country has the cheapest diesel today?",
+               a2="On {date}, diesel is cheapest in {c1} at about €{p1} per litre and most expensive in {c2} at €{p2}.",
+               q3="How much cheaper is petrol 95 in {c1} than in {c2}?",
+               a3="About €{d} per litre, or about €{f} on a {L} L fill-up."),
+    "sv": dict(h="Snabba svar",
+               q1="Vilket europeiskt land har billigast bensin idag?",
+               a1="Den {date} är bensin 95 billigast i {c1}, cirka €{p1} per liter (medianpris vid station), och dyrast i {c2}, €{p2}, bland {n} länder.",
+               q2="Vilket europeiskt land har billigast diesel idag?",
+               a2="Den {date} är diesel billigast i {c1}, cirka €{p1} per liter, och dyrast i {c2}, €{p2}.",
+               q3="Hur mycket billigare är bensin 95 i {c1} än i {c2}?",
+               a3="Ungefär €{d} per liter, alltså cirka €{f} på en tankning om {L} liter."),
+    "de": dict(h="Kurz beantwortet",
+               q1="Welches europäische Land hat heute das günstigste Benzin?",
+               a1="Am {date} ist Super 95 in {c1} am günstigsten, etwa €{p1} pro Liter (Median der Tankstellenpreise), und in {c2} am teuersten, €{p2}, unter {n} Ländern.",
+               q2="Welches europäische Land hat heute den günstigsten Diesel?",
+               a2="Am {date} ist Diesel in {c1} am günstigsten, etwa €{p1} pro Liter, und in {c2} am teuersten, €{p2}.",
+               q3="Wie viel günstiger ist Super 95 in {c1} als in {c2}?",
+               a3="Etwa €{d} pro Liter, also rund €{f} bei einer Tankfüllung von {L} Litern."),
+    "da": dict(h="Hurtige svar",
+               q1="Hvilket europæisk land har billigst benzin i dag?",
+               a1="Den {date} er benzin 95 billigst i {c1}, cirka €{p1} pr. liter (medianpris på stationer), og dyrest i {c2}, €{p2}, blandt {n} lande.",
+               q2="Hvilket europæisk land har billigst diesel i dag?",
+               a2="Den {date} er diesel billigst i {c1}, cirka €{p1} pr. liter, og dyrest i {c2}, €{p2}.",
+               q3="Hvor meget billigere er benzin 95 i {c1} end i {c2}?",
+               a3="Omkring €{d} pr. liter, altså cirka €{f} på en tankning på {L} liter."),
+}
+
+
+def faq_block(elig, nm: Dict[str, str], lang: str, updated: str):
+    """-> (html, FAQPage JSON-LD) from today's numbers, or ("", None) when fewer than two countries have the fuel."""
+    t = FAQ_TXT[lang]
+    ends = {}
+    for fuel in ("p95", "diesel"):
+        r = sorted(((v[fuel]["median"], cc) for cc, v in elig.items() if fuel in v))
+        if len(r) >= 2:
+            ends[fuel] = (r[0], r[-1])
+    if "p95" not in ends or "diesel" not in ends:
+        return "", None
+    n = len(elig)
+    (lo, lc), (hi, hc) = ends["p95"]
+    (dlo, dlc), (dhi, dhc) = ends["diesel"]
+    date = updated[:10]
+    qa = [(t["q1"].format(c1=nm.get(lc, NAMES[lc]), c2=nm.get(hc, NAMES[hc])),
+           t["a1"].format(date=date, c1=nm.get(lc, NAMES[lc]), p1=eur(lo), c2=nm.get(hc, NAMES[hc]), p2=eur(hi), n=n)),
+          (t["q2"], t["a2"].format(date=date, c1=nm.get(dlc, NAMES[dlc]), p1=eur(dlo), c2=nm.get(dhc, NAMES[dhc]), p2=eur(dhi))),
+          (t["q3"].format(c1=nm.get(lc, NAMES[lc]), c2=nm.get(hc, NAMES[hc])),
+           t["a3"].format(d=f"{hi - lo:.2f}", f=f"{(hi - lo) * FILL_L:.0f}", L=FILL_L))]
+    html = f'<h2>{escape(t["h"])}</h2>' + "".join(f"<p><strong>{escape(q)}</strong><br>{escape(a)}</p>" for q, a in qa)
+    ld = {"@context": "https://schema.org", "@type": "FAQPage",
+          "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in qa]}
+    return html, ld
+
+
 def build_index(elig, hist, today: str, updated: str, image: str = "") -> str:
     url = f"{SITE}/europe/"
     title = "European Fuel Prices Today – Cheapest & Most Expensive Countries"
@@ -270,9 +328,10 @@ def build_index(elig, hist, today: str, updated: str, image: str = "") -> str:
                  f'<div class="card"><div class="k">Most expensive petrol 95</div><div class="v">€{eur(dear95[0])}</div><div class="s">{escape(NAMES[dear95[1]])}</div></div></div>')
     pairs = [(a, b) for a, b in BORDER_PAIRS if pair_rows(elig, a, b)]
     pl = "".join(f'<li><a href="/europe/{pair_slug(a, b)}/">{escape(NAMES[a])} vs {escape(NAMES[b])}</a></li>' for a, b in pairs)
+    faq_html, faq_ld = faq_block(elig, NAMES, "en", updated)
     body = (crumbs([("Home", "/"), ("Europe fuel price index", None)]) + "<h1>European fuel prices today</h1>"
             f'<p class="lede">Median petrol and diesel prices across {n} European countries, from the live station data on EuroFuelPrices. '
-            f'Sorted cheapest first; the 7-day change appears once a week of history exists.</p>{cards}'
+            f'Sorted cheapest first; the 7-day change appears once a week of history exists.</p>{cards}{faq_html}'
             f"<h2>Petrol 95 — cheapest to most expensive</h2>{ranking_table(elig, 'p95', hist, today)}"
             f"<h2>Diesel — cheapest to most expensive</h2>{ranking_table(elig, 'diesel', hist, today)}"
             + (f'<h2>Is it cheaper across the border?</h2><ul class="links">{pl}</ul>' if pl else "")
@@ -282,7 +341,7 @@ def build_index(elig, hist, today: str, updated: str, image: str = "") -> str:
            "description": desc, "url": url, "creator": {"@type": "Organization", "name": "EuroFuelPrices", "url": SITE},
            "dateModified": updated[:10], "isAccessibleForFree": True,
            "distribution": [{"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": SITE + "/open-data/national-averages.json"},
-                            {"@type": "DataDownload", "encodingFormat": "text/csv", "contentUrl": SITE + "/open-data/national-averages.csv"}]}]
+                            {"@type": "DataDownload", "encodingFormat": "text/csv", "contentUrl": SITE + "/open-data/national-averages.csv"}]}] + ([faq_ld] if faq_ld else [])
     alts = "\n".join([f'<link rel="alternate" hreflang="en" href="{SITE}/europe/">'] +
                      [f'<link rel="alternate" hreflang="{l}" href="{SITE}/europe/{l}/">' for l in LANG_TXT] +
                      [f'<link rel="alternate" hreflang="x-default" href="{SITE}/europe/">'])
@@ -360,12 +419,13 @@ def build_index_lang(lang: str, elig, hist, today: str, updated: str) -> str:
                  f'<div class="card"><div class="k">{x["dear"]}</div><div class="v">€{eur(hi[0])}</div><div class="s">{escape(nm.get(hi[1], NAMES[hi[1]]))}</div></div></div>')
     pairs = [(a, b) for a, b in BORDER_PAIRS if pair_rows(elig, a, b)]
     pl = "".join(f'<li><a href="/europe/{pair_slug(a, b)}/">{escape(nm.get(a, NAMES[a]))} – {escape(nm.get(b, NAMES[b]))}</a></li>' for a, b in pairs)
+    faq_html, faq_ld = faq_block(elig, nm, lang, updated)
     body = (crumbs([(x["home"], "/"), (x["crumb"], None)]) + f"<h1>{x['h1']}</h1>"
-            f'<p class="lede">{x["lede"].format(n=n)}</p>{cards}<h2>{x["h95"]}</h2>{table("p95")}<h2>{x["hdi"]}</h2>{table("diesel")}'
+            f'<p class="lede">{x["lede"].format(n=n)}</p>{cards}{faq_html}<h2>{x["h95"]}</h2>{table("p95")}<h2>{x["hdi"]}</h2>{table("diesel")}'
             + (f'<h2>{x["hb"]}</h2><ul class="links">{pl}</ul>' if pl else "") + f'<p class="note">{x["note"]}</p>')
     alts = "\n".join([f'<link rel="alternate" hreflang="en" href="{SITE}/europe/">'] +
                      [f'<link rel="alternate" hreflang="{l}" href="{SITE}/europe/{l}/">' for l in LANG_TXT])
-    ld = [breadcrumb_ld([(x["home"], SITE + "/"), (x["crumb"], url)])]
+    ld = [breadcrumb_ld([(x["home"], SITE + "/"), (x["crumb"], url)])] + ([faq_ld] if faq_ld else [])
     foot_html = (f'<footer><p>{x["foot"].format(min_n=MIN_N, age=MAX_AGE_H)}</p><p>{x["upd"]}: {escape(updated)} UTC. {x["reuse"]} — '
                  f'<a href="/open-data/national-averages.json">JSON</a> · <a href="/open-data/national-averages.csv">CSV</a> · <a href="/embed.html">{x["widget"]}</a> · <a href="https://www.facebook.com/eurofuelprices" rel="me noopener">Facebook</a>.</p></footer>\n</body>\n</html>\n')
     return head(x["title"], x["desc"].format(n=n), url, ld, lang=lang, locale=x["locale"], back=x["back"], alts=alts) + body + foot_html

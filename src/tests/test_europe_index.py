@@ -75,6 +75,22 @@ class Pairs(unittest.TestCase):
                 self.assertIn(f'<html lang="{lang}">', (d / "europe" / lang / "index.html").read_text(encoding="utf-8"))
             self.assertIn("country,name,fuel", (d / "open-data" / "national-averages.csv").read_text(encoding="utf-8"))
 
+    def test_quick_answers_name_the_cheapest_and_dearest_country_in_every_language(self):
+        elig = ei.eligible({"countries": [country("PL", 1.40, 1.70), country("SE", 1.60, 1.90), country("NO", 2.20, 2.50)]}, NOW)
+        for lang in ("en", "sv", "de", "da"):
+            nm = ei.NAMES if lang == "en" else ei._names(ei.LANG_TXT[lang]["names"])
+            html, ld = ei.faq_block(elig, nm, lang, "2026-11-10T12:00:00")
+            self.assertEqual(ld["@type"], "FAQPage")
+            self.assertEqual(len(ld["mainEntity"]), 3)
+            first = ld["mainEntity"][0]["acceptedAnswer"]["text"]
+            self.assertIn("2026-11-10", first)
+            self.assertIn(nm["PL"], first)                       # cheapest
+            self.assertIn(nm["NO"], first)                       # dearest
+            self.assertIn("1.400", first)
+            self.assertIn("<strong>", html)
+        # fewer than two countries with a fuel: no block, no markup that would claim a ranking
+        self.assertEqual(ei.faq_block({"PL": {"p95": {"median": 1.4, "n": 500, "grade": "C"}}}, ei.NAMES, "en", "2026-11-10"), ("", None))
+
     def test_share_card_png(self):
         with tempfile.TemporaryDirectory() as d:
             f = Path(d) / "og" / "x.png"

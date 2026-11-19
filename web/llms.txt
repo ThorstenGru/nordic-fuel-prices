@@ -1,0 +1,22 @@
+# EuroFuelPrices
+
+> Free, non-commercial map of live fuel prices (petrol, diesel) at stations across Europe, with a route fuel planner. No accounts, no ads. Prices are guidance only; always check at the pump.
+
+## Where the numbers are
+- [European fuel price index](https://eurofuelprices.com/europe/): median petrol 95 and diesel price per country, ranked, with the date of the data. Also in Swedish (/europe/sv/), German (/europe/de/) and Danish (/europe/da/).
+- [Border comparisons](https://eurofuelprices.com/europe/fuel-prices-sweden-vs-denmark/): is it cheaper across the border? One page per country pair.
+- Town pages: https://eurofuelprices.com/{country}/{town}/ list the stations of a town with their prices and sources.
+- [Live map](https://eurofuelprices.com/): every station, route planner, car cost.
+
+## Open data
+- [National averages, JSON](https://eurofuelprices.com/open-data/national-averages.json)
+- [National averages, CSV](https://eurofuelprices.com/open-data/national-averages.csv)
+- Free to reuse with a link to eurofuelprices.com.
+
+## How to read the data
+- Country figures are the median station price, converted to euro at the ECB rate.
+- Each price names its source; source grades A/B (official) to D (community) are explained on [the methodology page](https://eurofuelprices.com/about.html).
+- Countries with too few priced stations, a failed feed or data older than the stated limit are left out of the index.
+
+## Contact and privacy
+- [Privacy](https://eurofuelprices.com/privacy.html). Contact through the Facebook Page: https://www.facebook.com/eurofuelprices
