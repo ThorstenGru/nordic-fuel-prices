@@ -102,6 +102,13 @@ for (let i = 1; i < mp.stops.length; i++) assert(mp.stops[i].along > mp.stops[i 
   assert.strictEqual(withCu.stops[0].s.country, 'DE', 'undated pump of an undated-only country is planned'); assert.strictEqual(withCu.undated, true);
   const noCu = rtMakePlan({ o: o2, segs: null, min: 280, cands: [dk(60, 2.3), de(150, 1.7, false)], ref, asm: {} });
   assert.strictEqual(noCu.stops[0].s.country, 'DK', 'an undated pump in a country that has dated pumps is still not planned around'); }
+// undated German pumps (ANWB) with a MEASURED error (unc) compete with their price band: a clearly cheaper one is planned and counted as undated, a dearer one is not
+{ const dk = (a, e) => ({ ...mkc(a, e), s: { country: 'DK' } }), de = (a, e) => ({ ...mkc(a, e, null), s: { country: 'DE' }, cu: false, unc: 0.03 });
+  const o2 = { ...rcar, km: 373, fuelL: 20, elecKm: 0, kwh100: 0, elecEur: null };
+  const cheap = rtMakePlan({ o: o2, segs: null, min: 280, cands: [dk(60, 2.3), de(150, 1.7)], ref, asm: {} });
+  assert.strictEqual(cheap.stops[0].s.country, 'DE'); assert.strictEqual(cheap.nUndated, 1);
+  const dear = rtMakePlan({ o: o2, segs: null, min: 280, cands: [dk(60, 2.3), de(150, 2.4)], ref, asm: {} });
+  assert.strictEqual(dear.stops[0].s.country, 'DK'); assert.strictEqual(dear.nUndated, 0); }
 // unverified (tier 2) pumps are never planned around; no usable pump and fuel short -> unreachable with the distance the start fuel carries
 mp = rtMakePlan({ o: low, segs: null, min: 280, cands: [mkc(100, 1.0, 100)], ref, asm: {} });
 assert.strictEqual(mp.status, 'unreachable'); assert(mp.energy.reachKm > 100 && mp.energy.reachKm < 373);

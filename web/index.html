@@ -3847,6 +3847,11 @@ Object.assign(I18N.fr, { rtPlanNoneStops:'Ce trajet est trop long pour un seul p
 Object.assign(I18N.es, { rtPlanNoneStops:'Este viaje es demasiado largo para un solo plan: con unos {t} km por depósito necesita unas {n} paradas y el planificador admite hasta {m}. Divídelo en dos etapas con una parada en el camino.',
   rtPlanNoneGap:'No hay un plan seguro: tu combustible y la reserva te llevan unos {r} km de {d} km (hasta el km {at}) y la siguiente gasolinera con precio está en el km {to}. Añade combustible al salir, baja la reserva o mira las gasolineras de abajo.',
   rtPlanNone2:'No hay un plan seguro: tu combustible y la reserva te llevan unos {r} km de {d} km. Añade combustible al salir, baja la reserva o mira las gasolineras de abajo.' });
+Object.assign(I18N.en, { rtPlanUndated2:'Warning: {u} of {n} stops rely on a price with no time stamp. Check the price at the pump.' });
+Object.assign(I18N.de, { rtPlanUndated2:'Achtung: {u} von {n} Stopps stützen sich auf einen Preis ohne Zeitstempel. Bitte den Preis an der Tankstelle prüfen.' });
+Object.assign(I18N.sv, { rtPlanUndated2:'Observera: {u} av {n} stopp bygger på ett pris utan tidsstämpel. Kontrollera priset vid pumpen.' });
+Object.assign(I18N.fr, { rtPlanUndated2:'Attention : {u} arrêt(s) sur {n} reposent sur un prix sans horodatage. Vérifiez le prix à la pompe.' });
+Object.assign(I18N.es, { rtPlanUndated2:'Atención: {u} de {n} paradas se basan en un precio sin marca de tiempo. Comprueba el precio en el surtidor.' });
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);   // one pass with a function: '$&' or '{n}' inside a value is never re-read as a pattern or a placeholder
@@ -6936,7 +6941,7 @@ function rtMakePlan(inp) {
   const build = maxTier => {
     const bk = new Map();
     for (const c of inp.cands || []) {
-      if ((c.tier > maxTier && !(c.tier === 1 && c.cu)) || c.along < 0 || c.along > o.km) continue;
+      if ((c.tier > maxTier && !(c.tier === 1 && (c.cu || c.unc != null))) || c.along < 0 || c.along > o.km) continue;
       const band = rtBand(c.age, c.unc), key = Math.floor(c.along / slice), eff = c.eur + band / 2 + c.detourKm * 0.02;
       if (!bk.has(key) || eff < bk.get(key).eff) bk.set(key, { ...c, band, eff });
     }
@@ -6989,7 +6994,7 @@ function rtMakePlan(inp) {
     while (si < n && stops[si].along <= p.km) { const a = stops[si].along, b = batt(mid.Lat(a).L); track.push({ km: a, fuelL: fuelAt(a), batt: b }); bought += stops[si].litres; track.push({ km: a, fuelL: fuelAt(a), batt: b }); si++; }
     track.push({ km: p.km, fuelL: fuelAt(p.km), batt: batt(p.L) });
   }
-  return { ...base, status: 'ok', relaxed, undated: stops.some(s => s.age == null), stops, nStops: n, energy, arrive, fuelCost: n ? fc : { mid: 0, lo: 0, hi: 0 },
+  return { ...base, status: 'ok', relaxed, undated: stops.some(s => s.age == null), nUndated: stops.filter(s => s.age == null).length, stops, nStops: n, energy, arrive, fuelCost: n ? fc : { mid: 0, lo: 0, hi: 0 },
     fresh: rtFresh(stops), areaFresh: rtFresh(cs.map(x => x.c)), track,
     time: { driveMin: tot.min, stopMin: n * RT_STOP_MIN, detourMin, totalMin: tot.min + n * RT_STOP_MIN + detourMin },
     segs: segs.map((s, i) => ({ km: s.km, min: s.min, f: s.f, ferry: !!s.ferry, kmEnd: mid.pts[i + 1].km })) };
@@ -8002,7 +8007,7 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
   else if (P.status !== 'ok') { const w = P.why || {}, r = Math.round(E.reachKm), d = Math.round(R.km); head = w.kind === 'stops' ? t('rtPlanNoneStops', { t: w.full, n: w.need, m: w.max }) : w.kind === 'gap' ? t('rtPlanNoneGap', { r, d, at: w.at, to: w.to }) : t('rtPlanNone2', { r, d }); cls = 'bad'; }
   else if (!n) { head = (E.petrolL < 0.5 ? t('rtPlan0E', { k: Math.round(E.kwh), c: E.elecCost != null ? ', ' + eur(E.elecCost) : '' }) : t('rtPlan0', { l: rtL0(E.petrolL), e: kw })) + arr; cls = 'good'; }
   else { head = t(n === 1 ? 'rtPlan1' : 'rtPlanN', { n, l: rtL0(P.stops.reduce((a, s) => a + s.litres, 0)), c: rtRng(P.fuelCost.lo, P.fuelCost.hi) }) + arr; }
-  if (P.undated) head += ' ' + t('rtPlanUndated');
+  if (P.undated) head += ' ' + t('rtPlanUndated2', { u: P.nUndated, n: P.nStops });
   sub = t(n ? 'rtPlanTime' : 'rtPlanTime0', { h: rtHm(P.time.totalMin), m: RT_STOP_MIN }) + (P.relaxed ? ' ' + t('rtPlanRelaxed') : '');
   const stops = P.stops.map((s, i) => {
     const nm = rtDedupe(s.s.name || s.s.brand || '—'), why = s.age == null ? t('rtWhyUndated') : s.reason === 'cheap' ? t('rtWhyCheap', { d: Math.round(s.refDelta * 100), m: rtPL(R.median) }) : t('rtWhyNeed');
