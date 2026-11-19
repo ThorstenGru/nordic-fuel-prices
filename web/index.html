@@ -3832,6 +3832,21 @@ Object.assign(I18N.fr, { rtDest0:'Le réservoir suffit jusqu’à l’arrivée (
 Object.assign(I18N.es, { rtDest0:'El depósito llega al destino (quedan {r} L de reserva). Para repostar allí: {n}, {p} por litro.', rtDestRoute:'Repostar en la ruta es {d} más barato por litro que en el destino ({n}, {p}).', rtDestNeed:'La parada es necesaria porque el depósito no llega al destino. En el destino, lo más barato es {n}, {p} por litro.',
   rtAsmCar:'Depósito {t} L · {c} L/100 km', rtAsmTitle:'Depósito y ajustes', rtCarEdit:'Cambiar coche y consumo', rtAssume:'Calculado para un depósito de {t} L, {c} L/100 km, {s}, {r} L de reserva.', rtStartFull:'salida con el depósito lleno', rtStartPct:'salida con el depósito al {p} %', rtAssumeEdit:'Cambiar', rtStopMore:'Fuente y detalles',
   rtDataFail:'No se pudieron cargar los precios de combustible de esta ruta ({c}). Comprueba la conexión e inténtalo de nuevo.', rtRetry:'Reintentar', rtMissing:'No se pudieron cargar los precios de {c}, así que no forman parte de este plan.' });
+Object.assign(I18N.en, { rtPlanNoneStops:'This trip is too long for one plan: at about {t} km per tank it needs about {n} fuel stops, and the planner handles up to {m}. Split it into two legs with a stop on the way.',
+  rtPlanNoneGap:'No safe plan found: your fuel and reserve carry you about {r} km of the {d} km (to km {at}), and the next pump with a price is at km {to}. Add start fuel, lower the reserve or check the pumps below.',
+  rtPlanNone2:'No safe plan found: your fuel and reserve carry you about {r} km of the {d} km. Add start fuel, lower the reserve or check the pumps below.' });
+Object.assign(I18N.de, { rtPlanNoneStops:'Diese Fahrt ist für einen Plan zu lang: bei etwa {t} km pro Tank braucht sie etwa {n} Tankstopps, der Planer schafft bis zu {m}. Teilen Sie sie in zwei Etappen mit einem Zwischenstopp.',
+  rtPlanNoneGap:'Kein sicherer Plan gefunden: Ihr Kraftstoff und die Reserve tragen Sie etwa {r} km von {d} km (bis km {at}), und die nächste Tankstelle mit Preis liegt bei km {to}. Mehr Startkraftstoff tanken, die Reserve senken oder die Tankstellen unten ansehen.',
+  rtPlanNone2:'Kein sicherer Plan gefunden: Ihr Kraftstoff und die Reserve tragen Sie etwa {r} km von {d} km. Mehr Startkraftstoff tanken, die Reserve senken oder die Tankstellen unten ansehen.' });
+Object.assign(I18N.sv, { rtPlanNoneStops:'Resan är för lång för en plan: vid cirka {t} km per tank behövs ungefär {n} tankstopp, och planeraren klarar upp till {m}. Dela upp den i två etapper med ett stopp på vägen.',
+  rtPlanNoneGap:'Ingen säker plan hittades: ditt bränsle och din reserv räcker cirka {r} km av {d} km (till km {at}), och nästa pump med pris ligger vid km {to}. Fyll på startbränsle, sänk reserven eller titta på pumparna nedan.',
+  rtPlanNone2:'Ingen säker plan hittades: ditt bränsle och din reserv räcker cirka {r} km av {d} km. Fyll på startbränsle, sänk reserven eller titta på pumparna nedan.' });
+Object.assign(I18N.fr, { rtPlanNoneStops:'Ce trajet est trop long pour un seul plan : à environ {t} km par plein il faut environ {n} arrêts, le planificateur en gère jusqu’à {m}. Scindez-le en deux étapes avec un arrêt en chemin.',
+  rtPlanNoneGap:'Aucun plan sûr : votre carburant et la réserve vous mènent à environ {r} km sur {d} km (jusqu’au km {at}), et la prochaine station avec prix est au km {to}. Ajoutez du carburant au départ, baissez la réserve ou consultez les stations ci-dessous.',
+  rtPlanNone2:'Aucun plan sûr : votre carburant et la réserve vous mènent à environ {r} km sur {d} km. Ajoutez du carburant au départ, baissez la réserve ou consultez les stations ci-dessous.' });
+Object.assign(I18N.es, { rtPlanNoneStops:'Este viaje es demasiado largo para un solo plan: con unos {t} km por depósito necesita unas {n} paradas y el planificador admite hasta {m}. Divídelo en dos etapas con una parada en el camino.',
+  rtPlanNoneGap:'No hay un plan seguro: tu combustible y la reserva te llevan unos {r} km de {d} km (hasta el km {at}) y la siguiente gasolinera con precio está en el km {to}. Añade combustible al salir, baja la reserva o mira las gasolineras de abajo.',
+  rtPlanNone2:'No hay un plan seguro: tu combustible y la reserva te llevan unos {r} km de {d} km. Añade combustible al salir, baja la reserva o mira las gasolineras de abajo.' });
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);   // one pass with a function: '$&' or '{n}' inside a value is never re-read as a pattern or a placeholder
@@ -6826,7 +6841,7 @@ const RT_V_REF = 110, RT_AERO = 0.6;     // R7: energy per km is 1.0 at 110 km/h
 const RT_MARGIN = 0.1;                   // plan with 10 % more energy use than the model says, so the reserve holds
 const RT_STOP_MIN = 10, RT_STOP_EUR = 2; // one fuel stop takes about 10 min and counts as about 2 EUR of hassle (this is what makes the plan prefer fewer stops)
 const RT_MAX_STOPS = 3, RT_LITRES_SMALL = 8;
-const rtMaxStops = km => Math.min(8, Math.max(RT_MAX_STOPS, Math.ceil(km / 250)));   // a 1800 km trip needs far more than 3 stops; 8 keeps the planner fast on a phone
+const rtMaxStops = km => Math.min(14, Math.max(RT_MAX_STOPS, Math.ceil(km / 250)));   // a 4000 km trip needs about 10 stops; 14 covers ~6000 km and keeps the planner fast (only the ~6 pumps within one tank's reach are tried per state)
 const rtDedupe = n => (n || '').replace(/^(.+?)\s+\1(?=\s|$)/i, '$1');   // feeds repeat the brand: 'JET JET GOETTINGEN' -> 'JET GOETTINGEN'
 const rtMinFill = tank => Math.min(tank, Math.max(10, Math.round(tank * 0.3)));   // a stop buys at least ~30 % of the tank (about 14 L on 47 L)
 const rtSpeedF = v => (1 - RT_AERO) + RT_AERO * Math.pow(Math.min(140, Math.max(70, v)) / RT_V_REF, 2);
@@ -6943,7 +6958,14 @@ function rtMakePlan(inp) {
   const kwh = mid.K(tot.L);
   const energy = { elecKm: o.elecKm > 0 ? Math.min(o.km, mid.batEmpty != null ? mid.batEmpty : o.km) : 0, batEmptyAt: mid.batEmpty, kwh, elecCost: o.elecEur && kwh ? kwh * o.elecEur : null, petrolL: mid.P(tot.L), reachKm: 0 };
   energy.reachKm = rtReachKm(hi, o.fuelL - o.reserveL, o);   // how far the start fuel alone carries (with the margin)
-  if (!sol) return { ...base, status: 'unreachable', stops: [], nStops: 0, relaxed: false, energy, fresh: rtFresh([]), areaFresh: rtFresh(cs.map(x => x.c)), time: { driveMin: tot.min, stopMin: 0, detourMin: 0, totalMin: tot.min }, fuelCost: null, arrive: null, track: [] };
+  let why = null;                    // why there is no plan: a stretch no pump covers, too many stops for the planner, or something else
+  if (!sol) {
+    const full = rtReachKm(hi, o.tank - o.reserveL, o), seq = [0, ...cs.map(x => x.c.along), o.km]; let bad = null;
+    for (let i = 1; i < seq.length; i++) { const lim = i === 1 ? energy.reachKm : full, d = seq[i] - seq[i - 1]; if (d > lim + 1e-9 && (!bad || d - lim > bad.over)) bad = { over: d - lim, at: seq[i - 1] + lim, to: seq[i] }; }
+    const need = Math.ceil(Math.max(0, o.km - energy.reachKm) / Math.max(1, full));
+    why = { kind: bad ? 'gap' : need > rtMaxStops(o.km) ? 'stops' : 'other', full: Math.round(full), need, max: rtMaxStops(o.km), at: bad ? Math.round(bad.at) : 0, to: bad ? Math.round(bad.to) : 0 };
+  }
+  if (!sol) return { ...base, why, status: 'unreachable', stops: [], nStops: 0, relaxed: false, energy, fresh: rtFresh([]), areaFresh: rtFresh(cs.map(x => x.c)), time: { driveMin: tot.min, stopMin: 0, detourMin: 0, totalMin: tot.min }, fuelCost: null, arrive: null, track: [] };
   // walk the chosen stops with mid, pessimistic and optimistic energy to get litres, arrival fuel and the cost range
   let leave = o.fuelL, Pfrom = 0; const stops = [];
   sol.stops.forEach(s => {
@@ -7977,7 +7999,7 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
   const kw = E.elecKm > 0 ? t('rtAndKwh', { k: Math.round(E.kwh) }) + (E.elecCost != null ? ' (' + eur(E.elecCost) + ')' : '') : '';
   let head, cls = 'same', sub = '';
   if (P.status !== 'ok' && I.fuelL < I.reserveL - 1e-9 && E.reachKm <= 0) { head = t('rtPlanLow', { f: rtL0(I.fuelL), r: rtL0(I.reserveL) }); cls = 'bad'; }
-  else if (P.status !== 'ok') { head = t('rtPlanNone', { r: Math.round(E.reachKm), d: Math.round(R.km) }); cls = 'bad'; }
+  else if (P.status !== 'ok') { const w = P.why || {}, r = Math.round(E.reachKm), d = Math.round(R.km); head = w.kind === 'stops' ? t('rtPlanNoneStops', { t: w.full, n: w.need, m: w.max }) : w.kind === 'gap' ? t('rtPlanNoneGap', { r, d, at: w.at, to: w.to }) : t('rtPlanNone2', { r, d }); cls = 'bad'; }
   else if (!n) { head = (E.petrolL < 0.5 ? t('rtPlan0E', { k: Math.round(E.kwh), c: E.elecCost != null ? ', ' + eur(E.elecCost) : '' }) : t('rtPlan0', { l: rtL0(E.petrolL), e: kw })) + arr; cls = 'good'; }
   else { head = t(n === 1 ? 'rtPlan1' : 'rtPlanN', { n, l: rtL0(P.stops.reduce((a, s) => a + s.litres, 0)), c: rtRng(P.fuelCost.lo, P.fuelCost.hi) }) + arr; }
   if (P.undated) head += ' ' + t('rtPlanUndated');

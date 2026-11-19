@@ -105,6 +105,17 @@ for (let i = 1; i < mp.stops.length; i++) assert(mp.stops[i].along > mp.stops[i 
 // unverified (tier 2) pumps are never planned around; no usable pump and fuel short -> unreachable with the distance the start fuel carries
 mp = rtMakePlan({ o: low, segs: null, min: 280, cands: [mkc(100, 1.0, 100)], ref, asm: {} });
 assert.strictEqual(mp.status, 'unreachable'); assert(mp.energy.reachKm > 100 && mp.energy.reachKm < 373);
+// a 4138 km trip (Billeberga - Karlsruhe - Kiruna): about 9-10 stops are needed, so the old cap of 3 (and a cap of 8) must not report 'unreachable'
+{ const long = { ...rcar, km: 4138, fuelL: 47, tank: 47, reserveL: 10, cons: 7.7, elecKm: 0, kwh100: 0, elecEur: null };
+  const dense = []; for (let a = 30; a < 4138; a += 60) dense.push(mkc(a, 1.5 + (a % 7) * 0.01));
+  const lp = rtMakePlan({ o: long, segs: null, min: 2700, cands: dense, ref, asm: {} });
+  assert.strictEqual(lp.status, 'ok'); assert(lp.nStops >= 9 && lp.nStops <= 14, 'stops: ' + lp.nStops);
+  // a stretch with no pump at all is reported as such, with the km where the fuel ends
+  const hole = dense.filter(c => c.along < 400 || c.along > 3000), hp = rtMakePlan({ o: long, segs: null, min: 2700, cands: hole, ref, asm: {} });
+  assert.strictEqual(hp.status, 'unreachable'); assert.strictEqual(hp.why.kind, 'gap'); assert(hp.why.at > 400 && hp.why.to > 3000);
+  // pumps everywhere but more stops than the planner takes: says so instead of blaming the pumps
+  const huge = rtMakePlan({ o: { ...long, km: 9000 }, segs: null, min: 6000, cands: (() => { const d = []; for (let a = 30; a < 9000; a += 60) d.push(mkc(a, 1.5)); return d; })(), ref, asm: {} });
+  assert.strictEqual(huge.status, 'unreachable'); assert.strictEqual(huge.why.kind, 'stops'); assert(huge.why.need > huge.why.max); }
 // only way to reach: pump so late that a full minimum fill is not possible is still allowed (relaxed), flagged
 const tight = { ...rcar, fuelL: 20, elecKm: 0, kwh100: 0, elecEur: null, tank: 47 };
 mp = rtMakePlan({ o: { ...tight, km: 300 }, segs: null, min: 200, cands: [mkc(190, 1.7)], ref, asm: {} });
