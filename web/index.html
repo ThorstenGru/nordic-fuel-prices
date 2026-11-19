@@ -3813,13 +3813,13 @@ Object.assign(I18N.sv, {
 for (const l of ['en', 'sv', 'de', 'fr', 'es']) if (I18N[l].rtNote) I18N[l].rtNote += ' ' + (I18N[l].rtShNote || I18N.en.rtShNote);   // the privacy text stays complete in every language (de/fr/es show the English sentence)
 localizeCN();
 
-Object.assign(I18N.en, { rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank and settings', rtCarEdit:'Change car and consumption', rtAssume:'Calculated for a {t} L tank, {c} L/100 km, {s}.',
+Object.assign(I18N.en, { rtDest0:'The tank reaches the destination (keeping {r} L in reserve). To fill up there: {n}, {p} per litre.', rtDestRoute:'Filling up on the route is {d} per litre cheaper than at the destination ({n}, {p}).', rtDestNeed:'The stop is needed because the tank does not reach the destination. At the destination the cheapest is {n}, {p} per litre.', rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank and settings', rtCarEdit:'Change car and consumption', rtAssume:'Calculated for a {t} L tank, {c} L/100 km, {s}, {r} L reserve.',
   rtStartFull:'starting with a full tank', rtStartPct:'starting with the tank {p} % full', rtAssumeEdit:'Change', rtStopMore:'Source and details',
   rtDataFail:'Fuel prices for this route could not be loaded ({c}). Check your connection and try again.', rtRetry:'Try again', rtMissing:'Prices from {c} could not be loaded, so they are not part of this plan.' });
-Object.assign(I18N.de, { rtAsmCar:'{t}-L-Tank · {c} L/100 km', rtAsmTitle:'Tank und Einstellungen', rtCarEdit:'Auto und Verbrauch ändern', rtAssume:'Berechnet für einen {t}-L-Tank, {c} L/100 km, {s}.',
+Object.assign(I18N.de, { rtDest0:'Der Tank reicht bis zum Ziel ({r} L Reserve bleiben). Zum Auffüllen am Ziel: {n}, {p} pro Liter.', rtDestRoute:'Auffüllen unterwegs ist {d} pro Liter günstiger als am Ziel ({n}, {p}).', rtDestNeed:'Der Stopp ist nötig, weil der Tank nicht bis zum Ziel reicht. Am Ziel ist {n} am günstigsten, {p} pro Liter.', rtAsmCar:'{t}-L-Tank · {c} L/100 km', rtAsmTitle:'Tank und Einstellungen', rtCarEdit:'Auto und Verbrauch ändern', rtAssume:'Berechnet für einen {t}-L-Tank, {c} L/100 km, {s}, {r} L Reserve.',
   rtStartFull:'Start mit vollem Tank', rtStartPct:'Start mit {p} % Tankfüllung', rtAssumeEdit:'Ändern', rtStopMore:'Quelle und Details',
   rtDataFail:'Die Spritpreise für diese Route konnten nicht geladen werden ({c}). Bitte Verbindung prüfen und erneut versuchen.', rtRetry:'Erneut versuchen', rtMissing:'Preise aus {c} konnten nicht geladen werden und fehlen deshalb in diesem Plan.' });
-Object.assign(I18N.sv, { rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank och inställningar', rtCarEdit:'Ändra bil och förbrukning', rtAssume:'Beräknat för en tank på {t} L, {c} L/100 km, {s}.',
+Object.assign(I18N.sv, { rtDest0:'Tanken räcker till målet ({r} L reserv finns kvar). För att tanka där: {n}, {p} per liter.', rtDestRoute:'Att tanka på vägen är {d} per liter billigare än vid målet ({n}, {p}).', rtDestNeed:'Stoppet behövs eftersom tanken inte räcker till målet. Vid målet är {n} billigast, {p} per liter.', rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank och inställningar', rtCarEdit:'Ändra bil och förbrukning', rtAssume:'Beräknat för en tank på {t} L, {c} L/100 km, {s}, {r} L reserv.',
   rtStartFull:'start med full tank', rtStartPct:'start med tanken {p} % full', rtAssumeEdit:'Ändra', rtStopMore:'Källa och detaljer',
   rtDataFail:'Bränslepriserna för rutten kunde inte laddas ({c}). Kontrollera anslutningen och försök igen.', rtRetry:'Försök igen', rtMissing:'Priser från {c} kunde inte laddas och ingår därför inte i planen.' });
 function t(key, vars) {
@@ -6733,7 +6733,7 @@ async function cheapestInView() {
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
 // acpOv: a public AC price taken from a shared plan link; it wins over My car's own price for this session only and is never saved
-const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fuelPct:50, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
@@ -7297,7 +7297,7 @@ function rtElecEur() {                           // car.elec is in car.elecCur (
 const acpNow = () => rt.acpOv || (car.acp > 0 && car.acpCur ? { p: car.acp, cur: car.acpCur } : null);
 function rtInputs() {
   const phev = car.type === 'phev' && car.batt && car.range, eff = (car.eff || 90) / 100;
-  const def = Math.max(5, Math.round(tank * 0.1));
+  const def = Math.min(Math.round(tank), 10);   // default reserve 10 L (owner's rule)
   const tn = phev ? tmpNow() : { T: null }, x = phevF(tn.T), k100 = phev ? carKwh100(1 / eff) : 0;   // temperature known: range, kWh and petrol follow the My car curve; unknown: unchanged
   return { cons: (car.cons || trip.cons) * (phev ? x.mp : 1), withCar: !!car.cons, phev: !!phev, tank, fuelL: tank * rt.fuelPct / 100, reserveL: Math.min(tank, rt.reserve ?? def), defReserve: def,
     elecKm: phev ? car.range * RT_REAL * x.f * rt.battPct / 100 : 0, elecKmFull: phev ? car.range * RT_REAL * x.f : 0, kwh100: k100 * x.mEl, gEl: x.gk * k100, elecEur: phev ? rtElecEur() : null, T: tn.T, tSrc: tn.src };
@@ -7546,7 +7546,9 @@ function rtPlanNow(rows) {
     unc: r.age == null ? rtUnc(r.s.country, R.fuel) : null,
     cu: dated[r.s.country].k / dated[r.s.country].n < 0.1,
     tier: rtTier({ age: r.age, ps: r.s.ps, sus: suspectLow(r.s.country, r.p), stale: R.stale.includes(r.s.country) }) }));
-  R.plan = rtMakePlan({ o, segs: R.segs, min: R.min, cands, ref, asm });
+  // fuel left on arrival is worth the cheapest trusted pump at the destination (the car gets filled there anyway): so the plan buys on the route only when that is cheaper than at the destination
+  R.dest = cands.filter(c => c.tier === 0 && c.along >= o.km - 10).sort((a, b) => a.eur - b.eur)[0] || null;
+  R.plan = rtMakePlan({ o, segs: R.segs, min: R.min, cands, ref, asm, endEur: R.dest ? R.dest.eur : 0 });
   R.speed = ref != null ? rtSpeedCmp(R.segs, o, ref, rt.cruise) : null;
   R.priced = cands;                      // wave 2: every priced pump near the route (tier, along, eur, detourKm, s) for the border tip
   rtCostsNow(R);                         // wave 2: R.costs = { routes, costs, pick, unit }
@@ -7983,7 +7985,8 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
   return `<section class="tcard rt-plan" id="rt-plan" aria-label="${esc(t('rtPlanH'))}">
     <h3>${ico('pump')} ${t('rtPlanH')}</h3>
     <div class="tverdict ${cls}" id="rt-plan-head" aria-live="polite">${head}<small>${sub}</small></div>
-    <p class="rt-assume">${t('rtAssume', { t: Math.round(I.tank), c: dec((Math.round(I.cons * 10) / 10).toFixed(1)), s: rt.fuelPct === 100 ? t('rtStartFull') : t('rtStartPct', { p: rt.fuelPct }) })} <button type="button" class="rt-lnk" onclick="rtOpenAsm()">${t('rtAssumeEdit')}</button></p>
+    <p class="rt-assume">${t('rtAssume', { t: Math.round(I.tank), c: dec((Math.round(I.cons * 10) / 10).toFixed(1)), s: rt.fuelPct === 100 ? t('rtStartFull') : t('rtStartPct', { p: rt.fuelPct }), r: rtL0(I.reserveL) })} <button type="button" class="rt-lnk" onclick="rtOpenAsm()">${t('rtAssumeEdit')}</button></p>
+    ${rtDestLine(R, P)}
     <div id="rt-plan-stops">${stops}</div>
     ${fresh ? `<p class="rt-fresh" id="rt-plan-fresh">${fresh}</p>` : ''}
     ${rtX.slice(0, rtXMore).map(k => `<div id="rt-x-${k}">${rtExtras[k] ? rtExtras[k](R, P) : ''}</div>`).join('')}
@@ -7998,6 +8001,13 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
       <details class="ev-how"><summary>${esc(t('rtHow'))}</summary><p>${esc(t('rtH1'))}</p>${rtSegTable(P)}${assump.map(x => `<p>${esc(x)}</p>`).join('')}</details>
     </details>
   </section>`;
+}
+function rtDestLine(R, P) {              // route or destination: where is filling up cheapest?
+  if (!R.dest || P.status !== 'ok') return '';
+  const dn = esc(rtPumpName(R.dest)), dp = rtPL(R.dest.eur), I = R.o;
+  if (!P.nStops) return `<p class="rt-assume" id="rt-dest">${t('rtDest0', { r: rtL0(I.reserveL), n: dn, p: dp })}</p>`;
+  const ls = P.stops.reduce((a, s) => a + s.litres, 0), avg = P.stops.reduce((a, s) => a + s.litres * s.eur, 0) / Math.max(1e-9, ls), d = R.dest.eur - avg;
+  return `<p class="rt-assume" id="rt-dest">${d >= 0.005 ? t('rtDestRoute', { d: rtPL(d), n: dn, p: dp }) : t('rtDestNeed', { n: dn, p: dp })}</p>`;
 }
 function rtSpeedLine(R) {
   if (!rt.cruise) return `<p class="mc-hint">${esc(t('rtSpAuto'))}</p>`;
