@@ -6733,7 +6733,7 @@ async function cheapestInView() {
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
 // acpOv: a public AC price taken from a shared plan link; it wins over My car's own price for this session only and is never saved
-const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fuelPct:50, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
