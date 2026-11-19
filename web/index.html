@@ -3822,6 +3822,16 @@ Object.assign(I18N.de, { rtDest0:'Der Tank reicht bis zum Ziel ({r} L Reserve bl
 Object.assign(I18N.sv, { rtDest0:'Tanken räcker till målet ({r} L reserv finns kvar). För att tanka där: {n}, {p} per liter.', rtDestRoute:'Att tanka på vägen är {d} per liter billigare än vid målet ({n}, {p}).', rtDestNeed:'Stoppet behövs eftersom tanken inte räcker till målet. Vid målet är {n} billigast, {p} per liter.', rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank och inställningar', rtCarEdit:'Ändra bil och förbrukning', rtAssume:'Beräknat för en tank på {t} L, {c} L/100 km, {s}, {r} L reserv.',
   rtStartFull:'start med full tank', rtStartPct:'start med tanken {p} % full', rtAssumeEdit:'Ändra', rtStopMore:'Källa och detaljer',
   rtDataFail:'Bränslepriserna för rutten kunde inte laddas ({c}). Kontrollera anslutningen och försök igen.', rtRetry:'Försök igen', rtMissing:'Priser från {c} kunde inte laddas och ingår därför inte i planen.' });
+Object.assign(I18N.fr, { vehEP:'Top 100 en Europe 2024 (AEE) : essence', vehEH:'Top 100 en Europe 2024 (AEE) : hybride (HEV, y c. mild)', vehED:'Top 100 en Europe 2024 (AEE) : diesel', vehEPh:'Top 100 en Europe 2024 (AEE) : hybride rechargeable',
+  vehEea:'Consommation WLTP officielle moyenne de ce modèle dans le registre européen des voitures neuves 2024 (AEE). La taille du réservoir n’y figure pas : vérifiez-la pour votre voiture.', vehEeaPh:'Pour les hybrides rechargeables, le registre ne donne qu’une valeur pondérée : indiquez votre propre consommation batterie vide et l’autonomie électrique.' });
+Object.assign(I18N.es, { vehEP:'Top 100 en Europa 2024 (AEMA): gasolina', vehEH:'Top 100 en Europa 2024 (AEMA): híbrido (HEV, incl. mild)', vehED:'Top 100 en Europa 2024 (AEMA): diésel', vehEPh:'Top 100 en Europa 2024 (AEMA): híbrido enchufable',
+  vehEea:'Consumo WLTP oficial medio de este modelo en el registro europeo de coches nuevos 2024 (AEMA). El tamaño del depósito no figura en el registro: compruébalo para tu coche.', vehEeaPh:'Para los híbridos enchufables el registro solo da un valor ponderado: introduce tu propio consumo con la batería vacía y la autonomía eléctrica.' });
+Object.assign(I18N.fr, { rtDest0:'Le réservoir suffit jusqu’à l’arrivée ({r} L de réserve restent). Pour faire le plein là-bas : {n}, {p} le litre.', rtDestRoute:'Faire le plein en route coûte {d} de moins par litre qu’à l’arrivée ({n}, {p}).', rtDestNeed:'L’arrêt est nécessaire car le réservoir n’atteint pas l’arrivée. À l’arrivée, le moins cher est {n}, {p} le litre.',
+  rtAsmCar:'Réservoir {t} L · {c} L/100 km', rtAsmTitle:'Réservoir et réglages', rtCarEdit:'Modifier la voiture et la consommation', rtAssume:'Calculé pour un réservoir de {t} L, {c} L/100 km, {s}, {r} L de réserve.', rtStartFull:'départ avec le plein', rtStartPct:'départ avec le réservoir à {p} %', rtAssumeEdit:'Modifier', rtStopMore:'Source et détails',
+  rtDataFail:'Les prix des carburants pour cet itinéraire n’ont pas pu être chargés ({c}). Vérifiez la connexion et réessayez.', rtRetry:'Réessayer', rtMissing:'Les prix de {c} n’ont pas pu être chargés et ne figurent donc pas dans ce plan.' });
+Object.assign(I18N.es, { rtDest0:'El depósito llega al destino (quedan {r} L de reserva). Para repostar allí: {n}, {p} por litro.', rtDestRoute:'Repostar en la ruta es {d} más barato por litro que en el destino ({n}, {p}).', rtDestNeed:'La parada es necesaria porque el depósito no llega al destino. En el destino, lo más barato es {n}, {p} por litro.',
+  rtAsmCar:'Depósito {t} L · {c} L/100 km', rtAsmTitle:'Depósito y ajustes', rtCarEdit:'Cambiar coche y consumo', rtAssume:'Calculado para un depósito de {t} L, {c} L/100 km, {s}, {r} L de reserva.', rtStartFull:'salida con el depósito lleno', rtStartPct:'salida con el depósito al {p} %', rtAssumeEdit:'Cambiar', rtStopMore:'Fuente y detalles',
+  rtDataFail:'No se pudieron cargar los precios de combustible de esta ruta ({c}). Comprueba la conexión e inténtalo de nuevo.', rtRetry:'Reintentar', rtMissing:'No se pudieron cargar los precios de {c}, así que no forman parte de este plan.' });
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);   // one pass with a function: '$&' or '{n}' inside a value is never re-read as a pattern or a placeholder
@@ -6816,6 +6826,8 @@ const RT_V_REF = 110, RT_AERO = 0.6;     // R7: energy per km is 1.0 at 110 km/h
 const RT_MARGIN = 0.1;                   // plan with 10 % more energy use than the model says, so the reserve holds
 const RT_STOP_MIN = 10, RT_STOP_EUR = 2; // one fuel stop takes about 10 min and counts as about 2 EUR of hassle (this is what makes the plan prefer fewer stops)
 const RT_MAX_STOPS = 3, RT_LITRES_SMALL = 8;
+const rtMaxStops = km => Math.min(8, Math.max(RT_MAX_STOPS, Math.ceil(km / 250)));   // a 1800 km trip needs far more than 3 stops; 8 keeps the planner fast on a phone
+const rtDedupe = n => (n || '').replace(/^(.+?)\s+\1(?=\s|$)/i, '$1');   // feeds repeat the brand: 'JET JET GOETTINGEN' -> 'JET GOETTINGEN'
 const rtMinFill = tank => Math.min(tank, Math.max(10, Math.round(tank * 0.3)));   // a stop buys at least ~30 % of the tank (about 14 L on 47 L)
 const rtSpeedF = v => (1 - RT_AERO) + RT_AERO * Math.pow(Math.min(140, Math.max(70, v)) / RT_V_REF, 2);
 // R3: half-width of the price range in EUR/L by price age (hours); null = undated. Replaces the old 10 h cliff.
@@ -6923,7 +6935,7 @@ function rtMakePlan(inp) {
   const mk = relaxed => {
     const nodes = cs.map(x => ({ Pc: hi.P(x.h.L), dL: x.dL, eur: x.c.eur + x.c.band / 2, x: x.dEl + vot * x.c.detourKm / 60,
       minq: relaxed ? 1 : (ref && x.c.eur <= ref * 0.88 ? Math.min(minFill, RT_LITRES_SMALL) : minFill) }));
-    return rtDP(nodes, { fuel0: o.fuelL, tank: o.tank, reserve: o.reserveL, Ptot: hi.P(hi.total.L), maxStops: RT_MAX_STOPS, stopX, endEur: inp.endEur || 0 });
+    return rtDP(nodes, { fuel0: o.fuelL, tank: o.tank, reserve: o.reserveL, Ptot: hi.P(hi.total.L), maxStops: rtMaxStops(o.km), stopX, endEur: inp.endEur || 0 });
   };
   let sol = mk(false), relaxed = false;
   if (!sol) { sol = mk(true); relaxed = !!sol; }
@@ -7720,7 +7732,7 @@ function rtCyclesLoad() {                               // our own static file, 
   return rtCycP = rtCycP || fetch('price_cycles.json').then(r => r.ok ? r.json() : null).then(j => rtCycData = j && j.schema === 1 && j.series ? j : null).catch(() => null);
 }
 rtCyclesLoad().then(() => { try { updLabel(); } catch (_) {} });   // the country note reads the same file
-const rtPumpName = x => (x.s.name || x.s.brand || '—') + (x.s.city && !(x.s.name || '').includes(x.s.city) ? ', ' + x.s.city : '');
+const rtPumpName = x => rtDedupe(x.s.name || x.s.brand || '—') + (x.s.city && !(x.s.name || '').includes(x.s.city) ? ', ' + x.s.city : '');
 const rtNum1 = v => dec((Math.round(v * 10) / 10).toFixed(1));
 function rtBackupHtml(R, s) {
   const b = rtBackup(s, R.priced || [], R.o); if (!b) return '';
@@ -7971,7 +7983,7 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
   if (P.undated) head += ' ' + t('rtPlanUndated');
   sub = t(n ? 'rtPlanTime' : 'rtPlanTime0', { h: rtHm(P.time.totalMin), m: RT_STOP_MIN }) + (P.relaxed ? ' ' + t('rtPlanRelaxed') : '');
   const stops = P.stops.map((s, i) => {
-    const nm = s.s.name || s.s.brand || '—', why = s.age == null ? t('rtWhyUndated') : s.reason === 'cheap' ? t('rtWhyCheap', { d: Math.round(s.refDelta * 100), m: rtPL(R.median) }) : t('rtWhyNeed');
+    const nm = rtDedupe(s.s.name || s.s.brand || '—'), why = s.age == null ? t('rtWhyUndated') : s.reason === 'cheap' ? t('rtWhyCheap', { d: Math.round(s.refDelta * 100), m: rtPL(R.median) }) : t('rtWhyNeed');
     return `<div class="rt-stop" onclick="rtPlanFocus(${i})"><div class="rt-n">${rtLet(i)}</div>
       <div><div class="nm">${FLAGS[s.s.country] || ''} ${esc(nm)}</div>
         <div class="sub">${esc(s.s.city || '')} · ${t('rtAlong', { k: Math.round(s.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: s.detourKm < 1 ? '<1' : s.detourKm.toFixed(1) })}<br><b>${t('rtBuy', { l: rtL0(s.litres), c: rtRng(s.cost.lo, s.cost.hi) })}</b><br>${t('rtTankLine', { a: rtL0(s.fuelArrive), b: rtL0(s.fuelAfter) })}<br>${esc(why)}</div>
@@ -8042,7 +8054,7 @@ function rtRenderOut() {
       const d = r.ref - r.eur, s = r.saving;
       const cmp = d >= 0.005 ? t('rtCheaper', { d: rtPL(d) }) : t('rtSame');
       const net = s >= 0.1 ? t('rtNetSave', { s: eur(s) }) : s <= -0.1 ? t('rtNetCost', { s: eur(-s) }) : t('rtNetNone');
-      const nm = r.s.name || r.s.brand || '—';
+      const nm = rtDedupe(r.s.name || r.s.brand || '—');
       const head = r.tier > 0 && !sep ? (sep = true, `<p class="rt-sep">${t('rtBelow')}</p>`) : '';
       return `${head}<div class="rt-stop${r.tier ? ' weak' : ''}" onclick="rtFocus(${i})"><div class="rt-n dot" aria-hidden="true"></div>
         <div><div class="nm">${FLAGS[r.s.country] || ''} ${esc(nm)}</div>
