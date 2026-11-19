@@ -3,6 +3,7 @@
 // Privacy: coordinates are rounded to ~100 m and never logged (no console.log of the request, no analytics binding).
 const UPSTREAM = 'https://valhalla1.openstreetmap.de/route';   // FOSSGIS public Valhalla: ferries included. Swap provider here only.
 const SITE = /^https:\/\/(www\.)?eurofuelprices\.com(\/|$)/;
+export const WTC = /^https:\/\/thorstengru\.github\.io(\/where-to-charge(\/|$)|$)/;   // the Pages site of "Where to charge today?": allowed for the counters only
 const EUROPE = { la: [27, 72], lo: [-32, 45] };                  // rough bounding box; everything outside is refused
 const TTL = 6 * 3600;
 const RL_MAX = 20;                                              // uncached (= upstream) requests per visitor and minute; a trip needs 1-3. Best effort per data centre: the origin check below can be faked by a script                                           // a route does not change within hours; prices are priced client-side
@@ -58,9 +59,9 @@ export async function overLimit(req, now = Date.now(), max = RL_MAX, bucket = 'r
 
 // Cookieless counters (POST /api/poll?e=<event> or ?q=<question>&a=<answer>): what people use, and a two-question survey. Only whitelisted names are counted,
 // nothing else is stored (no IP, no user agent): one row per day and event, one row per question and answer. Read it with wrangler (docs/OPERATIONS.md).
-export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown', 'fb_follow_shown', 'fb_follow_click', 'visit', 'visit_fb', 'search_used', 'app_installed'])
+export const EVENTS = new Set(['route_planned', 'station_opened', 'charger_opened', 'facilities_opened', 'trip_calc', 'mycar_opened', 'plan_shared', 'nearby_used', 'install_shown', 'fb_follow_shown', 'fb_follow_click', 'visit', 'visit_fb', 'search_used', 'app_installed', 'wtc_visit', 'wtc_locate'])   // wtc_* = the page "Where to charge today?" (thorstengru.github.io/where-to-charge)
 // Events with ONE small dimension from a fixed list (never free text): stored as "name:dim" in the same table.
-export const DIMS = { fuel_filter: ['p95', 'p98', 'diesel', 'e10', 'e5', 'lpg', 'e85', 'hvo100', 'cng', 'all'], nav_go: ['google', 'waze', 'apple', 'here', 'other'],
+export const DIMS = { wtc_car: ['phev', 'santafe', 'bev'], wtc_verdict: ['home', 'road', 'hev', 'full'], fuel_filter: ['p95', 'p98', 'diesel', 'e10', 'e5', 'lpg', 'e85', 'hvo100', 'cng', 'all'], nav_go: ['google', 'waze', 'apple', 'here', 'other'],
   country_view: ['AD', 'AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GL', 'GR', 'HR', 'HU', 'IE', 'IL', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'SM', 'TR', 'XK'] };
 export const POLL = { use: ['cheapest', 'route', 'ev', 'compare', 'other'], next: ['alerts', 'countries', 'ev', 'route', 'speed'] };
 export async function tally(req, env, now = Date.now()) {
@@ -134,7 +135,7 @@ export default {
     const poll = new URL(req.url).pathname.startsWith('/api/poll');
     if (req.method !== (poll ? 'POST' : 'GET')) return json({ error: 'method' }, 405);
     const from = req.headers.get('Origin') || req.headers.get('Referer') || '';
-    if (req.headers.get('Sec-Fetch-Site') !== 'same-origin' && !SITE.test(from)) return json({ error: 'origin' }, 403);   // not a browser on our own pages
+    if (req.headers.get('Sec-Fetch-Site') !== 'same-origin' && !SITE.test(from) && !(poll && WTC.test(from))) return json({ error: 'origin' }, 403);   // not a browser on our own pages
     if (poll) return (await overLimit(req, Date.now(), 40, 'pl')) ? json({ error: 'rate' }, 429) : tally(req, env);
     if (new URL(req.url).pathname.startsWith('/api/fac')) return facility(req, ctx);
     const q = normalise(new URL(req.url).searchParams.get('json'));

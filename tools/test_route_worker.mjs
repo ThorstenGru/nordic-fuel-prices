@@ -117,4 +117,15 @@ const okBody = await okRes.json(); assert.equal(okBody.events[0].name, 'visit');
 assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/stats', { headers: { Authorization: 'Bearer x' } }), { DB: sdb.DB }, ctx)).status, 401);   // no secret set: always closed
 store.clear(); let last2; for (let i = 0; i < 41; i++) last2 = await post('e=nearby_used');
 assert.equal(last2.status, 429);
+// "Where to charge today?" (thorstengru.github.io/where-to-charge) may count, but only on the counter path and only whitelisted names
+store.clear(); dbCalls.length = 0;
+const wtcSite = { Origin: 'https://thorstengru.github.io' };
+assert.equal((await post('e=wtc_visit', wtcSite)).status, 204); assert.equal(dbCalls[0][2], 'wtc_visit');
+assert.equal((await post('e=wtc_verdict&d=hev', wtcSite)).status, 204); assert.equal(dbCalls[1][2], 'wtc_verdict:hev');
+assert.equal((await post('e=wtc_car&d=bev', wtcSite)).status, 204); assert.equal((await post('e=wtc_locate', wtcSite)).status, 204);
+assert.equal((await post('e=wtc_car&d=tesla', wtcSite)).status, 400);                             // free text refused
+assert.equal((await post('e=wtc_visit', { Origin: 'https://thorstengru.github.io.evil.com' })).status, 403);
+assert.equal((await post('e=wtc_visit', { Origin: 'https://thorstengru.github.io/other-repo' })).status, 403);
+assert.equal((await w.fetch(new Request('https://eurofuelprices.com/api/route?json=%7B%7D', { headers: wtcSite }), env2, ctx)).status, 403);   // not for routing
+assert.equal(dbCalls.length, 4);
 console.log('test_route_worker: all passed');
