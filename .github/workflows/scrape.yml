@@ -119,7 +119,7 @@ jobs:
       - name: Keep last good ev_*.json if this run produced none
         continue-on-error: true
         run: |
-          for cc in se no dk de nl be ie is fr gb; do
+          for cc in se no dk de nl be ie is fr gb dc_se dc_no; do
             test -f data/ev_$cc.json || curl -fsS --retry 3 --max-time 30 https://eurofuelprices.com/ev_$cc.json -o data/ev_$cc.json || rm -f data/ev_$cc.json
           done
 

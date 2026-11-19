@@ -206,3 +206,30 @@ class Run(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FastChargers(unittest.TestCase):
+    def test_reduce_dc_keeps_ccs_and_chademo_and_drops_trucks_and_members(self):
+        ccs = nobil_cs(1, 55.7, 13.2, conn="39", cap="150 kW DC")
+        ccs["attr"]["conn"]["2"] = {"4": {"attrvalid": "30", "trans": "CHAdeMO"}, "5": {"attrvalid": "x", "trans": "62,5 kW DC"}}
+        truck = nobil_cs(2, 55.8, 13.3, conn="39", cap="400 kW DC")
+        truck["attr"]["conn"]["1"]["17"] = {"attrvalid": "9", "trans": "Rechargeable Medium or heavy trucks"}
+        members = nobil_cs(3, 55.9, 13.4, conn="39", cap="150 kW DC", **{"2": {"attrvalid": "2", "trans": "Visitors"}})
+        ac_only = nobil_cs(4, 56.0, 13.5)
+        out = chargers.reduce_nobil_dc({"chargerstations": [ccs, truck, members, ac_only]})
+        self.assertEqual(len(out), 1)
+        self.assertEqual((out[0]["kw"], out[0]["pts"], out[0]["mask"]), (150.0, 2, 1 | 2))      # CCS + CHAdeMO, the higher kW
+
+    def test_dc_dedupe_merges_connector_types_and_power(self):
+        a = {"lat": 59.3, "lon": 18.0, "op": "", "kw": 50.0, "pts": 1, "flags": 0, "yr": 2020, "title": "a", "mask": 2}
+        b = {"lat": 59.30005, "lon": 18.0, "op": "Ionity", "kw": 350.0, "pts": 2, "flags": 0, "yr": 2025, "title": "b", "mask": 1}
+        res, merged = chargers.dedupe([a, b])
+        self.assertEqual((len(res), merged, res[0]["mask"], res[0]["kw"], res[0]["pts"]), (1, 1, 3, 350.0, 2))
+
+    def test_dc_file_layout_and_guards(self):
+        st = [{"lat": 56.0 + i / 1000, "lon": 13.0, "op": "Ionity", "kw": 350.0, "pts": 4, "flags": 0, "yr": 2025, "title": "x", "mask": 1} for i in range(900)]
+        f = chargers.build_dc_file("SE", st, date(2026, 11, 19))
+        self.assertEqual((f["v"], f["kind"], f["n"], len(f["s"][0]), f["s"][0][8]), (1, "dc", 900, 9, 1))
+        self.assertIsNone(chargers.check_dc(f, None, [NKEY]))
+        self.assertIn("sanity band", chargers.check_dc(chargers.build_dc_file("SE", st[:100], date(2026, 11, 19)), None, []))
+        self.assertIn("drop", chargers.check_dc(chargers.build_dc_file("SE", st[:800], date(2026, 11, 19)), {"s": [0] * 1200}, []))

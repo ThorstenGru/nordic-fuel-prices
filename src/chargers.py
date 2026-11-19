@@ -36,6 +36,13 @@ COUNTRIES = {
 REPUBLISH_ONLY = ("DK", "DE", "NL", "BE", "IE", "IS", "FR", "GB")   # not refreshed here: src/chargefinder.py owns these; this only re-publishes the last published file (data/ is rebuilt every run)
 FLAG_FREE, FLAG_MEMBER, FLAG_NOTICE, FLAG_PAYLOC, FLAG_PARKHINT, FLAG_COSTNOTE, FLAG_TETHERED, FLAG_NOBIL_PARK, FLAG_H24 = 1, 2, 4, 8, 16, 32, 64, 128, 256   # H24: ChargeFinder says open 24/7
 
+# Fast chargers (data/ev_dc_<cc>.json, a sister file: ev_<cc>.json stays exactly version 1 for the main site). NOBIL connector values:
+# 39 CCS, 30 CHAdeMO, 40 Tesla, 87 MCS. kW in the row is the rated power of the charger (NOBIL label, e.g. "400 kW DC"): a ceiling, not what a car gets.
+DC_CONN = {"39": 1, "30": 2, "40": 4, "87": 8}                      # NOBIL value -> bit in the row's last column
+DC_NAMES = {"1": "CCS", "2": "CHAdeMO", "4": "Tesla", "8": "MCS"}
+DC_BAND = {"SE": (800, 6000), "NO": (500, 4000)}                    # sanity band (2026-11-19 probe: 2,831 stations with DC in the Swedish dump)
+HEAVY = re.compile(r"medium|heavy|truck|bus|lorry|hydrogen|biogas", re.I)   # not for cars
+
 # Operator aliases (normalised name -> display name) so every source shares one key space for the price table. Extend as needed.
 ALIAS = {"mer": "MER", "recharge": "Recharge", "fortum charge drive": "Recharge", "incharge": "Vattenfall InCharge",
          "vattenfall incharge": "Vattenfall InCharge", "vattenfall": "Vattenfall InCharge", "eon drive": "E.ON Drive",
@@ -84,9 +91,12 @@ def dedupe(stations: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], int]:
             continue
         merged += 1
         pts = max(hit["pts"], s["pts"])
+        mask, kw = hit.get("mask", 0) | s.get("mask", 0), max(hit.get("kw") or 0, s.get("kw") or 0) or None   # fast-charger records: keep every connector type and the highest power
         if score(s) > score(hit):
             hit.update(s)
         hit["pts"] = pts
+        if "mask" in hit:
+            hit["mask"], hit["kw"] = mask, kw
     return res, merged
 
 
@@ -132,6 +142,62 @@ def reduce_nobil(doc: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], Dict[str, i
                         "title": title or str(md.get("name") or "").strip(), "uc": "", "prov": 19, "ref": "", "ids": ids})
     st["kept"] = len(out)
     return out, st
+
+
+def reduce_nobil_dc(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """NOBIL v3 datadump -> fast-charger station dicts (CCS, CHAdeMO, Tesla, MCS; public; cars). Defensive like reduce_nobil."""
+    out: List[Dict[str, Any]] = []
+    for cs in (doc.get("chargerstations") or []):
+        md, attr = cs.get("csmd") or {}, cs.get("attr") or {}
+        sta = attr.get("st") or {}
+        conns = [c for c in (attr.get("conn") or {}).values()
+                 if isinstance(c, dict) and _nobil_attr(c, "4")[0] in DC_CONN and not HEAVY.search(_nobil_attr(c, "17")[1])]
+        m = re.match(r"\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)", str(md.get("Position") or ""))
+        if not conns or not m or _nobil_attr(sta, "2")[0] not in ("", "1"):
+            continue
+        kws = [float(x.replace(",", ".")) for c in conns for x in re.findall(r"(\d+(?:[.,]\d+)?)\s*kW", _nobil_attr(c, "5")[1], re.I)]
+        mask = 0
+        for c in conns:
+            mask |= DC_CONN[_nobil_attr(c, "4")[0]]
+        pay = _nobil_attr(sta, "19")[1].lower()
+        flags = 0
+        if _nobil_attr(sta, "7")[0] == "1" or _nobil_attr(sta, "7")[1].strip().lower() in ("yes", "ja"):
+            flags |= FLAG_NOBIL_PARK
+        if re.search(r"charging card|ladekort|laddkort", pay) and not re.search(r"phone|bank|sms|telefon|mobil", pay):
+            flags |= FLAG_MEMBER
+        title = ", ".join(x for x in [" ".join(filter(None, [str(md.get("Street") or "").strip(), str(md.get("House_number") or "").strip()])),
+                                      str(md.get("City") or "").strip()] if x)
+        out.append({"lat": float(m.group(1)), "lon": float(m.group(2)), "op": canon_op(md.get("Operator") or md.get("Owned_by")),
+                    "kw": max(kws) if kws else None, "pts": len(conns), "flags": flags, "yr": _year(md.get("Updated")),
+                    "title": title or str(md.get("name") or "").strip(), "mask": mask})
+    return out
+
+
+def build_dc_file(cc: str, stations: List[Dict[str, Any]], today: date) -> Dict[str, Any]:
+    """Sister file for fast chargers: rows [lat, lon, op index, kW, points, flags, year % 100, title, connector mask]."""
+    box = COUNTRIES[cc][2]
+    keep = [s for s in stations if box[0] <= s["lat"] <= box[1] and box[2] <= s["lon"] <= box[3]]
+    names = sorted({s["op"] for s in keep if s["op"]})
+    idx = {n: i + 1 for i, n in enumerate(names)}
+    rows = [[round(s["lat"], 5), round(s["lon"], 5), idx.get(s["op"], 0), int(s["kw"] + 0.5) if s["kw"] else 0, s["pts"], s["flags"],
+             s["yr"] % 100, s["title"], s["mask"]] for s in keep]
+    return {"v": 1, "kind": "dc", "cc": cc, "generated": today.isoformat(), "source": "nobil", "sources": ["NOBIL"],
+            "attribution": ["NOBIL by Enova (CC BY 4.0)"], "conn": DC_NAMES, "n": len(rows), "dropped_outside_box": len(stations) - len(keep),
+            "ops": names, "s": rows}
+
+
+def check_dc(new: Dict[str, Any], prev: Optional[Dict[str, Any]], secrets: List[str]) -> Optional[str]:
+    lo, hi = DC_BAND.get(new["cc"], (1, 10 ** 6))
+    n = new["n"]
+    if not lo <= n <= hi:
+        return f"{n} fast-charger stations outside the sanity band {lo}-{hi}"
+    pn = len((prev or {}).get("s") or [])
+    if pn and n < DROP_RATIO * pn and new["cc"] not in ALLOW_SHRINK:
+        return f"{n} is a drop of more than 20 % from {pn}"
+    txt = json.dumps(new, ensure_ascii=False)
+    if any(k and len(k) >= 8 and k in txt for k in secrets):
+        return "a key string is present in the output"
+    return None
 
 
 def build_file(cc: str, stations: List[Dict[str, Any]], today: date) -> Dict[str, Any]:
@@ -235,6 +301,23 @@ async def refresh(session: aiohttp.ClientSession, cc: str, nobil_key: str, prev:
     stations = [{k: v for k, v in x.items() if k != "ids"} for x in stations]
     stations, merged = dedupe(stations)
     print(f"[chargers] {cc} NOBIL filter {st}, dedupe merged {merged}")
+    try:                                                # fast chargers: sister file, own guards; never affects ev_<cc>.json
+        today = datetime.now(timezone.utc).date()
+        dc, _ = dedupe([{k: v for k, v in x.items()} for x in reduce_nobil_dc(doc)])
+        dcf = build_dc_file(cc, dc, today)
+        dpath = DATA / f"ev_dc_{cc.lower()}.json"
+        try:
+            dprev = json.loads(dpath.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            dprev = None
+        why = check_dc(dcf, dprev, [nobil_key])
+        if why:
+            print(f"[chargers] {cc} fast chargers refused ({why}); last good file kept")
+        else:
+            write_json(dpath, dcf)
+            print(f"[chargers] {cc} fast chargers: {dcf['n']} stations, {dpath.stat().st_size} bytes")
+    except Exception as e:  # noqa: BLE001
+        print(f"[chargers] {cc} fast chargers failed: {type(e).__name__}")
     return build_file(cc, stations, datetime.now(timezone.utc).date())
 
 
