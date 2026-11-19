@@ -4775,6 +4775,29 @@ function openStation(s, zoomTo) {
   openStationSheet(s, zoomTo);
 }
 
+// Desktop: the station popup can be dragged by its title row (it often covers the pin it belongs to). The CSS `translate` property is used on purpose:
+// Leaflet moves the popup with `transform`, so the two never fight; the arrow towards the pin is hidden once the card has been moved away.
+Object.assign(I18N.en, { popMove:'Drag to move' }); Object.assign(I18N.sv, { popMove:'Dra för att flytta' }); Object.assign(I18N.de, { popMove:'Zum Verschieben ziehen' });
+Object.assign(I18N.fr, { popMove:'Glisser pour déplacer' }); Object.assign(I18N.es, { popMove:'Arrastra para mover' });
+map.on('popupopen', e => {
+  const c = DESK.matches && e.popup.getElement && e.popup.getElement(), zone = c && c.querySelector('.pop > :first-child'); if (!zone) return;
+  let x = 0, y = 0, sx = 0, sy = 0, ox = 0, oy = 0, drag = false;
+  zone.style.cursor = 'grab'; zone.style.touchAction = 'none'; zone.title = t('popMove');
+  zone.addEventListener('pointerdown', ev => {
+    if (ev.button || ev.target.closest('button, a, input, select, textarea, summary')) return;
+    drag = true; sx = ev.clientX; sy = ev.clientY; ox = x; oy = y; zone.setPointerCapture(ev.pointerId); zone.style.cursor = 'grabbing'; ev.preventDefault();
+  });
+  zone.addEventListener('pointermove', ev => {
+    if (!drag) return;
+    x = ox + ev.clientX - sx; y = oy + ev.clientY - sy; c.style.translate = x + 'px ' + y + 'px';
+    const r = c.querySelector('.leaflet-popup-content-wrapper').getBoundingClientRect(), dx = Math.max(8 - r.left, Math.min(0, innerWidth - 8 - r.right)), dy = Math.max(8 - r.top, Math.min(0, innerHeight - 8 - r.bottom));
+    if (dx || dy) { x += dx; y += dy; c.style.translate = x + 'px ' + y + 'px'; }                // never drag it out of the window
+    const tip = c.querySelector('.leaflet-popup-tip-container'); if (tip && (Math.abs(x) > 12 || Math.abs(y) > 12)) tip.style.display = 'none';
+  });
+  const end = () => { drag = false; zone.style.cursor = 'grab'; };
+  zone.addEventListener('pointerup', end); zone.addEventListener('pointercancel', end);
+});
+
 let stId = null, stPrev = null, selRing = null;
 function setSelRing(s) {
   clearSelRing();
