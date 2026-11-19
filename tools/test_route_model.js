@@ -109,6 +109,13 @@ for (let i = 1; i < mp.stops.length; i++) assert(mp.stops[i].along > mp.stops[i 
   assert.strictEqual(cheap.stops[0].s.country, 'DE'); assert.strictEqual(cheap.nUndated, 1);
   const dear = rtMakePlan({ o: o2, segs: null, min: 280, cands: [dk(60, 2.3), de(150, 2.4)], ref, asm: {} });
   assert.strictEqual(dear.stops[0].s.country, 'DK'); assert.strictEqual(dear.nUndated, 0); }
+// refuelling policy: 'full' (default) fills the tank at every stop, 'need' buys only what is needed; the other buys only what is needed
+{ const o4 = { ...rcar, km: 1000, fuelL: 47, tank: 47, reserveL: 10, cons: 7, elecKm: 0, kwh100: 0, elecEur: null };
+  const cs4 = []; for (let a = 30; a < 1000; a += 60) cs4.push(mkc(a, 1.5 + (a % 5) * 0.02));
+  const full = rtMakePlan({ o: o4, segs: null, min: 640, cands: cs4, ref, asm: { fill: 'full' } }), need = rtMakePlan({ o: o4, segs: null, min: 640, cands: cs4, ref, asm: { fill: 'need' } });
+  assert.strictEqual(full.status, 'ok'); assert.strictEqual(full.filled, true); assert(full.nStops >= 2);
+  full.stops.forEach(s => assert(s.fuelAfter >= 46 && s.litres >= 6, 'full tank at every stop: ' + s.fuelAfter + ' / ' + s.litres));
+  assert.strictEqual(need.filled, false); assert(need.stops.some(s => s.fuelAfter < 46), 'need-plan does not fill up every time'); }
 // unverified (tier 2) pumps are never planned around; no usable pump and fuel short -> unreachable with the distance the start fuel carries
 mp = rtMakePlan({ o: low, segs: null, min: 280, cands: [mkc(100, 1.0, 100)], ref, asm: {} });
 assert.strictEqual(mp.status, 'unreachable'); assert(mp.energy.reachKm > 100 && mp.energy.reachKm < 373);

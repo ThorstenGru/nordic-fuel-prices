@@ -3852,6 +3852,11 @@ Object.assign(I18N.de, { rtPlanUndated2:'Achtung: {u} von {n} Stopps stützen si
 Object.assign(I18N.sv, { rtPlanUndated2:'Observera: {u} av {n} stopp bygger på ett pris utan tidsstämpel. Kontrollera priset vid pumpen.' });
 Object.assign(I18N.fr, { rtPlanUndated2:'Attention : {u} arrêt(s) sur {n} reposent sur un prix sans horodatage. Vérifiez le prix à la pompe.' });
 Object.assign(I18N.es, { rtPlanUndated2:'Atención: {u} de {n} paradas se basan en un precio sin marca de tiempo. Comprueba el precio en el surtidor.' });
+Object.assign(I18N.en, { rtFill:'Refuelling at a stop', rtFillFull:'Fill the tank', rtFillNeed:'Only what is needed', rtFillH:'“Fill the tank” is easy to follow and costs a few euros more. “Only what is needed” gives the cheapest plan.', rtAsmFull:'full tank at each stop', rtAsmNeed:'only what is needed at each stop', rtFillAll:'Fills the tank at every stop.', rtFillPart:'Buys only what is needed at each stop.', rtFillFallback:'A full tank at every stop did not work for this trip, so some stops take only what is needed.' });
+Object.assign(I18N.de, { rtFill:'Tanken am Stopp', rtFillFull:'Voll tanken', rtFillNeed:'Nur nötige Menge', rtFillH:'„Voll tanken“ ist einfach zu merken und kostet ein paar Euro mehr. „Nur nötige Menge“ ergibt den günstigsten Plan.', rtAsmFull:'an jedem Stopp voll tanken', rtAsmNeed:'an jedem Stopp nur die nötige Menge', rtFillAll:'An jedem Stopp wird voll getankt.', rtFillPart:'An jedem Stopp wird nur die nötige Menge getankt.', rtFillFallback:'Voll tanken an jedem Stopp ging für diese Fahrt nicht auf, deshalb wird bei manchen Stopps nur die nötige Menge getankt.' });
+Object.assign(I18N.sv, { rtFill:'Tankning vid stopp', rtFillFull:'Tanka fullt', rtFillNeed:'Bara det som behövs', rtFillH:'”Tanka fullt” är lätt att följa och kostar några euro mer. ”Bara det som behövs” ger den billigaste planen.', rtAsmFull:'full tank vid varje stopp', rtAsmNeed:'bara det som behövs vid varje stopp', rtFillAll:'Tankar fullt vid varje stopp.', rtFillPart:'Tankar bara det som behövs vid varje stopp.', rtFillFallback:'Full tank vid varje stopp gick inte ihop för den här resan, så vissa stopp tankar bara det som behövs.' });
+Object.assign(I18N.fr, { rtFill:'Plein à l’arrêt', rtFillFull:'Faire le plein', rtFillNeed:'Seulement le nécessaire', rtFillH:'« Faire le plein » est simple à suivre et coûte quelques euros de plus. « Seulement le nécessaire » donne le plan le moins cher.', rtAsmFull:'plein à chaque arrêt', rtAsmNeed:'seulement le nécessaire à chaque arrêt', rtFillAll:'Plein à chaque arrêt.', rtFillPart:'Seulement le nécessaire à chaque arrêt.', rtFillFallback:'Un plein à chaque arrêt n’a pas fonctionné pour ce trajet : certains arrêts ne prennent que le nécessaire.' });
+Object.assign(I18N.es, { rtFill:'Repostaje en la parada', rtFillFull:'Llenar el depósito', rtFillNeed:'Solo lo necesario', rtFillH:'«Llenar el depósito» es fácil de seguir y cuesta unos euros más. «Solo lo necesario» da el plan más barato.', rtAsmFull:'depósito lleno en cada parada', rtAsmNeed:'solo lo necesario en cada parada', rtFillAll:'Llena el depósito en cada parada.', rtFillPart:'Reposta solo lo necesario en cada parada.', rtFillFallback:'Llenar el depósito en cada parada no fue posible en este viaje, así que algunas paradas toman solo lo necesario.' });
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);   // one pass with a function: '$&' or '{n}' inside a value is never re-read as a pattern or a placeholder
@@ -6786,7 +6791,7 @@ async function cheapestInView() {
 // country files already in the browser. Ranking = price incl. estimated detour fuel; display = "below route median".
 // ════════════════════════════════════════════════════
 // acpOv: a public AC price taken from a shared plan link; it wins over My car's own price for this session only and is never saved
-const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
+const rt = { acpOv:null, shMsg:null, from:null, to:null, fromTxt:'', toTxt:'', vias:[], w:3, hideUnknown:false, fill:'full', fuelPct:100, battPct:100, reserve:null, cruise:null, vot:0, destChg:false, asmOpen:false, detOpen:false, res:null, busy:false, status:'', pick:null, layer:null };
 // Routing adapter: ONE place that talks to a router. rtRoute(a, b) -> { pts:[[lat,lon]...], km, min, ferry }.
 // Switch provider by changing ROUTER (also add its host to the CSP connect-src and update rtNote; see docs/ROUTING_BACKEND_2026-11-06.md).
 const ROUTER = 'valhalla';                     // 'valhalla' (FOSSGIS public, ferries) with automatic OSRM fallback | 'osrm' (demo, no ferries)
@@ -6931,7 +6936,7 @@ function rtDP(nodes, g) {
     for (let j = i + 1; j < N; j++) {
       const nd = nodes[j], a = F - (nd.Pc - Pfrom) - nd.dL / 2;
       if (a < Math.min(g.reserve, F) - 1e-9) break;            // pumps further on are even harder to reach (start fuel already under the reserve: only a burn-free arrival passes)
-      for (let T = Math.max(Math.ceil(a + nd.minq - 1e-9), 0); T <= Tmax; T++) {
+      for (let T = g.full ? (a + nd.minq <= Tmax + 1e-9 ? Tmax : Tmax + 1) : Math.max(Math.ceil(a + nd.minq - 1e-9), 0); T <= Tmax; T++) {   // g.full: every stop fills the tank (only where at least minq fits)
         const cc = c + (T - a) * nd.eur + g.stopX + nd.x;
         if (cc < best[j][k + 1][T]) { best[j][k + 1][T] = cc; prev[j][k + 1][T] = { j: back ? back.j : -1, k: back ? back.k : 0, T: back ? back.T : 0, a }; }
       }
@@ -6974,15 +6979,16 @@ function rtMakePlan(inp) {
     });
   };
   const base = { v: 1, km: o.km, minFillL: minFill, asm: { cruise: asm.cruise || null, vot, fuelPct: asm.fuelPct, battPct: asm.battPct, reserveL: o.reserveL, margin: RT_MARGIN } };
-  let cs = build(0);
-  const mk = relaxed => {
+  const cs0 = build(0); let cs = cs0;
+  const mk = (relaxed, full) => {
     const nodes = cs.map(x => ({ Pc: hi.P(x.h.L), dL: x.dL, eur: x.c.eur + x.c.band / 2, x: x.dEl + vot * x.c.detourKm / 60,
       minq: relaxed ? 1 : (ref && x.c.eur <= ref * 0.88 ? Math.min(minFill, RT_LITRES_SMALL) : minFill) }));
-    return rtDP(nodes, { fuel0: o.fuelL, tank: o.tank, reserve: o.reserveL, Ptot: hi.P(hi.total.L), maxStops: rtMaxStops(o.km), stopX, endEur: inp.endEur || 0 });
+    return rtDP(nodes, { fuel0: o.fuelL, tank: o.tank, reserve: o.reserveL, Ptot: hi.P(hi.total.L), maxStops: rtMaxStops(o.km), stopX, endEur: inp.endEur || 0, full });
   };
-  let sol = mk(false), relaxed = false;
-  if (!sol) { sol = mk(true); relaxed = !!sol; }
-  if (!sol) { cs = build(1); sol = mk(false); if (!sol) { sol = mk(true); relaxed = !!sol; } }
+  const solve = full => { cs = cs0; const r = { s: mk(false, full), rx: false }; if (!r.s) { r.s = mk(true, full); r.rx = !!r.s; } if (!r.s) { cs = build(1); r.s = mk(false, full); if (!r.s) { r.s = mk(true, full); r.rx = !!r.s; } } return r; };
+  let filled = asm.fill === 'full', r0 = solve(filled);   // the page always passes rt.fill ('full' by default); callers that pass nothing keep the cheapest-plan behaviour
+  if (!r0.s && filled) { r0 = solve(false); filled = false; }      // a full tank at every stop does not always work out (a stop only fits when at least the minimum fill is missing): then partial fills, and the page says so
+  let sol = r0.s, relaxed = r0.rx;
   const kwh = mid.K(tot.L);
   const energy = { elecKm: o.elecKm > 0 ? Math.min(o.km, mid.batEmpty != null ? mid.batEmpty : o.km) : 0, batEmptyAt: mid.batEmpty, kwh, elecCost: o.elecEur && kwh ? kwh * o.elecEur : null, petrolL: mid.P(tot.L), reachKm: 0 };
   energy.reachKm = rtReachKm(hi, o.fuelL - o.reserveL, o);   // how far the start fuel alone carries (with the margin)
@@ -6993,7 +6999,7 @@ function rtMakePlan(inp) {
     const need = Math.ceil(Math.max(0, o.km - energy.reachKm) / Math.max(1, full));
     why = { kind: bad ? 'gap' : need > rtMaxStops(o.km) ? 'stops' : 'other', full: Math.round(full), need, max: rtMaxStops(o.km), at: bad ? Math.round(bad.at) : 0, to: bad ? Math.round(bad.to) : 0 };
   }
-  if (!sol) return { ...base, why, status: 'unreachable', stops: [], nStops: 0, relaxed: false, energy, fresh: rtFresh([]), areaFresh: rtFresh(cs.map(x => x.c)), time: { driveMin: tot.min, stopMin: 0, detourMin: 0, totalMin: tot.min }, fuelCost: null, arrive: null, track: [] };
+  if (!sol) return { ...base, why, filled, status: 'unreachable', stops: [], nStops: 0, relaxed: false, energy, fresh: rtFresh([]), areaFresh: rtFresh(cs.map(x => x.c)), time: { driveMin: tot.min, stopMin: 0, detourMin: 0, totalMin: tot.min }, fuelCost: null, arrive: null, track: [] };
   // walk the chosen stops with mid, pessimistic and optimistic energy to get litres, arrival fuel and the cost range
   let leave = o.fuelL, Pfrom = 0; const stops = [];
   sol.stops.forEach(s => {
@@ -7017,7 +7023,7 @@ function rtMakePlan(inp) {
     while (si < n && stops[si].along <= p.km) { const a = stops[si].along, b = batt(mid.Lat(a).L); track.push({ km: a, fuelL: fuelAt(a), batt: b }); bought += stops[si].litres; track.push({ km: a, fuelL: fuelAt(a), batt: b }); si++; }
     track.push({ km: p.km, fuelL: fuelAt(p.km), batt: batt(p.L) });
   }
-  return { ...base, status: 'ok', relaxed, undated: stops.some(s => s.age == null), nUndated: stops.filter(s => s.age == null).length, stops, nStops: n, energy, arrive, fuelCost: n ? fc : { mid: 0, lo: 0, hi: 0 },
+  return { ...base, status: 'ok', relaxed, filled, undated: stops.some(s => s.age == null), nUndated: stops.filter(s => s.age == null).length, stops, nStops: n, energy, arrive, fuelCost: n ? fc : { mid: 0, lo: 0, hi: 0 },
     fresh: rtFresh(stops), areaFresh: rtFresh(cs.map(x => x.c)), track,
     time: { driveMin: tot.min, stopMin: n * RT_STOP_MIN, detourMin, totalMin: tot.min + n * RT_STOP_MIN + detourMin },
     segs: segs.map((s, i) => ({ km: s.km, min: s.min, f: s.f, ferry: !!s.ferry, kmEnd: mid.pts[i + 1].km })) };
@@ -7383,9 +7389,11 @@ function renderRoute() {
         <button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('to')">${ico('map')}</button></div>
       ${rt.vias.length < 2 ? `<button type="button" class="rt-lnk" style="margin:0 0 10px" onclick="rtViaAdd()">+ ${t('rtStopAdd')}</button>` : ''}
       ${(() => { const o = rtInputs(), chip = (k, v, on, txt) => `<button class="${on ? 'on' : ''}" data-k="${k}" data-v="${v}" aria-pressed="${on}" onclick="rtSet('${k}',${v})">${txt}</button>`, rs = [...new Set([o.defReserve, 5, 10, 15])].sort((a, b) => a - b);
-        const sum = [t('rtAsmCar', { t: Math.round(o.tank), c: dec((Math.round(o.cons * 10) / 10).toFixed(1)) }), t('rtAsmFuel', { f: rt.fuelPct }) + (o.phev ? ' ' + t('rtAsmBatt', { b: rt.battPct }) : ''), rt.cruise ? t('rtAsmSpd', { s: rt.cruise }) : t('rtAsmSpdAuto'), rt.vot ? t('rtAsmVot', { v: rtM(rt.vot) }) : t('rtAsmVotNo'), ...(o.phev && rt.destChg ? [t('rtAsmDest')] : [])].join(' · ');
+        const sum = [t('rtAsmCar', { t: Math.round(o.tank), c: dec((Math.round(o.cons * 10) / 10).toFixed(1)) }), (rt.fill === 'need' ? t('rtAsmNeed') : t('rtAsmFull')), t('rtAsmFuel', { f: rt.fuelPct }) + (o.phev ? ' ' + t('rtAsmBatt', { b: rt.battPct }) : ''), rt.cruise ? t('rtAsmSpd', { s: rt.cruise }) : t('rtAsmSpdAuto'), rt.vot ? t('rtAsmVot', { v: rtM(rt.vot) }) : t('rtAsmVotNo'), ...(o.phev && rt.destChg ? [t('rtAsmDest')] : [])].join(' · ');
         return `<details class="car-box ev-box mc-fold" id="rt-asm" ${rt.asmOpen ? 'open' : ''} ontoggle="rt.asmOpen=this.open"><summary>${t('rtAsmTitle')}<small>${esc(sum)}</small></summary>
           <p class="mc-hint">${t('rtAsmIntro')}</p>
+          <label>${t('rtFill')}</label><div class="tchips">${[['full', t('rtFillFull')], ['need', t('rtFillNeed')]].map(([v, x]) => `<button class="${rt.fill === v ? 'on' : ''}" data-k="fill" data-v="${v}" aria-pressed="${rt.fill === v}" onclick="rtSet('fill','${v}')">${x}</button>`).join('')}</div>
+          <p class="mc-hint">${t('rtFillH')}</p>
           <label>${t('rtFuelNow')}</label><div class="tchips">${[25, 50, 75, 100].map(v => chip('fuelPct', v, rt.fuelPct === v, v + ' %')).join('')}</div>`
           + (o.phev ? `<label>${t('rtBattNow')}</label><div class="tchips">${[0, 50, 100].map(v => chip('battPct', v, rt.battPct === v, v + ' %')).join('')}</div>` : '')
           + `<label>${t('rtReserve')}</label><div class="tchips">${rs.map(v => chip('reserve', v, o.reserveL === v, v + ' L')).join('')}</div>
@@ -7599,7 +7607,7 @@ function rtCorridor() {
 function rtRate(cc) { return fxRank(cc); }
 // The plan (ONE object, shape in rtMakePlan) from every priced pump near the route; the pure code drops unverified ones. Wave 2 reads R.plan, R.speed and rtExtras.
 function rtPlanNow(rows) {
-  const R = rt.res, o = R.o, asm = { cruise: rt.cruise, vot: rt.vot, fuelPct: rt.fuelPct, battPct: rt.battPct }, ref = R.median;
+  const R = rt.res, o = R.o, asm = { cruise: rt.cruise, vot: rt.vot, fuelPct: rt.fuelPct, battPct: rt.battPct, fill: rt.fill }, ref = R.median;
   const dated = {};                      // a country whose feed carries no price times at all (Germany via ANWB) would otherwise never be planned while any dated country is on the route
   // "dated" counts REAL source timestamps only: German pumps read from the official feed carry checked_at (a read time) and must not
   // tip the whole country into "has dated pumps", which would stop the planner from using the undated ANWB pumps around them
@@ -8047,7 +8055,7 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
   return `<section class="tcard rt-plan" id="rt-plan" aria-label="${esc(t('rtPlanH'))}">
     <h3>${ico('pump')} ${t('rtPlanH')}</h3>
     <div class="tverdict ${cls}" id="rt-plan-head" aria-live="polite">${head}<small>${sub}</small></div>
-    <p class="rt-assume">${t('rtAssume', { t: Math.round(I.tank), c: dec((Math.round(I.cons * 10) / 10).toFixed(1)), s: rt.fuelPct === 100 ? t('rtStartFull') : t('rtStartPct', { p: rt.fuelPct }), r: rtL0(I.reserveL) })} <button type="button" class="rt-lnk" onclick="rtOpenAsm()">${t('rtAssumeEdit')}</button></p>
+    <p class="rt-assume">${t('rtAssume', { t: Math.round(I.tank), c: dec((Math.round(I.cons * 10) / 10).toFixed(1)), s: rt.fuelPct === 100 ? t('rtStartFull') : t('rtStartPct', { p: rt.fuelPct }), r: rtL0(I.reserveL) })} ${P.nStops ? t(P.filled ? 'rtFillAll' : rt.fill === 'full' ? 'rtFillFallback' : 'rtFillPart') : ''} <button type="button" class="rt-lnk" onclick="rtOpenAsm()">${t('rtAssumeEdit')}</button></p>
     ${rtDestLine(R, P)}
     <div id="rt-plan-stops">${stops}</div>
     ${fresh ? `<p class="rt-fresh" id="rt-plan-fresh">${fresh}</p>` : ''}
