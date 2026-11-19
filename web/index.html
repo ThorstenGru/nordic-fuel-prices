@@ -479,6 +479,11 @@ button.gb { border:none; cursor:pointer; position:relative; padding:2px 8px; }
 .rt-sum { font-size:.82rem; color:var(--sub); margin:10px 0 4px; line-height:1.5; }
 .rt-stop { display:grid; grid-template-columns:30px 1fr auto; gap:10px; padding:10px 0; border-top:1px solid var(--line); align-items:start; cursor:pointer; }
 .rt-n { width:28px; height:28px; border-radius:50%; background:var(--acc-btn); color:var(--on-acc); font-weight:800; font-size:.8rem; display:flex; align-items:center; justify-content:center; }
+.rt-pin.dot { width:14px; height:14px; border-width:2px; background:var(--sub); }
+.rt-n.dot { width:12px; height:12px; margin:8px 0 0 8px; background:var(--sub); }
+.rt-assume { font-size:.78rem; color:var(--sub); margin:6px 0 8px; line-height:1.45; }
+.rt-sd { margin-top:4px; }
+.rt-sd summary { font-size:.72rem; color:var(--sub); cursor:pointer; min-height:28px; display:flex; align-items:center; }
 .rt-stop .nm { font-weight:700; font-size:.92rem; }
 .rt-stop .sub { font-size:.72rem; color:var(--sub); line-height:1.45; margin-top:2px; }
 .rt-stop .pr { text-align:right; font-weight:800; font-size:1.05rem; }
@@ -3808,6 +3813,15 @@ Object.assign(I18N.sv, {
 for (const l of ['en', 'sv', 'de', 'fr', 'es']) if (I18N[l].rtNote) I18N[l].rtNote += ' ' + (I18N[l].rtShNote || I18N.en.rtShNote);   // the privacy text stays complete in every language (de/fr/es show the English sentence)
 localizeCN();
 
+Object.assign(I18N.en, { rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank and settings', rtCarEdit:'Change car and consumption', rtAssume:'Calculated for a {t} L tank, {c} L/100 km, {s}.',
+  rtStartFull:'starting with a full tank', rtStartPct:'starting with the tank {p} % full', rtAssumeEdit:'Change', rtStopMore:'Source and details',
+  rtDataFail:'Fuel prices for this route could not be loaded ({c}). Check your connection and try again.', rtRetry:'Try again', rtMissing:'Prices from {c} could not be loaded, so they are not part of this plan.' });
+Object.assign(I18N.de, { rtAsmCar:'{t}-L-Tank · {c} L/100 km', rtAsmTitle:'Tank und Einstellungen', rtCarEdit:'Auto und Verbrauch ändern', rtAssume:'Berechnet für einen {t}-L-Tank, {c} L/100 km, {s}.',
+  rtStartFull:'Start mit vollem Tank', rtStartPct:'Start mit {p} % Tankfüllung', rtAssumeEdit:'Ändern', rtStopMore:'Quelle und Details',
+  rtDataFail:'Die Spritpreise für diese Route konnten nicht geladen werden ({c}). Bitte Verbindung prüfen und erneut versuchen.', rtRetry:'Erneut versuchen', rtMissing:'Preise aus {c} konnten nicht geladen werden und fehlen deshalb in diesem Plan.' });
+Object.assign(I18N.sv, { rtAsmCar:'{t} L tank · {c} L/100 km', rtAsmTitle:'Tank och inställningar', rtCarEdit:'Ändra bil och förbrukning', rtAssume:'Beräknat för en tank på {t} L, {c} L/100 km, {s}.',
+  rtStartFull:'start med full tank', rtStartPct:'start med tanken {p} % full', rtAssumeEdit:'Ändra', rtStopMore:'Källa och detaljer',
+  rtDataFail:'Bränslepriserna för rutten kunde inte laddas ({c}). Kontrollera anslutningen och försök igen.', rtRetry:'Försök igen', rtMissing:'Priser från {c} kunde inte laddas och ingår därför inte i planen.' });
 function t(key, vars) {
   let s = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => k in vars ? vars[k] : m);   // one pass with a function: '$&' or '{n}' inside a value is never re-read as a pattern or a placeholder
@@ -7298,7 +7312,6 @@ function renderRoute() {
   const lbl = (side) => rt[side] ? esc(rt[side + 'Txt'] || '') : esc(rt[side + 'Txt'] || '');
   el.innerHTML = (rt.shMsg ? `<p class="cmp-note" id="rt-sh-msg" role="status" style="margin:0 0 10px">${esc(rt.shMsg())}</p>` : '') + `
     <div class="tcard">
-      <h3>${ico('route')} ${t('routeTab')} <span class="rt-badge">${t('rtPreview')}</span></h3>
       <label style="margin-top:0">${t('rtFrom')}</label>
       <div class="rt-field"><input id="rt-from" data-ac="from" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" autocomplete="off" value="${lbl('from')}" placeholder="${t('rtPh')}" oninput="rt.fromTxt=this.value;rt.from=null" onkeydown="if(event.key==='Enter')rtGo()">
         <button type="button" title="${t('rtMyLoc')}" aria-label="${t('rtMyLoc')}" onclick="rtUseMe()">${ico('locate')}</button><button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('from')">${ico('map')}</button></div>
@@ -7306,29 +7319,29 @@ function renderRoute() {
       <label>${t('rtTo')}</label>
       <div class="rt-field"><input id="rt-to" data-ac="to" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ac-list" autocomplete="off" value="${lbl('to')}" placeholder="${t('rtPh')}" oninput="rt.toTxt=this.value;rt.to=null" onkeydown="if(event.key==='Enter')rtGo()">
         <button type="button" title="${t('rtPickMap')}" aria-label="${t('rtPickMap')}" onclick="rtPickOnMap('to')">${ico('map')}</button></div>
-      ${rt.vias.length < 2 ? `<button type="button" class="mc-btn" style="margin-top:8px" onclick="rtViaAdd()">+ ${t('rtStopAdd')}</button>` : ''}
-      <label>${t('rtWidth')}</label>
-      <div class="tchips">${[2, 3, 5].map(w => `<button class="${rt.w === w ? 'on' : ''}" onclick="rt.w=${w};rt.res=null;renderRoute()">${w} km</button>`).join('')}</div>
+      ${rt.vias.length < 2 ? `<button type="button" class="rt-lnk" style="margin:0 0 10px" onclick="rtViaAdd()">+ ${t('rtStopAdd')}</button>` : ''}
       ${(() => { const o = rtInputs(), chip = (k, v, on, txt) => `<button class="${on ? 'on' : ''}" data-k="${k}" data-v="${v}" aria-pressed="${on}" onclick="rtSet('${k}',${v})">${txt}</button>`, rs = [...new Set([o.defReserve, 5, 10, 15])].sort((a, b) => a - b);
-        const sum = [t('rtAsmFuel', { f: rt.fuelPct }) + (o.phev ? ' ' + t('rtAsmBatt', { b: rt.battPct }) : ''), rt.cruise ? t('rtAsmSpd', { s: rt.cruise }) : t('rtAsmSpdAuto'), rt.vot ? t('rtAsmVot', { v: rtM(rt.vot) }) : t('rtAsmVotNo'), ...(o.phev && rt.destChg ? [t('rtAsmDest')] : [])].join(' · ');
+        const sum = [t('rtAsmCar', { t: Math.round(o.tank), c: dec((Math.round(o.cons * 10) / 10).toFixed(1)) }), t('rtAsmFuel', { f: rt.fuelPct }) + (o.phev ? ' ' + t('rtAsmBatt', { b: rt.battPct }) : ''), rt.cruise ? t('rtAsmSpd', { s: rt.cruise }) : t('rtAsmSpdAuto'), rt.vot ? t('rtAsmVot', { v: rtM(rt.vot) }) : t('rtAsmVotNo'), ...(o.phev && rt.destChg ? [t('rtAsmDest')] : [])].join(' · ');
         return `<details class="car-box ev-box mc-fold" id="rt-asm" ${rt.asmOpen ? 'open' : ''} ontoggle="rt.asmOpen=this.open"><summary>${t('rtAsmTitle')}<small>${esc(sum)}</small></summary>
           <p class="mc-hint">${t('rtAsmIntro')}</p>
           <label>${t('rtFuelNow')}</label><div class="tchips">${[25, 50, 75, 100].map(v => chip('fuelPct', v, rt.fuelPct === v, v + ' %')).join('')}</div>`
           + (o.phev ? `<label>${t('rtBattNow')}</label><div class="tchips">${[0, 50, 100].map(v => chip('battPct', v, rt.battPct === v, v + ' %')).join('')}</div>` : '')
           + `<label>${t('rtReserve')}</label><div class="tchips">${rs.map(v => chip('reserve', v, o.reserveL === v, v + ' L')).join('')}</div>
+          <label>${t('rtWidth')}</label><div class="tchips">${[2, 3, 5].map(w => `<button class="${rt.w === w ? 'on' : ''}" aria-pressed="${rt.w === w}" onclick="rt.w=${w};rt.res=null;renderRoute()">${w} km</button>`).join('')}</div>
+          <label class="nav-rem" style="margin-top:10px"><input type="checkbox" ${rt.hideUnknown ? 'checked' : ''} onchange="rt.hideUnknown=this.checked;if(rt.res)rtRank()"> <span>${t('rtHideUnknown')}</span></label>
+          <p class="mc-hint"><button type="button" class="rt-lnk" onclick="goTab('car')">${t('rtCarEdit')}</button></p>
           <label>${t('rtSpeed')}</label><div class="tchips">${[null, 90, 110, 130].map(v => chip('cruise', v, rt.cruise === v, v ? v + ' km/h' : t('rtSpeedAuto'))).join('')}</div>
           <p class="mc-hint">${t('rtSpeedH')}</p><div id="rt-spd-out">${rtSpeedLine(rt.res)}</div>
           <label>${t('rtVot')}</label><div class="tchips">${[0, 10, 20, 40].map(v => chip('vot', v, rt.vot === v, v ? rtM(v) + '/h' : t('rtVotOff'))).join('')}</div>
           <p class="mc-hint">${t('rtVotH')}</p>`
           + (o.phev ? `<label class="nav-rem"><input type="checkbox" data-k="destChg" data-v="${rt.destChg}" ${rt.destChg ? 'checked' : ''} onchange="rtSet('destChg',this.checked)"> <span>${t('rtDestChg')}</span></label><p class="mc-hint">${t('rtDestChgH')}</p>` : '') + `</details>`; })()}
-      <label class="nav-rem" style="margin-top:10px"><input type="checkbox" ${rt.hideUnknown ? 'checked' : ''} onchange="rt.hideUnknown=this.checked;if(rt.res)rtRank()"> <span>${t('rtHideUnknown')}</span></label>
       <button class="rt-go" id="rt-go" onclick="rtGo()" ${rt.busy ? 'disabled' : ''}>${ico('search')} ${t('rtGo')}</button>
-      ${rt.res && !rt.res.error && rt.from && rt.to ? `<div class="rt-sh"><button type="button" class="mc-btn" id="rt-sh-btn" onclick="shShare()">${ico('share')} ${t('rtShBtn')}</button><p class="cmp-note" style="margin-top:6px">${t('rtShLine')}</p><div id="rt-sh-out"></div></div>` : ''}
     </div>
     <div id="rt-out"></div>
     <p class="cmp-note">${t('rtNote')}</p>${(o => o.phev && o.T != null ? `<p class="cmp-note">${esc(t('rtTemp', { t: Math.round(o.T), s: t('mxSrc_' + o.tSrc) }))}</p>` : '')(rtInputs())}`;
   rtRenderOut();
 }
+function rtOpenAsm() { rt.asmOpen = true; const d = document.getElementById('rt-asm'); if (d) { d.open = true; d.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
 function rtSetStatus(msg) { rt.status = msg; const o = document.getElementById('rt-out'); if (o && rt.busy) o.innerHTML = `<p class="empty" style="padding:14px 0"><i class="spin"></i> ${esc(msg)}</p>`; }
 
 function rtViaAdd() { if (rt.vias.length >= 2) return; rt.vias.push({ txt: '', ll: null }); rt.res = null; renderRoute(); document.getElementById('rt-via' + (rt.vias.length - 1))?.focus(); }
@@ -7428,7 +7441,8 @@ async function rtGo(fromShare) {
       rtSetStatus(t('rtLoading', { c: todo.map(c => CNAMES[c] || c).join(', ') }));
       await Promise.all(todo.map(cc => loadCC(cc)));
     }
-    rt.res = { pts, km: rte.km, min: rte.min, segs: rte.segs || null, ferry: rte.ferry, toll: !!rte.toll, via: rte.via, fb: !!rte.fb, countries: need, fuel: rtFuelKey(), alts };
+    const missing = needAll.filter(cc => !loaded.has(cc));   // a data file that failed to load must not look like "no pump near the route"
+    rt.res = { pts, km: rte.km, min: rte.min, segs: rte.segs || null, ferry: rte.ferry, toll: !!rte.toll, via: rte.via, fb: !!rte.fb, countries: need, fuel: rtFuelKey(), alts, missing, dataFail: !!needAll.length && missing.length === needAll.length };
     rt.res.cc = rtRouteCountries(pts, needAll); alts.forEach(x => { x.cc = rtRouteCountries(x.pts, needAll); });
     await Promise.all([rtFaresLoad(), rtCyclesLoad()]);    // neither throws: null when a file cannot be loaded
     rtCorridor();
@@ -7440,6 +7454,7 @@ async function rtGo(fromShare) {
   }
   rt.busy = false;
   renderRoute();
+  if (rt.res && !rt.res.error && !rt.res.dataFail) document.getElementById('rt-plan')?.scrollIntoView({ block: 'start', behavior: 'smooth' });   // the answer, not the form, is what the user came for
 }
 
 // ── share a plan as a link (pure part: SH-PURE block) ──
@@ -7593,7 +7608,7 @@ function rtRank() {
   rtRenderOut(); rtDraw(false);
 }
 // Plan card. Waves 2 and 3 fill the containers #rt-x-strip, -cost, -alts, -tank, -dep, -nav, -ac by setting rtExtras.<name> = (R, plan) => html
-const rtX = ['cost', 'nav', 'costd', 'navd', 'tank', 'dep', 'alts', 'strip', 'ac', 'chg'], rtXMore = 2, rtExtras = {};   // the first two (trip total, navigation buttons) stay in view; the rest sit in the one Details fold
+const rtX = ['nav', 'cost', 'costd', 'navd', 'tank', 'dep', 'alts', 'strip', 'ac', 'chg'], rtXMore = 2, rtExtras = {};   // the first two (trip total, navigation buttons) stay in view; the rest sit in the one Details fold
 const rtLet = i => 'ABC'[i] || String(i + 1);
 const rtL0 = v => Math.max(0, Math.round(v));
 const rtHm = m => { const h = Math.floor(Math.round(m) / 60), r = Math.round(m) % 60; return (h ? h + ' h ' : '') + r + ' min'; };
@@ -7732,14 +7747,23 @@ function rtStripHtml(R, P) {
     <div class="rt-lg">${leg}</div><p class="rt-fresh" id="rt-strip-cap">${esc(cap)}</p></div>`;
 }
 const rtNavDest = R => (rt.toTxt || '').trim() || t('rtNavDest');
+// every waypoint of the trip in driving order: the user's own stops (rt.vias) and the planned fuel stops, ordered by distance along the route
+function rtNavItems(R, P) {
+  const pts = R.pts, seg = (i) => hKm(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]), cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + seg(i));
+  const scale = R.km / (cum[cum.length - 1] || 1);
+  const alongOf = ll => { let b = 1e9, bi = 0; pts.forEach((p, i) => { const d = hKm(p[0], p[1], ll.lat, ll.lon); if (d < b) { b = d; bi = i; } }); return cum[bi] * scale; };
+  return [...rt.vias.filter(v => v.ll).map((v, i) => ({ lat: v.ll.lat, lon: v.ll.lon, along: alongOf(v.ll), via: true, name: v.txt.trim() })),
+    ...P.stops.map((s, i) => ({ lat: s.s.lat, lon: s.s.lon, along: s.along, name: rtPumpName(s), s, i }))].sort((a, b) => a.along - b.along);
+}
 function rtNavHtml(R, P, detail) {   // detail=false: heading + buttons; true: hints and leg list (inside Details)
-  if (P.status !== 'ok' || !P.nStops || rt.vias.length) return '';   // shortcut: with via stops the export would drop them; add the stops in route order when asked for
-  const stops = P.stops.map(s => ({ lat: s.s.lat, lon: s.s.lon })), e = R.pts[R.pts.length - 1], dest = rtNavDest(R);
+  if (P.status !== 'ok' || (!P.nStops && !rt.vias.length)) return '';
+  const items = rtNavItems(R, P), stops = items.map(x => ({ lat: x.lat, lon: x.lon })), e = R.pts[R.pts.length - 1], dest = rtNavDest(R);
   const L = rtNavLinks(stops, { lat: e[0], lon: e[1] }), A = { waze: [t('rtNavWazeBtn'), L.waze[0]], google: [t('rtNavGoogle'), L.google], apple: [t('rtNavApple'), L.apple] };
   const iosOk = NAV_APPS.find(x => x.id === 'apple')?.show();
   const order = ['waze', 'google', 'apple'].filter(k => A[k][1] && (k !== 'apple' || iosOk)), pi = order.indexOf(navPref); if (pi > 0) order.unshift(order.splice(pi, 1)[0]);   // the app you picked in App settings goes first
   const lnk = (u, x, c) => `<a${c ? ` class="${c}"` : ''} href="${esc(u)}" target="_blank" rel="noopener noreferrer">${x}</a>`;
-  const legs = [...P.stops.map((s, i) => t('rtNavLeg', { l: rtLet(i), n: esc(rtPumpName(s)) })), t('rtNavFinal', { n: esc(dest) })].map((x, i) => `<li>${lnk(L.waze[i], x)}</li>`).join('');
+  const legs = [...items.map(x => t('rtNavLeg', { l: x.via ? '→' : rtLet(x.i), n: esc(x.name) })), t('rtNavFinal', { n: esc(dest) })].map((x, i) => `<li>${lnk(L.waze[i], x)}</li>`).join('');
   if (!detail) return `<div class="rt-xc"><h4 class="rt-xh">${t('rtNavH')}</h4>
     <div class="rt-navb">${order.map((k, i) => lnk(A[k][1], esc(A[k][0]), i ? '' : 'pri')).join('')}<button type="button" onclick="rtNavCopy()">${t('rtNavCopy')}</button></div></div>`;
   return `<div class="rt-xc">
@@ -7747,9 +7771,9 @@ function rtNavHtml(R, P, detail) {   // detail=false: heading + buttons; true: h
     <ol class="rt-legs" aria-label="${esc(t('rtNavLegs'))}">${legs}</ol><p class="mc-hint">${t('rtNavPriv')}</p></div>`;
 }
 async function rtNavCopy() {
-  const R = rt.res, P = R && R.plan; if (!P || !P.stops.length) return;
+  const R = rt.res, P = R && R.plan; if (!P || (!P.stops.length && !rt.vias.length)) return;
   const e = R.pts[R.pts.length - 1];
-  const txt = t('rtNavTxtH') + '\n' + rtNavText([...P.stops.map((s, i) => ({ label: t('rtNavTxtLine', { l: rtLet(i), n: rtPumpName(s), p: cTxt(s.p.price, s.p.currency), q: rtL0(s.litres) }), p: { lat: s.s.lat, lon: s.s.lon } })),
+  const txt = t('rtNavTxtH') + '\n' + rtNavText([...rtNavItems(R, P).map(x => ({ label: x.via ? '→ ' + x.name : t('rtNavTxtLine', { l: rtLet(x.i), n: x.name, p: cTxt(x.s.p.price, x.s.p.currency), q: rtL0(x.s.litres) }), p: { lat: x.lat, lon: x.lon } })),
     { label: t('rtNavTxtDest', { n: rtNavDest(R) }), p: { lat: e[0], lon: e[1] } }]);
   try { await navigator.clipboard.writeText(txt); toast(t('rtNavCopied')); } catch (_) { toast(txt, 9000); }
 }
@@ -7948,8 +7972,8 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
     const nm = s.s.name || s.s.brand || '—', why = s.age == null ? t('rtWhyUndated') : s.reason === 'cheap' ? t('rtWhyCheap', { d: Math.round(s.refDelta * 100), m: rtPL(R.median) }) : t('rtWhyNeed');
     return `<div class="rt-stop" onclick="rtPlanFocus(${i})"><div class="rt-n">${rtLet(i)}</div>
       <div><div class="nm">${FLAGS[s.s.country] || ''} ${esc(nm)}</div>
-        <div class="sub">${esc(s.s.city || '')} · ${t('rtAlong', { k: Math.round(s.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: s.detourKm < 1 ? '<1' : s.detourKm.toFixed(1) })}<br><b>${t('rtBuy', { l: rtL0(s.litres), c: rtRng(s.cost.lo, s.cost.hi) })}</b><br>${t('rtTankLine', { a: rtL0(s.fuelArrive), b: rtL0(s.fuelAfter) })}<br>${esc(why)}${rtNoonHtml(s)}<br>${esc(srcName(s.p.source || s.s.source || ''))}${s.p.source || s.s.source ? ' · ' : ''}${ageTxt(s.p.updated_at)}${s.age == null ? ' · ' + t('rtUndated') : ''}</div>
-        ${rtBackupHtml(R, s)}<div class="acts"><button onclick="event.stopPropagation();doNav('${escId(s.s.id)}')">${ico('go', 'sm')} ${t('go')}</button></div></div>
+        <div class="sub">${esc(s.s.city || '')} · ${t('rtAlong', { k: Math.round(s.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: s.detourKm < 1 ? '<1' : s.detourKm.toFixed(1) })}<br><b>${t('rtBuy', { l: rtL0(s.litres), c: rtRng(s.cost.lo, s.cost.hi) })}</b><br>${t('rtTankLine', { a: rtL0(s.fuelArrive), b: rtL0(s.fuelAfter) })}<br>${esc(why)}</div>
+        <details class="rt-sd" onclick="event.stopPropagation()"><summary>${t('rtStopMore')}</summary><div class="sub">${esc(srcName(s.p.source || s.s.source || ''))}${s.p.source || s.s.source ? ' · ' : ''}${ageTxt(s.p.updated_at)}${s.age == null ? ' · ' + t('rtUndated') : ''}${rtNoonHtml(s)}</div>${rtBackupHtml(R, s)}</details><div class="acts"><button onclick="event.stopPropagation();doNav('${escId(s.s.id)}')">${ico('go', 'sm')} ${t('go')}</button></div></div>
       <div class="pr">${cTxt(s.p.price, s.p.currency)}<small>±${Math.round(s.band * 100)} ¢/L</small></div></div>`;
   }).join('');
   const F = n ? P.fresh : P.areaFresh, hrs = F.minH == null ? '' : Math.round(F.minH) === Math.round(F.maxH) ? t('rtFrOne', { a: Math.max(1, Math.round(F.minH)) }) : t('rtFrRange', { a: Math.round(F.minH), b: Math.round(F.maxH) });
@@ -7959,6 +7983,7 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
   return `<section class="tcard rt-plan" id="rt-plan" aria-label="${esc(t('rtPlanH'))}">
     <h3>${ico('pump')} ${t('rtPlanH')}</h3>
     <div class="tverdict ${cls}" id="rt-plan-head" aria-live="polite">${head}<small>${sub}</small></div>
+    <p class="rt-assume">${t('rtAssume', { t: Math.round(I.tank), c: dec((Math.round(I.cons * 10) / 10).toFixed(1)), s: rt.fuelPct === 100 ? t('rtStartFull') : t('rtStartPct', { p: rt.fuelPct }) })} <button type="button" class="rt-lnk" onclick="rtOpenAsm()">${t('rtAssumeEdit')}</button></p>
     <div id="rt-plan-stops">${stops}</div>
     ${fresh ? `<p class="rt-fresh" id="rt-plan-fresh">${fresh}</p>` : ''}
     ${rtX.slice(0, rtXMore).map(k => `<div id="rt-x-${k}">${rtExtras[k] ? rtExtras[k](R, P) : ''}</div>`).join('')}
@@ -7989,12 +8014,13 @@ function rtRenderOut() {
   const R = rt.res;
   if (!R) { o.innerHTML = ''; return; }
   if (R.error) { o.innerHTML = `<p class="empty">${t('rtFail')}</p>`; return; }
+  if (R.dataFail) { o.innerHTML = `<p class="empty">${t('rtDataFail', { c: esc(R.missing.map(c => CNAMES[c] || c).join(', ')) })}</p><button type="button" class="rt-go" onclick="rtGo()">${t('rtRetry')}</button>`; return; }
   const P = R.plan, I = R.o, eur = v => rtM(v);
   const sum = t('rtSummary', { d: Math.round(R.km), h: rtHm(P.time.driveMin), n: (R.nRows || 0).toLocaleString(), w: rt.w });
   const used = `<br>${t(R.fb ? 'rtUsedFb' : 'rtUsed', { r: t(R.via === 'valhalla' ? 'rtProvVal' : 'rtProvOsrm') })}${R.ferry ? ' ' + t('rtFerryNote') : ''}`;
   const clr = `<button class="upd-line" style="margin-left:6px" onclick="rtClear()">${ico('close', 'sm')} ${t('rtClear')}</button>`;
   const best = R.best ? t('rtBest', { s: eur(R.best.saving) }) : t('rtNoBest', { s: eur(RT_MIN_SAVE) });
-  const notes = [used.slice(4), R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '',
+  const notes = [used.slice(4), R.missing.length ? t('rtMissing', { c: R.missing.map(c => CNAMES[c] || c).join(', ') }) : '', R.stale.length ? t('rtStaleCty', { c: R.stale.map(c => CNAMES[c] || c).join(', ') }) : '', R.beyond ? t('rtBeyond', { n: R.beyond }) : '',
     R.segs ? '' : t('rtNoSegs'), I.withCar ? '' : t('rtNoCar', { c: trip.cons })].filter(Boolean).map(x => `<br>${x}`).join('');
   const fares = '<div id="rt-fares"></div>';
   if (!R.rows?.length) { o.innerHTML = rtPlanHtml(R, `<p class="rt-sum">${sum}${notes}${clr}</p><p class="empty">${t('rtNone', { w: rt.w })}</p>${fares}`); rtRenderFares(); return; }
@@ -8008,7 +8034,7 @@ function rtRenderOut() {
       const net = s >= 0.1 ? t('rtNetSave', { s: eur(s) }) : s <= -0.1 ? t('rtNetCost', { s: eur(-s) }) : t('rtNetNone');
       const nm = r.s.name || r.s.brand || '—';
       const head = r.tier > 0 && !sep ? (sep = true, `<p class="rt-sep">${t('rtBelow')}</p>`) : '';
-      return `${head}<div class="rt-stop${r.tier ? ' weak' : ''}" onclick="rtFocus(${i})"><div class="rt-n">${i + 1}</div>
+      return `${head}<div class="rt-stop${r.tier ? ' weak' : ''}" onclick="rtFocus(${i})"><div class="rt-n dot" aria-hidden="true"></div>
         <div><div class="nm">${FLAGS[r.s.country] || ''} ${esc(nm)}</div>
           <div class="sub">${esc(r.s.city || '')} · ${t('rtAlong', { k: Math.round(r.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: r.detourKm < 1 ? '<1' : r.detourKm.toFixed(1) })}<br>${esc(srcName(r.p.source || r.s.source || ''))}${r.p.source || r.s.source ? ' · ' : ''}${ageTxt(r.p.updated_at)}${r.why ? '<br>' + t(r.why) : ''}<br>${net}</div>
           <div class="acts"><button onclick="event.stopPropagation();doNav('${escId(r.s.id)}')">${ico('go', 'sm')} ${t('go')}</button><button onclick="event.stopPropagation();rtVia(${i})">${ico('route', 'sm')} ${t('rtVia')}</button></div></div>
@@ -8024,7 +8050,7 @@ function rtDraw(fit) {
   L.polyline(R.pts, { color:'#0B8F6E', weight:5, opacity:.9 }).addTo(g);
   L.circleMarker(R.pts[0], { radius:7, color:'#fff', weight:3, fillColor:'#0B8F6E', fillOpacity:1 }).addTo(g);
   L.circleMarker(R.pts[R.pts.length - 1], { radius:7, color:'#fff', weight:3, fillColor:'#0F2037', fillOpacity:1 }).addTo(g);
-  (R.rows || []).forEach((r, i) => L.marker([r.s.lat, r.s.lon], { icon:L.divIcon({ className:'', html:`<div class="rt-pin">${i + 1}</div>`, iconSize:[26, 26], iconAnchor:[13, 13] }), zIndexOffset:700 })
+  (R.rows || []).forEach((r, i) => L.marker([r.s.lat, r.s.lon], { icon:L.divIcon({ className:'', html:`<div class="rt-pin dot"></div>`, iconSize:[14, 14], iconAnchor:[7, 7] }), zIndexOffset:700 })
     .on('click', () => rtFocus(i)).addTo(g));
   (R.plan?.stops || []).forEach((st, i) => L.marker([st.s.lat, st.s.lon], { icon:L.divIcon({ className:'', html:`<div class="rt-pin plan">${rtLet(i)}</div>`, iconSize:[26, 26], iconAnchor:[13, 13] }), zIndexOffset:900 })
     .on('click', () => rtPlanFocus(i)).addTo(g));
