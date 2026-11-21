@@ -1,0 +1,415 @@
+{
+ "updated": "2026-11-21 18:22Z",
+ "unit": "EUR per litre (median station price, converted at the ECB rate)",
+ "attribution": "EuroFuelPrices (https://eurofuelprices.com) - free to reuse with a link",
+ "rows": [
+  {
+   "country": "AT",
+   "name": "Austria",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.56,
+   "stations": 1506,
+   "source_grade": "A"
+  },
+  {
+   "country": "AT",
+   "name": "Austria",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.979,
+   "stations": 1638,
+   "source_grade": "A"
+  },
+  {
+   "country": "BE",
+   "name": "Belgium",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.819,
+   "stations": 1851,
+   "source_grade": "C"
+  },
+  {
+   "country": "BE",
+   "name": "Belgium",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.274,
+   "stations": 2990,
+   "source_grade": "C"
+  },
+  {
+   "country": "BG",
+   "name": "Bulgaria",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.57,
+   "stations": 560,
+   "source_grade": "C"
+  },
+  {
+   "country": "BG",
+   "name": "Bulgaria",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.86,
+   "stations": 683,
+   "source_grade": "C"
+  },
+  {
+   "country": "CH",
+   "name": "Switzerland",
+   "fuel": "p95",
+   "median_eur_per_litre": 2.099,
+   "stations": 2765,
+   "source_grade": "C"
+  },
+  {
+   "country": "CH",
+   "name": "Switzerland",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.483,
+   "stations": 2715,
+   "source_grade": "C"
+  },
+  {
+   "country": "CY",
+   "name": "Cyprus",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.719,
+   "stations": 313,
+   "source_grade": "C"
+  },
+  {
+   "country": "CY",
+   "name": "Cyprus",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.999,
+   "stations": 312,
+   "source_grade": "C"
+  },
+  {
+   "country": "CZ",
+   "name": "Czechia",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.665,
+   "stations": 1354,
+   "source_grade": "D"
+  },
+  {
+   "country": "CZ",
+   "name": "Czechia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.786,
+   "stations": 1532,
+   "source_grade": "D"
+  },
+  {
+   "country": "DE",
+   "name": "Germany",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.889,
+   "stations": 14140,
+   "source_grade": "C"
+  },
+  {
+   "country": "DE",
+   "name": "Germany",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.109,
+   "stations": 14878,
+   "source_grade": "C"
+  },
+  {
+   "country": "DK",
+   "name": "Denmark",
+   "fuel": "p95",
+   "median_eur_per_litre": 2.126,
+   "stations": 1680,
+   "source_grade": "C"
+  },
+  {
+   "country": "DK",
+   "name": "Denmark",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.367,
+   "stations": 2154,
+   "source_grade": "C"
+  },
+  {
+   "country": "EE",
+   "name": "Estonia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.099,
+   "stations": 339,
+   "source_grade": "C"
+  },
+  {
+   "country": "ES",
+   "name": "Spain",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.579,
+   "stations": 10976,
+   "source_grade": "A"
+  },
+  {
+   "country": "ES",
+   "name": "Spain",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.809,
+   "stations": 11316,
+   "source_grade": "A"
+  },
+  {
+   "country": "FI",
+   "name": "Finland",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.351,
+   "stations": 414,
+   "source_grade": "C"
+  },
+  {
+   "country": "FR",
+   "name": "France",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.974,
+   "stations": 9300,
+   "source_grade": "A"
+  },
+  {
+   "country": "FR",
+   "name": "France",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.119,
+   "stations": 9521,
+   "source_grade": "A"
+  },
+  {
+   "country": "GB",
+   "name": "United Kingdom",
+   "fuel": "p95",
+   "median_eur_per_litre": 2.122,
+   "stations": 7104,
+   "source_grade": "B"
+  },
+  {
+   "country": "GB",
+   "name": "United Kingdom",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.292,
+   "stations": 8457,
+   "source_grade": "B"
+  },
+  {
+   "country": "GR",
+   "name": "Greece",
+   "fuel": "p95",
+   "median_eur_per_litre": 2.049,
+   "stations": 541,
+   "source_grade": "C"
+  },
+  {
+   "country": "GR",
+   "name": "Greece",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.029,
+   "stations": 545,
+   "source_grade": "C"
+  },
+  {
+   "country": "HR",
+   "name": "Croatia",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.64,
+   "stations": 856,
+   "source_grade": "C"
+  },
+  {
+   "country": "HR",
+   "name": "Croatia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.72,
+   "stations": 856,
+   "source_grade": "C"
+  },
+  {
+   "country": "HU",
+   "name": "Hungary",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.604,
+   "stations": 744,
+   "source_grade": "C"
+  },
+  {
+   "country": "HU",
+   "name": "Hungary",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.851,
+   "stations": 1177,
+   "source_grade": "C"
+  },
+  {
+   "country": "IE",
+   "name": "Ireland",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.159,
+   "stations": 796,
+   "source_grade": "C"
+  },
+  {
+   "country": "IT",
+   "name": "Italy",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.939,
+   "stations": 21868,
+   "source_grade": "B"
+  },
+  {
+   "country": "IT",
+   "name": "Italy",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.199,
+   "stations": 21861,
+   "source_grade": "B"
+  },
+  {
+   "country": "LT",
+   "name": "Lithuania",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.759,
+   "stations": 424,
+   "source_grade": "C"
+  },
+  {
+   "country": "LT",
+   "name": "Lithuania",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.16,
+   "stations": 482,
+   "source_grade": "C"
+  },
+  {
+   "country": "LV",
+   "name": "Latvia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.96,
+   "stations": 301,
+   "source_grade": "C"
+  },
+  {
+   "country": "NL",
+   "name": "Netherlands",
+   "fuel": "p95",
+   "median_eur_per_litre": 2.069,
+   "stations": 3800,
+   "source_grade": "C"
+  },
+  {
+   "country": "NL",
+   "name": "Netherlands",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.199,
+   "stations": 3806,
+   "source_grade": "C"
+  },
+  {
+   "country": "NO",
+   "name": "Norway",
+   "fuel": "p95",
+   "median_eur_per_litre": 2.212,
+   "stations": 445,
+   "source_grade": "C"
+  },
+  {
+   "country": "NO",
+   "name": "Norway",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.449,
+   "stations": 1162,
+   "source_grade": "C"
+  },
+  {
+   "country": "PL",
+   "name": "Poland",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.332,
+   "stations": 4857,
+   "source_grade": "C"
+  },
+  {
+   "country": "PL",
+   "name": "Poland",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.657,
+   "stations": 5152,
+   "source_grade": "C"
+  },
+  {
+   "country": "PT",
+   "name": "Portugal",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.949,
+   "stations": 3081,
+   "source_grade": "A"
+  },
+  {
+   "country": "PT",
+   "name": "Portugal",
+   "fuel": "diesel",
+   "median_eur_per_litre": 2.159,
+   "stations": 2923,
+   "source_grade": "A"
+  },
+  {
+   "country": "RS",
+   "name": "Serbia",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.63,
+   "stations": 489,
+   "source_grade": "C"
+  },
+  {
+   "country": "RS",
+   "name": "Serbia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.893,
+   "stations": 496,
+   "source_grade": "C"
+  },
+  {
+   "country": "SE",
+   "name": "Sweden",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.908,
+   "stations": 1936,
+   "source_grade": "D"
+  },
+  {
+   "country": "SI",
+   "name": "Slovenia",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.444,
+   "stations": 519,
+   "source_grade": "C"
+  },
+  {
+   "country": "SI",
+   "name": "Slovenia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.798,
+   "stations": 541,
+   "source_grade": "C"
+  },
+  {
+   "country": "SK",
+   "name": "Slovakia",
+   "fuel": "p95",
+   "median_eur_per_litre": 1.625,
+   "stations": 557,
+   "source_grade": "C"
+  },
+  {
+   "country": "SK",
+   "name": "Slovakia",
+   "fuel": "diesel",
+   "median_eur_per_litre": 1.909,
+   "stations": 705,
+   "source_grade": "C"
+  }
+ ]
+}
