@@ -4552,9 +4552,9 @@ function renderBubbles() {
     // country average in the same currency as the tags; the other currency small underneath (euro countries: just the euro figure)
     let avg = '', two = '';
     if (med && cur !== 'EUR' && r0) {
-      const loc = med * r0, a = `${loc.toFixed(2)} ${curLbl(cur)}`, e = `€${cEur(loc, cur).toFixed(2)}`;
+      const loc = med * r0, a = `${loc.toFixed(3)} ${curLbl(cur)}`, e = `€${cEur(loc, cur).toFixed(3)}`;
       avg = curMode === 'eur' ? `<small>${e}</small><small class="al">${a}</small>` : `<small>${a}</small><small class="al">${e}</small>`; two = ' two';
-    } else if (med) avg = `<small>€${med.toFixed(2)}</small>`;
+    } else if (med) avg = `<small>€${med.toFixed(3)}</small>`;
     const m = L.marker(CPT[c.country], {
       icon: L.divIcon({ className:'', html:`<div class="cty-b${two}" title="${esc(CNAMES[c.country] || c.country)}">${FLAGS[c.country] || ''}<b>${fmtCount(c.station_count)}</b>${avg}</div>`, iconSize:[66, 66], iconAnchor:[33, 33] }),
       keyboard:false,
@@ -7710,7 +7710,7 @@ function rtM(v) {                          // amount (EUR) in the trip currency
   const x = rtLocal(v);
   return `${x >= 100 ? Math.round(x) : dec(x.toFixed(2))} ${curLbl(rtTripCur)}`.trim();
 }
-const rtPL = v => `${dec(rtLocal(v).toFixed(2))} ${curLbl(rtTripCur)}`.trim();   // price per litre (EUR in, trip currency out)
+const rtPL = v => `${dec(rtLocal(v).toFixed(3))} ${curLbl(rtTripCur)}`.trim();   // price per litre (EUR in, trip currency out)
 function rtRng(lo, hi) { const x = Math.round(rtLocal(lo)), y = Math.round(rtLocal(hi)); return (x === y ? '' + x : x + '–' + y) + ' ' + curLbl(rtTripCur); }
 // ── Wave 2 UI: R4 cost card + alternatives, R5 fare list, R9 border tip, R10 noon note ──
 const FARES_V = 1;   // data-hash:fares.json=0b4d09b5ff  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
@@ -7773,7 +7773,7 @@ function rtTankHtml(R, P) {
   const tips = rtTank(R.priced || [], P, R.o, R.km).slice(0, 3); if (!tips.length) return '';
   const fuel = t(R.fuel === 'DIESEL' ? 'rtFuelDiesel' : 'rtFuelPetrol');
   return `<div class="rt-xc">${tips.map(x => {
-    const p = x.pump, v = { a: CNAMES[x.from] || x.from, b: CNAMES[x.to] || x.to, f: fuel, c: Math.round(x.diff * 100), l: rtL0(x.litres), s: rtM(x.save), n: esc(p.s.name || p.s.brand || '—') + (p.s.city && !(p.s.name || '').includes(p.s.city) ? ', ' + esc(p.s.city) : ''), p: p.eur.toFixed(2) + ' €' };
+    const p = x.pump, v = { a: CNAMES[x.from] || x.from, b: CNAMES[x.to] || x.to, f: fuel, c: Math.round(x.diff * 100), l: rtL0(x.litres), s: rtM(x.save), n: esc(p.s.name || p.s.brand || '—') + (p.s.city && !(p.s.name || '').includes(p.s.city) ? ', ' + esc(p.s.city) : ''), p: p.eur.toFixed(3) + ' €' };
     return `<p class="rt-tip"><b>${t('rtTankH', v)}</b> ${t(x.dir === 'before' ? 'rtTankBefore' : 'rtTankAfter', v)}${x.dir === 'before' && x.planned ? ' ' + t('rtTankPlanned') : ''}</p>`;
   }).join('')}</div>`;
 }
@@ -8252,7 +8252,7 @@ function tripCalc() {
     const save = L * pf - (L * pt + drive);
     const brk = (L * (pf - pt)) / (pt * cons / 100);
     bEl.innerHTML = `<div class="tverdict ${save > 0 ? 'good' : 'bad'}">${t(save > 0 ? 'tripWorth' : 'tripNot', { s: money(Math.abs(save), 'EUR') })}
-      <small>${FLAGS[trip.from] || ''} ${pf.toFixed(2)} € → ${FLAGS[trip.to] || ''} ${pt.toFixed(2)} € / L${brk > 0 ? ' · ' + t('tripBreak', { k: Math.round(brk), l: L }) : ''}</small></div>`;
+      <small>${FLAGS[trip.from] || ''} ${pf.toFixed(3)} € → ${FLAGS[trip.to] || ''} ${pt.toFixed(3)} € / L${brk > 0 ? ' · ' + t('tripBreak', { k: Math.round(brk), l: L }) : ''}</small></div>`;
   } else if (bEl) bEl.innerHTML = '';
   const rEl = document.getElementById('t-road'); if (!rEl) return;
   const via = trip.via.filter(c => tripPrice(c) != null);
@@ -8286,8 +8286,8 @@ function renderCompare() {
   // each country in its own currency (or EUR under the switch), the other one small underneath; bars stay on the shared ECB-EUR axis
   const curOf = r => metaCountries.find(c => c.country === r.cc)?.currency || 'EUR';
   const pv = (r, v) => { const cur = curOf(r), q = rateOf(cur);
-    if (cur === 'EUR' || !q) return { main: `€${v.toFixed(2)}`, alt: '' };
-    const loc = `${(v * q).toFixed(2)} ${curLbl(cur)}`, e = `€${cEur(v * q, cur).toFixed(2)}`;
+    if (cur === 'EUR' || !q) return { main: `€${v.toFixed(3)}`, alt: '' };
+    const loc = `${(v * q).toFixed(3)} ${curLbl(cur)}`, e = `€${cEur(v * q, cur).toFixed(3)}`;
     return curMode === 'eur' ? { main: e, alt: loc } : { main: loc, alt: e }; };
   const cls = r => (r.cc === fCountry ? ' sel' : '') + (r.cc === myCountry ? ' me' : '') + (r.st.n < 30 ? ' few' : '');
 
