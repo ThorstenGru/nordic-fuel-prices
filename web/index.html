@@ -4227,6 +4227,8 @@ function curLbl(cur) {                     // currency name in the UI language: 
 const cNum = (p, cur, d = 3) => { const s = cShow(p, cur).v.toFixed(d); return d === 3 ? `${s.slice(0, -1)}<sup class="p3">${s.slice(-1)}</sup>` : s; };   // HTML: 3rd decimal small and raised
 const cUn = cur => curLbl(cShow(1, cur).cur);
 const dec = s => lang === 'en' ? s : s.replace('.', ',');           // decimal comma outside English
+const p3 = s => s.replace(/(\d[.,]\d\d)(\d)(?!\d)/g, '$1<sup class="p3">$2</sup>');   // HTML only: 3rd decimal small + raised
+const cTxtH = (p, cur, d = 3) => p3(cTxt(p, cur, d));
 const cTxt = (p, cur, d = 3) => { const x = cShow(p, cur); return `${dec(x.v.toFixed(d))} ${curLbl(x.cur)}`; };
 const tagU = cur => `<u>${esc(cUn(cur))}</u>`;     // unit on every map tag: the euro sign for euro prices, the code for the rest; EUR mode shows the euro sign everywhere
 function fxDate() { try { return new Date(metaFx.date + 'T12:00:00Z').toLocaleDateString(lang, { day:'numeric', month:'short', year:'numeric', timeZone:'UTC' }); } catch (_) { return metaFx?.date || ''; } }
@@ -4554,8 +4556,8 @@ function renderBubbles() {
     let avg = '', two = '';
     if (med && cur !== 'EUR' && r0) {
       const loc = med * r0, a = `${loc.toFixed(3)} ${curLbl(cur)}`, e = `€${cEur(loc, cur).toFixed(3)}`;
-      avg = curMode === 'eur' ? `<small>${e}</small><small class="al">${a}</small>` : `<small>${a}</small><small class="al">${e}</small>`; two = ' two';
-    } else if (med) avg = `<small>€${med.toFixed(3)}</small>`;
+      avg = curMode === 'eur' ? `<small>${p3(e)}</small><small class="al">${p3(a)}</small>` : `<small>${p3(a)}</small><small class="al">${p3(e)}</small>`; two = ' two';
+    } else if (med) avg = `<small>${p3('€' + med.toFixed(3))}</small>`;
     const m = L.marker(CPT[c.country], {
       icon: L.divIcon({ className:'', html:`<div class="cty-b${two}" title="${esc(CNAMES[c.country] || c.country)}">${FLAGS[c.country] || ''}<b>${fmtCount(c.station_count)}</b>${avg}</div>`, iconSize:[66, 66], iconAnchor:[33, 33] }),
       keyboard:false,
@@ -4941,9 +4943,9 @@ function nearOpts(s, key) {
     let d = '', cls = '';
     if (base && base.currency === q.currency) {
       const df = q.price - base.price;
-      if (Math.abs(df) < 0.005) d = t('nbSame'); else { d = (df < 0 ? '-' : '+') + cTxt(Math.abs(df), q.currency); cls = df < 0 ? ' less' : ''; }
-    } else d = cTxt(q.price, q.currency);
-    return `<button type="button" class="nb-row" onclick="openStation(findStation('${escId(o.id)}'), false)"><span>${esc(o.brand || o.name || '—')} · ${fmtDist(km)}</span><span class="d${cls}">${esc(d)}</span></button>`;
+      if (Math.abs(df) < 0.0005) d = t('nbSame'); else { d = (df < 0 ? '-' : '+') + cTxtH(Math.abs(df), q.currency); cls = df < 0 ? ' less' : ''; }
+    } else d = cTxtH(q.price, q.currency);
+    return `<button type="button" class="nb-row" onclick="openStation(findStation('${escId(o.id)}'), false)"><span>${esc(o.brand || o.name || '—')} · ${fmtDist(km)}</span><span class="d${cls}">${d}</span></button>`;
   }).join('');
   return `<div class="nb-h">${t('nbTitle')}</div>${rows}`;
 }
@@ -6311,8 +6313,8 @@ function evRender0() {
   const fe = mxFid && $id(mxFid); if (fe) { if (mxVal != null) fe.value = mxVal; fe.focus(); }
   let h = `<h4 class="ev-sub">${esc(t('evStTitle'))}</h4>` + mcQ('95');
   if (st.picked.length) {
-    h += `<ul class="ev-st">${st.picked.map(x => `<li><span><span class="ev-n">${esc(x.s.name || x.s.brand || '–')}</span><br>${esc(fmtDist(x.km))}${x.p.updated_at ? ' · ' + esc(ageTxt(x.p.updated_at)) : ''}</span><b>${esc(cTxt(x.price, cur, 2))}</b></li>`).join('')}</ul>`
-      + `<p class="ev-note"><b>${esc(t('evAvg', { p: cTxt(st.avg, cur, 2) }))}</b> · ${esc(t('evStFrom', { w: t(st.mine ? 'evMyPos' : 'evMapC') }))}`
+    h += `<ul class="ev-st">${st.picked.map(x => `<li><span><span class="ev-n">${esc(x.s.name || x.s.brand || '–')}</span><br>${esc(fmtDist(x.km))}${x.p.updated_at ? ' · ' + esc(ageTxt(x.p.updated_at)) : ''}</span><b>${cTxtH(x.price, cur)}</b></li>`).join('')}</ul>`
+      + `<p class="ev-note"><b>${esc(t('evAvg', { p: '' })).replace('', cTxtH(st.avg, cur))}</b> · ${esc(t('evStFrom', { w: t(st.mine ? 'evMyPos' : 'evMapC') }))}`
       + (st.picked.length < 5 ? ' ' + esc(t('evFew', { n: st.picked.length })) : '') + (st.setAside ? ' ' + esc(t('evSetAside', { n: st.setAside })) : '') + '</p>';
   } else h += `<p class="ev-note">${esc(t('evNoSt', { c: nm }))}</p>`;
   stEl.innerHTML = h + `<p class="ev-note">${esc(t('evOwnNote'))}</p>`;
@@ -6579,7 +6581,7 @@ function no95Html(s) {
     const q = minOf(o, 'P95'); if (!q || suspectLow(o.country, q)) continue;
     const d = dist(s.lat, s.lon, o.lat, o.lon); if (d < bd) { bd = d; best = { o, q }; }
   }
-  const near = best ? `<div>${esc(t('no95Near', { n: best.o.name || best.o.brand || '—', d: fmtDist(bd), p: cTxt(best.q.price, best.q.currency) }))}</div>
+  const near = best ? `<div>${esc(t('no95Near', { n: best.o.name || best.o.brand || '—', d: fmtDist(bd), p: '' })).replace('', cTxtH(best.q.price, best.q.currency))}</div>
     <button class="st-go" onclick="doNav('${escId(best.o.id)}')">${ico('go')} ${t('go')}</button>` : '';
   return `<div class="no95"><b>${t('no95')}</b>${near}</div>`;
 }
@@ -6730,7 +6732,7 @@ function worthHtml(s, key) {
     const abs = money(Math.abs(w.save), cur), tol = 0.3;
     const cls = w.save > tol ? 'good' : w.save < -tol ? 'bad' : 'same';
     const head = cls === 'good' ? t('worthYes', { s: abs }) : cls === 'bad' ? t('worthNo', { s: abs }) : t('worthSame', { s: money(tol, cur) });
-    body = `<div class="tverdict ${cls}">${head}<small>${t('worthVs', { d: fmtDist(w.dP), w: t(w.from.you ? 'worthYou' : 'worthMap'), n: esc(w.alt.s.name || w.alt.s.brand || '—'), a: fmtDist(w.altD), p: cTxt(w.alt.p.price, cur) })} · ${t('worthBreak', { k: Math.round(w.brk) })}</small></div>`;
+    body = `<div class="tverdict ${cls}">${head}<small>${t('worthVs', { d: fmtDist(w.dP), w: t(w.from.you ? 'worthYou' : 'worthMap'), n: esc(w.alt.s.name || w.alt.s.brand || '—'), a: fmtDist(w.altD), p: cTxtH(w.alt.p.price, cur) })} · ${t('worthBreak', { k: Math.round(w.brk) })}</small></div>`;
   }
   return `${chips}${body}${w.from.you ? '' : `<div class="wnote">${t('worthMapNote')}</div>`}`;
 }
@@ -7711,7 +7713,7 @@ function rtM(v) {                          // amount (EUR) in the trip currency
   const x = rtLocal(v);
   return `${x >= 100 ? Math.round(x) : dec(x.toFixed(2))} ${curLbl(rtTripCur)}`.trim();
 }
-const rtPL = v => `${dec(rtLocal(v).toFixed(3))} ${curLbl(rtTripCur)}`.trim();   // price per litre (EUR in, trip currency out)
+const rtPL = v => p3(`${dec(rtLocal(v).toFixed(3))} ${curLbl(rtTripCur)}`.trim());   // price per litre (EUR in, trip currency out)
 function rtRng(lo, hi) { const x = Math.round(rtLocal(lo)), y = Math.round(rtLocal(hi)); return (x === y ? '' + x : x + '–' + y) + ' ' + curLbl(rtTripCur); }
 // ── Wave 2 UI: R4 cost card + alternatives, R5 fare list, R9 border tip, R10 noon note ──
 const FARES_V = 1;   // data-hash:fares.json=0b4d09b5ff  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
@@ -7774,7 +7776,7 @@ function rtTankHtml(R, P) {
   const tips = rtTank(R.priced || [], P, R.o, R.km).slice(0, 3); if (!tips.length) return '';
   const fuel = t(R.fuel === 'DIESEL' ? 'rtFuelDiesel' : 'rtFuelPetrol');
   return `<div class="rt-xc">${tips.map(x => {
-    const p = x.pump, v = { a: CNAMES[x.from] || x.from, b: CNAMES[x.to] || x.to, f: fuel, c: Math.round(x.diff * 100), l: rtL0(x.litres), s: rtM(x.save), n: esc(p.s.name || p.s.brand || '—') + (p.s.city && !(p.s.name || '').includes(p.s.city) ? ', ' + esc(p.s.city) : ''), p: p.eur.toFixed(3) + ' €' };
+    const p = x.pump, v = { a: CNAMES[x.from] || x.from, b: CNAMES[x.to] || x.to, f: fuel, c: Math.round(x.diff * 100), l: rtL0(x.litres), s: rtM(x.save), n: esc(p.s.name || p.s.brand || '—') + (p.s.city && !(p.s.name || '').includes(p.s.city) ? ', ' + esc(p.s.city) : ''), p: p3(p.eur.toFixed(3) + ' €') };
     return `<p class="rt-tip"><b>${t('rtTankH', v)}</b> ${t(x.dir === 'before' ? 'rtTankBefore' : 'rtTankAfter', v)}${x.dir === 'before' && x.planned ? ' ' + t('rtTankPlanned') : ''}</p>`;
   }).join('')}</div>`;
 }
@@ -7797,7 +7799,7 @@ const rtNum1 = v => dec((Math.round(v * 10) / 10).toFixed(1));
 function rtBackupHtml(R, s) {
   const b = rtBackup(s, R.priced || [], R.o); if (!b) return '';
   const c = b.pump;
-  return `<div class="sub rt-bk">${t('rtBackup', { k: b.km < 10 ? rtNum1(b.km) : Math.round(b.km), n: esc(rtPumpName(c)), p: cTxt(c.p.price, c.p.currency) + '/L' })}${c.age == null ? ' (' + t('rtUndated') + ')' : ''}</div>`;
+  return `<div class="sub rt-bk">${t('rtBackup', { k: b.km < 10 ? rtNum1(b.km) : Math.round(b.km), n: esc(rtPumpName(c)), p: cTxtH(c.p.price, c.p.currency) + '/L' })}${c.age == null ? ' (' + t('rtUndated') + ')' : ''}</div>`;
 }
 function rtBackHtml(R) {
   const o = R.o; if (!rt.destChg || !o.phev) return '';
@@ -7896,7 +7898,7 @@ function chgView(p) {                                    // everything the sheet
   return { pr, kwh, carKw, min, cost, eur: rate && cost && !cost.free ? (cost.lo + cost.hi) / 2 * rate : rate && (pr.kind === 'own' || pr.kind === 'list') ? (pr.lo + pr.hi) / 2 * rate : null };   // without a battery size there is no cost: rank by the price per kWh
 }
 const chgRng = (c, cur) => Math.abs(c.hi - c.lo) < 0.005 ? money(c.lo, cur) : t('chgCostRange', { a: money(c.lo, cur), b: money(c.hi, cur) });
-const chgShort = v => v.pr.kind === 'free' ? t('chgShortFree') : v.cost ? t('chgShortCost', { c: chgRng(v.cost, v.pr.cur) }) : v.pr.kind === 'old' ? t('chgShortOld') : v.pr.kind === 'none' ? t('chgShortNone') : (v.pr.from ? t('chgFrom') + ' ' : '') + (v.pr.hi > v.pr.lo ? cTxt(v.pr.lo, v.pr.cur) + '–' + cTxt(v.pr.hi, v.pr.cur) : cTxt(v.pr.lo, v.pr.cur)) + '/kWh';
+const chgShort = v => v.pr.kind === 'free' ? t('chgShortFree') : v.cost ? t('chgShortCost', { c: chgRng(v.cost, v.pr.cur) }) : v.pr.kind === 'old' ? t('chgShortOld') : v.pr.kind === 'none' ? t('chgShortNone') : (v.pr.from ? t('chgFrom') + ' ' : '') + (v.pr.hi > v.pr.lo ? cTxt(v.pr.lo, v.pr.cur, 2) + '–' + cTxt(v.pr.hi, v.pr.cur, 2) : cTxt(v.pr.lo, v.pr.cur, 2)) + '/kWh';
 const CHG_KWK = { low: 'chgKwLow', mid: 'chgKwMid', high: 'chgKwHigh' };
 function chgHead(p, popup) {
   const sub = [t('chgPost'), p.title, myLat != null ? fmtDist(dist(myLat, myLon, p.lat, p.lon)) : ''].filter(Boolean).join(' · ');
@@ -7904,12 +7906,12 @@ function chgHead(p, popup) {
 }
 function chgBody(p) {
   const v = chgView(p), pr = v.pr, cur = pr.cur, f = chg.files[p.cc], row = (k, x) => `<dt>${esc(t(k))}</dt><dd>${x}</dd>`;
-  const rng = pr.hi > pr.lo ? t('chgCostRange', { a: cTxt(pr.lo, cur), b: cTxt(pr.hi, cur) }) : cTxt(pr.lo || 0, cur), seen = esc(rtDay(pr.seen));
-  const price = pr.kind === 'free' ? t('chgPrFree') : pr.kind === 'own' ? t('chgPrOwn', { p: cTxt(pr.lo, cur) })
+  const rng = pr.hi > pr.lo ? t('chgCostRange', { a: cTxt(pr.lo, cur, 2), b: cTxt(pr.hi, cur, 2) }) : cTxt(pr.lo || 0, cur, 2), seen = esc(rtDay(pr.seen));
+  const price = pr.kind === 'free' ? t('chgPrFree') : pr.kind === 'own' ? t('chgPrOwn', { p: cTxt(pr.lo, cur, 2) })
     : pr.kind === 'old' ? t('chgPrOld', { d: seen, p: rng })
     : pr.kind === 'list' ? t('chgPrList', { f: pr.from ? t('chgFrom') : '', p: rng, s: pr.start > 0 ? t('chgPrStart', { s: money(pr.start, cur) }) : t('chgPrNoStart'), d: seen }) : t('chgPrNone');
   const idle = pr.kind === 'list' && pr.idle && chgNum(pr.idle.after_min) ? `<p class="chg-p">${esc(t(pr.idle.unit === 'minute' ? 'chgIdleMin' : pr.idle.unit === 'session' ? 'chgIdleSes' : 'chgIdleU', { a: money(pr.idle.amount, pr.idle.currency || cur), m: pr.idle.after_min }))}</p>` : '';
-  const mem = pr.kind === 'list' && pr.member != null ? `<p class="chg-p">${esc(t(pr.memberSub ? 'chgMemSub' : 'chgMemReg', { p: cTxt(pr.member, cur) }))}</p>` : '';
+  const mem = pr.kind === 'list' && pr.member != null ? `<p class="chg-p">${esc(t(pr.memberSub ? 'chgMemSub' : 'chgMemReg', { p: cTxt(pr.member, cur, 2) }))}</p>` : '';
   const time = !v.kwh ? '' : v.min != null ? t('chgTime', { k: dec(String(Math.round(v.kwh * 10) / 10)), h: rtHm(v.min) }) : t('chgNoCarKw');
   const est = !v.kwh ? t('chgNoBatt') : pr.kind === 'free' ? t('chgCostFree') : pr.kind === 'old' ? t('chgCostOld') : v.cost ? t('chgCostEst', { c: chgRng(v.cost, cur), x: (v.cost.startIn ? t('chgCostStart') : '') + (v.cost.idleIn ? t('chgCostIdle') : '') }) : t('chgCostNone');
   const group = chgKwGroup(p.kw), park = chgParking(p.f), tags = chgTags(p.f).map(k => esc(t('chgTag' + k[0].toUpperCase() + k.slice(1)))).join('; ');
@@ -8048,7 +8050,7 @@ function rtPlanHtml(R, extra) {   // extra: html that joins the one Details fold
       <div><div class="nm">${FLAGS[s.s.country] || ''} ${esc(nm)}</div>
         <div class="sub">${esc(s.s.city || '')} · ${t('rtAlong', { k: Math.round(s.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: s.detourKm < 1 ? '<1' : s.detourKm.toFixed(1) })}<br><b>${t('rtBuy', { l: rtL0(s.litres), c: rtRng(s.cost.lo, s.cost.hi) })}</b><br>${t('rtTankLine', { a: rtL0(s.fuelArrive), b: rtL0(s.fuelAfter) })}<br>${esc(why)}</div>
         <details class="rt-sd" onclick="event.stopPropagation()"><summary>${t('rtStopMore')}</summary><div class="sub">${esc(srcName(s.p.source || s.s.source || ''))}${s.p.source || s.s.source ? ' · ' : ''}${ageTxt(s.p.updated_at)}${s.age == null ? ' · ' + t('rtUndated') : ''}${rtNoonHtml(s)}</div>${rtBackupHtml(R, s)}</details><div class="acts"><button onclick="event.stopPropagation();doNav('${escId(s.s.id)}')">${ico('go', 'sm')} ${t('go')}</button></div></div>
-      <div class="pr">${cTxt(s.p.price, s.p.currency)}<small>±${Math.round(s.band * 100)} ¢/L</small></div></div>`;
+      <div class="pr">${cTxtH(s.p.price, s.p.currency)}<small>±${Math.round(s.band * 100)} ¢/L</small></div></div>`;
   }).join('');
   const F = n ? P.fresh : P.areaFresh, hrs = F.minH == null ? '' : Math.round(F.minH) === Math.round(F.maxH) ? t('rtFrOne', { a: Math.max(1, Math.round(F.minH)) }) : t('rtFrRange', { a: Math.round(F.minH), b: Math.round(F.maxH) });
   const fresh = !F.n ? '' : F.nDated === 0 ? t(n ? 'rtFrNone' : 'rtFrNoneArea', { n: F.n }) : (n ? t('rtFrDated', { h: hrs }) : t('rtFrArea', { d: F.nDated, n: F.n, h: hrs })) + (F.nDated < F.n ? ' ' + t(n ? 'rtFrUndated' : 'rtFrUndatedArea', { u: F.n - F.nDated, n: F.n }) : '');
@@ -8079,7 +8081,7 @@ function rtDestLine(R, P) {              // route or destination: where is filli
   const dn = esc(rtPumpName(R.dest)), dp = rtPL(R.dest.eur), I = R.o;
   if (!P.nStops) return `<p class="rt-assume" id="rt-dest">${t('rtDest0', { r: rtL0(I.reserveL), n: dn, p: dp })}</p>`;
   const ls = P.stops.reduce((a, s) => a + s.litres, 0), avg = P.stops.reduce((a, s) => a + s.litres * s.eur, 0) / Math.max(1e-9, ls), d = R.dest.eur - avg;
-  return `<p class="rt-assume" id="rt-dest">${d >= 0.005 ? t('rtDestRoute', { d: rtPL(d), n: dn, p: dp }) : t('rtDestNeed', { n: dn, p: dp })}</p>`;
+  return `<p class="rt-assume" id="rt-dest">${d >= 0.0005 ? t('rtDestRoute', { d: rtPL(d), n: dn, p: dp }) : t('rtDestNeed', { n: dn, p: dp })}</p>`;
 }
 function rtSpeedLine(R) {
   if (!rt.cruise) return `<p class="mc-hint">${esc(t('rtSpAuto'))}</p>`;
@@ -8112,7 +8114,7 @@ function rtRenderOut() {
     <h3 class="rt-oh">${t('rtOther')}</h3><p class="rt-sum" style="margin-top:0">${best}</p>
     ${R.rows.map((r, i) => {
       const d = r.ref - r.eur, s = r.saving;
-      const cmp = d >= 0.005 ? t('rtCheaper', { d: rtPL(d) }) : t('rtSame');
+      const cmp = d >= 0.0005 ? t('rtCheaper', { d: rtPL(d) }) : t('rtSame');
       const net = s >= 0.1 ? t('rtNetSave', { s: eur(s) }) : s <= -0.1 ? t('rtNetCost', { s: eur(-s) }) : t('rtNetNone');
       const nm = rtDedupe(r.s.name || r.s.brand || '—');
       const head = r.tier > 0 && !sep ? (sep = true, `<p class="rt-sep">${t('rtBelow')}</p>`) : '';
@@ -8120,7 +8122,7 @@ function rtRenderOut() {
         <div><div class="nm">${FLAGS[r.s.country] || ''} ${esc(nm)}</div>
           <div class="sub">${esc(r.s.city || '')} · ${t('rtAlong', { k: Math.round(r.along), n: Math.round(R.km) })} · ${t('rtDetour', { k: r.detourKm < 1 ? '<1' : r.detourKm.toFixed(1) })}<br>${esc(srcName(r.p.source || r.s.source || ''))}${r.p.source || r.s.source ? ' · ' : ''}${ageTxt(r.p.updated_at)}${r.why ? '<br>' + t(r.why) : ''}<br>${net}</div>
           <div class="acts"><button onclick="event.stopPropagation();doNav('${escId(r.s.id)}')">${ico('go', 'sm')} ${t('go')}</button><button onclick="event.stopPropagation();rtVia(${i})">${ico('route', 'sm')} ${t('rtVia')}</button></div></div>
-        <div class="pr">${cTxt(r.p.price, r.p.currency)}<small>${cmp}</small></div></div>`;
+        <div class="pr">${cTxtH(r.p.price, r.p.currency)}<small>${cmp}</small></div></div>`;
     }).join('')}${fares}`);
   rtRenderFares();
 }
@@ -8253,7 +8255,7 @@ function tripCalc() {
     const save = L * pf - (L * pt + drive);
     const brk = (L * (pf - pt)) / (pt * cons / 100);
     bEl.innerHTML = `<div class="tverdict ${save > 0 ? 'good' : 'bad'}">${t(save > 0 ? 'tripWorth' : 'tripNot', { s: money(Math.abs(save), 'EUR') })}
-      <small>${FLAGS[trip.from] || ''} ${pf.toFixed(3)} € → ${FLAGS[trip.to] || ''} ${pt.toFixed(3)} € / L${brk > 0 ? ' · ' + t('tripBreak', { k: Math.round(brk), l: L }) : ''}</small></div>`;
+      <small>${FLAGS[trip.from] || ''} ${p3(pf.toFixed(3) + ' €')} → ${FLAGS[trip.to] || ''} ${p3(pt.toFixed(3) + ' €')} / L${brk > 0 ? ' · ' + t('tripBreak', { k: Math.round(brk), l: L }) : ''}</small></div>`;
   } else if (bEl) bEl.innerHTML = '';
   const rEl = document.getElementById('t-road'); if (!rEl) return;
   const via = trip.via.filter(c => tripPrice(c) != null);
@@ -8287,8 +8289,8 @@ function renderCompare() {
   // each country in its own currency (or EUR under the switch), the other one small underneath; bars stay on the shared ECB-EUR axis
   const curOf = r => metaCountries.find(c => c.country === r.cc)?.currency || 'EUR';
   const pv = (r, v) => { const cur = curOf(r), q = rateOf(cur);
-    if (cur === 'EUR' || !q) return { main: `€${v.toFixed(3)}`, alt: '' };
-    const loc = `${(v * q).toFixed(3)} ${curLbl(cur)}`, e = `€${cEur(v * q, cur).toFixed(3)}`;
+    if (cur === 'EUR' || !q) return { main: p3(`€${v.toFixed(3)}`), alt: '' };
+    const loc = p3(`${(v * q).toFixed(3)} ${curLbl(cur)}`), e = p3(`€${cEur(v * q, cur).toFixed(3)}`);
     return curMode === 'eur' ? { main: e, alt: loc } : { main: loc, alt: e }; };
   const cls = r => (r.cc === fCountry ? ' sel' : '') + (r.cc === myCountry ? ' me' : '') + (r.st.n < 30 ? ' few' : '');
 
