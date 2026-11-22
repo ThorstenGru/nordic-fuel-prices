@@ -233,6 +233,7 @@ body.sheet #peek, body.kb #peek { display:none; }
   font-family:var(--f-disp); font-size:.74rem; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums; white-space:nowrap; pointer-events:none; transition:opacity .15s; }
 .mk .lbl::after { content:''; position:absolute; left:50%; bottom:-5px; width:7px; height:7px; background:inherit; border-right:1.5px solid var(--tag-ink); border-bottom:1.5px solid var(--tag-ink); transform:translateX(-50%) rotate(45deg); }
 .mk .lbl i { display:block; height:3px; border-radius:2px; background:var(--ub, var(--line)); }
+sup.p3 { font-size:.62em; font-weight:inherit; vertical-align:top; line-height:1.1; margin-left:1px; }
 .mk .lbl em { font-style:normal; font-size:.6rem; font-weight:700; opacity:.7; margin-right:3px; }
 .mk .lbl.off { opacity:0; }
 .mk .lbl u { text-decoration:none; font-size:.56rem; font-weight:700; opacity:.7; margin-left:2px; }
@@ -4223,7 +4224,7 @@ function curLbl(cur) {                     // currency name in the UI language: 
   try { l = new Intl.NumberFormat(lang, { style:'currency', currency:cur }).formatToParts(0).find(x => x.type === 'currency').value; } catch (_) {}
   return (_cl[k] = l);
 }
-const cNum = (p, cur, d = 3) => cShow(p, cur).v.toFixed(d);
+const cNum = (p, cur, d = 3) => { const s = cShow(p, cur).v.toFixed(d); return d === 3 ? `${s.slice(0, -1)}<sup class="p3">${s.slice(-1)}</sup>` : s; };   // HTML: 3rd decimal small and raised
 const cUn = cur => curLbl(cShow(1, cur).cur);
 const dec = s => lang === 'en' ? s : s.replace('.', ',');           // decimal comma outside English
 const cTxt = (p, cur, d = 3) => { const x = cShow(p, cur); return `${dec(x.v.toFixed(d))} ${curLbl(x.cur)}`; };
@@ -4727,7 +4728,7 @@ function updPeek(best) {
   const s = best.s, p = best.p, sy = cUn(p.currency);
   const km = myLat != null && s.lat ? dist(myLat, myLon, s.lat, s.lon) : null;
   $id('pk-n').textContent = [s.name || s.brand || '—', s.city, km != null && km < 500 ? fmtDist(km) : ''].filter(Boolean).join(' · ');
-  $id('pk-v').textContent = cNum(p.price, p.currency);
+  $id('pk-v').innerHTML = cNum(p.price, p.currency);
   $id('pk-u').textContent = `${sy}${UNIT[p.unit] || '/L'} · ${fuelLabel(p)}`;
   $id('pk-p').style.setProperty('--pk-b', s._col || 'var(--line)');
   el.hidden = false;
