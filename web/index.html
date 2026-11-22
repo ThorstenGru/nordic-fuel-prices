@@ -6520,7 +6520,7 @@ function opRender() {
 }
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
-const VEH_V = 4;   // data-hash:vehicles.json=7d1cd12e37  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
+const VEH_V = 5;   // data-hash:vehicles.json=7e435c3870  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
 const VEH_E_V = 2;   // data-hash:vehicles_eea.json=6160c4e728  (EEA register 2024: top 100 per kind, model level, no tank size / electric range; same ?v= rule as above)
 let _veh = null, _vehTried = false;
 function vehLoad() {
