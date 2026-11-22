@@ -27,8 +27,8 @@ assert.deepStrictEqual(curShow(100, 'ISK', 'eur', R, 0), { v: 100, cur: 'ISK' })
 // ranking in EUR puts a cheap-looking big number where it belongs: 620 HUF/L is not dearer than 15 SEK/L
 const H = { ...R, HUF: 395 };
 assert(toEur(620, 'HUF', H, 0) < toEur(15.43, 'SEK', H, 0) * 1.2);
-// decimals: pumps price EUR/GBP in 3 decimals natively; converted amounts and other currencies 2
-assert.strictEqual(curDec('EUR', true), 3); assert.strictEqual(curDec('GBP', true), 3); assert.strictEqual(curDec('EUR', false), 2); assert.strictEqual(curDec('SEK', true), 2);
+// decimals: every pump price is shown with 3 decimals (native or converted; the 3rd is rendered small + raised)
+assert.strictEqual(curDec('EUR', true), 3); assert.strictEqual(curDec('EUR', false), 3); assert.strictEqual(curDec('SEK', true), 3); assert.strictEqual(curDec('GBP', false), 3);
 
 // trip currency: one currency for the whole trip: the one most countries use (tie: the start country); unknown rate or EUR switch -> EUR
 { const m2 = src.match(/\/\/ CURTRIP-PURE-BEGIN[^\n]*\n([\s\S]*?)\/\/ CURTRIP-PURE-END/); assert(m2, 'curtrip block not found');
