@@ -6532,7 +6532,12 @@ function vehLoad() {
     j.eea = (await eeaP)?.categories || {};
     const all = [...cat, ...j.hyundai, ...Object.values(j.eea).flat()];
     _veh = { j, by: Object.fromEntries(all.map(v => [v.id, v])) };
-    $id('veh').hidden = false; vehBuild();
+    $id('veh').hidden = false;
+    try {   // link ?veh=<catalogue id> selects (and saves) that car once, then the parameter is removed from the address bar
+      const u = new URL(location.href), id = u.searchParams.get('veh');
+      if (id) { if (_veh.by[id]) vehPick(id); u.searchParams.delete('veh'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
+    } catch (_) {}
+    vehBuild();
   }).catch(() => {});                                  // picker stays hidden; manual fields keep working
 }
 const vehName = v => [v.make, v.model, v.variant].filter(Boolean).join(' ');
@@ -8525,6 +8530,7 @@ document.addEventListener('focusout', () => setTimeout(updKb, 80));
   loadCC(home);
   schedVP();
 
+  try { if (new URLSearchParams(location.search).get('veh')) vehLoad(); } catch (_) {}   // car link: load the catalogue now, not on the first My car visit
   // Shared station link: ?s=<station id>
   try {
     const sid = new URLSearchParams(location.search).get('s');
