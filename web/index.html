@@ -6541,17 +6541,19 @@ function vehLoad() {
   }).catch(() => {});                                  // picker stays hidden; manual fields keep working
 }
 const vehName = v => [v.make, v.model, v.variant].filter(Boolean).join(' ');
+const VEH_PIN = 'hyundai-santa-fe-1-6-t-gdi-plug-in-hybrid-253-hp-4wd';   // the owner's car: first in the list, with a star (shown to every visitor)
 function vehBuild() {
   if (!_veh) return;
   const q = ($id('veh-q').value || '').trim().toLowerCase(), sel = $id('veh-sel'), j = _veh.j;
   const ok = v => !q || vehName(v).toLowerCase().includes(q);
-  const grp = (label, list, dis) => { const l = list.filter(ok); return l.length ? `<optgroup label="${esc(label)}"${dis ? ' disabled' : ''}>${l.map(v => `<option value="${esc(v.id)}"${dis ? ' disabled' : ''}>${esc(vehName(v))}</option>`).join('')}</optgroup>` : ''; };
+  const grp = (label, list, dis) => { const l = list.filter(v => v.id !== VEH_PIN).filter(ok); return l.length ? `<optgroup label="${esc(label)}"${dis ? ' disabled' : ''}>${l.map(v => `<option value="${esc(v.id)}"${dis ? ' disabled' : ''}>${esc(vehName(v))}</option>`).join('')}</optgroup>` : ''; };
   const hy = j.hyundai || [], on = v => v.type === 'ev' || v.type === 'hydrogen';
-  sel.innerHTML = `<option value="">${esc(t('vehCustom'))}</option>`
+  const pin = _veh.by[VEH_PIN];
+  sel.innerHTML = `<option value="">${esc(t('vehCustom'))}</option>` + (pin && ok(pin) ? `<option value="${VEH_PIN}">★ ${esc(vehName(pin))}</option>` : '')
     + grp(t('vehPetrol'), j.categories?.petrol || []) + grp(t('vehDiesel'), j.categories?.diesel || []) + grp(t('vehPhev'), j.categories?.phev || [])
     + grp(t('vehHyundai'), hy.filter(v => !on(v))) + grp(t('vehElec2'), hy.filter(on))
     + [['petrol', 'vehEP'], ['hev', 'vehEH'], ['diesel', 'vehED'], ['phev', 'vehEPh']].map(([k, key]) => grp(t(key), j.eea?.[k] || [])).join('');
-  if (q && !sel.querySelector('optgroup')) sel.innerHTML += `<option value="" disabled>${esc(t('vehNone'))}</option>`;
+  if (q && sel.options.length < 2) sel.innerHTML += `<option value="" disabled>${esc(t('vehNone'))}</option>`;
   sel.value = car.veh && _veh.by[car.veh] && ok(_veh.by[car.veh]) ? car.veh : '';
   vehNote();
 }
