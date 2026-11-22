@@ -4191,7 +4191,7 @@ function curShow(amt, cur, mode, rates, card) {
   return { v: amt, cur };
 }
 // pumps price EUR and GBP in tenths of a cent/penny; converted and other currencies show 2 decimals
-const curDec = (cur, native) => native && (cur === 'EUR' || cur === 'GBP') ? 3 : 2;
+const curDec = () => 3;   // every pump price: 3 decimals (shown with the 3rd small + raised via p3)
 // CUR-PURE-END
 let _ro = {};
 function rateOf(cur) {                     // units of `cur` per 1 EUR: the ECB rate from meta.json fx, else derived from published medians
@@ -4305,7 +4305,7 @@ function provHtml(p) {
   let h = bits.join(' · ');
   if (p.disagree) h += (h ? ' · ' : '') + t('sourcesDiffer');
   if (p.alt?.length) {
-    const li = p.alt.map(a => `${sheetPrice(a.price, p.currency).n} ${esc(sheetPrice(a.price, p.currency).u)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
+    const li = p.alt.map(a => `${p3(sheetPrice(a.price, p.currency).n)} ${esc(sheetPrice(a.price, p.currency).u)} — ${esc(srcName(a.source))}, ${ageTxt(a.updated_at)}`).join('<br>');
     h += `<details><summary>${t('otherSources', { n: p.alt.length })}</summary>${li}</details>`;
   }
   return h;
@@ -4874,7 +4874,7 @@ function stBody(s) {
     const e10 = p.fuel_type === 'E10' ? ` <span title="E10" style="font-size:0.62rem;opacity:.75">${t('e10ok')}</span>` : '';
     const np = p.plausible === false;
     const sus = np ? '' : suspectMsg(s.country, p);       // not flagged by the pipeline, but the data contradicts it: shown, marked, never ranked first
-    return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? ico('warn', 'sm') + ' ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${sp.n}</td><td class="un">${esc(sp.u)}${UNIT[p.unit]||''}${sp.alt ? `<small>${esc(sp.alt)}${UNIT[p.unit]||''}</small>` : ''}</td></tr>`
+    return `<tr class="${np ? 'np' : ''}"><td class="ft">${np ? ico('warn', 'sm') + ' ' : ''}${fuelLabel(p)}${e10}</td><td class="pr">${p3(sp.n)}</td><td class="un">${esc(sp.u)}${UNIT[p.unit]||''}${sp.alt ? `<small>${p3(esc(sp.alt))}${UNIT[p.unit]||''}</small>` : ''}</td></tr>`
       + (np ? `<tr class="np"><td class="pv npnote" colspan="3"><b>${t('notPlausible')}</b> — ${t('np_' + (p.implausible_reason || 'far_from_country'))}. ${t('npExcluded')}</td></tr>`
             : (sus ? `<tr><td class="pv" colspan="3"><span class="sus-note">${ico('warn', 'sm')} ${sus}</span></td></tr>` : ''));
   }).join('') + (missing ? `<tr><td class="ft">${fFuel === 'P95' ? '95' : fFuel === 'P98' ? '98' : esc(fFuel)}</td><td colspan="2" style="text-align:right"><span class="nobadge">${t('noPriceRep')}</span></td></tr>` : '');
