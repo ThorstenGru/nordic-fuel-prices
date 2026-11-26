@@ -1,4 +1,4 @@
-"""Merge tools/vehicles/{petrol,diesel,phev,hyundai}.json into web/vehicles.json.
+"""Merge tools/vehicles/{petrol,diesel,phev,ev,hyundai}.json into web/vehicles.json.
 Fails loudly (exit 1) on validation errors. Python stdlib only."""
 import json, sys
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 OUT = HERE.parent.parent / "web" / "vehicles.json"
 KEEP = ("id", "make", "model", "variant", "type", "hybrid", "rank", "tank_l", "cons_l100",
-        "battery_kwh", "range_km", "ev_kwh100", "confidence", "source", "notes")
+        "battery_kwh", "range_km", "ev_kwh100", "ac_kw", "dc_kw", "kwh_basis", "confidence", "source", "notes")
 NOTE_MAX = 240
 
 
@@ -39,6 +39,10 @@ def validate(entries):
         check_range(errs, v, "battery_kwh", 5, 130)
         check_range(errs, v, "range_km", 20, 800 if t != "hydrogen" else 1000)
         check_range(errs, v, "ev_kwh100", 10, 35)
+        check_range(errs, v, "ac_kw", 1, 50)
+        check_range(errs, v, "dc_kw", 20, 500)
+        if v.get("kwh_basis") not in (None, "wall", "battery"):
+            errs.append(f"{v.get('id')}: kwh_basis must be wall or battery")
     return errs
 
 
@@ -50,7 +54,7 @@ def slim(v):
 
 
 def main():
-    cats = {c: load(c) for c in ("petrol", "diesel", "phev")}
+    cats = {c: load(c) for c in ("petrol", "diesel", "phev", "ev")}
     hyundai = load("hyundai")
     errs = validate([v for l in cats.values() for v in l] + hyundai)
     # same id in a category list and the Hyundai list must be identical
@@ -62,7 +66,7 @@ def main():
         print("vehicles validation FAILED:\n  " + "\n  ".join(errs), file=sys.stderr)
         return 1
     key = lambda v: (v["rank"] is None, v["rank"] or 0)  # stable: unranked keep file order
-    out = {"version": 1, "generated": "2026-11-05",
+    out = {"version": 1, "generated": "2026-11-26",
            "note": "Example values (typical WLTP figures). Please adjust to your car.",
            "categories": {c: [slim(v) for v in sorted(l, key=key)] for c, l in cats.items()},
            "hyundai": [slim(v) for v in hyundai]}

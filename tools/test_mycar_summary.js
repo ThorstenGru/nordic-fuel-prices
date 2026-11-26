@@ -10,4 +10,7 @@ eq(mcState({ type: 'phev', missCar: ['Batt'], missElec: true }), 'needcar'); eq(
 eq(mcState({ type: 'phev', missCar: [], missElec: true }), 'needelec'); eq(mcNext({ type: 'phev', missCar: [], missElec: true }), 2);
 eq(mcState({ type: 'phev', missCar: [], missElec: false }), 'needpet'); eq(mcNext({ type: 'phev', missCar: [], missElec: false }), 3);
 for (const c of ['electric', 'petrol', 'same']) { eq(mcState({ type: 'phev', missCar: [], missElec: false, cheaper: c }), c); eq(mcNext({ type: 'phev', cheaper: c }), 0); }
+// electric cars are compared like plug-in hybrids
+eq(mcState({ type: 'ev', missCar: ['Cons'], missElec: false }), 'needcar'); eq(mcNext({ type: 'ev', missCar: ['Cons'], missElec: false }), 1);
+eq(mcState({ type: 'ev', missCar: [], missElec: false, cheaper: 'electric' }), 'electric');
 console.log('mycar summary: all tests passed');

@@ -4,9 +4,11 @@ from pathlib import Path
 
 PATH = Path(__file__).resolve().parents[2] / "web" / "vehicles.json"
 # PHEV list: 10 ranked (Europe 2025) + 10 candidates without a published rank.
-EXPECTED = {"petrol": 20, "diesel": 20, "phev": 20}
+# 2026-11-26: only manufacturer documents and open-ev-data; every aggregator entry was removed (their terms forbid copying).
+# petrol/diesel stay empty (the EEA file covers them), the old PHEV top-20 is replaced by sourced entries.
+EXPECTED = {"petrol": 0, "diesel": 0, "phev": 4, "ev": 18}
 FIELDS = {"id", "make", "model", "variant", "type", "hybrid", "rank", "tank_l", "cons_l100",
-          "battery_kwh", "range_km", "ev_kwh100", "confidence", "source", "notes"}
+          "battery_kwh", "range_km", "ev_kwh100", "ac_kw", "dc_kw", "kwh_basis", "confidence", "source", "notes"}
 
 
 class VehiclesJson(unittest.TestCase):
@@ -44,6 +46,18 @@ class VehiclesJson(unittest.TestCase):
         for v in self.d["categories"]["phev"]:
             if v["battery_kwh"] is None or v["range_km"] is None:
                 self.assertEqual(v["confidence"], "low", v["id"])
+
+    def test_no_aggregator_sources(self):
+        banned = ("auto-data.net", "cars-data.com", "ultimatespecs.com", "adac.de", "autotijd.be", "carsart.net", "arenaev.com", "ev-database.org")
+        for e in [v for l in self.d["categories"].values() for v in l] + self.d["hyundai"]:
+            self.assertFalse(any(b in e["source"] for b in banned), e["id"])
+
+    def test_ev_have_numbers_and_basis(self):
+        for v in self.d["categories"]["ev"]:
+            self.assertEqual(v["type"], "ev", v["id"])
+            for f in ("battery_kwh", "range_km", "ev_kwh100"):
+                self.assertGreater(v[f], 0, v["id"] + f)
+            self.assertIn(v["kwh_basis"], ("wall", "battery"), v["id"])
 
     def test_phev_cons_is_petrol_only(self):
         for v in self.d["categories"]["phev"] + [h for h in self.d["hyundai"] if h["type"] == "phev"]:
