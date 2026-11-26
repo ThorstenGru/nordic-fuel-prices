@@ -1,0 +1,1048 @@
+{
+ "note": "Fuel tank size per EEA model id, from manufacturer documents only (2026-11-26). Only high/medium confidence is stored; see docs/TANK_SIZES.md.",
+ "tanks": {
+  "eea-diesel-alfa-romeo-stelvio": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 64,
+   "source": "https://www.media.stellantis.com/uploads/em/2018/ALFA-ROMEO/Schede-Tecniche/181123_Alfa-Romeo_Stelvio_Technical-Sheet.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-alfa-romeo-tonale": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 55,
+   "source": "https://www.media.stellantis.com/uploads/gr/attachment//newalfaromeotonaletechnicalsheet-68ee7fa842209.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-audi-a1-sportback": {
+   "tank_l": 40,
+   "tank_min": 40,
+   "tank_max": 40,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/23/file_en/f758eb0e21732c5565365838957dd3d7f6eb954b/eTD-Audi-A1-Sportback-30-TFSI-S_tronic-85kW_250108.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-audi-a3-limousine": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://press.audi.co.uk/assets/documents/original/295-AudiA3Saloon35TDIStronicUKTechnicalDataDecember2020.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-audi-a3-sportback": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1176/file_en/3000505d34f50bbc9d409c309f9c8c5692e635f8/eTD-Audi-A3-Sportback-TFSI-110kW_250605.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-audi-a3-sportback": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1176/file_en/3000505d34f50bbc9d409c309f9c8c5692e635f8/eTD-Audi-A3-Sportback-TFSI-110kW_250605.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-audi-q2": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/834/file_en/e1ca9c9578434c70c128c2b1635601cad96ddcdf/eTD-Audi-Q2-35-TFSI-110kW_250108.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-audi-q2": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/834/file_en/e1ca9c9578434c70c128c2b1635601cad96ddcdf/eTD-Audi-Q2-35-TFSI-110kW_250108.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-audi-q3": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 63,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/625/file_en/f7bcd1948f855e702ae2b6b45a3c2f4166ac376a/eTD-Audi-Q3-35-TFSI-110kW_240322.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-audi-q3": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 63,
+   "source": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/625/file_en/f7bcd1948f855e702ae2b6b45a3c2f4166ac376a/eTD-Audi-Q3-35-TFSI-110kW_240322.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-audi-q3-sportback": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 60,
+   "source": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline%20info_Audi_Q3_Sportback.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-audi-q3-sportback": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 60,
+   "source": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline%20info_Audi_Q3_Sportback.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-bmw-116i": {
+   "tank_l": 49,
+   "tank_min": 49,
+   "tank_max": 49,
+   "source": "https://newsroom.bmwgroup.com/apac/specifications-of-the-bmw-1-series-116-valid-from-112024",
+   "confidence": "medium"
+  },
+  "eea-petrol-bmw-218i-active-tourer": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://www.press.bmwgroup.com/global/article/attachment/T0346212EN/519605",
+   "confidence": "high"
+  },
+  "eea-petrol-bmw-318i": {
+   "tank_l": 59,
+   "tank_min": 59,
+   "tank_max": 59,
+   "source": "https://www.press.bmwgroup.com/global/article/attachment/T0304990EN/445465",
+   "confidence": "medium"
+  },
+  "eea-petrol-bmw-m2": {
+   "tank_l": 52,
+   "tank_min": 52,
+   "tank_max": 52,
+   "source": "https://www.press.bmwgroup.com/netherlands/article/attachment/T0404606NL/568154",
+   "confidence": "high"
+  },
+  "eea-petrol-bmw-m3-competition-m-xdrive": {
+   "tank_l": 59,
+   "tank_min": 59,
+   "tank_max": 59,
+   "source": "https://www.press.bmwgroup.com/global/article/attachment/T0329893EN/477739",
+   "confidence": "high"
+  },
+  "eea-diesel-bmw-x1-sdrive18d": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://www.press.bmwgroup.com/spain/article/attachment/T0405218ES/569211",
+   "confidence": "medium"
+  },
+  "eea-petrol-bmw-x1-sdrive18i": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://www.press.bmwgroup.com/global/article/attachment/T0393974EN/567415",
+   "confidence": "high"
+  },
+  "eea-diesel-bmw-x1-sdrive-18d": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://www.press.bmwgroup.com/spain/article/attachment/T0405218ES/569211",
+   "confidence": "medium"
+  },
+  "eea-diesel-bmw-x2-sdrive18d": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://www.press.bmwgroup.com/global/article/attachment/T0437451EN/608982",
+   "confidence": "high"
+  },
+  "eea-diesel-citroen-berlingo": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 53,
+   "source": "https://store.citroen.es/selector/configurable/berlingo-m-m/plus/bluehdi-100cv-manual-diesel/negro-perla/tejido-metropolitan",
+   "confidence": "medium"
+  },
+  "eea-petrol-citroen-c3": {
+   "tank_l": 44,
+   "tank_min": 42,
+   "tank_max": 45,
+   "source": "https://www.citroen.fr/content/dam/citroen/france/showroom/b2c/technical-file/09-25/C3etEC3-SEPTEMBRE-25.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-citroen-c3": {
+   "tank_l": 44,
+   "tank_min": 42,
+   "tank_max": 45,
+   "source": "https://www.citroen.fr/content/dam/citroen/france/showroom/b2c/technical-file/09-25/C3etEC3-SEPTEMBRE-25.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-citroen-c3-aircross": {
+   "tank_l": 44,
+   "tank_min": 44,
+   "tank_max": 45,
+   "source": "https://citroen.fr/content/dam/citroen/france/showroom/b2c/technical-file/11-25/CT-Nouveau-C3-Aircross-E-C3-Aircross.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-citroen-c3-aircross": {
+   "tank_l": 44,
+   "tank_min": 44,
+   "tank_max": 45,
+   "source": "https://citroen.fr/content/dam/citroen/france/showroom/b2c/technical-file/11-25/CT-Nouveau-C3-Aircross-E-C3-Aircross.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-citroen-c4": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.media.stellantis.com/uploads/uk/model-pricelist/citroenc4pricelistoctober2022-635a95f8ed2b8.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-citroen-c4": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.media.stellantis.com/uploads/uk/model-pricelist/citroenc4pricelistoctober2022-635a95f8ed2b8.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-citroen-c4-x": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.media.stellantis.com/uploads/uk/attachment/new_c4x_price_specification_guide_dec24-67559cc003745.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-citroen-c5-aircross": {
+   "tank_l": 55,
+   "tank_min": 53,
+   "tank_max": 55,
+   "source": "https://www.citroen.fr/content/dam/citroen/france/showroom/b2c/technical-file/11-25/CT-Nouveau-c5-Aircross-1.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-citroen-c5-aircross": {
+   "tank_l": 55,
+   "tank_min": 53,
+   "tank_max": 55,
+   "source": "https://www.citroen.fr/content/dam/citroen/france/showroom/b2c/technical-file/11-25/CT-Nouveau-c5-Aircross-1.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-citroen-nuevo-berlingo-talla-m-bluehdi-100-s-s-6v-plus": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 53,
+   "source": "https://store.citroen.es/selector/configurable/berlingo-m-m/plus/bluehdi-100cv-manual-diesel/negro-perla/tejido-metropolitan",
+   "confidence": "medium"
+  },
+  "eea-petrol-cupra-ateca": {
+   "tank_l": 55,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.cupraofficial.co.uk/content/dam/countries/gb/cupra-website/download-documents/2025/v1-cupra-ateca-price-list-12-2025.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-cupra-formentor": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.cupra.com/content/dam/countries/gb/cupra-website/download-documents/2023/v1_cars_models_cupra_formentor-pricelist-KM7-04-2023.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-cupra-formentor": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.cupra.com/content/dam/countries/gb/cupra-website/download-documents/2023/v1_cars_models_cupra_formentor-pricelist-KM7-04-2023.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-cupra-leon": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 50,
+   "source": "https://www.cupra.com/content/dam/countries/gb/cupra-website/download-documents/2024/v1-cars-models-cupra-leon-pricelist-KL16-07-2024.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-cupra-leon-sp": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 50,
+   "source": "https://www.cupra.com/content/dam/countries/gb/cupra-website/download-documents/2024/v1-cars-models-cupra-leon-pricelist-KL16-07-2024.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-cupra-leon-sp": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 50,
+   "source": "https://www.cupra.com/content/dam/countries/gb/cupra-website/download-documents/2024/v1-cars-models-cupra-leon-pricelist-KL16-07-2024.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-dacia-duster": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.dacia.co.uk/hybrid-and-electric-range/duster-suv/compare-specifications.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-dacia-duster": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.dacia.co.uk/hybrid-and-electric-range/duster-suv/compare-specifications.html",
+   "confidence": "medium"
+  },
+  "eea-petrol-dacia-jogger": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.dacia.co.uk/vehicles/jogger/specifications.html",
+   "confidence": "high"
+  },
+  "eea-petrol-dacia-logan": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://media.dacia.com/wp-content/uploads/2022/07/ae5568b4eb3dda3938d1e233fa4900ba-keeexed.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-dacia-sandero": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.dacia.co.uk/vehicles/sandero/compare.html",
+   "confidence": "high"
+  },
+  "eea-petrol-ford-focus": {
+   "tank_l": 52,
+   "tank_min": 47,
+   "tank_max": 52,
+   "source": "https://www.ford.ie/content/dam/guxeu/ie/Documents/Feature-PDFs/FT-New_Focus.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-ford-focus": {
+   "tank_l": 52,
+   "tank_min": 47,
+   "tank_max": 52,
+   "source": "https://www.ford.ie/content/dam/guxeu/ie/Documents/Feature-PDFs/FT-New_Focus.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-hyundai-bayon": {
+   "tank_l": 40,
+   "tank_min": 40,
+   "tank_max": 40,
+   "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/BAYON_Tech_Specpdf",
+   "confidence": "high"
+  },
+  "eea-petrol-hyundai-i-30": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.hyundai.news/newsroom/dam/uk/press-kits/hyundai-uk-i30-tech-spec-pricing-model-year-2023-0424.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-hyundai-i10": {
+   "tank_l": 36,
+   "tank_min": 36,
+   "tank_max": 36,
+   "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/i10_Tech_Specpdf",
+   "confidence": "high"
+  },
+  "eea-petrol-hyundai-i20": {
+   "tank_l": 40,
+   "tank_min": 40,
+   "tank_max": 40,
+   "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/i20_Tech_and_Specpdf",
+   "confidence": "high"
+  },
+  "eea-petrol-hyundai-kona-kauai": {
+   "tank_l": 47,
+   "tank_min": 38,
+   "tank_max": 47,
+   "source": "https://dmassets.hyundai.com/is/content/hyundaiautoever/KONA_Tech_and_Specpdf",
+   "confidence": "high"
+  },
+  "eea-diesel-hyundai-staria": {
+   "tank_l": 75,
+   "tank_min": 75,
+   "tank_max": 75,
+   "source": "https://www.hyundai.com/content/dam/hyundai/au/en/models/staria/2021/docs/Hyundai_STARIA-US4_Specifications.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-hyundai-tucson-ix35": {
+   "tank_l": 54,
+   "tank_min": 52,
+   "tank_max": 54,
+   "source": "https://www.hyundai.news/newsroom/dam/uk/press-kits/hyundai-uk-tucson-tech-spec-pricing-model-year-2025-0524.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-hyundai-tucson-ix35": {
+   "tank_l": 54,
+   "tank_min": 52,
+   "tank_max": 54,
+   "source": "https://www.hyundai.news/newsroom/dam/uk/press-kits/hyundai-uk-tucson-tech-spec-pricing-model-year-2025-0524.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-jeep-renegade": {
+   "tank_l": 48,
+   "tank_min": 48,
+   "tank_max": 48,
+   "source": "https://www.jeep.com/content/dam/cross-regional/ee/renegade/Renegade-price-list.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-kia-ceed": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.kia.com/content/dam/kwcms/kme/uk/en/assets/vehicles/The-New-Ceed/Specification/new-kia-ceed-specification.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-kia-picanto": {
+   "tank_l": 35,
+   "tank_min": 35,
+   "tank_max": 35,
+   "source": "https://www.kia.com/uk/new-cars/picanto/specification/",
+   "confidence": "high"
+  },
+  "eea-petrol-kia-proceed": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.kia.com/content/dam/kwcms/kme/uk/en/assets/vehicles/The-New-ProCeed/Specification/new-kia-proceed-specification.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-kia-sorento": {
+   "tank_l": 67,
+   "tank_min": 67,
+   "tank_max": 67,
+   "source": "https://www.kia.com/content/dam/kwcms/kme/uk/en/assets/vehicles/Sorento-MY25/sorento-specification.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-kia-sportage": {
+   "tank_l": 54,
+   "tank_min": 52,
+   "tank_max": 54,
+   "source": "https://www.kia.com/content/dam/kwcms/kme/ie/en/assets/contents/utilty/brochure/spechsheet/The-all-new-Sportage-Specifications.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-kia-sportage": {
+   "tank_l": 54,
+   "tank_min": 52,
+   "tank_max": 54,
+   "source": "https://www.kia.com/content/dam/kwcms/kme/ie/en/assets/contents/utilty/brochure/spechsheet/The-all-new-Sportage-Specifications.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-kia-stonic": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://www.kia.com/uk/new-cars/rio/emissions/",
+   "confidence": "high"
+  },
+  "eea-petrol-kia-xceed": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://www.kia.com/uk/dealers/pentagonmansfield/new-cars/xceed/specification/",
+   "confidence": "high"
+  },
+  "eea-petrol-mg-hs": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 55,
+   "source": "https://cdn.mgmotor.eu/files/TECHNICAL-SHEET-MG-HS-HS-PHEV-27-01-2025_compressed.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-mg-zs": {
+   "tank_l": 55,
+   "tank_min": 41,
+   "tank_max": 55,
+   "source": "https://www.mg.co.uk/sites/default/files/2025-04/MG_ZS_Range_Brochure_April_2025.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-mini-cooper": {
+   "tank_l": 44,
+   "tank_min": 44,
+   "tank_max": 44,
+   "source": "https://newsroom.bmwgroup.com/global/download/0274d4c5-9746-4155-9184-1000b5a8a25f/20260723103920803-207.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-mini-cooper-c": {
+   "tank_l": 44,
+   "tank_min": 44,
+   "tank_max": 44,
+   "source": "https://newsroom.bmwgroup.com/global/download/0274d4c5-9746-4155-9184-1000b5a8a25f/20260723103920803-207.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-mini-cooper-s": {
+   "tank_l": 44,
+   "tank_min": 44,
+   "tank_max": 44,
+   "source": "https://newsroom.bmwgroup.com/global/download/0274d4c5-9746-4155-9184-1000b5a8a25f/20260723103920803-207.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-mazda-cx-5": {
+   "tank_l": 56,
+   "tank_min": 56,
+   "tank_max": 58,
+   "source": "https://owners-manual.mazda.com/gen/en/cx-5/cx-5_8hy2ee19l/contents/10020104.html",
+   "confidence": "medium"
+  },
+  "eea-petrol-mazda-mazda2": {
+   "tank_l": 44,
+   "tank_min": 35,
+   "tank_max": 44,
+   "source": "https://owners-manual.mazda.com/gen/en/mazda2/mazda2_8gl7ee18c/contents/10020104.html",
+   "confidence": "high"
+  },
+  "eea-petrol-mazda-mx-5": {
+   "tank_l": 45,
+   "tank_min": 45,
+   "tank_max": 45,
+   "source": "https://owners-manual.mazda.com/gen/en/mx-5/mx-5_8ja8ee19k/contents/10020104.html",
+   "confidence": "high"
+  },
+  "eea-diesel-mercedes-benz-a-180-d": {
+   "tank_l": 43,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.de/passengercars/models/hatchback/a-class/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-a-200-d": {
+   "tank_l": 43,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.de/passengercars/models/hatchback/a-class/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-gla-180-d": {
+   "tank_l": 43,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.de/passengercars/models/suv/gla/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-gla-200-d": {
+   "tank_l": 43,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.de/passengercars/models/suv/gla/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-gla-200-d-4matic": {
+   "tank_l": 51,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.de/passengercars/models/suv/gla/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-gla-220-d-4matic": {
+   "tank_l": 51,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.de/passengercars/models/suv/gla/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-glb-200-d": {
+   "tank_l": 52,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.co.uk/passengercars/models/suv/glb/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-v-klasse": {
+   "tank_l": 70,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.mercedes-benz.co.uk/passengercars/models/van/v-class/overview.html",
+   "confidence": "medium"
+  },
+  "eea-diesel-mercedes-benz-vito-tourer": {
+   "tank_l": 57,
+   "tank_min": 57,
+   "tank_max": 70,
+   "source": "https://tools.mercedes-benz.co.uk/current/vans/brochures/new-vito-tourer.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-mitsubishi-colt": {
+   "tank_l": 42,
+   "tank_min": 39,
+   "tank_max": 42,
+   "source": "https://presse.mitsubishi-motors.de/api/asset/1481/download",
+   "confidence": "high"
+  },
+  "eea-petrol-mitsubishi-space-star": {
+   "tank_l": 35,
+   "tank_min": 35,
+   "tank_max": 35,
+   "source": "https://www.mitsubishi-motors.nl/content/dam/mitsubishi-motors-nl/downloads/prijslijsten/Januari_2023_Space_Star.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-nissan-juke": {
+   "tank_l": 46,
+   "tank_min": 46,
+   "tank_max": 46,
+   "source": "https://www.nissan.co.uk/vehicles/new-vehicles/juke/prices-specifications.html",
+   "confidence": "high"
+  },
+  "eea-diesel-nissan-primastar": {
+   "tank_l": 80,
+   "tank_min": 80,
+   "tank_max": 80,
+   "source": "https://www-europe.nissan-cdn.net/content/dam/Nissan/fr/brochures/Brochures-vehicules/FICHE_TECHNIQUE_PRIMASTAR_Fourgon.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-nissan-townstar": {
+   "tank_l": 54,
+   "tank_min": 54,
+   "tank_max": 54,
+   "source": "https://www-europe.nissan-cdn.net/content/dam/Nissan/gb/brochures/Vehicles/Nissan_Townstar_UK.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-peugeot-2008": {
+   "tank_l": 44,
+   "tank_min": 41,
+   "tank_max": 44,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/2008.p2/eGuide_p24_ed01-20/pdfs/9999_9999_402_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-peugeot-2008": {
+   "tank_l": 44,
+   "tank_min": 41,
+   "tank_max": 44,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/2008.p2/eGuide_p24_ed01-20/pdfs/9999_9999_402_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-peugeot-208": {
+   "tank_l": 44,
+   "tank_min": 40,
+   "tank_max": 44,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/208.p2/eGuide_p21_ed01-23/pdfs/9999_9999_494_en-GB.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-peugeot-3008": {
+   "tank_l": 55,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/3008.p6/eGuide_p64_ed01-24_dag/pdfs/9999_9999_527_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-peugeot-3008": {
+   "tank_l": 55,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/3008.p6/eGuide_p64_ed01-24_dag/pdfs/9999_9999_527_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-peugeot-308": {
+   "tank_l": 52,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/308.p5/eGuide_p512_ed01-23_dag/pdfs/9999_9999_482_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-peugeot-308": {
+   "tank_l": 52,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/308.p5/eGuide_p512_ed01-23_dag/pdfs/9999_9999_482_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-peugeot-5008": {
+   "tank_l": 55,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/3008.p6/eGuide_p64_ed01-24_dag/pdfs/9999_9999_527_en-GB.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-peugeot-5008": {
+   "tank_l": 55,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/3008.p6/eGuide_p64_ed01-24_dag/pdfs/9999_9999_527_en-GB.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-peugeot-508": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 62,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/508.r8/eGuide_r823_ed01-18/pdfs/9999_9999_265_en-GB.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-peugeot-nuevo-rifter-allure-bluehdi-100-s-s-6-vel-man-sta": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 61,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/partner.k9/eGuide_k9vp_ed01-21/pdfs/9999_9999_390_de-DE.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-peugeot-rifter": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 61,
+   "source": "https://public.servicebox.peugeot.com/APddb/modeles/partner.k9/eGuide_k9vp_ed01-21/pdfs/9999_9999_390_de-DE.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-renault-captur": {
+   "tank_l": 48,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/mobile-brochure-tech-spec/mobile-tech-spec-captur.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-renault-clio": {
+   "tank_l": 42,
+   "tank_min": 39,
+   "tank_max": 42,
+   "source": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/mobile-brochure-tech-spec/mobile-tech-spec-new-clio.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-renault-clio": {
+   "tank_l": 42,
+   "tank_min": 39,
+   "tank_max": 42,
+   "source": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/mobile-brochure-tech-spec/mobile-tech-spec-new-clio.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-renault-kangoo": {
+   "tank_l": 54,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/mobile-brochure-tech-spec/mobile-tech-spec-kangoo.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-renault-kangoo": {
+   "tank_l": 54,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/mobile-brochure-tech-spec/mobile-tech-spec-kangoo.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-renault-trafic": {
+   "tank_l": 80,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://cdn.group.renault.com/ren/gb/transversal-assets/brochures/mobile-brochure-tech-spec/mobile-tech-spec-trafic-van.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-renault-twingo": {
+   "tank_l": 35,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.press.renault.co.uk/assets/documents/original/14009-RenaultTwingoPressKitFebruary2018.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-seat-arona": {
+   "tank_l": 40,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.seat.co.uk/content/dam/countries/gb/seat-website/car-shopping-tools/price-lists/arona/v1-cars-models-seat-arona-pricelist-KJ7-NA-04-2025.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-seat-ateca": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.seat.com/content/dam/public/seat-website/myco/2130/car-shopping-tools/brochure-download/brochures/new-ateca/car-models-brochure-specs-new-ateca-oct-2020.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-seat-ateca": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.seat.com/content/dam/public/seat-website/myco/2130/car-shopping-tools/brochure-download/brochures/new-ateca/car-models-brochure-specs-new-ateca-oct-2020.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-seat-ibiza": {
+   "tank_l": 40,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.seat.com/content/dam/public/seat-website/myco/2130/car-shopping-tools/brochure-download/brochures/ibiza/other-shoppingtools-brochure-ibiza-specs-final-jan-2021.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-seat-leon": {
+   "tank_l": 45,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.seat.co.uk/content/dam/countries/gb/seat-website/car-shopping-tools/price-lists/leon/v1-cars-models-seat-leon-pricelist-KL1-NA-07-2025.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-seat-leon": {
+   "tank_l": 45,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.seat.co.uk/content/dam/countries/gb/seat-website/car-shopping-tools/price-lists/leon/v1-cars-models-seat-leon-pricelist-KL1-NA-07-2025.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-seat-tarraco": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 60,
+   "source": "https://www.seat.com/content/dam/public/seat-website/myco/2130/car-shopping-tools/brochure-download/brochures/tarraco/other-shoppingtools-brochure-tarraco-specs-final-september-2020.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-skoda-fabia": {
+   "tank_l": 40,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://www.skoda-auto.com/_doc/73b79e58-4d5c-4167-8b6f-56d68b4e8103",
+   "confidence": "high"
+  },
+  "eea-petrol-skoda-kamiq": {
+   "tank_l": 50,
+   "tank_min": null,
+   "tank_max": null,
+   "source": "https://cdn.skoda-storyboard.com/2022/03/TD-KAMIQ-en.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-skoda-karoq": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://cdn.skoda-storyboard.com/2020/11/TD-KAROQ-en.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-skoda-karoq": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://cdn.skoda-storyboard.com/2020/11/TD-KAROQ-en.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-skoda-kodiaq": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 58,
+   "source": "https://cdn.skoda-storyboard.com/2025/02/Kodiaq_EN_fd56751c.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-skoda-kodiaq": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 58,
+   "source": "https://cdn.skoda-storyboard.com/2025/02/Kodiaq_EN_fd56751c.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-skoda-octavia": {
+   "tank_l": 55,
+   "tank_min": 45,
+   "tank_max": 55,
+   "source": "https://cdn.skoda-storyboard.com/2025/02/Octavia_EN_ed9ab7ae.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-skoda-octavia": {
+   "tank_l": 55,
+   "tank_min": 45,
+   "tank_max": 55,
+   "source": "https://cdn.skoda-storyboard.com/2025/02/Octavia_EN_ed9ab7ae.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-skoda-octavia-rs": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://cdn.skoda-storyboard.com/2025/02/Octavia_EN_ed9ab7ae.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-skoda-octavia-rs": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://cdn.skoda-storyboard.com/2025/02/Octavia_EN_ed9ab7ae.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-skoda-scala": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://cdn.skoda-storyboard.com/2019/01/TD-SCALA-en-1.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-skoda-superb": {
+   "tank_l": 66,
+   "tank_min": 66,
+   "tank_max": 66,
+   "source": "https://cdn.skoda-storyboard.com/2024/03/TD-Superb-en_87b42ad4.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-skoda-superb": {
+   "tank_l": 66,
+   "tank_min": 66,
+   "tank_max": 66,
+   "source": "https://cdn.skoda-storyboard.com/2024/03/TD-Superb-en_87b42ad4.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-toyota-aygo-x": {
+   "tank_l": 35,
+   "tank_min": 30,
+   "tank_max": 35,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/230120M-Aygo-X-Tech-Spec.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-toyota-corolla": {
+   "tank_l": 43,
+   "tank_min": 43,
+   "tank_max": 43,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/240812-Corolla-Press-Pack.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-toyota-gr-yaris": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/260130-GR-Yaris-Tech-Specs.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-toyota-land-cruiser": {
+   "tank_l": 80,
+   "tank_min": 80,
+   "tank_max": 80,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/260216-Land-Cruiser-Tech-Specs.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-toyota-land-cruiser-150-series": {
+   "tank_l": 87,
+   "tank_min": 87,
+   "tank_max": 87,
+   "source": "https://www.toyota.co.uk/content/dam/toyota/nmsc/united-kingdom/brochure-archive/land-cruiser/lc150-may-21.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-toyota-proace": {
+   "tank_l": 69,
+   "tank_min": 69,
+   "tank_max": 69,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/240916-Proace-Tech-Specs.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-toyota-proace-city-verso": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/230203M-Proace-City-Tech-Spec.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-toyota-proace-city-verso": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 50,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/230203M-Proace-City-Tech-Spec.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-toyota-yaris": {
+   "tank_l": 36,
+   "tank_min": 36,
+   "tank_max": 36,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/241127-Yaris-Tech-Specs.pdf",
+   "confidence": "high"
+  },
+  "eea-petrol-toyota-yaris-cross": {
+   "tank_l": 36,
+   "tank_min": 36,
+   "tank_max": 36,
+   "source": "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/250708-Yaris-Cross-tech-spec.pdf",
+   "confidence": "high"
+  },
+  "eea-diesel-volkswagen-california-beach": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 58,
+   "source": "https://www.volkswagen-vans.co.uk/idhub/content/dam/onehub_nfz/importers/gb/downloads/brochures/california/california-brochure.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-volkswagen-golf": {
+   "tank_l": 50,
+   "tank_min": 45,
+   "tank_max": 55,
+   "source": "https://www.volkswagen.de/de/modelle/golf.html/__ui/technische-daten.app",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-golf": {
+   "tank_l": 50,
+   "tank_min": 45,
+   "tank_max": 55,
+   "source": "https://www.volkswagen.de/de/modelle/golf.html/__ui/technische-daten.app",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-multivan": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 58,
+   "source": "https://volkswagen.at/dam/files/a1ddcdb05417c0fee2b4494308c84073d98f49ab/303e725f-b4e2-40ea-8631-071820ede0e5/preisliste-vw-multivan-august-2024",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-passat": {
+   "tank_l": 66,
+   "tank_min": 66,
+   "tank_max": 66,
+   "source": "https://www.volkswagen.de/de/modelle/der-passat.html/__ui/technische-daten.app",
+   "confidence": "medium"
+  },
+  "eea-petrol-volkswagen-polo": {
+   "tank_l": 40,
+   "tank_min": 40,
+   "tank_max": 40,
+   "source": "https://www.volkswagen.de/de/modelle/der-polo.html/__ui/technische-daten.app",
+   "confidence": "high"
+  },
+  "eea-petrol-volkswagen-t-cross": {
+   "tank_l": 40,
+   "tank_min": 40,
+   "tank_max": 40,
+   "source": "https://www.volkswagen.de/de/modelle/der-t-cross.html/__ui/technische-daten.app",
+   "confidence": "high"
+  },
+  "eea-petrol-volkswagen-t-roc": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.volkswagen-newsroom.com/en/the-new-t-roc-international-media-drive-19983/drive-systems-19984",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-t-roc": {
+   "tank_l": 50,
+   "tank_min": 50,
+   "tank_max": 55,
+   "source": "https://www.volkswagen-newsroom.com/en/the-new-t-roc-international-media-drive-19983/drive-systems-19984",
+   "confidence": "medium"
+  },
+  "eea-petrol-volkswagen-taigo": {
+   "tank_l": 40,
+   "tank_min": 40,
+   "tank_max": 40,
+   "source": "https://www.volkswagen.de/de/modelle/taigo.html/__ui/technische-daten.app",
+   "confidence": "high"
+  },
+  "eea-petrol-volkswagen-tiguan": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 58,
+   "source": "https://www.volkswagen.de/de/modelle/tiguan.html/__ui/technische-daten.app",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-tiguan": {
+   "tank_l": 55,
+   "tank_min": 55,
+   "tank_max": 58,
+   "source": "https://www.volkswagen.de/de/modelle/tiguan.html/__ui/technische-daten.app",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-touareg": {
+   "tank_l": 75,
+   "tank_min": 75,
+   "tank_max": 90,
+   "source": "https://www.volkswagen.de/de/modelle/der-touareg.html/__ui/technische-daten.app",
+   "confidence": "medium"
+  },
+  "eea-petrol-volkswagen-touran": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 58,
+   "source": "https://www.volkswagen.se/idhub/content/dam/onehub_pkw/importers/se/hjalp-och-support/broschyrer/touran/vw-touran_modellbroschyr.pdf",
+   "confidence": "medium"
+  },
+  "eea-diesel-volkswagen-touran": {
+   "tank_l": 58,
+   "tank_min": 58,
+   "tank_max": 58,
+   "source": "https://www.volkswagen.se/idhub/content/dam/onehub_pkw/importers/se/hjalp-och-support/broschyrer/touran/vw-touran_modellbroschyr.pdf",
+   "confidence": "medium"
+  },
+  "eea-petrol-volvo-xc40": {
+   "tank_l": 54,
+   "tank_min": 54,
+   "tank_max": 54,
+   "source": "https://www.volvocars.com/uk/cars/xc40/specifications/",
+   "confidence": "high"
+  }
+ }
+}

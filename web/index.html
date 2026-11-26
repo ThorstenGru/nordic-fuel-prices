@@ -5987,13 +5987,13 @@ function ctyNote(cc) {
   el.innerHTML = h;
 }
 
-Object.assign(I18N.en, { carEv:'Electric car', carConsEv:'Petrol use of a comparable petrol car (litres per 100 km)', mcConsHEv:'Which petrol car would you drive instead? Example: 7 means it uses 7 litres of petrol per 100 km.', vehEv:'Electric cars (manufacturer data)', vehElec2:'Hyundai electric',
+Object.assign(I18N.en, { vehTank:'Tank size {l} L for the usual version, from the manufacturer ({s}). Other versions can differ.', vehTankR:'Tank size {l} L for the usual version, from the manufacturer ({s}). Versions range from {a} to {b} L.', mcVerC:'Close call: charging and filling up cost nearly the same once the effort of plugging in is counted.', mcSum_c:'Close call for {car}: about {e} per 100 km on electricity and {p} on petrol. The gain is too small to be sure, because prices and consumption are estimates. Charging is clearly worth the effort below about {w} per kWh (break-even {b}).', carEv:'Electric car', carConsEv:'Petrol use of a comparable petrol car (litres per 100 km)', mcConsHEv:'Which petrol car would you drive instead? Example: 7 means it uses 7 litres of petrol per 100 km.', vehEv:'Electric cars (manufacturer data)', vehElec2:'Hyundai electric',
   mcTypeH:'A plug-in hybrid runs on petrol and on a battery you charge from a socket. Plug-in hybrids and electric cars can be compared with petrol.', mcSum_notphev:'Electricity can be compared for plug-in hybrids and electric cars. Choose one of them under "What does your car run on?" if that is your car.',
   mcEvNote:'The petrol side is a comparable petrol car with the consumption you entered. Route planning for electric cars is not available yet.' });
-Object.assign(I18N.sv, { carEv:'Elbil', carConsEv:'Bensinförbrukning hos en jämförbar bensinbil (liter per 100 km)', mcConsHEv:'Vilken bensinbil skulle du köra i stället? Exempel: 7 betyder att den drar 7 liter bensin per 100 km.', vehEv:'Elbilar (tillverkardata)', vehElec2:'Hyundai el',
+Object.assign(I18N.sv, { vehTank:'Tankstorlek {l} L för den vanligaste versionen, från tillverkaren ({s}). Andra versioner kan skilja sig.', vehTankR:'Tankstorlek {l} L för den vanligaste versionen, från tillverkaren ({s}). Versionerna varierar från {a} till {b} L.', mcVerC:'Knappt: att ladda och att tanka kostar nästan lika mycket när man räknar in besväret med att ladda.', mcSum_c:'Knappt för {car}: ca {e} per 100 km på el och {p} på bensin. Vinsten är för liten för att vara säker, eftersom priser och förbrukning är uppskattningar. Det är tydligt värt besväret att ladda under ca {w} per kWh (break-even {b}).', carEv:'Elbil', carConsEv:'Bensinförbrukning hos en jämförbar bensinbil (liter per 100 km)', mcConsHEv:'Vilken bensinbil skulle du köra i stället? Exempel: 7 betyder att den drar 7 liter bensin per 100 km.', vehEv:'Elbilar (tillverkardata)', vehElec2:'Hyundai el',
   mcTypeH:'En laddhybrid går på bensin och på ett batteri du laddar i ett vägguttag. Laddhybrider och elbilar kan jämföras med bensin.', mcSum_notphev:'El kan jämföras för laddhybrider och elbilar. Välj en av dem under "Vad drivs din bil med?" om det är din bil.',
   mcEvNote:'Bensinsidan är en jämförbar bensinbil med den förbrukning du angett. Ruttplanering för elbilar finns inte ännu.' });
-Object.assign(I18N.de, { carEv:'Elektroauto', carConsEv:'Benzinverbrauch eines vergleichbaren Benziners (Liter pro 100 km)', mcConsHEv:'Welchen Benziner würdest du stattdessen fahren? Beispiel: 7 heißt 7 Liter Benzin auf 100 km.', vehEv:'Elektroautos (Herstellerdaten)', vehElec2:'Hyundai elektrisch',
+Object.assign(I18N.de, { vehTank:'Tankgröße {l} L für die übliche Version, laut Hersteller ({s}). Andere Versionen können abweichen.', vehTankR:'Tankgröße {l} L für die übliche Version, laut Hersteller ({s}). Die Versionen reichen von {a} bis {b} L.', mcVerC:'Knapp: Laden und Tanken kosten fast gleich viel, wenn man den Aufwand des Ansteckens mitrechnet.', mcSum_c:'Knapp bei {car}: etwa {e} pro 100 km mit Strom und {p} mit Benzin. Der Vorteil ist zu klein, um sicher zu sein, weil Preise und Verbrauch Schätzwerte sind. Laden lohnt sich deutlich unter etwa {w} pro kWh (Break-even {b}).', carEv:'Elektroauto', carConsEv:'Benzinverbrauch eines vergleichbaren Benziners (Liter pro 100 km)', mcConsHEv:'Welchen Benziner würdest du stattdessen fahren? Beispiel: 7 heißt 7 Liter Benzin auf 100 km.', vehEv:'Elektroautos (Herstellerdaten)', vehElec2:'Hyundai elektrisch',
   mcTypeH:'Ein Plug-in-Hybrid fährt mit Benzin und mit einer Batterie, die du an der Steckdose lädst. Plug-in-Hybride und Elektroautos lassen sich mit Benzin vergleichen.', mcSum_notphev:'Strom lässt sich für Plug-in-Hybride und Elektroautos vergleichen. Wähle eines davon unter "Womit fährt dein Auto?", wenn das dein Auto ist.',
   mcEvNote:'Die Benzinseite ist ein vergleichbarer Benziner mit dem eingegebenen Verbrauch. Routenplanung für Elektroautos gibt es noch nicht.' });
 // ── My car: optional profile (nothing is pre-filled). Tank litres reuse efp_tank, consumption reuses the Trip tab's trip.cons ──
@@ -6217,7 +6217,7 @@ function tankPick(n) { const e = $id('car-tank'); if (e) e.value = n; carSet('ta
 function evReset(k) { delete ev[k]; store.set('efp_ev', ev); evAll(); }
 function tfUse(v) { carSet('elec', v); const e = $id('car-elec'); if (e) e.value = car.elec != null ? car.elec : ''; }
 // MC-PURE-BEGIN  (no DOM, no globals: extracted and tested by tools/test_mycar_summary.js)
-// o = { type: 'petrol'|'diesel'|'phev'|undefined, missCar: [missing car fields], missElec: bool, cheaper: 'electric'|'petrol'|'same'|null }  ->  which sentence the answer card shows
+// o = { type: 'petrol'|'diesel'|'phev'|'ev'|undefined, missCar: [missing car fields], missElec: bool, cheaper: 'electric'|'petrol'|'same'|'close'|null }  ->  which sentence the answer card shows
 function mcState(o) {
   if (!o.type) return 'nocar';
   if (o.type !== 'phev' && o.type !== 'ev') return 'notphev';
@@ -6227,6 +6227,11 @@ function mcState(o) {
 }
 // the step the driver should do next: 1 car, 2 electricity price, 3 petrol prices, 0 = nothing to do
 function mcNext(o) { const s = mcState(o); return s === 'nocar' || s === 'needcar' ? 1 : s === 'needelec' ? 2 : s === 'needpet' ? 3 : 0; }
+// gain = what 1 kWh is worth in petrol (the break-even price) minus the price paid, minGain = the least gain that is worth the effort of charging, band = the zone around it that is too close to call (docs/CLOSE_CALL.md)
+function mcWorth(gain, minGain, band) {
+  if (!isFinite(gain) || !(minGain >= 0) || !(band >= 0)) return null;
+  return Math.abs(gain - minGain) < band ? 'close' : gain >= minGain ? 'worth' : 'not';
+}
 // MC-PURE-END
 let _mcAns = null;       // set by evRender0: the already computed figures the answer card reads
 const mcPay = (a, u) => t(a.mode === 'home' ? 'mcYouPay' : a.mode === 'fc' ? 'mcPayFc' : a.assumed ? 'mcPayAssume' : 'mcPayPub', { u });   // says where the per-kWh price comes from
@@ -6252,8 +6257,8 @@ function mcSummary() {
   else if (s === 'notphev') h = P(t('mcSum_notphev') + (car.type === 'petrol' && a.petrolOnly != null ? ' ' + t('mcSum_petrolOnly', { p: c0(a.petrolOnly) }) : ''));
   else {
     res = true;
-    const vars = { car: my, e: c0(r.elec100), p: c0(r.petrol100), b: money(r.breakEven, cur) };
-    h = P(t(s === 'electric' ? 'mcSum_e' : s === 'petrol' ? 'mcSum_p' : 'mcSum_s', vars) + ' ' + mcPay(a, money(a.elec, cur))) + (a.T != null ? P(t('mcSum_cold', { t: Math.round(a.T) })) : '') + (car.type === 'ev' ? P(t('mcEvNote')) : '');
+    const vars = { car: my, e: c0(r.elec100), p: c0(r.petrol100), b: money(r.breakEven, cur), w: r.worthBelow > 0 ? money(r.worthBelow, cur) : '' };
+    h = P(t(s === 'electric' ? 'mcSum_e' : s === 'petrol' ? 'mcSum_p' : s === 'close' ? 'mcSum_c' : 'mcSum_s', vars) + ' ' + mcPay(a, money(a.elec, cur))) + (a.T != null ? P(t('mcSum_cold', { t: Math.round(a.T) })) : '') + (car.type === 'ev' ? P(t('mcEvNote')) : '');
     fine = t('mcSum_trust');
   }
   if (_vehNo && s !== 'nocar') h = P(t('mcBev', { m: vehName(_vehNo) })) + h;
@@ -6274,6 +6279,8 @@ function evPatch(el, html, fid) {         // inputs are patched in place so keyb
   if (sk !== el._sk) { el.innerHTML = html; el._sk = sk; if (fid) $id(fid)?.focus(); }
   else { const tpl = document.createElement('div'); tpl.innerHTML = html; for (const i of tpl.querySelectorAll('input')) { const o = $id(i.id); if (o && o.value !== i.value) o.value = i.value; } }
 }
+const MC_MIN_SEK = 0.30, MC_BAND_SEK = 0.45;   // per kWh, Where-to-charge research (RESEARCH_2026-11-18.md); the same figures in every currency via the ECB rate
+function mcMinGain(cur) { const a = rateOf('SEK'), b = rateOf(cur), k = cur === 'SEK' ? 1 : a > 0 && b > 0 ? b / a : 0; return k > 0 ? { min: MC_MIN_SEK * k, band: MC_BAND_SEK * k } : null; }
 function evRender() { _mcAns = null; evRender0(); mcSummary(); }
 function evRender0() {
   const el = $id('ev-in'), el2 = $id('ev-in2'), stEl = $id('ev-st'), pan = $id('p-car'); if (!el || !pan?.classList.contains('open')) return;
@@ -6300,6 +6307,10 @@ function evRender0() {
   const px = phevF(tn.T, bev ? 'pess' : undefined), rng = car.range * RT_REAL;   // electric car: the engine never helps with heating      // one electric-range base everywhere: RT_REAL of the WLTP figure, times the temperature factor
   // both sides at the same temperature: battery side with its kWh multiplier and heating petrol, petrol side with its cold multiplier
   const r = evCompare({ kwh100: kwh100 * px.mEl, elec, cons: car.cons * px.mp, petrol: st.avg, km, heat: kwh100 ? px.gk * kwh100 * (st.avg || 0) : 0, elecKm: car.range && !bev ? rng * px.f : 0 });
+  if (r.cheaper && r.cheaper !== 'same' && r.breakEven != null && elec != null) {   // a small gain is not worth the effort of plugging in: too close to call
+    const mg = mcMinGain(cur);
+    if (mg) { r.worthBelow = r.breakEven - mg.min - mg.band; if (mcWorth(r.breakEven - elec, mg.min, mg.band) === 'close') r.cheaper = 'close'; }
+  }
   if (r.trip && !bev) { const bl = phevBlend({ range: rng, kwh100, cons: car.cons, pKwh: elec, pL: st.avg, d: km, T: tn.T }); if (bl) { r.trip.elec = bl.cost; r.trip.elecKm = bl.e; r.trip.limited = bl.e < km - 1e-9; } }   // the trip row is the realistic mix at this temperature
   const missCar = []; if (!car.batt) missCar.push('Batt'); if (!car.range) missCar.push('Range'); if (!car.cons) missCar.push('Cons');
   const miss = missCar.map(k => t('mcMiss' + k)); if (elec == null) miss.push(t(mode === 'home' ? 'mcMissElec' : mode === 'pub' ? 'mcMissPub' : 'mcMissFc')); if (st.avg == null) miss.push(t('mcMissPet'));
@@ -6312,7 +6323,7 @@ function evRender0() {
   let vd = '';      // the conclusion in words first, then the two numbers
   if (r.cheaper) {
     const diff = Math.abs(r.petrol100 - r.elec100);
-    const hd = r.cheaper === 'electric' ? t('mcVerE', { s: c0(diff) }) : r.cheaper === 'petrol' ? t('mcVerP', { s: c0(diff) }) : t('mcVerS');
+    const hd = r.cheaper === 'electric' ? t('mcVerE', { s: c0(diff) }) : r.cheaper === 'petrol' ? t('mcVerP', { s: c0(diff) }) : r.cheaper === 'close' ? t('mcVerC') : t('mcVerS');
     const pair = (l, v) => `<div><span>${esc(l)}</span><b>${esc(c0(v))}</b><span>${esc(t('mcPer100'))}</span></div>`;
     vd = `<div class="ev-verdict${r.cheaper === 'electric' ? ' e' : ''}"><div class="ev-h">${esc(hd)}</div><div class="mc-pair">${pair(t('evElec'), r.elec100)}${pair(t('evPet'), r.petrol100)}</div>${tn.T != null ? `<div class="ev-s">${esc(t('evAtT', { t: Math.round(tn.T) }))}</div>` : ''}</div>
       <p class="ev-note">${esc(t('mcTripLine', { k: km, e: c0(r.trip.elec), p: c0(r.trip.petrol) }))}${r.trip.limited ? ' ' + esc(t('evTripMix', { k: Math.round(r.trip.elecKm) })) : ''}</p>
@@ -6532,7 +6543,7 @@ function opRender() {
 
 // ── Vehicle picker (v2.0): web/vehicles.json, fetched on first visit to My car (versioned URL = cache-first in the service worker) ──
 const VEH_V = 7;   // data-hash:vehicles.json=0f1c5612a9  (service worker serves ?v= URLs cache-first; after editing the file run: node tools/check_data_versions.js --fix)
-const VEH_E_V = 2;   // data-hash:vehicles_eea.json=6160c4e728  (EEA register 2024: top 100 per kind, model level, no tank size / electric range; same ?v= rule as above)
+const VEH_E_V = 3;   // data-hash:vehicles_eea.json=a9a4b4027d  (EEA register 2024: top 100 per kind, model level, no tank size / electric range; same ?v= rule as above)
 let _veh = null, _vehTried = false;
 function vehLoad() {
   if (_vehTried) return; _vehTried = true;
@@ -6573,7 +6584,10 @@ function vehNote() {
   const v = car.veh && _veh?.by[car.veh], el = $id('veh-note'); if (!el) return;
   if (_vehNo) { el.textContent = t('mcBev', { m: vehName(_vehNo) }); return; }
   if (!v) { el.textContent = ''; return; }
-  if (v.source === 'EEA 2024') { el.textContent = t('vehEea') + (v.type === 'phev' ? ' ' + t('vehEeaPh') : ''); return; }
+  if (v.source === 'EEA 2024') {
+    let tk = ''; if (v.tank_l) { let h = ''; try { h = new URL(v.tank_src).hostname.replace(/^www\./, ''); } catch (_) {} tk = ' ' + (v.tank_min && v.tank_max && v.tank_max > v.tank_min ? t('vehTankR', { l: v.tank_l, a: v.tank_min, b: v.tank_max, s: h }) : t('vehTank', { l: v.tank_l, s: h })); }
+    el.textContent = t('vehEea') + (v.type === 'phev' ? ' ' + t('vehEeaPh') : '') + tk; return;
+  }
   let host = ''; try { host = new URL(v.source).hostname.replace(/^www\./, ''); } catch (_) {}
   el.textContent = t('vehExample') + (host ? ' ' + t('vehSrc', { s: host }) : '') + (v.confidence === 'low' ? ' ' + t('vehApprox') : '');
 }

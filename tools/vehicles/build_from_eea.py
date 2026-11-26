@@ -16,6 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SRC = ROOT / "data" / "eea" / "co2cars_2024Fv30_top.json"
+TANKS = Path(__file__).resolve().parent / "tank_sizes.json"   # manufacturer documents only, see docs/TANK_SIZES.md
 OUT = ROOT / "web" / "vehicles_eea.json"
 KINDS = ("petrol", "diesel", "hev", "phev")
 TOP = 100
@@ -62,7 +63,7 @@ def build(src):
                 "cons_l100": None if kind == "phev" else fc,
                 "cons_wltp_weighted": fc if kind == "phev" else None,
                 "ev_kwh100": round(wh / 10, 1) if (kind == "phev" and wh) else None,
-                "co2_g_km": w("co2"), "tank_l": None, "range_km": None, "battery_kwh": None,
+                "co2_g_km": w("co2"), "tank_l": None, "tank_min": None, "tank_max": None, "tank_src": None, "range_km": None, "battery_kwh": None,
                 "source": "EEA 2024",
             })
         out[kind] = rows
@@ -81,13 +82,22 @@ def validate(out):
     return errs
 
 
+def add_tanks(out, tanks):
+    for rows in out.values():
+        for r in rows:
+            t = tanks.get(r["id"])
+            if t:
+                r["tank_l"], r["tank_min"], r["tank_max"], r["tank_src"] = t["tank_l"], t.get("tank_min"), t.get("tank_max"), t["source"]
+
+
 def main():
     out = build(json.loads(SRC.read_text(encoding="utf-8")))
+    add_tanks(out, json.loads(TANKS.read_text(encoding="utf-8"))["tanks"])
     errs = validate(out)
     if errs:
         print("\n".join(errs))
         sys.exit(1)
-    doc = {"version": 1, "source": CREDIT, "note": "Model-level averages weighted by registrations; no tank size or electric range in the register. HEV includes mild hybrids. For PHEV the consumption figures are weighted WLTP values, not charge-sustaining.", "categories": out}
+    doc = {"version": 1, "source": CREDIT, "note": "Model-level averages weighted by registrations; tank sizes come from manufacturer documents (tank_sizes.json, only where found); no electric range in the register. HEV includes mild hybrids. For PHEV the consumption figures are weighted WLTP values, not charge-sustaining.", "categories": out}
     OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print({k: len(v) for k, v in out.items()}, OUT.stat().st_size, "bytes")
 

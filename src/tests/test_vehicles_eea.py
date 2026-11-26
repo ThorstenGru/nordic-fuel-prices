@@ -35,5 +35,21 @@ class BuildFromEea(unittest.TestCase):
         self.assertEqual(b.validate(out), [])
 
 
+class TankSizes(unittest.TestCase):
+    def test_tank_sizes_are_sourced_plausible_and_in_the_catalogue(self):
+        tanks = json.load(open(os.path.join(os.path.dirname(b.__file__), "tank_sizes.json"), encoding="utf-8"))["tanks"]
+        eea = json.load(open(os.path.join(os.path.dirname(__file__), "..", "..", "web", "vehicles_eea.json"), encoding="utf-8"))["categories"]
+        ids = {v["id"]: v for rows in eea.values() for v in rows}
+        banned = ("auto-data", "ultimatespecs", "cars-data", "adac.de", "autotijd", "carsized", "wikipedia", "ev-database", "carsart", "arenaev")
+        for i, t in tanks.items():
+            self.assertIn(i, ids)
+            self.assertEqual(ids[i]["tank_l"], t["tank_l"], i)
+            self.assertTrue(25 <= t["tank_l"] <= 100, i)
+            self.assertIn(t["confidence"], ("high", "medium"), i)
+            self.assertTrue(t["source"].startswith("http") and not any(x in t["source"] for x in banned), i)
+            if t.get("tank_min") and t.get("tank_max"):
+                self.assertLessEqual(t["tank_min"], t["tank_max"], i)
+
+
 if __name__ == "__main__":
     unittest.main()
