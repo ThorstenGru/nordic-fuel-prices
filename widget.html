@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>EuroFuelPrices widget</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'">
+<style>
+:root { --bg:#fff; --fg:#0E1A29; --mut:#5a6b7d; --acc:#0f766e; --bd:#d5dde5; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0E1A29; --fg:#e9eef3; --mut:#9fb0c0; --acc:#5eead4; --bd:#29405a; } }
+html[data-theme=light] { --bg:#fff; --fg:#0E1A29; --mut:#5a6b7d; --acc:#0f766e; --bd:#d5dde5; }
+html[data-theme=dark] { --bg:#0E1A29; --fg:#e9eef3; --mut:#9fb0c0; --acc:#5eead4; --bd:#29405a; }
+* { box-sizing:border-box; }
+body { margin:0; font:15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); }
+a.box { display:block; text-decoration:none; color:inherit; border:1px solid var(--bd); border-radius:12px; padding:12px 14px; }
+.k { font-size:.78rem; color:var(--mut); }
+.v { font-size:1.7rem; font-weight:700; color:var(--acc); font-variant-numeric:tabular-nums; }
+.v small { font-size:.9rem; font-weight:500; color:var(--mut); }
+.s { font-size:.74rem; color:var(--mut); margin-top:2px; }
+</style>
+</head>
+<body>
+<a class="box" id="box" href="https://eurofuelprices.com/" target="_blank" rel="noopener">
+  <div class="k" id="k">EuroFuelPrices</div>
+  <div class="v" id="v">…</div>
+  <div class="s" id="s">Live fuel prices across Europe</div>
+</a>
+<script>
+// ?cc=SE&fuel=diesel|p95&theme=light|dark  — shows the country median from meta.json (same origin, no tracking, no cookies).
+(function () {
+  var q = new URLSearchParams(location.search);
+  var cc = (q.get('cc') || 'SE').toUpperCase().slice(0, 2);
+  var fuel = q.get('fuel') === 'p95' ? 'p95' : 'diesel';
+  var th = q.get('theme'); if (th === 'light' || th === 'dark') document.documentElement.dataset.theme = th;
+  var NAMES = { SE:'Sweden', DK:'Denmark', NO:'Norway', FI:'Finland', DE:'Germany', NL:'the Netherlands', BE:'Belgium', FR:'France', ES:'Spain', PT:'Portugal', IT:'Italy', AT:'Austria', CH:'Switzerland', PL:'Poland', CZ:'Czechia', GB:'the UK', IE:'Ireland' };
+  fetch('meta.json').then(function (r) { return r.json(); }).then(function (m) {
+    var c = (m.countries || []).filter(function (x) { return x.country === cc; })[0];
+    var st = c && c.stats_eur && c.stats_eur[fuel];
+    if (!c || c.status !== 'ok' || !st || st.n < 30) throw new Error('no data');
+    var cur = c.currency, rate = m.fx && m.fx.rates && m.fx.rates[cur];
+    var local = (cur !== 'EUR' && rate) ? (st.median * rate) : null;
+    document.getElementById('k').textContent = (fuel === 'p95' ? 'Petrol 95' : 'Diesel') + ' in ' + (NAMES[cc] || cc) + ' today';
+    document.getElementById('v').innerHTML = '€' + st.median.toFixed(3) + ' <small>/ L</small>' + (local ? ' <small>· ' + local.toFixed(2) + ' ' + cur + '</small>' : '');
+    document.getElementById('s').textContent = 'Median of ' + st.n + ' stations · eurofuelprices.com';
+    document.getElementById('box').href = 'https://eurofuelprices.com/' + (['se','at','de','ch','fr','es','pt','dk'].indexOf(cc.toLowerCase()) >= 0 ? cc.toLowerCase() + '/' : '');
+  }).catch(function () { document.getElementById('v').textContent = 'Open the live map'; });
+})();
+</script>
+</body>
+</html>

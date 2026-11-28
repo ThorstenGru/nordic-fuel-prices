@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#E9EEF3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1A29" media="(prefers-color-scheme: dark)">
+<title>Privacy — EuroFuelPrices</title>
+<meta name="description" content="Which data EuroFuelPrices and its map send where, what is stored (nothing personal) and how to contact us (Datenschutz).">
+<link rel="canonical" href="https://eurofuelprices.com/privacy.html">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self';
+  connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="stylesheet" href="theme.css">
+<style>
+*, *::before, *::after { box-sizing:border-box; }
+body { margin:0 auto; max-width:680px; padding:0 20px 60px; line-height:1.65; font-size:16px; }
+header { padding:22px 0 10px; display:flex; align-items:center; justify-content:space-between; }
+.back { font-size:0.82rem; color:var(--blue); text-decoration:none; border:1px solid var(--border); border-radius:12px; padding:7px 14px; background:var(--surf); }
+h1 { font-size:1.5rem; font-weight:500; line-height:1.3; margin:18px 0 8px; }
+h2 { font-size:1.1rem; font-weight:500; margin:34px 0 10px; }
+p, li { color:var(--text); }
+p { margin:0 0 14px; }
+ul { padding-left:20px; margin:0 0 14px; }
+li { margin-bottom:6px; }
+a { color:var(--blue); }
+.lede { color:var(--text2); }
+footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--border); color:var(--text3); font-size:0.82rem; }
+</style>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "4266c1f5c19845839b3163f64446320f"}'></script>
+</head>
+<body>
+<header>
+  <a href="index.html"><img src="logo.svg" alt="EuroFuelPrices" height="30" style="display:block;height:30px;width:auto"></a>
+  <a class="back" href="index.html">← Live map</a>
+</header>
+
+<h1>Privacy</h1>
+<p class="lede">Datenschutz. English first, the German summary is at the end.</p>
+
+<h2>About this service and contact</h2>
+<p>EuroFuelPrices is a free, non-commercial information service with no ads, no accounts and no paid features. Prices are guidance only; please check at the pump. We take no liability for the correctness of prices from third-party sources, which are named next to each price.</p>
+<p>Contact: send a message to our <a href="https://www.facebook.com/eurofuelprices" rel="me noopener" target="_blank">Facebook Page</a>. Security issues can also be reported privately through <a href="https://github.com/ThorstenGru/nordic-fuel-prices/security/advisories/new" rel="noopener">GitHub</a> (see <a href="https://github.com/ThorstenGru/nordic-fuel-prices/blob/main/SECURITY.md" rel="noopener">SECURITY.md</a>).</p>
+
+<h2>What we store about you</h2>
+<p>Nothing that identifies you. There are no accounts, no cookies and no advertising or tracking services.</p>
+<ul>
+  <li><strong>Visit and usage counters.</strong> A small request to our own server counts events such as "a visit", "a fuel type was chosen", "a country was viewed", "a navigation app was opened" or "the search was used". It stores only the day, the event name and a number. It never stores your IP address, your location, your search text or any identifier. The server looks at your IP address only for a moment to limit abuse, and does not keep it.</li>
+  <li><strong>Cloudflare Web Analytics.</strong> The site is delivered through Cloudflare. Its cookieless analytics counts page views, countries and browsers in aggregate. Cloudflare is the operator of this service; see <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">its privacy policy</a>.</li>
+  <li><strong>Settings in your browser.</strong> Your language, car profile, saved stations, theme and similar choices are kept in your browser's local storage on your device. They are not sent to us and you can delete them in your browser settings at any time.</li>
+</ul>
+
+<h2>What your browser sends to other services</h2>
+<p>Some parts of the map are loaded or calculated by public services. When you use them, your browser connects to them directly, so they see your IP address and the request, as with any website:</p>
+<ul>
+  <li><strong>Map tiles: OpenFreeMap</strong> (tiles.openfreemap.org), which serves map data from OpenStreetMap. Loaded whenever the map is shown. If the vector map cannot start, the fallback map may load tiles from Esri (server.arcgisonline.com) or the OpenStreetMap Foundation (tile.openstreetmap.org) instead.</li>
+  <li><strong>Address search: OpenStreetMap Nominatim.</strong> Only when you search for a place or enter route start and end points; the text you type is sent to find the place.</li>
+  <li><strong>Route planning.</strong> Only when you plan a route; start and end coordinates go to a routing server through our own proxy. Shared plan links contain the places and settings in the link itself; nothing is stored on a server.</li>
+  <li><strong>Facilities near a station.</strong> Only when you open a station; the station's position goes to OpenStreetMap Overpass servers through our proxy.</li>
+  <li><strong>Navigation buttons.</strong> If you choose Google Maps, Waze, Apple Maps or HERE, the destination is passed to that app, which then follows its own rules.</li>
+</ul>
+<p>We use your device location only if you ask for "near me", and only inside your browser; the position is not sent to us except as part of a nearby-facility or routing request described above.</p>
+
+<h2>Facebook</h2>
+<p>Our Facebook Page is run by Facebook (Meta) as well as by us. Facebook processes the data of people who visit or interact with the Page and gives us aggregate statistics. When you comment on the Page, a small program of ours may read your comment text and answer it. It keeps only the comment's technical id so that it does not answer twice, not your name or profile.</p>
+
+<h2>Your rights</h2>
+<p>Because we store no personal data, there is normally nothing to access, correct or delete. If you believe we hold data about you anyway, contact us (above) and we will look into it. In the EU you may also complain to your data protection authority; in Sweden that is the <a href="https://www.imy.se/" rel="noopener">IMY</a>.</p>
+
+<h2>Sources, licences and credits</h2>
+<p>Map data © OpenStreetMap contributors (ODbL). Vector tiles by OpenFreeMap and OpenMapTiles. Price sources and their licences are named on the map and on the <a href="about.html">methodology page</a>; for example Tankerkönig / MTS-K, Bundeskartellamt (CC BY 4.0) in Germany and fuel-prices.eu (CC BY 4.0) in Italy and Greece. Charging-station data: NOBIL by Enova, ChargeFinder. Car consumption in the "My car" list: European Environment Agency (EEA) and European Commission DG CLIMA, monitoring of CO2 emissions from passenger cars (2024 data), licence <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>; we selected and averaged the figures.</p>
+
+<h2>Zusammenfassung auf Deutsch</h2>
+<p><strong>Dienst:</strong> kostenlos und nicht kommerziell. Kontakt nur über die Facebook-Seite (Sicherheitsmeldungen auch über GitHub). <strong>Datenschutz:</strong> keine Konten, keine Cookies, keine Werbung. Gezählt werden nur anonyme Ereignisse (Tag, Name, Anzahl) ohne IP-Adresse, Standort oder Suchtext; dazu die cookielose Cloudflare-Statistik. Einstellungen bleiben lokal in Ihrem Browser. Beim Laden der Karte verbindet sich Ihr Browser direkt mit OpenFreeMap (Kacheln); bei Orts- und Routensuche gehen die eingegebenen Orte an OpenStreetMap Nominatim bzw. einen Routing-Server. Preise sind Richtwerte ohne Gewähr.</p>
+
+<footer>Last updated 18 November 2026. <a href="index.html">Back to the map</a> · <a href="about.html">Methodology</a></footer>
+</body>
+</html>
